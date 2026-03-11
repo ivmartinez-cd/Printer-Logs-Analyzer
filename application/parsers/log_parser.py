@@ -1,0 +1,144 @@
+"""Robust parser for HP printer logs with validation and error tolerance."""
+
+from __future__ import annotations
+
+import pathlib
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Iterable, List
+
+from domain.entities import Event
+
+DATE_FORMAT = "%d-%b-%Y %H:%M:%S"
+HEADER_KEYWORDS = {"tipo", "type", "código", "codigo", "fecha", "date"}
+TYPE_MAP = {"error": "ERROR", "warning": "WARNING", "info": "INFO"}
+
+
+@dataclass(frozen=True)
+class ParserError:
+    """Non-fatal parsing issue tracked for observability."""
+
+    line_number: int
+    raw_line: str
+    reason: str
+
+
+@dataclass
+class ParserReport:
+    """Collects parser output for downstream analysis."""
+
+    events: List[Event]
+    errors: List[ParserError]
+
+    def valid_ratio(self) -> float:
+        """Return percentage of successfully parsed lines."""
+        total = len(self.events) + len(self.errors)
+        return 1.0 if total == 0 else len(self.events) / total
+
+
+class LogParser:
+    """Parse HP printer logs into immutable Event entities."""
+
+    def __init__(self, strict: bool = False) -> None:
+        self.strict = strict
+
+    def parse_text(self, payload: str) -> ParserReport:
+        """Parse raw text content."""
+        lines = payload.splitlines()
+        return self._parse_lines(lines)
+
+    def parse_file(self, file_path: pathlib.Path) -> ParserReport:
+        """Parse logs directly from a file."""
+        content = file_path.read_text(encoding="utf-8")
+        return self.parse_text(content)
+
+    def _parse_lines(self, lines: Iterable[str]) -> ParserReport:
+        events: List[Event] = []
+        errors: List[ParserError] = []
+
+        for idx, raw_line in enumerate(lines, start=1):
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            try:
+                event = self._parse_line(line, is_first_line=idx == 1)
+                if event:
+                    events.append(event)
+            except ValueError as exc:
+                if str(exc) == "Header row skipped":
+                    continue
+                error = ParserError(line_number=idx, raw_line=line, reason=str(exc))
+                errors.append(error)
+                if self.strict:
+                    raise
+
+        return ParserReport(events=events, errors=errors)
+
+    def _parse_line(self, line: str, is_first_line: bool) -> Event | None:
+        """Parse an individual log line enforcing the TSV layout."""
+        parts = [segment.strip() for segment in line.split("\t")]
+        if is_first_line and self._looks_like_header(parts):
+            raise ValueError("Header row skipped")
+
+        if len(parts) < 6:
+            raise ValueError("Expected 6 tab-separated columns")
+
+        event_type = self._normalize_type(parts[0])
+        code = parts[1]
+        timestamp = self._parse_timestamp(parts[2])
+        counter = self._parse_counter(parts[3])
+        firmware = parts[4] or None
+        help_reference = parts[5] or None
+
+        return Event(
+            type=event_type,
+            code=code,
+            timestamp=timestamp,
+            counter=counter,
+            firmware=firmware,
+            help_reference=help_reference,
+        )
+
+    @staticmethod
+    def _parse_timestamp(value: str) -> datetime:
+        normalized = LogParser._normalize_timestamp_text(value)
+        try:
+            return datetime.strptime(normalized, DATE_FORMAT)
+        except ValueError as exc:
+            raise ValueError(f"Timestamp must follow {DATE_FORMAT}") from exc
+
+    @staticmethod
+    def _parse_counter(value: str) -> int:
+        cleaned = value.strip()
+        if not cleaned.isdigit():
+            raise ValueError("Counter must be a positive integer")
+        return int(cleaned)
+
+    @staticmethod
+    def _normalize_timestamp_text(value: str) -> str:
+        """Ensure month abbreviations parse with the English locale."""
+        value = value.strip()
+        if " " not in value:
+            raise ValueError("Timestamp must include date and time")
+        date_part, time_part = value.split(" ", 1)
+        try:
+            day, month, year = date_part.split("-")
+        except ValueError as exc:
+            raise ValueError("Date portion must be DD-MMM-YYYY") from exc
+        month = month[:1].upper() + month[1:].lower()
+        return f"{day}-{month}-{year} {time_part.strip()}"
+
+    @staticmethod
+    def _normalize_type(value: str) -> str:
+        normalized = TYPE_MAP.get(value.strip().lower())
+        if not normalized:
+            raise ValueError(f"Unsupported event type: {value}")
+        return normalized
+
+    @staticmethod
+    def _looks_like_header(parts: List[str]) -> bool:
+        if not parts:
+            return False
+        joined = " ".join(parts).lower()
+        return any(keyword in joined for keyword in HEADER_KEYWORDS)
