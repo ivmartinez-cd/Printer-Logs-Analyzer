@@ -1,0 +1,135 @@
+{
+  "models": {},
+  "defaults": {
+    "recency_window": 300
+  },
+  "metadata": {
+    "name": "hp-default",
+    "version": "1.0"
+  },
+  "global_rules": [
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "13.*",
+      "tags": [
+        "paper",
+        "jam"
+      ],
+      "enabled": true,
+      "resolution": "revisar trayecto papel",
+      "description": "Paper jam detected",
+      "classification": "paper_jam",
+      "recency_window": 300,
+      "severity_weight": 3,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "10.00.58",
+      "tags": [
+        "toner",
+        "consumable"
+      ],
+      "enabled": true,
+      "resolution": "Revisar toner y reemplazar si es necesario",
+      "description": "Regla agregada desde log",
+      "classification": "Consumable",
+      "recency_window": 300,
+      "severity_weight": 1,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "10.99.40",
+      "tags": [
+        "toner"
+      ],
+      "enabled": true,
+      "resolution": "Cambiar cartucho toner",
+      "description": "Regla agregada desde log",
+      "classification": "consumable",
+      "recency_window": 300,
+      "severity_weight": 2,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "10.00.70",
+      "tags": [
+        "consumable",
+        "toner"
+      ],
+      "enabled": true,
+      "resolution": "Revisar toner y reemplazar si es necesario",
+      "description": "Regla agregada desde log",
+      "classification": "consumable",
+      "recency_window": 300,
+      "severity_weight": 2,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "32.08.A1",
+      "tags": [
+        "Evento de inicio"
+      ],
+      "enabled": true,
+      "resolution": "Evento relacionado al encedido de la impresora",
+      "description": "Regla agregada desde log",
+      "classification": "system",
+      "recency_window": 300,
+      "severity_weight": 2,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "32.08.A3",
+      "tags": [
+        "Evento de inicio"
+      ],
+      "enabled": true,
+      "resolution": "Evento relacionado al encendido de la impresora",
+      "description": "Regla agregada desde log",
+      "classification": "system",
+      "recency_window": 300,
+      "severity_weight": 2,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "33.01.03",
+      "tags": [
+        "event"
+      ],
+      "enabled": true,
+      "resolution": "La funci\u00f3n de guardado y recuperaci\u00f3n funciona correctamente tras estar deshabilitada.",
+      "description": "Regla agregada desde log",
+      "classification": "system",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "40.08.00",
+      "tags": [
+        "evento"
+      ],
+      "enabled": true,
+      "resolution": "Se ha eliminado el accesorio de almacenamiento USB.",
+      "description": "Regla agregada desde log",
+      "classification": "system",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+// =============================================================================
+// Components — base mínima: button, textarea, select, table, badge, toolbar
+// Limpio, reutilizable. Estilo herramientas técnicas.
+// =============================================================================
+
+@use 'variables' as *;
+
+// --- Button ---
+.btn {
+  font-family: $font-sans;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-base;
+  padding: $space-2 $space-3;
+  border: $border-default;
+  border-radius: $radius-sm;
+  background: $color-bg-elevated;
+  color: $color-text;
+  cursor: pointer;
+  &:hover {
+    border-color: $color-border;
+    background: $color-bg;
+  }
+  &:focus-visible {
+    outline: $border-width-thick solid $color-accent;
+    outline-offset: 2px;
+  }
+}
+
+// --- Textarea ---
+.textarea {
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  line-height: $line-height-base;
+  padding: $space-3;
+  border: $border-default;
+  border-radius: $radius-sm;
+  background: $color-bg-elevated;
+  color: $color-text;
+  resize: vertical;
+  min-height: 80px;
+  &:focus {
+    outline: none;
+    border-color: $color-accent;
+  }
+}
+
+// --- Select ---
+.select {
+  font-family: $font-sans;
+  font-size: $font-size-sm;
+  padding: $space-2 $space-3;
+  border: $border-default;
+  border-radius: $radius-sm;
+  background: $color-bg-elevated;
+  color: $color-text;
+  cursor: pointer;
+  &:focus {
+    outline: none;
+    border-color: $color-accent;
+  }
+}
+
+// --- Table ---
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  font-family: $font-sans;
+  th,
+  td {
+    padding: $space-2 $space-3;
+    text-align: left;
+    border-bottom: $border-subtle;
+  }
+  th {
+    font-weight: $font-weight-medium;
+    color: $color-text-muted;
+    background: $color-bg;
+  }
+  tbody tr:hover {
+    background: $color-bg;
+  }
+}
+
+// --- Badge ---
+.badge {
+  display: inline-block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  padding: $space-1 $space-2;
+  border-radius: $radius-sm;
+  border: $border-default;
+  background: $color-bg;
+  color: $color-text-muted;
+}
+
+// --- Toolbar ---
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  border-bottom: $border-subtle;
+  background: $color-bg-elevated;
+  min-height: 40px;
+}

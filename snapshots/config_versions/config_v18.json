@@ -1,0 +1,102 @@
+{
+  "models": {},
+  "defaults": {
+    "recency_window": 300
+  },
+  "metadata": {
+    "name": "hp-default",
+    "version": "1.0"
+  },
+  "global_rules": [
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "10.00.58",
+      "tags": [
+        "consumable",
+        "toner"
+      ],
+      "enabled": true,
+      "sds_link": null,
+      "resolution": "TEST ESCRITURA HIBRIDA OK",
+      "description": "Regla agregada desde log",
+      "classification": "consumable",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "13.*",
+      "tags": [
+        "jam",
+        "paper"
+      ],
+      "enabled": true,
+      "sds_link": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85mjPVBB6qPbl7SSYups3oh426P+lfj_f1WV89vhVyIsxEb8wVHMM6wRfVlaTaEpSK+05h5IZ_pB7UjEb_/ish_12379041-47296-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true",
+      "resolution": "revisar trayecto papel",
+      "description": "Paper jam detected",
+      "classification": "paper_jam",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "32.08.A1",
+      "tags": [],
+      "enabled": true,
+      "sds_link": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibl4TC4ts9Hvi4e6P+sL2++ISFg+rBFOa6hcdPkFGf5XmQH8hqa0E8VemJ_l7dp1sUP7lyQK_g==/ish_1690610-1447158-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true",
+      "resolution": "Regla agregada desde log",
+      "description": "Regla agregada desde log",
+      "classification": "system",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "32.08.A3",
+      "tags": [],
+      "enabled": true,
+      "sds_link": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibl4TC4ts9Hvi4e6P+sLhtixQn9NrxJPFfFTXfohHtYBhDmK1o6+8BWVdDk0tpJNYQpzw5AKVg==/ish_1690610-1447158-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true",
+      "resolution": "Regla agregada desde log",
+      "description": "Regla agregada desde log",
+      "classification": "system",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "42.33.01",
+      "tags": [],
+      "enabled": true,
+      "sds_link": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85mDHbDBKvPbx+TSkquM3zjIuwP+sJ2_zxTF0koBR7YfF4QOZnJNEpjhPQ1qa68XHP+MjVdKzs0kswEuqB84g=/ish_12157884-1266231-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true",
+      "resolution": "Regla agregada desde log",
+      "description": "Regla agregada desde log",
+      "classification": "consumable",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    },
+    {
+      "X": 2,
+      "Y": 60,
+      "code": "10.23.15",
+      "tags": [],
+      "enabled": true,
+      "sds_link": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85mjHbBhOqPb95TigtvdHvi4e6P+sLhvGGQ2YHoHtKI8YubP8iOuQbwgvHibqKBnv5qMfrHVYUpV3WkBqWLA==/ish_12357291-255756-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true",
+      "resolution": "Regla agregada desde log",
+      "description": "Regla agregada desde log",
+      "classification": "mechanical",
+      "recency_window": 300,
+      "severity_weight": null,
+      "counter_max_jump": 100000
+    }
+  ]
+}

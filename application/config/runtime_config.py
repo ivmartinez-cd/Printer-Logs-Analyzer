@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from infrastructure.json_config_validator import ConfigDocument, JsonConfigValidator
+from psycopg2 import extras
+
+from infrastructure.database import Database
+from infrastructure.json_config_validator import ConfigDocument, GlobalRuleModel, JsonConfigValidator
 from infrastructure.repositories.config_repository import (
     AuditRecord,
     AuditRepository,
@@ -45,6 +49,7 @@ class RuntimeConfig:
         self.repository = repository
         self.validator = validator
         self._cache: Optional[ActiveConfig] = None
+        self._db = Database()
 
     def get(self) -> ActiveConfig:
         """Return the cached configuration, loading from DB if needed."""
@@ -52,16 +57,80 @@ class RuntimeConfig:
             self._cache = self._load()
         return self._cache
 
-    def refresh(self) -> ActiveConfig:
-        """Force a reload from the database."""
-        self._cache = None
-        return self.get()
-
     def _load(self) -> ActiveConfig:
         version = self.repository.get_latest()
         if not version:
             raise RuntimeError("No configuration versions found in the database")
-        payload = self.validator.validate(version.config_json)
+
+        # 1) Validar documento completo desde JSON como hasta ahora
+        raw_payload = self.validator.validate(version.config_json)
+
+        rules_rows: List[dict] = []
+        # 2) Intentar cargar reglas normalizadas desde tablas rules / rule_tags
+        with self._db.connect() as conn, conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT id,
+                       code,
+                       classification,
+                       description,
+                       resolution,
+                       recency_window,
+                       x_threshold,
+                       y_window,
+                       counter_max_jump,
+                       enabled,
+                       sds_link
+                FROM rules
+                WHERE config_version_id = %s
+                ORDER BY code
+                """,
+                (version.id,),
+            )
+            rules_rows = cur.fetchall() or []
+
+            if rules_rows:
+                rules: List[GlobalRuleModel] = []
+                for row in rules_rows:
+                    cur.execute(
+                        "SELECT tag FROM rule_tags WHERE rule_id = %s ORDER BY tag",
+                        (row["id"],),
+                    )
+                    tag_rows = cur.fetchall() or []
+                    tags = [t["tag"] for t in tag_rows]
+
+                    rule_dict = {
+                        "code": row["code"],
+                        "classification": row["classification"],
+                        "description": row["description"],
+                        "resolution": row["resolution"],
+                        "recency_window": row["recency_window"],
+                        "X": row["x_threshold"],
+                        "Y": row["y_window"],
+                        "counter_max_jump": row["counter_max_jump"],
+                        "severity_weight": None,
+                        "enabled": row["enabled"],
+                        "tags": tags,
+                        "sds_link": row["sds_link"],
+                    }
+                    rules.append(GlobalRuleModel.model_validate(rule_dict))
+
+                payload = ConfigDocument(
+                    metadata=raw_payload.metadata,
+                    defaults=raw_payload.defaults,
+                    models=raw_payload.models,
+                    global_rules=rules,
+                )
+            else:
+                # Fallback limpio al JSON legacy
+                payload = raw_payload
+
+        rules_codes = [r.code for r in payload.global_rules]
+        source = "rules_table" if rules_rows else "config_json"
+        print(
+            "[RuntimeConfig._load] fuente=%s version_number=%s rules.code=%s"
+            % (source, version.version_number, rules_codes)
+        )
         return ActiveConfig(
             version_id=version.id,
             version_number=version.version_number,
@@ -69,6 +138,15 @@ class RuntimeConfig:
             created_at=version.created_at,
             created_by=version.created_by,
         )
+
+    def refresh(self) -> ActiveConfig:
+        """Force a reload from the database."""
+        self._cache = None
+        return self.get()
+
+    def force_reload(self) -> None:
+        """Clear cache so next get() loads from the database again."""
+        self._cache = None
 
 
 class ConfigService:
@@ -87,6 +165,7 @@ class ConfigService:
         self.runtime_config = runtime_config
         self.validator = validator
         self.snapshot_store = snapshot_store or SnapshotStore(Path("snapshots/config_versions"))
+        self._db = Database()
 
     def get_active(self) -> ActiveConfig:
         return self.runtime_config.get()
@@ -98,6 +177,53 @@ class ConfigService:
             AuditRecord(user=actor, action="CONFIG_UPDATE", version_number=version.version_number, timestamp=datetime.utcnow())
         )
         self.snapshot_store.save(f"config_v{version.version_number}", version.config_json)
+
+        # Escritura híbrida: insertar reglas en tablas rules + rule_tags
+        with self._db.connect() as conn, conn.cursor() as cur:
+            for rule in validated.global_rules:
+                rule_id = str(uuid.uuid4())
+                cur.execute(
+                    """
+                    INSERT INTO rules (
+                        id,
+                        config_version_id,
+                        code,
+                        classification,
+                        description,
+                        resolution,
+                        recency_window,
+                        x_threshold,
+                        y_window,
+                        counter_max_jump,
+                        enabled,
+                        sds_link,
+                        created_by
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        rule_id,
+                        version.id,
+                        rule.code,
+                        rule.classification,
+                        rule.description,
+                        rule.resolution,
+                        rule.recency_window,
+                        rule.X,
+                        rule.Y,
+                        rule.counter_max_jump,
+                        rule.enabled,
+                        getattr(rule, "sds_link", None),
+                        actor,
+                    ),
+                )
+                for tag in rule.tags:
+                    cur.execute(
+                        "INSERT INTO rule_tags (rule_id, tag) VALUES (%s, %s)",
+                        (rule_id, tag),
+                    )
+            conn.commit()
+
         return self.runtime_config.refresh()
 
     def history(self, limit: int = 20) -> List[ConfigHistoryEntry]:

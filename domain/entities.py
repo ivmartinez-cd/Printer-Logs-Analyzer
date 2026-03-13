@@ -27,12 +27,14 @@ class Incident(BaseModel):
     id: str
     code: str
     classification: str
-    severity_weight: int
+    severity: str = Field(..., description="INFO, WARNING or ERROR from event type")
+    severity_weight: int = Field(..., description="Numeric score for sorting (1=INFO, 2=WARNING, 3=ERROR)")
     occurrences: int
     start_time: datetime
     end_time: datetime
     counter_range: tuple[int, int]
     events: List[Event]
+    sds_link: Optional[str] = None
 
     model_config = {"frozen": True}
 

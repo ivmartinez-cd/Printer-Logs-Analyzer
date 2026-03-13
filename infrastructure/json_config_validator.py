@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -18,9 +18,10 @@ class GlobalRuleModel(BaseModel):
     X: int = Field(ge=1, description="Minimum occurrences threshold")
     Y: int = Field(ge=1, description="Window minutes threshold")
     counter_max_jump: int = Field(ge=1)
-    severity_weight: int = Field(ge=1)
+    severity_weight: Optional[int] = Field(None, ge=1, description="Deprecated, severity comes from event type")
     enabled: bool
     tags: List[str]
+    sds_link: Optional[str] = None
 
 
 class ConfigDocument(BaseModel):

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from fnmatch import fnmatch
 from typing import Any, Dict, List
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from application.config.runtime_config import ConfigService, RuntimeConfig
@@ -17,10 +19,28 @@ from infrastructure.json_config_validator import JsonConfigValidator
 from infrastructure.repositories.config_repository import AuditRepository, ConfigRepository
 
 
+MAX_LOGS_LENGTH = 2_000_000
+
+
 class ParseLogsRequest(BaseModel):
     """Request body containing the raw log payload."""
 
     logs: str
+
+
+class ValidateLogsRequest(BaseModel):
+    """Request body for log validation (codes detection)."""
+
+    logs: str
+
+
+class ValidateLogsResponse(BaseModel):
+    """Response of POST /parser/validate."""
+
+    total_lines: int
+    codes_detected: List[str]
+    codes_new: List[str]
+    errors: List[ParserErrorModel]
 
 
 class ParserErrorModel(BaseModel):
@@ -91,6 +111,13 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         version="0.1.0",
         description="MVP API for ingesting and parsing HP printer logs.",
     )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get("/health", summary="Basic health probe")
     def health() -> dict:
@@ -111,6 +138,44 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             events=report.events,
             incidents=analysis.incidents,
             global_severity=analysis.global_severity,
+            errors=errors,
+        )
+
+    @app.post("/parser/validate", response_model=ValidateLogsResponse, dependencies=[Depends(authenticate)])
+    def validate_logs(payload: ValidateLogsRequest) -> ValidateLogsResponse:
+        if len(payload.logs) > MAX_LOGS_LENGTH:
+            raise HTTPException(
+                status_code=400,
+                detail="logs exceeds max length",
+            )
+        lines_non_empty = [l for l in payload.logs.splitlines() if l.strip()]
+        total_lines = len(lines_non_empty)
+        if total_lines == 0:
+            return ValidateLogsResponse(
+                total_lines=0,
+                codes_detected=[],
+                codes_new=[],
+                errors=[],
+            )
+        report = parser.parse_text(payload.logs)
+        codes_detected = sorted(set(e.code for e in report.events))
+        try:
+            active = config_service.get_active()
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        rules = active.payload.global_rules
+        codes_new = [
+            c for c in codes_detected
+            if not any(r.enabled and fnmatch(c, r.code) for r in rules)
+        ]
+        errors = [
+            ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)
+            for e in report.errors
+        ]
+        return ValidateLogsResponse(
+            total_lines=total_lines,
+            codes_detected=codes_detected,
+            codes_new=codes_new,
             errors=errors,
         )
 

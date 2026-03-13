@@ -30,6 +30,26 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
      - `MAX_CONCURRENT_ANALYSIS`: cantidad de análisis simultáneos permitidos.
      - `ANALYSIS_TIMEOUT`: límite (segundos) por análisis.
 
+## Setup backend y base de datos
+
+4. **Crear la base de datos**
+   - En Neon (o tu instancia PostgreSQL): crear una base de datos y anotar la URL de conexión.
+   - Usar esa URL en `.env` como `DB_URL` (formato `postgresql://user:password@host:port/dbname`).
+
+5. **Aplicar migraciones**
+   - Ejecutar el SQL de inicialización contra la base (sustituir `<CONNECTION_STRING>` por tu `DB_URL` de `.env`):
+   ```powershell
+   psql "<CONNECTION_STRING>" -f migrations/001_init.sql
+   ```
+   - O abrir `migrations/001_init.sql` en el cliente SQL de Neon/PostgreSQL y ejecutarlo manualmente.
+
+6. **Ejecutar el seed inicial**
+   - Inserta la configuración por defecto desde `config.json` como versión 1. Si ya existe configuración, no hace nada.
+   ```powershell
+   python scripts/seed_config.py
+   ```
+   - Asegurarse de ejecutar desde la raíz del proyecto (donde está `config.json`).
+
 ## Uso del parser
 
 El parser acepta archivos TSV oficiales de HP (separador TAB) con las columnas:

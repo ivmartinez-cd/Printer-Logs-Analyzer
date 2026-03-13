@@ -51,7 +51,12 @@ class ConfigRepository:
         with self.db.connect() as conn, conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
             cur.execute(query)
             row = cur.fetchone()
-            return self._row_to_version(row) if row else None
+            if row:
+                version = self._row_to_version(row)
+                rules_codes = [r.get("code") for r in version.config_json.get("global_rules", [])]
+                print("[ConfigRepository.get_latest] fuente=tabla config_versions version_number=%s rules.code=%s" % (version.version_number, rules_codes))
+                return version
+            return None
 
     def create_version(self, payload: dict, created_by: str) -> ConfigVersion:
         new_id = str(uuid.uuid4())
@@ -107,7 +112,7 @@ class AuditRepository:
 
     def log(self, record: AuditRecord) -> None:
         query = """
-            INSERT INTO audit_log (user, action, version, timestamp)
+            INSERT INTO audit_log ("user", action, version, timestamp)
             VALUES (%s, %s, %s, %s)
         """
         with self.db.connect() as conn, conn.cursor() as cur:

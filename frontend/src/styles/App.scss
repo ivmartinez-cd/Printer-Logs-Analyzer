@@ -1,0 +1,10 @@
+@use 'variables';
+@use 'layout';
+@use 'components';
+
+body {
+  background: variables.$bg-base;
+  color: variables.$text-primary;
+  font-family: variables.$font-sans;
+  font-size: variables.$font-size-sm;
+}
