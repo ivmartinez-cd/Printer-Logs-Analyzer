@@ -17,6 +17,9 @@ class Event(BaseModel):
     counter: int = Field(..., description="Device counter at the time of the event")
     firmware: Optional[str] = Field(None, description="Firmware version tagged in the log")
     help_reference: Optional[str] = Field(None, description="Optional troubleshooting hint or URL")
+    code_severity: Optional[str] = Field(None, description="Severity from error_codes catalog")
+    code_description: Optional[str] = Field(None, description="Description from error_codes catalog")
+    code_solution_url: Optional[str] = Field(None, description="Solution URL from error_codes catalog")
 
     model_config = {"frozen": True}
 

@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from fnmatch import fnmatch
-from typing import Any, Dict, List
+import hashlib
+import time
+from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from application.config.runtime_config import ConfigService, RuntimeConfig
 from application.parsers.log_parser import LogParser
 from application.services.analysis_service import AnalysisService
 from domain.entities import Event, Incident
 from infrastructure.config import Settings, get_settings
-from infrastructure.json_config_validator import JsonConfigValidator
-from infrastructure.repositories.config_repository import AuditRepository, ConfigRepository
-
+from infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
 
 MAX_LOGS_LENGTH = 2_000_000
+
+# Single-slot cache for preview: same input -> return cached result (no parse/DB/analysis).
+_preview_cache: Dict[str, Optional[object]] = {"hash": None, "response": None}
 
 
 class ParseLogsRequest(BaseModel):
@@ -60,23 +60,13 @@ class ParseLogsResponse(BaseModel):
     errors: list[ParserErrorModel]
 
 
-class ConfigResponse(BaseModel):
-    """Details about the active configuration."""
+class ErrorCodeUpsertRequest(BaseModel):
+    """Body for POST /error-codes/upsert."""
 
-    version_number: int
-    version_id: str
-    created_at: datetime
-    created_by: str
-    config: Dict[str, Any]
-
-
-class ConfigHistoryItemModel(BaseModel):
-    """Historical version summary."""
-
-    version_number: int
-    created_at: datetime
-    created_by: str
-    diff: Dict[str, List[str]]
+    code: str
+    severity: Optional[str] = None
+    description: Optional[str] = None
+    solution_url: Optional[str] = None
 
 
 def authenticate(api_key: str = Header(..., alias="x-api-key")) -> None:
@@ -86,26 +76,12 @@ def authenticate(api_key: str = Header(..., alias="x-api-key")) -> None:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
-def get_actor(user_id: str = Header(..., alias="x-user-id")) -> str:
-    """Extract the acting user for auditing."""
-    return user_id
-
-
 def get_app(settings: Settings | None = None) -> FastAPI:
     """Factory mainly used for testing."""
     settings = settings or get_settings()
     parser = LogParser()
-    config_repository = ConfigRepository()
-    audit_repository = AuditRepository()
-    validator = JsonConfigValidator()
-    runtime_config = RuntimeConfig(config_repository, validator)
-    config_service = ConfigService(
-        repository=config_repository,
-        audit_repository=audit_repository,
-        runtime_config=runtime_config,
-        validator=validator,
-    )
-    analysis_service = AnalysisService(settings=settings, runtime_config=runtime_config)
+    analysis_service = AnalysisService()
+    error_code_repository = ErrorCodeRepository()
     app = FastAPI(
         title="HP Printer Logs Analyzer",
         version="0.1.0",
@@ -123,26 +99,66 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict:
         return {"status": "ok", "recency_window": settings.recency_window}
 
+    def _enrich_events_with_catalog(events: list[Event], catalog_map: Dict[str, ErrorCode]) -> list[Event]:
+        enriched: list[Event] = []
+        for evt in events:
+            row = catalog_map.get(evt.code)
+            if row:
+                data = evt.model_dump()
+                data["code_severity"] = row.severity
+                data["code_description"] = row.description
+                data["code_solution_url"] = row.solution_url
+                enriched.append(Event(**data))
+            else:
+                enriched.append(evt)
+        return enriched
+
     @app.post("/parser/preview", response_model=ParseLogsResponse, dependencies=[Depends(authenticate)])
     def parse_logs(payload: ParseLogsRequest) -> ParseLogsResponse:
+        t0 = time.perf_counter()
+        logs_hash = hashlib.sha256(payload.logs.encode("utf-8")).hexdigest()
+        if _preview_cache["hash"] == logs_hash and _preview_cache["response"] is not None:
+            elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            print(f"[preview] cache_hit=true total_ms={elapsed_ms}")
+            return _preview_cache["response"]
+
+        t_parse_start = time.perf_counter()
         report = parser.parse_text(payload.logs)
+        parse_ms = int((time.perf_counter() - t_parse_start) * 1000)
+
+        unique_codes = list(dict.fromkeys(e.code for e in report.events))
+        t_db_start = time.perf_counter()
+        catalog_map = error_code_repository.get_by_codes(unique_codes)
+        db_ms = int((time.perf_counter() - t_db_start) * 1000)
+        t_analysis_start = time.perf_counter()
+
+        events = _enrich_events_with_catalog(report.events, catalog_map)
         try:
-            analysis = analysis_service.analyze(report.events)
+            analysis = analysis_service.analyze(events)
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
+        analysis_ms = int((time.perf_counter() - t_analysis_start) * 1000)
+
         errors = [
             ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)
             for e in report.errors
         ]
-        return ParseLogsResponse(
-            events=report.events,
+        response = ParseLogsResponse(
+            events=events,
             incidents=analysis.incidents,
             global_severity=analysis.global_severity,
             errors=errors,
         )
+        _preview_cache["hash"] = logs_hash
+        _preview_cache["response"] = response
+
+        total_ms = int((time.perf_counter() - t0) * 1000)
+        print(f"[preview] parse_ms={parse_ms} db_ms={db_ms} analysis_ms={analysis_ms} total_ms={total_ms}")
+        return response
 
     @app.post("/parser/validate", response_model=ValidateLogsResponse, dependencies=[Depends(authenticate)])
     def validate_logs(payload: ValidateLogsRequest) -> ValidateLogsResponse:
+        t0 = time.perf_counter()
         if len(payload.logs) > MAX_LOGS_LENGTH:
             raise HTTPException(
                 status_code=400,
@@ -157,21 +173,23 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 codes_new=[],
                 errors=[],
             )
+
+        t_parse_start = time.perf_counter()
         report = parser.parse_text(payload.logs)
+        parse_ms = int((time.perf_counter() - t_parse_start) * 1000)
+
         codes_detected = sorted(set(e.code for e in report.events))
-        try:
-            active = config_service.get_active()
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        rules = active.payload.global_rules
-        codes_new = [
-            c for c in codes_detected
-            if not any(r.enabled and fnmatch(c, r.code) for r in rules)
-        ]
+        catalog_map = error_code_repository.get_by_codes(codes_detected)
+        db_ms = int((time.perf_counter() - t_parse_start) * 1000) - parse_ms
+
+        codes_new = [c for c in codes_detected if c not in catalog_map]
         errors = [
             ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)
             for e in report.errors
         ]
+        total_ms = int((time.perf_counter() - t0) * 1000)
+        print(f"[validate] parse_ms={parse_ms} db_ms={db_ms} total_ms={total_ms}")
+
         return ValidateLogsResponse(
             total_lines=total_lines,
             codes_detected=codes_detected,
@@ -179,48 +197,26 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             errors=errors,
         )
 
-    @app.get("/config", response_model=ConfigResponse, dependencies=[Depends(authenticate)])
-    def get_config() -> ConfigResponse:
-        try:
-            active = config_service.get_active()
-        except RuntimeError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        return ConfigResponse(
-            version_number=active.version_number,
-            version_id=active.version_id,
-            created_at=active.created_at,
-            created_by=active.created_by,
-            config=active.payload.model_dump(),
+    @app.post("/error-codes/upsert", dependencies=[Depends(authenticate)])
+    def upsert_error_code(body: ErrorCodeUpsertRequest) -> dict:
+        """Insert or update an error code in the catalog."""
+        _preview_cache["hash"] = None
+        _preview_cache["response"] = None
+        ec = error_code_repository.upsert(
+            code=body.code,
+            severity=body.severity,
+            description=body.description,
+            solution_url=body.solution_url,
         )
-
-    @app.put("/config", response_model=ConfigResponse, dependencies=[Depends(authenticate)])
-    def put_config(body: Dict[str, Any], actor: str = Depends(get_actor)) -> ConfigResponse:
-        try:
-            active = config_service.update(body, actor)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=500, detail=str(exc)) from exc
-        return ConfigResponse(
-            version_number=active.version_number,
-            version_id=active.version_id,
-            created_at=active.created_at,
-            created_by=active.created_by,
-            config=active.payload.model_dump(),
-        )
-
-    @app.get("/config/history", response_model=List[ConfigHistoryItemModel], dependencies=[Depends(authenticate)])
-    def get_config_history(limit: int = 10) -> List[ConfigHistoryItemModel]:
-        entries = config_service.history(limit)
-        return [
-            ConfigHistoryItemModel(
-                version_number=item.version_number,
-                created_at=item.created_at,
-                created_by=item.created_by,
-                diff=item.diff,
-            )
-            for item in entries
-        ]
+        return {
+            "id": ec.id,
+            "code": ec.code,
+            "severity": ec.severity,
+            "description": ec.description,
+            "solution_url": ec.solution_url,
+            "created_at": ec.created_at.isoformat(),
+            "updated_at": ec.updated_at.isoformat(),
+        }
 
     return app
 
