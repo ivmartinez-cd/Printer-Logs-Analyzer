@@ -866,6 +866,7 @@ body {
 
 .dashboard-table__cell-actions-placeholder {
   color: #6b7280;
+  -webkit-user-select: none;
   user-select: none;
 }
 
