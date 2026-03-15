@@ -780,6 +780,16 @@ export default function DashboardPage() {
                             </span>
                           </td>
                         </tr>
+                        {isExpanded && inc.eventsInWindow.length > 0 && (
+                          <tr className="dashboard-table__row-detail-header" aria-hidden>
+                            <th className="dashboard-table__cell-expand" scope="col" />
+                            <th scope="col">Fecha y hora</th>
+                            <th scope="col">Contador</th>
+                            <th scope="col" title="Diferencia con la ocurrencia anterior">Δ</th>
+                            <th scope="col">Firmware</th>
+                            <th scope="col" colSpan={3}>Mensaje / Ayuda</th>
+                          </tr>
+                        )}
                         {isExpanded && inc.eventsInWindow.map((evt, idx) => {
                           const prevCounter = idx > 0 ? inc.eventsInWindow[idx - 1].counter : null
                           const delta = prevCounter !== null ? evt.counter - prevCounter : null
