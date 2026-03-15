@@ -3,9 +3,9 @@
   "private": true,
   "description": "Monorepo root: run frontend + backend with one command",
   "scripts": {
-    "dev": "concurrently -n fe,be -c blue,yellow \"npm run dev --prefix frontend\" \"uvicorn interface.api:app --reload\"",
+    "dev": "concurrently -n fe,be -c blue,yellow \"npm run dev --prefix frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --prefix frontend",
-    "dev:backend": "uvicorn interface.api:app --reload"
+    "dev:backend": "cd backend && uvicorn interface.api:app --reload"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
-load_dotenv()
+# Cargar .env desde la raíz del repo (backend/ está dentro del repo)
+_repo_root = Path(__file__).resolve().parent.parent.parent
+load_dotenv(_repo_root / ".env")
 
 
 class Settings(BaseModel):

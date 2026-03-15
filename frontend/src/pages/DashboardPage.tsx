@@ -14,7 +14,6 @@ import { previewLogs, validateLogs, upsertErrorCode } from '../services/api'
 import type { ParseLogsResponse, Event as ApiEvent, Incident as ApiIncident, ErrorCodeUpsertBody } from '../types/api'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
 import { useToast } from '../contexts/ToastContext'
-import './DashboardPage.css'
 
 function useLiveTime() {
   const [now, setNow] = useState(() => new Date())

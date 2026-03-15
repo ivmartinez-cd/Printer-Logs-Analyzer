@@ -4,12 +4,19 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
 
 ## Estructura del proyecto
 
-- `domain/`: Entidades inmutables (Event, Incident, AnalysisResult).
-- `application/`: Servicios y parsers (por ahora LogParser y AnalysisService).
-- `infrastructure/`: Configuración, acceso a BD y manejo de snapshots.
-- `interface/`: FastAPI + endpoints públicos.
-- `scripts/`: Herramientas CLI (parser manual).
-- `samples/`: Logs de ejemplo para pruebas rápidas.
+- **`backend/`**: Servidor (API y lógica). Incluye:
+  - `application/`: Servicios y parsers (LogParser, AnalysisService).
+  - `config/`: Configuración estática (p. ej. `default.json`).
+  - `domain/`: Entidades (Event, Incident, AnalysisResult).
+  - `infrastructure/`: Configuración env, BD y repositorios.
+  - `interface/`: API FastAPI y endpoints.
+  - `migrations/`: SQL de esquema (PostgreSQL/Neon).
+  - `scripts/`: Herramientas CLI (p. ej. `run_parser.py`).
+  - `main.py`, `requirements.txt`.
+- **`frontend/`**: App React/Vite.
+- **`docs/`**: Documentación (visión, PowerShell, auditoría).
+- **`samples/`**: Logs y bodies de ejemplo (`hp_log.txt`, `request.json`).
+- **`snapshots/`**: Versiones de configuración (respaldo).
 
 ## Requisitos iniciales
 
@@ -18,12 +25,12 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
    python -m venv .venv
    .\.venv\Scripts\Activate.ps1
    ```
-2. **Instalar dependencias**
+2. **Instalar dependencias del backend**
    ```powershell
-   pip install -r requirements.txt
+   pip install -r backend/requirements.txt
    ```
 3. **Configurar variables de entorno**
-   - Duplique el archivo `.env.example` → `.env` y actualice los valores:
+   - En la **raíz del proyecto**, duplique `.env.example` → `.env` y actualice los valores:
      - `DB_URL`: cadena de conexión Neon/PostgreSQL.
      - `API_KEY`: clave para la cabecera `x-api-key`.
      - `RECENCY_WINDOW`: ventana (segundos) para análisis recientes.
@@ -37,18 +44,11 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
    - Usar esa URL en `.env` como `DB_URL` (formato `postgresql://user:password@host:port/dbname`).
 
 5. **Aplicar migraciones**
-   - Ejecutar el SQL de inicialización contra la base (sustituir `<CONNECTION_STRING>` por tu `DB_URL` de `.env`):
+   - Ejecutar el SQL contra la base (sustituir `<CONNECTION_STRING>` por tu `DB_URL` de `.env`), desde la raíz del proyecto:
    ```powershell
-   psql "<CONNECTION_STRING>" -f migrations/001_init.sql
+   psql "<CONNECTION_STRING>" -f backend/migrations/001_init.sql
    ```
-   - O abrir `migrations/001_init.sql` en el cliente SQL de Neon/PostgreSQL y ejecutarlo manualmente.
-
-6. **Ejecutar el seed inicial**
-   - Inserta la configuración por defecto desde `config.json` como versión 1. Si ya existe configuración, no hace nada.
-   ```powershell
-   python scripts/seed_config.py
-   ```
-   - Asegurarse de ejecutar desde la raíz del proyecto (donde está `config.json`).
+   - O abrir `backend/migrations/001_init.sql` en el cliente SQL de Neon/PostgreSQL y ejecutarlo manualmente.
 
 ## Uso del parser
 
@@ -56,10 +56,11 @@ El parser acepta archivos TSV oficiales de HP (separador TAB) con las columnas:
 
 `Tipo de evento | Código de evento | Fecha de evento | N.º total de impresiones | Versión firmware | Ayuda`
 
-Ejecute la utilidad CLI para validar un archivo (usa `samples/example.log` como ejemplo real):
+Ejecute la utilidad CLI desde la raíz del proyecto (el backend carga el entorno desde la raíz):
 
 ```powershell
-python scripts/run_parser.py samples/example.log
+cd backend
+python scripts/run_parser.py ../samples/hp_log.txt
 ```
 
 El parser normaliza los tipos (`Error/Warning/Info` → `ERROR/WARNING/INFO`) y registra errores no fatales sin detener la ejecución.
@@ -88,13 +89,20 @@ Arranca a la vez el frontend (Vite) y la API (Uvicorn). Cada uno en su proceso, 
 Comandos por separado:
 
 - Frontend: `npm run dev:frontend` o `cd frontend && npm run dev`
-- Backend: `npm run dev:backend` o `uvicorn interface.api:app --reload`
+- Backend: `npm run dev:backend` (ejecuta Uvicorn desde `backend/`)
 
-## Ejecutar la API con FastAPI
+## Ejecutar solo la API (backend)
 
-Inicie el servidor de desarrollo con Uvicorn:
+Desde la raíz del proyecto:
 
 ```powershell
+npm run dev:backend
+```
+
+O manualmente, entrando en `backend/` y arrancando Uvicorn:
+
+```powershell
+cd backend
 uvicorn interface.api:app --reload
 ```
 
@@ -104,6 +112,6 @@ La API expone:
 
 ## Próximos pasos sugeridos
 
-- Añadir reglas de correlación en `application/` que construyan Incident a partir de eventos.
-- Persistir snapshots/incident reports usando `infrastructure/snapshots.py` e `infrastructure/database.py`.
+- Añadir reglas de correlación en `backend/application/` que construyan Incident a partir de eventos.
+- Persistir snapshots/incident reports (p. ej. con `backend/infrastructure/database.py`).
 - Ampliar métricas y monitoreo reutilizando la estructura modular ya creada.
