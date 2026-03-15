@@ -74,6 +74,22 @@ El parser normaliza los tipos (`Error/Warning/Info` → `ERROR/WARNING/INFO`) y 
 - La ventana de recencia global proviene del JSON (`defaults.recency_window`) y, si falta, se usa `RECENCY_WINDOW`.
 - Se generan snapshots planos por versión en `snapshots/config_versions` para respaldo fuera de la base.
 
+## Ejecutar todo el stack (recomendado)
+
+Desde la **raíz del repo**, con el venv de Python activado y Node instalado:
+
+```bash
+npm install
+npm run dev
+```
+
+Arranca a la vez el frontend (Vite) y la API (Uvicorn). Cada uno en su proceso, con salida etiquetada `fe` y `be`.
+
+Comandos por separado:
+
+- Frontend: `npm run dev:frontend` o `cd frontend && npm run dev`
+- Backend: `npm run dev:backend` o `uvicorn interface.api:app --reload`
+
 ## Ejecutar la API con FastAPI
 
 Inicie el servidor de desarrollo con Uvicorn:
