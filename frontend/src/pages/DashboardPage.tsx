@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   AreaChart,
   Area,
@@ -10,8 +10,10 @@ import {
   BarChart,
   Bar,
 } from 'recharts'
-import { previewLogs } from '../services/api'
-import type { ParseLogsResponse, Event as ApiEvent } from '../types/api'
+import { previewLogs, validateLogs, upsertErrorCode } from '../services/api'
+import type { ParseLogsResponse, Event as ApiEvent, Incident as ApiIncident, ErrorCodeUpsertBody } from '../types/api'
+import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
+import { useToast } from '../contexts/ToastContext'
 import './DashboardPage.css'
 
 function useLiveTime() {
@@ -34,28 +36,41 @@ function formatDateTime(iso: string): string {
   }
 }
 
-const HOURS_24_MS = 24 * 60 * 60 * 1000
-
-const DAY_OFFSET_ALL = -1
-
-/** Ventana de 24h para un día anterior. dayOffset 0 = últimas 24h, 1 = día anterior, etc. -1 = todo el rango. */
-function get24hWindowForDay(events: ApiEvent[], dayOffset: number): { minTs: number; maxTs: number } | null {
+/** selectedDate: null = Todo el log; "YYYY-MM-DD" = solo ese día (calendario local). */
+function getWindowForDate(events: ApiEvent[], selectedDate: string | null): { minTs: number; maxTs: number } | null {
   if (events.length === 0) return null
   const times = events.map((e) => new Date(e.timestamp).getTime()).filter((t) => !Number.isNaN(t))
   if (times.length === 0) return null
   const minTs = Math.min(...times)
   const maxTs = Math.max(...times)
-  if (dayOffset === DAY_OFFSET_ALL) return { minTs, maxTs }
-  const logEndTs = maxTs
-  const windowEndTs = logEndTs - dayOffset * HOURS_24_MS
-  const windowStartTs = windowEndTs - HOURS_24_MS
-  return { minTs: windowStartTs, maxTs: windowEndTs }
+  if (!selectedDate) return { minTs, maxTs }
+  const [y, m, d] = selectedDate.split('-').map(Number)
+  const startOfDay = new Date(y, m - 1, d, 0, 0, 0, 0).getTime()
+  const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999).getTime()
+  return { minTs: startOfDay, maxTs: endOfDay }
 }
 
-/** Filtra eventos por día. dayOffset -1 = todos los eventos. */
-function filterEventsByDay(events: ApiEvent[], dayOffset: number): ApiEvent[] {
-  if (dayOffset === DAY_OFFSET_ALL) return [...events]
-  const window = get24hWindowForDay(events, dayOffset)
+/** Rango de fechas del log en formato YYYY-MM-DD para min/max del input date. */
+function getDateRangeFromEvents(events: ApiEvent[]): { minDate: string; maxDate: string } | null {
+  if (events.length === 0) return null
+  const dates = events.map((e) => {
+    const d = new Date(e.timestamp)
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
+  }).filter((n) => !Number.isNaN(n))
+  if (dates.length === 0) return null
+  const min = Math.min(...dates)
+  const max = Math.max(...dates)
+  const toStr = (n: number) => {
+    const y = Math.floor(n / 10000)
+    const m = Math.floor((n % 10000) / 100)
+    const d = n % 100
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  }
+  return { minDate: toStr(min), maxDate: toStr(max) }
+}
+
+function filterEventsByDate(events: ApiEvent[], selectedDate: string | null): ApiEvent[] {
+  const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
   return events.filter((e) => {
@@ -64,37 +79,113 @@ function filterEventsByDay(events: ApiEvent[], dayOffset: number): ApiEvent[] {
   })
 }
 
-/** Top N códigos por cantidad de eventos (calculado desde la lista de eventos del log). */
-function getTopCodesFromEvents(events: ApiEvent[], n: number): { code: string; count: number }[] {
-  const byCode = new Map<string, number>()
-  for (const e of events) {
-    byCode.set(e.code, (byCode.get(e.code) ?? 0) + 1)
-  }
-  return Array.from(byCode.entries())
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, n)
-    .map(([code, count]) => ({ code, count }))
+function filterIncidentsByDate(
+  incidents: ApiIncident[],
+  events: ApiEvent[],
+  selectedDate: string | null
+): ApiIncident[] {
+  const window = getWindowForDate(events, selectedDate)
+  if (!window) return []
+  const { minTs, maxTs } = window
+  return incidents.filter((inc) =>
+    inc.events.some((e) => {
+      const t = new Date(e.timestamp).getTime()
+      return !Number.isNaN(t) && t >= minTs && t <= maxTs
+    })
+  )
 }
 
-/** 24 buckets de 1 hora para la ventana del día elegido; horas sin eventos = 0. */
-function bucketEventsLast24h(events: ApiEvent[], dayOffset: number): { time: string; count: number }[] {
-  const window = get24hWindowForDay(events, dayOffset)
+type IncidentRow = {
+  id: string
+  code: string
+  classification: string
+  severity: string
+  severity_weight: number
+  occurrences: number
+  start_time: string
+  end_time: string
+  sds_link: string | null
+  eventsInWindow: ApiEvent[]
+}
+
+function getIncidentTableRows(
+  incidents: ApiIncident[],
+  events: ApiEvent[],
+  selectedDate: string | null
+): IncidentRow[] {
+  const filtered = filterIncidentsByDate(incidents, events, selectedDate)
+  const window = getWindowForDate(events, selectedDate)
+  if (!window) return []
+  const { minTs, maxTs } = window
+  return filtered
+    .map((inc) => {
+      const inWindow = inc.events
+        .filter((e) => {
+          const t = new Date(e.timestamp).getTime()
+          return !Number.isNaN(t) && t >= minTs && t <= maxTs
+        })
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      if (inWindow.length === 0) return null
+      const times = inWindow.map((e) => new Date(e.timestamp).getTime())
+      return {
+        id: inc.id,
+        code: inc.code,
+        classification: inc.classification || inc.code,
+        severity: inc.severity,
+        severity_weight: inc.severity_weight,
+        occurrences: inWindow.length,
+        start_time: new Date(Math.min(...times)).toISOString(),
+        end_time: new Date(Math.max(...times)).toISOString(),
+        sds_link: inc.sds_link ?? null,
+        eventsInWindow: inWindow,
+      }
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .sort((a, b) => {
+      if (b.severity_weight !== a.severity_weight) return b.severity_weight - a.severity_weight
+      return new Date(b.end_time).getTime() - new Date(a.end_time).getTime()
+    })
+}
+
+function getTopIncidentsForChart(
+  incidents: ApiIncident[],
+  events: ApiEvent[],
+  selectedDate: string | null,
+  n: number
+): { name: string; count: number }[] {
+  const window = getWindowForDate(events, selectedDate)
+  if (!window) return []
+  const { minTs, maxTs } = window
+  const withCount = incidents
+    .map((inc) => {
+      const countInWindow = inc.events.filter((e) => {
+        const t = new Date(e.timestamp).getTime()
+        return !Number.isNaN(t) && t >= minTs && t <= maxTs
+      }).length
+      return { inc, countInWindow }
+    })
+    .filter((x) => x.countInWindow > 0)
+  return withCount
+    .sort((a, b) => b.countInWindow - a.countInWindow)
+    .slice(0, n)
+    .map((x) => ({ name: x.inc.code, count: x.countInWindow }))
+}
+
+function bucketEventsByHour(events: ApiEvent[], selectedDate: string | null): { time: string; count: number }[] {
+  const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
   const hourMs = 60 * 60 * 1000
+  const numHours = Math.ceil((maxTs - minTs) / hourMs) || 1
   const counts = new Map<number, number>()
-  const numHours = dayOffset === DAY_OFFSET_ALL
-    ? Math.ceil((maxTs - minTs) / hourMs) || 1
-    : 24
-  const start = dayOffset === DAY_OFFSET_ALL ? minTs : minTs
   for (let h = 0; h < numHours; h++) {
-    counts.set(start + h * hourMs, 0)
+    counts.set(minTs + h * hourMs, 0)
   }
   for (const e of events) {
     const t = new Date(e.timestamp).getTime()
     if (Number.isNaN(t) || t < minTs || t > maxTs) continue
     const hourIndex = Math.min(numHours - 1, Math.floor((t - minTs) / hourMs))
-    const bucketStart = start + hourIndex * hourMs
+    const bucketStart = minTs + hourIndex * hourMs
     counts.set(bucketStart, (counts.get(bucketStart) ?? 0) + 1)
   }
   return Array.from(counts.entries())
@@ -105,17 +196,6 @@ function bucketEventsLast24h(events: ApiEvent[], dayOffset: number): { time: str
     }))
 }
 
-const DAY_OFFSET_LABELS: Record<number, string> = {
-  [DAY_OFFSET_ALL]: 'Todo',
-  0: 'Hoy (últimas 24h)',
-  1: 'Ayer',
-  2: 'Hace 2 días',
-  3: 'Hace 3 días',
-  4: 'Hace 4 días',
-  5: 'Hace 5 días',
-  6: 'Hace 6 días',
-}
-
 interface LogPasteModalProps {
   loading: boolean
   error: string | null
@@ -123,8 +203,22 @@ interface LogPasteModalProps {
   onClose: () => void
 }
 
+/** Obtiene descripción y severidad del primer evento del resultado para un código. */
+function getEventInfoForCode(result: ParseLogsResponse | null, code: string): { description: string; severity: string } {
+  if (!result?.events?.length) return { description: '', severity: 'INFO' }
+  const ev = result.events.find((e) => e.code === code)
+  return {
+    description: ev?.help_reference?.trim() ?? ev?.code_description?.trim() ?? '',
+    severity: (ev?.type?.toUpperCase() ?? 'INFO') as string,
+  }
+}
+
 function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProps) {
   const [logText, setLogText] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    textareaRef.current?.focus()
+  }, [])
   return (
     <div className="log-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="log-modal-title">
       <div className="log-modal" onClick={(e) => e.stopPropagation()}>
@@ -133,6 +227,7 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
           <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">×</button>
         </div>
         <textarea
+          ref={textareaRef}
           className="log-modal__textarea"
           placeholder="Pegar logs HP aquí..."
           value={logText}
@@ -163,28 +258,78 @@ export default function DashboardPage() {
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [dashboardDayOffset, setDashboardDayOffset] = useState(0)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [logModalOpen, setLogModalOpen] = useState(false)
+  const [eventsTableCollapsed, setEventsTableCollapsed] = useState(true)
+  const [codesNew, setCodesNew] = useState<string[]>([])
+  const [addCodeModalCode, setAddCodeModalCode] = useState<string | null>(null)
+  const [savingCode, setSavingCode] = useState(false)
+  const [incidentsSeverityFilter, setIncidentsSeverityFilter] = useState<string>('')
+  const [incidentsSearchFilter, setIncidentsSearchFilter] = useState('')
+  const [eventsSeverityFilter, setEventsSeverityFilter] = useState<string>('')
+  const [eventsSearchFilter, setEventsSearchFilter] = useState('')
+  const [incidentsSort, setIncidentsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'end_time', dir: 'desc' })
+  const [eventsSort, setEventsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'timestamp', dir: 'desc' })
+  const [expandedIncidentIds, setExpandedIncidentIds] = useState<Set<string>>(new Set())
+  const [editCodeInitial, setEditCodeInitial] = useState<{ code: string; description: string; severity: string; solutionUrl: string } | null>(null)
+  const toast = useToast()
 
   async function handleAnalyze(logText: string) {
     if (!logText.trim()) return
     setError(null)
     setResult(null)
+    setCodesNew([])
+    setSelectedDate(null)
+    setIncidentsSeverityFilter('')
+    setIncidentsSearchFilter('')
+    setEventsSeverityFilter('')
+    setEventsSearchFilter('')
+    setExpandedIncidentIds(new Set())
     setLoading(true)
     try {
       const data = await previewLogs(logText)
+      const validateRes = await validateLogs(logText).catch(() => ({ codes_new: [] as string[] }))
+      const newCodes = validateRes.codes_new ?? []
       setResult(data)
+      setCodesNew(newCodes)
       setLogModalOpen(false)
+      if (newCodes.length > 0) {
+        toast.showWarning(`Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`)
+      } else {
+        toast.showSuccess('Análisis completado')
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(msg)
+      toast.showError(msg)
     } finally {
       setLoading(false)
     }
   }
 
+  async function handleSaveCodeToCatalog(body: ErrorCodeUpsertBody, isEdit: boolean = false) {
+    setError(null)
+    setSavingCode(true)
+    try {
+      await upsertErrorCode(body)
+      if (!isEdit) setCodesNew((prev) => prev.filter((c) => c !== body.code))
+      setAddCodeModalCode(null)
+      setEditCodeInitial(null)
+      toast.showSuccess(isEdit ? `Código ${body.code} actualizado` : `Código ${body.code} agregado al catálogo`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(msg)
+      toast.showError(msg)
+    } finally {
+      setSavingCode(false)
+    }
+  }
+
   const events = result?.events ?? []
   const incidents = result?.incidents ?? []
-  const filteredEvents = filterEventsByDay(events, dashboardDayOffset)
+  const filteredEvents = filterEventsByDate(events, selectedDate)
+  const filteredIncidents = filterIncidentsByDate(incidents, events, selectedDate)
+  const dateRange = getDateRangeFromEvents(events)
   const SEVERITY_SCORE: Record<string, number> = { ERROR: 3, WARNING: 2, INFO: 1 }
   const globalSeverityFromFiltered =
     filteredEvents.length > 0
@@ -195,15 +340,83 @@ export default function DashboardPage() {
           return score > bestScore ? s : best
         }, 'INFO')
       : '—'
-  const errorCount = filteredEvents.filter((e) => e.type.toUpperCase() === 'ERROR').length
-  const warningCount = filteredEvents.filter((e) => e.type.toUpperCase() === 'WARNING').length
-  const infoCount = filteredEvents.filter((e) => e.type.toUpperCase() === 'INFO').length
+  const errorCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length
+  const warningCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length
+  const infoCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'INFO').length
   const uniqueCodes = new Set(filteredEvents.map((e) => e.code)).size
-  const volumeData = bucketEventsLast24h(events, dashboardDayOffset)
-  const topCodes = getTopCodesFromEvents(filteredEvents, 5)
-  const tableRows = [...filteredEvents].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  )
+  const volumeData = bucketEventsByHour(events, selectedDate)
+  const topCodes = getTopIncidentsForChart(incidents, events, selectedDate, 5)
+  const incidentRowsBase = getIncidentTableRows(incidents, events, selectedDate)
+  const incidentRowsFiltered = incidentRowsBase.filter((inc) => {
+    if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter) return false
+    const q = incidentsSearchFilter.trim().toLowerCase()
+    if (q) {
+      const code = (inc.code ?? '').toLowerCase()
+      const classification = (inc.classification ?? '').toLowerCase()
+      if (!code.includes(q) && !classification.includes(q)) return false
+    }
+    return true
+  })
+  const incidentRows = [...incidentRowsFiltered].sort((a, b) => {
+    const { column, dir } = incidentsSort
+    const mult = dir === 'asc' ? 1 : -1
+    let cmp = 0
+    switch (column) {
+      case 'code':
+        cmp = (a.code ?? '').localeCompare(b.code ?? '')
+        break
+      case 'classification':
+        cmp = (a.classification ?? '').localeCompare(b.classification ?? '')
+        break
+      case 'severity':
+        cmp = (a.severity ?? '').localeCompare(b.severity ?? '')
+        break
+      case 'occurrences':
+        cmp = a.occurrences - b.occurrences
+        break
+      case 'start_time':
+        cmp = new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        break
+      case 'end_time':
+      default:
+        cmp = new Date(a.end_time).getTime() - new Date(b.end_time).getTime()
+        break
+    }
+    return cmp * mult
+  })
+  const tableRowsBase = [...filteredEvents].filter((evt) => {
+    if (eventsSeverityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== eventsSeverityFilter) return false
+    const q = eventsSearchFilter.trim().toLowerCase()
+    if (q) {
+      const code = (evt.code ?? '').toLowerCase()
+      const msg = (evt.code_description ?? evt.help_reference ?? '').toLowerCase()
+      if (!code.includes(q) && !msg.includes(q)) return false
+    }
+    return true
+  })
+  const tableRows = [...tableRowsBase].sort((a, b) => {
+    const { column, dir } = eventsSort
+    const mult = dir === 'asc' ? 1 : -1
+    let cmp = 0
+    switch (column) {
+      case 'timestamp':
+        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        break
+      case 'code':
+        cmp = (a.code ?? '').localeCompare(b.code ?? '')
+        break
+      case 'severity':
+        cmp = (a.type ?? '').localeCompare(b.type ?? '')
+        break
+      case 'message':
+        cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(b.code_description ?? b.help_reference ?? '')
+        break
+      default:
+        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        break
+    }
+    return cmp * mult
+  })
 
   return (
     <div className="dashboard">
@@ -264,27 +477,94 @@ export default function DashboardPage() {
             </div>
           </header>
 
+          {result?.errors?.length > 0 && (
+            <div className="dashboard__parse-errors-banner" role="alert">
+              Se omitieron {result!.errors.length} líneas por formato inválido
+            </div>
+          )}
+
+          {result && codesNew.length > 0 && (
+            <div className="dashboard__codes-new-section" role="status">
+              <p className="dashboard__codes-new-intro">
+                Se detectaron {codesNew.length} código{codesNew.length !== 1 ? 's' : ''} nuevo{codesNew.length !== 1 ? 's' : ''} que no están en el catálogo. Agrega cada uno con su URL de solución si la tienes.
+              </p>
+              <ul className="dashboard__codes-new-list">
+                {codesNew.map((code) => {
+                  const { description } = getEventInfoForCode(result, code)
+                  return (
+                    <li key={code} className="dashboard__codes-new-item">
+                      <span className="dashboard__codes-new-code">{code}</span>
+                      {description && (
+                        <span className="dashboard__codes-new-desc" title={description}>
+                          {description.slice(0, 60)}{description.length > 60 ? '…' : ''}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
+                        onClick={() => setAddCodeModalCode(code)}
+                        disabled={savingCode}
+                      >
+                        Agregar al catálogo
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+
+          {addCodeModalCode && result && (
+            <AddCodeToCatalogModal
+              code={addCodeModalCode}
+              initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
+              initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
+              onSave={(body) => handleSaveCodeToCatalog(body, false)}
+              onClose={() => !savingCode && setAddCodeModalCode(null)}
+              saving={savingCode}
+            />
+          )}
+
+          {editCodeInitial && (
+            <AddCodeToCatalogModal
+              code={editCodeInitial.code}
+              initialDescription={editCodeInitial.description}
+              initialSeverity={editCodeInitial.severity}
+              initialSolutionUrl={editCodeInitial.solutionUrl}
+              title="Editar código en el catálogo"
+              submitLabel="Guardar"
+              onSave={(body) => handleSaveCodeToCatalog(body, true)}
+              onClose={() => !savingCode && setEditCodeInitial(null)}
+              saving={savingCode}
+            />
+          )}
+
+          {codesNew.length === 0 && (
           <>
           {/* Subheader: Errors Dashboard | filtro día | date */}
           <div className="dashboard__subheader">
             <span className="dashboard__subheader-title">Errors Dashboard</span>
             <div className="dashboard__subheader-actions">
-              <label className="dashboard__day-filter-label" htmlFor="dashboard-day-filter">
+              <label className="dashboard__day-filter-label" htmlFor="dashboard-date-filter">
                 Ver datos:
               </label>
-              <select
-                id="dashboard-day-filter"
-                className="dashboard__day-select"
-                value={dashboardDayOffset}
-                onChange={(e) => setDashboardDayOffset(Number(e.target.value))}
-                aria-label="Filtrar por día"
+              <input
+                id="dashboard-date-filter"
+                type="date"
+                className="dashboard__date-input"
+                min={dateRange?.minDate}
+                max={dateRange?.maxDate}
+                value={selectedDate ?? ''}
+                onChange={(e) => setSelectedDate(e.target.value || null)}
+                aria-label="Filtrar por fecha del log"
+              />
+              <button
+                type="button"
+                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${selectedDate === null ? 'dashboard__btn--todo-active' : ''}`}
+                onClick={() => setSelectedDate(null)}
               >
-                {[DAY_OFFSET_ALL, 0, 1, 2, 3, 4, 5, 6].map((d) => (
-                  <option key={d} value={d}>
-                    {DAY_OFFSET_LABELS[d]}
-                  </option>
-                ))}
-              </select>
+                Todo
+              </button>
               <time className="dashboard__datetime" dateTime={now.toISOString()}>
                 {now.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
               </time>
@@ -304,8 +584,8 @@ export default function DashboardPage() {
             </div>
             <div className="kpi-card">
               <div className="kpi-card__label">Activity Impacts</div>
-              <div className="kpi-card__value">{filteredEvents.length}</div>
-              <div className="kpi-card__sub">eventos / {uniqueCodes} códigos en período</div>
+              <div className="kpi-card__value">{filteredIncidents.length}</div>
+              <div className="kpi-card__sub">incidencias en período</div>
             </div>
             <div className="kpi-card">
               <div className="kpi-card__label">Impacted Printers</div>
@@ -323,7 +603,7 @@ export default function DashboardPage() {
           <div className="dashboard__charts-row">
             <section className="section dashboard__chart-left">
               <h2 className="section__title">
-                {dashboardDayOffset === DAY_OFFSET_ALL ? 'Issue Volume (todo el log)' : 'Issue Volume (Last 24h)'}
+                {selectedDate ? `Issue Volume (${selectedDate})` : 'Issue Volume (todo el log)'}
               </h2>
               <div className="chart-wrap">
                 {volumeData.length > 0 ? (
@@ -363,7 +643,7 @@ export default function DashboardPage() {
                     <BarChart data={topCodes} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#232734" />
                       <XAxis type="number" stroke="#9aa3b2" tick={{ fontSize: 11 }} />
-                      <YAxis type="category" dataKey="code" stroke="#9aa3b2" tick={{ fontSize: 11 }} width={80} />
+                      <YAxis type="category" dataKey="name" stroke="#9aa3b2" tick={{ fontSize: 11 }} width={80} />
                       <Tooltip
                         contentStyle={{ background: '#151821', border: '1px solid #232734', borderRadius: 6 }}
                       />
@@ -377,37 +657,254 @@ export default function DashboardPage() {
             </section>
           </div>
 
-          {/* Fila 3 — Tabla full width */}
+          {/* Fila 3 — Tabla de incidencias (lo primero que se ve) */}
           <section className="section dashboard__table-section">
-            <h2 className="section__title">Recent Printer Errors</h2>
+            <h2 className="section__title">Incidencias</h2>
+            <div className="table-toolbar">
+              <label className="table-toolbar__label" htmlFor="incidents-severity-filter">
+                Severidad:
+              </label>
+              <select
+                id="incidents-severity-filter"
+                className="table-toolbar__select"
+                value={incidentsSeverityFilter}
+                onChange={(e) => setIncidentsSeverityFilter(e.target.value)}
+                aria-label="Filtrar por severidad"
+              >
+                <option value="">Todo</option>
+                <option value="ERROR">Error</option>
+                <option value="WARNING">Warning</option>
+                <option value="INFO">Info</option>
+              </select>
+              <label className="table-toolbar__label" htmlFor="incidents-search-filter">
+                Buscar:
+              </label>
+              <input
+                id="incidents-search-filter"
+                type="search"
+                className="table-toolbar__search"
+                placeholder="Código o clasificación..."
+                value={incidentsSearchFilter}
+                onChange={(e) => setIncidentsSearchFilter(e.target.value)}
+                aria-label="Buscar en código o clasificación"
+              />
+            </div>
             <div className="table-wrap">
               <table className="dashboard-table">
                 <thead>
                   <tr>
-                    <th>Timestamp</th>
-                    <th>Code</th>
-                    <th>Severity</th>
-                    <th>Message</th>
+                    <th className="dashboard-table__cell-expand" aria-label="Expandir detalle" />
+                    {[
+                      { key: 'code', label: 'Code' },
+                      { key: 'classification', label: 'Clasificación' },
+                      { key: 'severity', label: 'Severidad' },
+                      { key: 'occurrences', label: 'Ocurrencias' },
+                      { key: 'start_time', label: 'Primera vez' },
+                      { key: 'end_time', label: 'Última vez' },
+                    ].map(({ key, label }) => {
+                      const sortState = incidentsSort.column === key ? incidentsSort.dir : null
+                      return (
+                      <th key={key} {...(sortState ? { 'aria-sort': sortState === 'asc' ? 'ascending' : 'descending' } : {})}>
+                        <button
+                          type="button"
+                          className="dashboard-table__sort-header"
+                          onClick={() => setIncidentsSort((s) => ({ column: key, dir: s.column === key && s.dir === 'asc' ? 'desc' : 'asc' }))}
+                        >
+                          {label}
+                          <span className="dashboard-table__sort-icon" aria-hidden>
+                            {incidentsSort.column === key ? (incidentsSort.dir === 'asc' ? ' ↑' : ' ↓') : ' ⇅'}
+                          </span>
+                        </button>
+                      </th>
+                    )})}
+                    <th className="dashboard-table__th-solution">Solución</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tableRows.map((evt, i) => (
-                    <tr key={i}>
-                      <td>{formatDateTime(evt.timestamp)}</td>
-                      <td>{evt.code}</td>
-                      <td>
-                        <span className={`badge badge--${(evt.type || 'info').toLowerCase()}`}>
-                          {evt.type}
-                        </span>
-                      </td>
-                      <td>{evt.code_description?.trim() || evt.code || '—'}</td>
-                    </tr>
-                  ))}
+                  {incidentRows.map((inc) => {
+                    const isExpanded = expandedIncidentIds.has(inc.id)
+                    const toggleExpand = () => setExpandedIncidentIds((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(inc.id)) next.delete(inc.id)
+                      else next.add(inc.id)
+                      return next
+                    })
+                    return (
+                      <React.Fragment key={inc.id}>
+                        <tr className="dashboard-table__row-main">
+                          <td className="dashboard-table__cell-expand">
+                            <button
+                              type="button"
+                              className="dashboard-table__expand-btn"
+                              onClick={toggleExpand}
+                              {...(isExpanded ? { 'aria-expanded': 'true' } : { 'aria-expanded': 'false' })}
+                              aria-label={isExpanded ? 'Colapsar detalle' : 'Expandir detalle'}
+                              title={isExpanded ? 'Colapsar' : 'Ver ocurrencias'}
+                            >
+                              {isExpanded ? '▼' : '▶'}
+                            </button>
+                          </td>
+                          <td>{inc.code}</td>
+                          <td>{inc.classification || inc.code}</td>
+                          <td>
+                            <span className={`badge badge--${(inc.severity || 'info').toLowerCase()}`}>
+                              {inc.severity}
+                            </span>
+                          </td>
+                          <td>{inc.occurrences}</td>
+                          <td>{formatDateTime(inc.start_time)}</td>
+                          <td>{formatDateTime(inc.end_time)}</td>
+                          <td className="dashboard-table__cell-solution">
+                            <span className="dashboard-table__cell-actions">
+                              <span className="dashboard-table__cell-actions-left">
+                                {inc.sds_link ? (
+                                  <a href={inc.sds_link} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link">
+                                    Ver solución
+                                  </a>
+                                ) : (
+                                  <span className="dashboard-table__cell-actions-placeholder">—</span>
+                                )}
+                              </span>
+                              <button
+                                type="button"
+                                className="dashboard__btn dashboard__btn--secondary dashboard__btn--edit"
+                                onClick={() => setEditCodeInitial({
+                                  code: inc.code,
+                                  description: inc.classification || '',
+                                  severity: inc.severity || 'INFO',
+                                  solutionUrl: inc.sds_link || '',
+                                })}
+                                title="Editar código en el catálogo"
+                              >
+                                Editar
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                        {isExpanded && inc.eventsInWindow.map((evt, idx) => {
+                          const prevCounter = idx > 0 ? inc.eventsInWindow[idx - 1].counter : null
+                          const delta = prevCounter !== null ? evt.counter - prevCounter : null
+                          const msg = evt.help_reference ?? (evt as ApiEvent & { code_description?: string }).code_description ?? '—'
+                          return (
+                            <tr key={`${inc.id}-${idx}`} className="dashboard-table__row-detail">
+                              <td className="dashboard-table__cell-expand" />
+                              <td className="dashboard-table__cell-detail-label">{formatDateTime(evt.timestamp)}</td>
+                              <td className="dashboard-table__cell-detail-num">{evt.counter}</td>
+                              <td className="dashboard-table__cell-detail-delta" title="Diferencia de contador desde la ocurrencia anterior">
+                                {delta !== null ? (delta >= 0 ? `+${delta}` : delta) : '—'}
+                              </td>
+                              <td>{evt.firmware ?? '—'}</td>
+                              <td colSpan={3} className="dashboard-table__cell-detail-msg">{msg.length > 80 ? `${msg.slice(0, 80)}…` : msg}</td>
+                            </tr>
+                          )
+                        })}
+                      </React.Fragment>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
           </section>
+
+          {/* Fila 4 — Tabla de eventos recientes (colapsable, cerrada por defecto) */}
+          <section className="section dashboard__table-section dashboard__table-section--collapsible">
+            <button
+              type="button"
+              className="section__title section__title--toggle"
+              onClick={() => setEventsTableCollapsed((c) => !c)}
+            >
+              <span>Recent Printer Errors</span>
+              <span className="section__toggle-icon" aria-hidden>{eventsTableCollapsed ? '▶' : '▼'}</span>
+            </button>
+            {!eventsTableCollapsed && (
+              <>
+                <div className="table-toolbar">
+                  <label className="table-toolbar__label" htmlFor="events-severity-filter">
+                    Severidad:
+                  </label>
+                  <select
+                    id="events-severity-filter"
+                    className="table-toolbar__select"
+                    value={eventsSeverityFilter}
+                    onChange={(e) => setEventsSeverityFilter(e.target.value)}
+                    aria-label="Filtrar por severidad"
+                  >
+                    <option value="">Todo</option>
+                    <option value="ERROR">Error</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="INFO">Info</option>
+                  </select>
+                  <label className="table-toolbar__label" htmlFor="events-search-filter">
+                    Buscar:
+                  </label>
+                  <input
+                    id="events-search-filter"
+                    type="search"
+                    className="table-toolbar__search"
+                    placeholder="Código o mensaje..."
+                    value={eventsSearchFilter}
+                    onChange={(e) => setEventsSearchFilter(e.target.value)}
+                    aria-label="Buscar en código o mensaje"
+                  />
+                </div>
+                <div className="table-wrap">
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      {[
+                        { key: 'timestamp', label: 'Timestamp' },
+                        { key: 'code', label: 'Code' },
+                        { key: 'severity', label: 'Severity' },
+                        { key: 'message', label: 'Message' },
+                      ].map(({ key, label }) => {
+                        const sortState = eventsSort.column === key ? eventsSort.dir : null
+                        return (
+                        <th key={key} {...(sortState ? { 'aria-sort': sortState === 'asc' ? 'ascending' : 'descending' } : {})}>
+                          <button
+                            type="button"
+                            className="dashboard-table__sort-header"
+                            onClick={() => setEventsSort((s) => ({ column: key, dir: s.column === key && s.dir === 'asc' ? 'desc' : 'asc' }))}
+                          >
+                            {label}
+                            <span className="dashboard-table__sort-icon" aria-hidden>
+                              {eventsSort.column === key ? (eventsSort.dir === 'asc' ? ' ↑' : ' ↓') : ' ⇅'}
+                            </span>
+                          </button>
+                        </th>
+                      )})}
+                      <th className="dashboard-table__th-solution">Solución</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableRows.map((evt, i) => (
+                      <tr key={i}>
+                        <td>{formatDateTime(evt.timestamp)}</td>
+                        <td>{evt.code}</td>
+                        <td>
+                          <span className={`badge badge--${(evt.type || 'info').toLowerCase()}`}>
+                            {evt.type}
+                          </span>
+                        </td>
+                        <td>{evt.code_description?.trim() || evt.code || '—'}</td>
+                        <td className="dashboard-table__cell-solution">
+                          {evt.code_solution_url?.trim() ? (
+                            <a href={evt.code_solution_url.trim()} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link">
+                              Ver solución
+                            </a>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              </>
+            )}
+          </section>
           </>
+          )}
         </>
       )}
 

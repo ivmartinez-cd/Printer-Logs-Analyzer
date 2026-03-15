@@ -36,3 +36,17 @@ export interface ParseLogsResponse {
   global_severity: string
   errors: ParserError[]
 }
+
+export interface ValidateLogsResponse {
+  total_lines: number
+  codes_detected: string[]
+  codes_new: string[]
+  errors: ParserError[]
+}
+
+export interface ErrorCodeUpsertBody {
+  code: string
+  severity?: string | null
+  description?: string | null
+  solution_url?: string | null
+}

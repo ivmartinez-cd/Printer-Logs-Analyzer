@@ -76,13 +76,25 @@ class LogParser:
         return ParserReport(events=events, errors=errors)
 
     def _parse_line(self, line: str, is_first_line: bool) -> Event | None:
-        """Parse an individual log line enforcing the TSV layout."""
-        parts = [segment.strip() for segment in line.split("\t")]
+        """Parse an individual log line (TSV or space-separated with date+time)."""
+        parts = [s.strip() for s in line.split("\t")]
+        if len(parts) < 6:
+            # Fallback: columnas separadas por espacios (fecha y hora = dos tokens)
+            tokens = line.split()
+            if len(tokens) >= 6:
+                # type, code, date, time, counter, firmware [, help...]
+                parts = [
+                    tokens[0],
+                    tokens[1],
+                    f"{tokens[2]} {tokens[3]}",
+                    tokens[4],
+                    tokens[5],
+                    " ".join(tokens[6:]) if len(tokens) > 6 else "",
+                ]
+            else:
+                raise ValueError("Expected 6 tab-separated columns (or 6+ space-separated: type code date time counter firmware [help])")
         if is_first_line and self._looks_like_header(parts):
             raise ValueError("Header row skipped")
-
-        if len(parts) < 6:
-            raise ValueError("Expected 6 tab-separated columns")
 
         event_type = self._normalize_type(parts[0])
         code = parts[1]
