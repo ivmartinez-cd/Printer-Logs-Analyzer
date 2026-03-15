@@ -13,18 +13,16 @@ Orientada a uso operativo real.
 ## Flujo principal (usuario)
 
 1. pegar log
-2. seleccionar modelo
-3. validar códigos
-4. analizar
-5. ver dashboard
-6. editar reglas si hace falta
+2. validar códigos
+3. analizar
+4. ver dashboard
+5. editar reglas si hace falta
 
 Todo en una sola experiencia.
 
 ## Pantalla 1 — Input
 
 - Área pegar log (multiline, soporta TAB, logs largos)
-- Selector modelo (obligatorio); si no selecciona → no analiza
 - Validación previa: total líneas, códigos detectados, advertencia códigos nuevos. Si hay código nuevo: bloquea análisis y abre formulario.
 
 ## Pantalla 2 — Dashboard principal
