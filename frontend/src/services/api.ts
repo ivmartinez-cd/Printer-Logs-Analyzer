@@ -2,6 +2,10 @@ import type {
   ParseLogsResponse,
   ValidateLogsResponse,
   ErrorCodeUpsertBody,
+  SavedAnalysisCreateBody,
+  SavedAnalysisSummary,
+  SavedAnalysisFull,
+  CompareResponse,
 } from '../types/api'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -64,4 +68,71 @@ export async function upsertErrorCode(
     signal,
   })
   return handleResponse(res)
+}
+
+// --- Saved analyses (incidents) ---
+
+export async function createSavedAnalysis(
+  body: SavedAnalysisCreateBody,
+  signal?: AbortSignal
+): Promise<SavedAnalysisSummary> {
+  const res = await fetch(`${API_BASE}/saved-analyses`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(body),
+    signal,
+  })
+  return handleResponse<SavedAnalysisSummary>(res)
+}
+
+export async function listSavedAnalyses(
+  signal?: AbortSignal
+): Promise<SavedAnalysisSummary[]> {
+  const res = await fetch(`${API_BASE}/saved-analyses`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<SavedAnalysisSummary[]>(res)
+}
+
+export async function getSavedAnalysis(
+  id: string,
+  signal?: AbortSignal
+): Promise<SavedAnalysisFull> {
+  const res = await fetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<SavedAnalysisFull>(res)
+}
+
+export async function compareSavedAnalysis(
+  id: string,
+  logs: string,
+  signal?: AbortSignal
+): Promise<CompareResponse> {
+  const res = await fetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}/compare`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ logs }),
+    signal,
+  })
+  return handleResponse<CompareResponse>(res)
+}
+
+export async function deleteSavedAnalysis(
+  id: string,
+  signal?: AbortSignal
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: apiHeaders(),
+    signal,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed')
+  }
 }

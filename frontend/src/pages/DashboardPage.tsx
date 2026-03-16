@@ -10,9 +10,22 @@ import {
   BarChart,
   Bar,
 } from 'recharts'
-import { previewLogs, validateLogs, upsertErrorCode } from '../services/api'
-import type { ParseLogsResponse, Event as ApiEvent, Incident as ApiIncident, ErrorCodeUpsertBody } from '../types/api'
+import { previewLogs, validateLogs, upsertErrorCode, createSavedAnalysis, listSavedAnalyses, getSavedAnalysis, compareSavedAnalysis, deleteSavedAnalysis } from '../services/api'
+import type {
+  ParseLogsResponse,
+  Event as ApiEvent,
+  Incident as ApiIncident,
+  ErrorCodeUpsertBody,
+  SavedAnalysisSummary,
+  SavedAnalysisFull,
+  SavedAnalysisIncidentItem,
+  CompareResponse,
+} from '../types/api'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { SaveIncidentModal } from '../components/SaveIncidentModal'
+import { SDSIncidentModal, type SdsIncidentData } from '../components/SDSIncidentModal'
+import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { useToast } from '../contexts/ToastContext'
 
 function useLiveTime() {
@@ -259,6 +272,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [logModalOpen, setLogModalOpen] = useState(false)
+  const [sdsModalOpen, setSdsModalOpen] = useState(false)
+  const [sdsIncident, setSdsIncident] = useState<SdsIncidentData | null>(null)
   const [eventsTableCollapsed, setEventsTableCollapsed] = useState(true)
   const [codesNew, setCodesNew] = useState<string[]>([])
   const [addCodeModalCode, setAddCodeModalCode] = useState<string | null>(null)
@@ -271,6 +286,18 @@ export default function DashboardPage() {
   const [eventsSort, setEventsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'timestamp', dir: 'desc' })
   const [expandedIncidentIds, setExpandedIncidentIds] = useState<Set<string>>(new Set())
   const [editCodeInitial, setEditCodeInitial] = useState<{ code: string; description: string; severity: string; solutionUrl: string } | null>(null)
+  const [saveIncidentModalOpen, setSaveIncidentModalOpen] = useState(false)
+  const [savingIncident, setSavingIncident] = useState(false)
+  const [viewMode, setViewMode] = useState<'dashboard' | 'saved-list' | 'saved-detail'>('dashboard')
+  const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
+  const [savedDetail, setSavedDetail] = useState<SavedAnalysisFull | null>(null)
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
+  const [compareModalOpen, setCompareModalOpen] = useState(false)
+  const [compareLogText, setCompareLogText] = useState('')
+  const [comparing, setComparing] = useState(false)
+  const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
   const toast = useToast()
 
   async function handleAnalyze(logText: string) {
@@ -321,6 +348,42 @@ export default function DashboardPage() {
       toast.showError(msg)
     } finally {
       setSavingCode(false)
+    }
+  }
+
+  function buildIncidentSummaryItems(incidents: ApiIncident[]): SavedAnalysisIncidentItem[] {
+    return incidents.map((inc) => ({
+      code: inc.code,
+      classification: inc.classification,
+      severity: inc.severity,
+      occurrences: inc.occurrences,
+      start_time: inc.start_time,
+      end_time: inc.end_time,
+      counter_range: inc.counter_range,
+      sds_link: inc.sds_link ?? null,
+      last_event_time: inc.end_time,
+    }))
+  }
+
+  async function handleSaveIncident(name: string, equipmentIdentifier: string | null) {
+    if (!result) return
+    setSavingIncident(true)
+    setError(null)
+    try {
+      await createSavedAnalysis({
+        name,
+        equipment_identifier: equipmentIdentifier,
+        incidents: buildIncidentSummaryItems(result.incidents),
+        global_severity: result.global_severity,
+      })
+      setSaveIncidentModalOpen(false)
+      toast.showSuccess('Incidente guardado')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(msg)
+      toast.showError(msg)
+    } finally {
+      setSavingIncident(false)
     }
   }
 
@@ -419,8 +482,8 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard">
-      {!result ? (
-        /* Sin resultado: siempre el marco de bienvenida (también detrás del modal) */
+      {!result && viewMode === 'dashboard' ? (
+        /* Sin resultado y vista dashboard: marco de bienvenida */
         <div className="dashboard__frame">
           <header className="dashboard__header dashboard__header--inside-frame">
             <h1 className="dashboard__title">HP Logs Analyzer</h1>
@@ -439,9 +502,16 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="dashboard__btn dashboard__btn--primary dashboard__btn--welcome"
-                onClick={() => setLogModalOpen(true)}
+                onClick={() => setSdsModalOpen(true)}
               >
                 Pegar logs y analizar
+              </button>
+              <button
+                type="button"
+                className="dashboard__btn dashboard__btn--secondary dashboard__btn--welcome-secondary"
+                onClick={() => { setViewMode('saved-list'); setSavedList(null); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+              >
+                Ver logs guardados
               </button>
               <div className="dashboard__features">
                 <span className="dashboard__features-title">Después del análisis verás:</span>
@@ -455,18 +525,34 @@ export default function DashboardPage() {
             </section>
           </div>
         </div>
-      ) : (
+      ) : (result || viewMode === 'saved-list' || viewMode === 'saved-detail') ? (
         <>
           <header className="dashboard__header">
             <h1 className="dashboard__title">HP Logs Analyzer</h1>
             <div className="dashboard__header-actions">
               <button
                 type="button"
+                className="dashboard__btn dashboard__btn--secondary"
+                onClick={() => { setViewMode('saved-list'); setSavedList(null); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+              >
+                Incidentes guardados
+              </button>
+              <button
+                type="button"
                 className="dashboard__btn dashboard__btn--primary dashboard__btn--header-cta"
-                onClick={() => setLogModalOpen(true)}
+                onClick={() => setSdsModalOpen(true)}
               >
                 Analizar otro log
               </button>
+              {result && (
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--secondary"
+                  onClick={() => setSaveIncidentModalOpen(true)}
+                >
+                  Guardar incidente
+                </button>
+              )}
               <time className="dashboard__datetime" dateTime={now.toISOString()}>
                 {now.toLocaleString(undefined, {
                   dateStyle: 'long',
@@ -476,6 +562,158 @@ export default function DashboardPage() {
             </div>
           </header>
 
+          {viewMode === 'saved-list' && (
+            <div className="dashboard__saved-section">
+              <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => setViewMode('dashboard')}>
+                ← Volver al dashboard
+              </button>
+              <h2 className="dashboard__subheader-title" style={{ marginTop: 16 }}>Incidentes guardados</h2>
+              {savedList === null ? (
+                <p className="dashboard__muted">Cargando…</p>
+              ) : savedList.length === 0 ? (
+                <p className="dashboard__muted">No hay incidentes guardados.</p>
+              ) : (
+                <div className="table-wrap" style={{ marginTop: 12 }}>
+                  <table className="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Equipo</th>
+                        <th scope="col">Severidad</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col" aria-label="Acciones" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {savedList.map((s) => (
+                        <tr key={s.id}>
+                          <td>{s.name}</td>
+                          <td>{s.equipment_identifier ?? '—'}</td>
+                          <td>{s.global_severity}</td>
+                          <td>{formatDateTime(s.created_at)}</td>
+                          <td>
+                            <span className="dashboard-table__cell-actions dashboard-table__cell-actions--grouped">
+                              <button type="button" className="dashboard__btn dashboard__btn--small" onClick={() => { setSelectedSavedId(s.id); setSavedDetail(null); setCompareResult(null); setViewMode('saved-detail'); getSavedAnalysis(s.id).then(setSavedDetail).catch(() => toast.showError('Error al cargar')) }}>
+                                Abrir
+                              </button>
+                              <button type="button" className="dashboard__btn dashboard__btn--small" disabled={deletingId !== null} onClick={() => setDeleteConfirm({ id: s.id, name: s.name })}>
+                                {deletingId === s.id ? 'Borrando…' : 'Borrar'}
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === 'saved-detail' && selectedSavedId && !savedDetail && (
+            <div className="dashboard__saved-section">
+              <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => { setViewMode('saved-list'); setSavedDetail(null); setSelectedSavedId(null); setCompareResult(null) }}>
+                ← Volver a la lista
+              </button>
+              <p className="dashboard__muted" style={{ marginTop: 16 }}>Cargando…</p>
+            </div>
+          )}
+
+          {viewMode === 'saved-detail' && savedDetail && (
+            <div className="dashboard__saved-section">
+              <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => { setViewMode('saved-list'); setSavedDetail(null); setSelectedSavedId(null); setCompareResult(null) }}>
+                ← Volver a la lista
+              </button>
+              <h2 className="dashboard__subheader-title" style={{ marginTop: 16 }}>{savedDetail.name}</h2>
+              {savedDetail.equipment_identifier && <p className="dashboard__muted">Equipo: {savedDetail.equipment_identifier}</p>}
+              <p className="dashboard__muted">Severidad: {savedDetail.global_severity} · Guardado: {formatDateTime(savedDetail.created_at)}</p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <button type="button" className="dashboard__btn dashboard__btn--primary" onClick={() => { setCompareLogText(''); setCompareModalOpen(true) }}>
+                  Comparar con log
+                </button>
+                <button type="button" className="dashboard__btn dashboard__btn--secondary" disabled={deletingId !== null} onClick={() => savedDetail?.id && setDeleteConfirm({ id: savedDetail.id, name: savedDetail.name })}>
+                  {deletingId === savedDetail.id ? 'Borrando…' : 'Borrar'}
+                </button>
+              </div>
+              <div className="table-wrap" style={{ marginTop: 16 }}>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Código</th>
+                      <th scope="col">Clasificación</th>
+                      <th scope="col">Severidad</th>
+                      <th scope="col">Ocurrencias</th>
+                      <th scope="col">Último evento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {savedDetail.incidents.map((inc, i) => (
+                      <tr key={inc.code + String(i)}>
+                        <td>{inc.code}</td>
+                        <td>{inc.classification}</td>
+                        <td>{inc.severity}</td>
+                        <td>{inc.occurrences}</td>
+                        <td>{inc.last_event_time || inc.end_time ? formatDateTime(inc.last_event_time || inc.end_time) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {compareResult && (
+                <div className="dashboard__compare-block" style={{ marginTop: 24 }}>
+                  <h3 className="dashboard__subheader-title">Comparación con el log nuevo</h3>
+                  <div className="dashboard__diff-grid">
+                    <div><strong>Días desde guardado:</strong> {compareResult.diff.diferencia_dias}</div>
+                    <div><strong>Tendencia:</strong> {compareResult.diff.tendencia}</div>
+                    {compareResult.diff.codigos_nuevos.length > 0 && (
+                      <div><strong>Códigos nuevos:</strong> {compareResult.diff.codigos_nuevos.join(', ')}</div>
+                    )}
+                    {compareResult.diff.codigos_desaparecidos.length > 0 && (
+                      <div><strong>Códigos que desaparecieron:</strong> {compareResult.diff.codigos_desaparecidos.join(', ')}</div>
+                    )}
+                    {compareResult.diff.cambios_ocurrencias.length > 0 && (
+                      <div>
+                        <strong>Cambios en ocurrencias:</strong>
+                        <ul style={{ marginTop: 4 }}>
+                          {compareResult.diff.cambios_ocurrencias.map((c) => (
+                            <li key={c.code}>{c.code}: {c.saved_occurrences} → {c.current_occurrences} ({c.delta >= 0 ? '+' : ''}{c.delta})</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <h4 style={{ marginTop: 16 }}>Análisis del log nuevo</h4>
+                  <div className="table-wrap" style={{ marginTop: 8 }}>
+                    <table className="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Código</th>
+                          <th scope="col">Clasificación</th>
+                          <th scope="col">Severidad</th>
+                          <th scope="col">Ocurrencias</th>
+                          <th scope="col">Último evento</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {compareResult.current.incidents.map((inc) => (
+                          <tr key={inc.id}>
+                            <td>{inc.code}</td>
+                            <td>{inc.classification}</td>
+                            <td>{inc.severity}</td>
+                            <td>{inc.occurrences}</td>
+                            <td>{inc.end_time ? formatDateTime(inc.end_time) : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === 'dashboard' && (
+          <>
           {result?.errors?.length > 0 && (
             <div className="dashboard__parse-errors-banner" role="alert">
               Se omitieron {result!.errors.length} líneas por formato inválido
@@ -912,9 +1150,30 @@ export default function DashboardPage() {
               </>
             )}
           </section>
+
+          {sdsIncident && (
+            <SDSIncidentPanel
+              sdsIncident={sdsIncident}
+              incidentRows={incidentRows.map((r) => ({ code: r.code, classification: r.classification || r.code }))}
+              incidentsFull={result?.incidents?.map((inc) => ({ code: inc.code, end_time: inc.end_time, occurrences: inc.occurrences })) ?? []}
+            />
+          )}
+          </>
+          )}
           </>
           )}
         </>
+      ) : null}
+
+      {sdsModalOpen && (
+        <SDSIncidentModal
+          onContinue={(data) => {
+            setSdsIncident(data)
+            setSdsModalOpen(false)
+            setLogModalOpen(true)
+          }}
+          onClose={() => setSdsModalOpen(false)}
+        />
       )}
 
       {/* Modal: siempre encima cuando está abierto (desde bienvenida o desde dashboard) */}
@@ -928,6 +1187,88 @@ export default function DashboardPage() {
             setLogModalOpen(false)
           }}
         />
+      )}
+
+      {saveIncidentModalOpen && result && (
+        <SaveIncidentModal
+          onSave={handleSaveIncident}
+          onClose={() => !savingIncident && setSaveIncidentModalOpen(false)}
+          saving={savingIncident}
+        />
+      )}
+
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Borrar incidente"
+          message={`¿Borrar el incidente "${deleteConfirm.name}"? Esta acción no se puede deshacer.`}
+          confirmLabel="Borrar"
+          cancelLabel="Cancelar"
+          loading={deletingId === deleteConfirm.id}
+          onConfirm={async () => {
+            setDeletingId(deleteConfirm.id)
+            try {
+              await deleteSavedAnalysis(deleteConfirm.id)
+              setSavedList(prev => (prev ? prev.filter(x => x.id !== deleteConfirm.id) : []))
+              if (selectedSavedId === deleteConfirm.id) {
+                setViewMode('saved-list')
+                setSavedDetail(null)
+                setSelectedSavedId(null)
+                setCompareResult(null)
+              }
+              toast.showSuccess('Incidente borrado')
+            } catch (e) {
+              toast.showError(e instanceof Error ? e.message : 'Error al borrar')
+            } finally {
+              setDeletingId(null)
+              setDeleteConfirm(null)
+            }
+          }}
+          onCancel={() => !deletingId && setDeleteConfirm(null)}
+        />
+      )}
+
+      {compareModalOpen && selectedSavedId && (
+        <div className="log-modal-overlay" onClick={() => !comparing && setCompareModalOpen(false)} role="dialog" aria-modal="true" aria-labelledby="compare-modal-title">
+          <div className="log-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="log-modal__header">
+              <h2 id="compare-modal-title" className="log-modal__title">Comparar con log nuevo</h2>
+              <button type="button" className="log-modal__close" onClick={() => !comparing && setCompareModalOpen(false)} aria-label="Cerrar" disabled={comparing}>×</button>
+            </div>
+            <textarea
+              className="log-modal__textarea"
+              placeholder="Pegar logs HP aquí..."
+              value={compareLogText}
+              onChange={(e) => setCompareLogText(e.target.value)}
+              disabled={comparing}
+            />
+            <div className="log-modal__actions">
+              <button
+                type="button"
+                className="dashboard__btn dashboard__btn--primary"
+                onClick={async () => {
+                  if (!compareLogText.trim() || !selectedSavedId) return
+                  setComparing(true)
+                  try {
+                    const res = await compareSavedAnalysis(selectedSavedId, compareLogText)
+                    setCompareResult(res)
+                    setCompareModalOpen(false)
+                    toast.showSuccess('Comparación completada')
+                  } catch (e) {
+                    toast.showError(e instanceof Error ? e.message : 'Error al comparar')
+                  } finally {
+                    setComparing(false)
+                  }
+                }}
+                disabled={comparing || !compareLogText.trim()}
+              >
+                {comparing ? 'Comparando…' : 'Comparar'}
+              </button>
+              <button type="button" className="log-modal__btn-secondary" onClick={() => !comparing && setCompareModalOpen(false)} disabled={comparing}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

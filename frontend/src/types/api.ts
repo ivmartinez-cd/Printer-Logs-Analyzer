@@ -50,3 +50,60 @@ export interface ErrorCodeUpsertBody {
   description?: string | null
   solution_url?: string | null
 }
+
+// --- Saved analyses (incidents) ---
+
+export interface SavedAnalysisIncidentItem {
+  code: string
+  classification: string
+  severity: string
+  occurrences: number
+  start_time: string
+  end_time: string
+  counter_range: [number, number]
+  sds_link?: string | null
+  last_event_time?: string | null
+}
+
+export interface SavedAnalysisCreateBody {
+  name: string
+  equipment_identifier?: string | null
+  incidents: SavedAnalysisIncidentItem[]
+  global_severity: string
+}
+
+export interface SavedAnalysisSummary {
+  id: string
+  name: string
+  equipment_identifier: string | null
+  global_severity: string
+  created_at: string
+}
+
+export interface SavedAnalysisFull {
+  id: string
+  name: string
+  equipment_identifier: string | null
+  incidents: SavedAnalysisIncidentItem[]
+  global_severity: string
+  created_at: string
+}
+
+export interface CompareDiff {
+  codigos_nuevos: string[]
+  codigos_desaparecidos: string[]
+  cambios_ocurrencias: Array<{
+    code: string
+    saved_occurrences: number
+    current_occurrences: number
+    delta: number
+  }>
+  diferencia_dias: number
+  tendencia: 'mejoró' | 'igual' | 'peor'
+}
+
+export interface CompareResponse {
+  saved: SavedAnalysisFull
+  current: ParseLogsResponse
+  diff: CompareDiff
+}
