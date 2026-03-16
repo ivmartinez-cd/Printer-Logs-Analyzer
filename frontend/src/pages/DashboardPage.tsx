@@ -389,6 +389,7 @@ export default function DashboardPage() {
 
   const events = result?.events ?? []
   const incidents = result?.incidents ?? []
+  const parseErrorsCount = result?.errors?.length ?? 0
   const filteredEvents = filterEventsByDate(events, selectedDate)
   const filteredIncidents = filterIncidentsByDate(incidents, events, selectedDate)
   const dateRange = getDateRangeFromEvents(events)
@@ -567,13 +568,13 @@ export default function DashboardPage() {
               <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => setViewMode('dashboard')}>
                 ← Volver al dashboard
               </button>
-              <h2 className="dashboard__subheader-title" style={{ marginTop: 16 }}>Incidentes guardados</h2>
+              <h2 className="dashboard__subheader-title">Incidentes guardados</h2>
               {savedList === null ? (
                 <p className="dashboard__muted">Cargando…</p>
               ) : savedList.length === 0 ? (
                 <p className="dashboard__muted">No hay incidentes guardados.</p>
               ) : (
-                <div className="table-wrap" style={{ marginTop: 12 }}>
+                <div className="table-wrap">
                   <table className="dashboard-table">
                     <thead>
                       <tr>
@@ -615,7 +616,7 @@ export default function DashboardPage() {
               <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => { setViewMode('saved-list'); setSavedDetail(null); setSelectedSavedId(null); setCompareResult(null) }}>
                 ← Volver a la lista
               </button>
-              <p className="dashboard__muted" style={{ marginTop: 16 }}>Cargando…</p>
+              <p className="dashboard__muted dashboard__muted--top">Cargando…</p>
             </div>
           )}
 
@@ -624,10 +625,10 @@ export default function DashboardPage() {
               <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => { setViewMode('saved-list'); setSavedDetail(null); setSelectedSavedId(null); setCompareResult(null) }}>
                 ← Volver a la lista
               </button>
-              <h2 className="dashboard__subheader-title" style={{ marginTop: 16 }}>{savedDetail.name}</h2>
+              <h2 className="dashboard__subheader-title">{savedDetail.name}</h2>
               {savedDetail.equipment_identifier && <p className="dashboard__muted">Equipo: {savedDetail.equipment_identifier}</p>}
               <p className="dashboard__muted">Severidad: {savedDetail.global_severity} · Guardado: {formatDateTime(savedDetail.created_at)}</p>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+              <div className="dashboard__saved-actions">
                 <button type="button" className="dashboard__btn dashboard__btn--primary" onClick={() => { setCompareLogText(''); setCompareModalOpen(true) }}>
                   Comparar con log
                 </button>
@@ -635,7 +636,7 @@ export default function DashboardPage() {
                   {deletingId === savedDetail.id ? 'Borrando…' : 'Borrar'}
                 </button>
               </div>
-              <div className="table-wrap" style={{ marginTop: 16 }}>
+              <div className="table-wrap table-wrap--top-16">
                 <table className="dashboard-table">
                   <thead>
                     <tr>
@@ -660,7 +661,7 @@ export default function DashboardPage() {
                 </table>
               </div>
               {compareResult && (
-                <div className="dashboard__compare-block" style={{ marginTop: 24 }}>
+                <div className="dashboard__compare-block">
                   <h3 className="dashboard__subheader-title">Comparación con el log nuevo</h3>
                   <div className="dashboard__diff-grid">
                     <div><strong>Días desde guardado:</strong> {compareResult.diff.diferencia_dias}</div>
@@ -674,7 +675,7 @@ export default function DashboardPage() {
                     {compareResult.diff.cambios_ocurrencias.length > 0 && (
                       <div>
                         <strong>Cambios en ocurrencias:</strong>
-                        <ul style={{ marginTop: 4 }}>
+                        <ul>
                           {compareResult.diff.cambios_ocurrencias.map((c) => (
                             <li key={c.code}>{c.code}: {c.saved_occurrences} → {c.current_occurrences} ({c.delta >= 0 ? '+' : ''}{c.delta})</li>
                           ))}
@@ -682,8 +683,8 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
-                  <h4 style={{ marginTop: 16 }}>Análisis del log nuevo</h4>
-                  <div className="table-wrap" style={{ marginTop: 8 }}>
+                  <h4>Análisis del log nuevo</h4>
+                  <div className="table-wrap">
                     <table className="dashboard-table">
                       <thead>
                         <tr>
@@ -714,9 +715,9 @@ export default function DashboardPage() {
 
           {viewMode === 'dashboard' && (
           <>
-          {result?.errors?.length > 0 && (
+          {parseErrorsCount > 0 && (
             <div className="dashboard__parse-errors-banner" role="alert">
-              Se omitieron {result!.errors.length} líneas por formato inválido
+              Se omitieron {parseErrorsCount} líneas por formato inválido
             </div>
           )}
 

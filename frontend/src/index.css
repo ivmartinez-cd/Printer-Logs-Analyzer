@@ -1068,15 +1068,43 @@ body {
 .dashboard__saved-section {
   margin-top: 8px;
 }
+.dashboard__saved-section .dashboard__subheader-title {
+  margin-top: 16px;
+}
+.dashboard__saved-section .dashboard__muted--top {
+  margin-top: 16px;
+}
+.dashboard__saved-section .table-wrap {
+  margin-top: 12px;
+}
+.dashboard__saved-section .table-wrap--top-16 {
+  margin-top: 16px;
+}
+.dashboard__saved-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
 .dashboard__diff-grid {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-top: 8px;
 }
+.dashboard__diff-grid ul {
+  margin-top: 4px;
+}
 .dashboard__compare-block {
+  margin-top: 24px;
   padding: 16px;
   background: #1a1d26;
   border: 1px solid #2d3544;
   border-radius: 8px;
+}
+.dashboard__compare-block h4 {
+  margin-top: 16px;
+}
+.dashboard__compare-block .table-wrap {
+  margin-top: 8px;
 }
