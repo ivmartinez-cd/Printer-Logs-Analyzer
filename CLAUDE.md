@@ -133,5 +133,5 @@ VITE_API_BASE=http://localhost:8000
 - Botón Editar sin consistencia visual con Ver solución
 
 ### Baja prioridad
-- KPI "Impacted Printers" sigue en inglés
+- ~~KPI "Impacted Printers" sigue en inglés~~ → resuelto
 - Header podría mostrar nombre del archivo analizado

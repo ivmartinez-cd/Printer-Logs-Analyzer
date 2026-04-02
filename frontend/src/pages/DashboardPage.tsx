@@ -781,7 +781,7 @@ export default function DashboardPage() {
           <>
           {/* Subheader: Errors Dashboard | filtro día | date */}
           <div className="dashboard__subheader">
-            <span className="dashboard__subheader-title">Errors Dashboard</span>
+            <span className="dashboard__subheader-title">Panel de errores</span>
             <div className="dashboard__subheader-actions">
               <label className="dashboard__day-filter-label" htmlFor="dashboard-date-filter">
                 Ver datos:
@@ -812,7 +812,7 @@ export default function DashboardPage() {
           {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
           <section className="kpis">
             <div className="kpi-card">
-              <div className="kpi-card__label">Error Status</div>
+              <div className="kpi-card__label">Estado de errores</div>
               <div className="kpi-card__values">
                 <span className="kpi-card__value kpi-card__value--error">{errorCount}</span>
                 <span className="kpi-card__values-sep">·</span>
@@ -828,7 +828,7 @@ export default function DashboardPage() {
               <div className="kpi-card__sub">incidentes detectados en el log</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-card__label">Impacted Printers</div>
+              <div className="kpi-card__label">Impresoras afectadas</div>
               <div className="kpi-card__value">{uniqueCodes}</div>
               <div className="kpi-card__sub">códigos únicos de error</div>
             </div>
@@ -843,7 +843,7 @@ export default function DashboardPage() {
           <div className="dashboard__charts-row">
             <section className="section dashboard__chart-left">
               <h2 className="section__title">
-                {selectedDate ? `Issue Volume (${selectedDate})` : 'Issue Volume (todo el log)'}
+                {selectedDate ? `Volumen de incidencias (${selectedDate})` : 'Volumen de incidencias (todo el log)'}
               </h2>
               <div className="chart-wrap">
                 {volumeData.length > 0 ? (
@@ -876,7 +876,7 @@ export default function DashboardPage() {
               </div>
             </section>
             <section className="section dashboard__chart-right">
-              <h2 className="section__title">Top Errors</h2>
+              <h2 className="section__title">Errores más frecuentes</h2>
               <div className="chart-wrap">
                 {topCodes.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -1063,7 +1063,7 @@ export default function DashboardPage() {
               className="section__title section__title--toggle"
               onClick={() => setEventsTableCollapsed((c) => !c)}
             >
-              <span>Recent Printer Errors</span>
+              <span>Últimos errores registrados</span>
               <span className="section__toggle-icon" aria-hidden>{eventsTableCollapsed ? '▶' : '▼'}</span>
             </button>
             {!eventsTableCollapsed && (
