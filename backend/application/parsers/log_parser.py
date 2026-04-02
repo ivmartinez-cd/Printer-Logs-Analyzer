@@ -145,6 +145,7 @@ class LogParser:
     @staticmethod
     def _normalize_timestamp_text(value: str) -> str:
         """Ensure month abbreviations parse with the English locale."""
+        print(f"DEBUG normalize: input='{value}'")
         value = value.strip()
         if " " not in value:
             raise ValueError("Timestamp must include date and time")
