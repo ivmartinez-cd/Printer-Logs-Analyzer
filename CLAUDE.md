@@ -119,3 +119,28 @@ VITE_API_BASE=http://localhost:8000
 - `vendor-react` — React core
 - `vendor-charts` — Recharts (large; cached separately)
 - `index` — app code (~48 KB gzip vs. 572 KB before splitting)
+
+## BUG CRÍTICO PENDIENTE - Parser 106 líneas
+
+### DIAGNÓSTICO CONFIRMADO:
+- El parser funciona perfectamente en Python puro: `parse_text("Info\t34.02.01\t02-abr-2026 10:16:33\t217952\t2508402_000053\t")` → Events: 1, Errors: []
+- El fix de meses españoles (`_ES_MONTHS`) está en el código y funciona
+- El problema ocurre SOLO cuando el log llega desde el frontend
+
+### PRÓXIMO PASO - DIAGNÓSTICO QUIRÚRGICO:
+1. Agregar en `api.py`, ANTES de llamar al parser, este log exacto:
+   ```python
+   import json
+   with open("debug_payload.json", "w", encoding="utf-8") as f:
+       json.dump({"logs": payload.logs[:500]}, f, ensure_ascii=False)
+   ```
+   Esto guarda exactamente lo que llega del frontend al disco.
+
+2. Pegar el log en la app y analizar `debug_payload.json` para ver:
+   - ¿El texto tiene tabs o espacios?
+   - ¿Cómo viene el mes exactamente? ¿`"abr"` o `"abr"` con caracteres raros?
+   - ¿Hay caracteres invisibles o encoding raro?
+
+3. Con esa info real, hacer el fix correcto en UN solo lugar.
+
+### REGLA: No tocar el parser más sin ver debug_payload.json primero.
