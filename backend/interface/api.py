@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import inspect
 import logging
 import time
 
@@ -28,12 +26,6 @@ from infrastructure.repositories.saved_analysis_repository import (
 )
 
 MAX_LOGS_LENGTH = 2_000_000
-
-# Hash of the parser source — used to bust the preview cache when the parser changes.
-_PARSER_VERSION = hashlib.sha256(inspect.getsource(LogParser).encode()).hexdigest()[:12]
-
-# Single-slot cache for preview: same input + same parser version -> return cached result.
-_preview_cache: Dict[str, Optional[object]] = {"hash": None, "parser_version": None, "response": None}
 
 
 class ParseLogsRequest(BaseModel):
@@ -231,16 +223,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/parser/preview", response_model=ParseLogsResponse, dependencies=[Depends(authenticate)])
     def parse_logs(payload: ParseLogsRequest) -> ParseLogsResponse:
         t0 = time.perf_counter()
-        logs_hash = hashlib.sha256(payload.logs.encode("utf-8")).hexdigest()
-        if (
-            _preview_cache["hash"] == logs_hash
-            and _preview_cache["parser_version"] == _PARSER_VERSION
-            and _preview_cache["response"] is not None
-        ):
-            elapsed_ms = int((time.perf_counter() - t0) * 1000)
-            print(f"[preview] cache_hit=true total_ms={elapsed_ms}")
-            return _preview_cache["response"]
-
         t_parse_start = time.perf_counter()
         report = parser.parse_text(payload.logs)
         parse_ms = int((time.perf_counter() - t_parse_start) * 1000)
@@ -262,19 +244,14 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)
             for e in report.errors
         ]
-        response = ParseLogsResponse(
+        total_ms = int((time.perf_counter() - t0) * 1000)
+        print(f"[preview] parse_ms={parse_ms} db_ms={db_ms} analysis_ms={analysis_ms} total_ms={total_ms}")
+        return ParseLogsResponse(
             events=events,
             incidents=analysis.incidents,
             global_severity=analysis.global_severity,
             errors=errors,
         )
-        _preview_cache["hash"] = logs_hash
-        _preview_cache["parser_version"] = _PARSER_VERSION
-        _preview_cache["response"] = response
-
-        total_ms = int((time.perf_counter() - t0) * 1000)
-        print(f"[preview] parse_ms={parse_ms} db_ms={db_ms} analysis_ms={analysis_ms} total_ms={total_ms}")
-        return response
 
     @app.post("/parser/validate", response_model=ValidateLogsResponse, dependencies=[Depends(authenticate)])
     def validate_logs(payload: ValidateLogsRequest) -> ValidateLogsResponse:
@@ -320,8 +297,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/error-codes/upsert", dependencies=[Depends(authenticate)])
     def upsert_error_code(body: ErrorCodeUpsertRequest) -> dict:
         """Insert or update an error code in the catalog."""
-        _preview_cache["hash"] = None
-        _preview_cache["response"] = None
         ec = error_code_repository.upsert(
             code=body.code,
             severity=body.severity,
