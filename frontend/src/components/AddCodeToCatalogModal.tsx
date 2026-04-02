@@ -15,7 +15,7 @@ export interface AddCodeToCatalogModalProps {
 
 const SEVERITY_OPTIONS = [
   { value: 'INFO', label: 'Info' },
-  { value: 'WARNING', label: 'Warning' },
+  { value: 'WARNING', label: 'Advertencia' },
   { value: 'ERROR', label: 'Error' },
 ]
 

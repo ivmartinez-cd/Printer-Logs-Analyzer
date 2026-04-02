@@ -985,7 +985,7 @@ export default function DashboardPage() {
               >
                 <option value="">Todo</option>
                 <option value="ERROR">Error</option>
-                <option value="WARNING">Warning</option>
+                <option value="WARNING">Advertencia</option>
                 <option value="INFO">Info</option>
               </select>
               <label className="table-toolbar__label" htmlFor="incidents-search-filter">
@@ -1007,7 +1007,7 @@ export default function DashboardPage() {
                   <tr>
                     <th className="dashboard-table__cell-expand" aria-label="Expandir detalle" />
                     {[
-                      { key: 'code', label: 'Code' },
+                      { key: 'code', label: 'Código' },
                       { key: 'classification', label: 'Clasificación' },
                       { key: 'severity', label: 'Severidad' },
                       { key: 'occurrences', label: 'Ocurrencias' },
@@ -1153,7 +1153,7 @@ export default function DashboardPage() {
                   >
                     <option value="">Todo</option>
                     <option value="ERROR">Error</option>
-                    <option value="WARNING">Warning</option>
+                    <option value="WARNING">Advertencia</option>
                     <option value="INFO">Info</option>
                   </select>
                   <label className="table-toolbar__label" htmlFor="events-search-filter">
@@ -1174,10 +1174,10 @@ export default function DashboardPage() {
                   <thead>
                     <tr>
                       {[
-                        { key: 'timestamp', label: 'Timestamp' },
-                        { key: 'code', label: 'Code' },
-                        { key: 'severity', label: 'Severity' },
-                        { key: 'message', label: 'Message' },
+                        { key: 'timestamp', label: 'Fecha/hora' },
+                        { key: 'code', label: 'Código' },
+                        { key: 'severity', label: 'Severidad' },
+                        { key: 'message', label: 'Mensaje' },
                       ].map(({ key, label }) => {
                         const sortState = eventsSort.column === key ? eventsSort.dir : null
                         return (
