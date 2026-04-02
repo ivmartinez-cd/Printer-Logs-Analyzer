@@ -93,9 +93,11 @@ class LogParser:
     def _parse_line(self, line: str, is_first_line: bool) -> Event | None:
         """Parse an individual log line (TSV or space-separated with date+time)."""
         parts = [s.strip() for s in line.split("\t")]
+        print(f"DEBUG _parse_line: tab-split → {len(parts)} partes: {parts}")
         if len(parts) < 6:
             # Fallback: columnas separadas por espacios (fecha y hora = dos tokens)
             tokens = line.split()
+            print(f"DEBUG _parse_line: fallback space-split → {len(tokens)} tokens: {tokens}")
             if len(tokens) >= 6:
                 # type, code, date, time, counter, firmware [, help...]
                 parts = [
@@ -106,7 +108,9 @@ class LogParser:
                     tokens[5],
                     " ".join(tokens[6:]) if len(tokens) > 6 else "",
                 ]
+                print(f"DEBUG _parse_line: partes reconstruidas ({len(parts)}): {parts}")
             else:
+                print(f"DEBUG _parse_line: insuficientes columnas ({len(tokens)}), lanzando ValueError")
                 raise ValueError("Expected 6 tab-separated columns (or 6+ space-separated: type code date time counter firmware [help])")
         if is_first_line and self._looks_like_header(parts):
             raise ValueError("Header row skipped")
