@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import pathlib
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, List
 
 from domain.entities import Event
+
+logger = logging.getLogger(__name__)
 
 DATE_FORMAT = "%d-%b-%Y %H:%M:%S"
 HEADER_KEYWORDS = {"tipo", "type", "código", "codigo", "fecha", "date"}
@@ -70,6 +73,12 @@ class LogParser:
                     continue
                 error = ParserError(line_number=idx, raw_line=line, reason=str(exc))
                 errors.append(error)
+                logger.debug(
+                    "Skipped line %d — %s | raw: %r",
+                    idx,
+                    str(exc),
+                    line,
+                )
                 if self.strict:
                     raise
 
@@ -139,7 +148,10 @@ class LogParser:
         except ValueError as exc:
             raise ValueError("Date portion must be DD-MMM-YYYY") from exc
         month = month[:1].upper() + month[1:].lower()
-        return f"{day}-{month}-{year} {time_part.strip()}"
+        time_str = time_part.strip()
+        if len(time_str) > 0 and time_str[1:2] == ":":
+            time_str = "0" + time_str
+        return f"{day}-{month}-{year} {time_str}"
 
     @staticmethod
     def _normalize_type(value: str) -> str:
