@@ -38,7 +38,7 @@ body {
 
 .dashboard__header--inside-frame {
   padding: 4px 0;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   border-bottom: 1px solid #232734;
 }
 
@@ -263,13 +263,13 @@ body {
 .dashboard__welcome {
   max-width: 100%;
   width: 100%;
-  padding: 20px 24px;
+  padding: 12px 24px 20px;
   background: #151821;
   border: 1px solid #232734;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .dashboard__tagline {
