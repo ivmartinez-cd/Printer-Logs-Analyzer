@@ -11,3 +11,6 @@ __pycache__/
 .mypy_cache/
 pytest_cache/
 a.md
+.claude/
+*.tsbuildinfo
+frontend/vite.config.js
