@@ -106,6 +106,53 @@ body {
   font-size: 0.875rem;
 }
 
+.dashboard__parse-errors-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.dashboard__parse-errors-chevron {
+  margin-left: auto;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.dashboard__parse-errors-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.dashboard__parse-errors-table th,
+.dashboard__parse-errors-table td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(224, 178, 82, 0.2);
+  vertical-align: top;
+}
+
+.dashboard__parse-errors-table th {
+  opacity: 0.7;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard__parse-errors-table code {
+  font-family: monospace;
+  word-break: break-all;
+  opacity: 0.85;
+}
+
 .dashboard__codes-new-section {
   padding: 16px 20px;
   background: rgba(99, 149, 237, 0.08);

@@ -331,6 +331,7 @@ export default function DashboardPage() {
   const [compareLogText, setCompareLogText] = useState('')
   const [comparing, setComparing] = useState(false)
   const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
+  const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
   const [logFileName, setLogFileName] = useState<string | null>(null)
@@ -774,7 +775,34 @@ export default function DashboardPage() {
           <>
           {parseErrorsCount > 0 && (
             <div className="dashboard__parse-errors-banner" role="alert">
-              Se omitieron {parseErrorsCount} líneas por formato inválido
+              <button
+                className="dashboard__parse-errors-toggle"
+                onClick={() => setParseErrorsExpanded((v) => !v)}
+                aria-expanded={parseErrorsExpanded}
+              >
+                <span>Se omitieron {parseErrorsCount} líneas por formato inválido</span>
+                <span className="dashboard__parse-errors-chevron">{parseErrorsExpanded ? '▲' : '▼'}</span>
+              </button>
+              {parseErrorsExpanded && (
+                <table className="dashboard__parse-errors-table">
+                  <thead>
+                    <tr>
+                      <th>Línea</th>
+                      <th>Texto crudo</th>
+                      <th>Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(result?.errors ?? []).map((e) => (
+                      <tr key={e.line_number}>
+                        <td>{e.line_number}</td>
+                        <td><code>{e.raw_line}</code></td>
+                        <td>{e.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
