@@ -119,3 +119,19 @@ VITE_API_BASE=http://localhost:8000
 - `vendor-react` — React core
 - `vendor-charts` — Recharts (large; cached separately)
 - `index` — app code (~48 KB gzip vs. 572 KB before splitting)
+
+## Mejoras UI pendientes
+
+### Alta prioridad
+- Gráfico Issue Volume: eje X con demasiadas etiquetas, ilegible
+- Top Errors: barras sin distinción de color por severidad (ERROR/WARNING/INFO)
+- Título "Issue Volume (todo el log)" mezcla español e inglés
+
+### Media prioridad
+- Columna Clasificación en tabla demasiado ancha
+- Filas de tabla sin hover state visible
+- Botón Editar sin consistencia visual con Ver solución
+
+### Baja prioridad
+- KPI "Impacted Printers" sigue en inglés
+- Header podría mostrar nombre del archivo analizado
