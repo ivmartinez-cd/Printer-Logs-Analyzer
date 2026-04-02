@@ -530,28 +530,54 @@ export default function DashboardPage() {
               <p className="dashboard__tagline">
                 Analiza logs de impresoras HP, detecta errores por severidad y visualiza tendencias en segundos.
               </p>
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--primary dashboard__btn--welcome"
-                onClick={() => setSdsModalOpen(true)}
-              >
-                Pegar logs y analizar
-              </button>
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--secondary dashboard__btn--welcome-secondary"
-                onClick={() => { setViewMode('saved-list'); setSavedList(null); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
-              >
-                Ver logs guardados
-              </button>
+              <div className="dashboard__welcome-actions">
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--primary dashboard__btn--welcome"
+                  onClick={() => setSdsModalOpen(true)}
+                >
+                  Pegar logs y analizar
+                </button>
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--secondary dashboard__btn--welcome-secondary"
+                  onClick={() => { setViewMode('saved-list'); setSavedList(null); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+                >
+                  Ver logs guardados
+                </button>
+              </div>
               <div className="dashboard__features">
-                <span className="dashboard__features-title">Después del análisis verás:</span>
-                <ul className="dashboard__features-list">
-                  <li>KPIs por severidad (Error / Warning / Info) y códigos impactados</li>
-                  <li>Gráfico de volumen de eventos en el tiempo (con filtro por día)</li>
-                  <li>Top 5 códigos de error con mayor ocurrencia</li>
-                  <li>Tabla de eventos recientes con timestamp, código, severidad y mensaje</li>
-                </ul>
+                <span className="dashboard__features-title">Después del análisis verás</span>
+                <div className="dashboard__features-grid">
+                  <div className="dashboard__feature-item">
+                    <span className="dashboard__feature-icon">📊</span>
+                    <div className="dashboard__feature-text">
+                      <strong>KPIs de severidad</strong>
+                      Error · Warning · Info y códigos únicos
+                    </div>
+                  </div>
+                  <div className="dashboard__feature-item">
+                    <span className="dashboard__feature-icon">📈</span>
+                    <div className="dashboard__feature-text">
+                      <strong>Gráfico temporal</strong>
+                      Volumen de eventos filtrable por día
+                    </div>
+                  </div>
+                  <div className="dashboard__feature-item">
+                    <span className="dashboard__feature-icon">🏅</span>
+                    <div className="dashboard__feature-text">
+                      <strong>Top 5 errores</strong>
+                      Códigos con mayor ocurrencia en el log
+                    </div>
+                  </div>
+                  <div className="dashboard__feature-item">
+                    <span className="dashboard__feature-icon">📋</span>
+                    <div className="dashboard__feature-text">
+                      <strong>Tabla de incidencias</strong>
+                      Timestamp, código, severidad y mensaje
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
