@@ -24,14 +24,9 @@ function normalizeEnvValue(value: string | undefined): string {
   return trimmed
 }
 
-const API_KEY = normalizeEnvValue(import.meta.env.VITE_API_KEY)
+const API_KEY = normalizeEnvValue(import.meta.env.VITE_API_KEY) || 'dev'
 
 function apiHeaders(): Record<string, string> {
-  if (!API_KEY) {
-    throw new Error(
-      'Configuracion invalida: falta VITE_API_KEY en frontend/.env (o esta vacia).'
-    )
-  }
   return {
     'Content-Type': 'application/json',
     'x-api-key': API_KEY,

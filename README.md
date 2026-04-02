@@ -18,6 +18,12 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
 - **`samples/`**: Logs y bodies de ejemplo (`hp_log.txt`, `request.json`).
 - **`snapshots/`**: Versiones de configuración (respaldo).
 
+## Requisitos del sistema
+
+- **Python 3.11+**
+- **Node.js 18+**
+- **PostgreSQL** (local o instancia en la nube como [Neon](https://neon.tech))
+
 ## Requisitos iniciales
 
 1. **Crear y activar el entorno virtual**
@@ -30,12 +36,8 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
    pip install -r backend/requirements.txt
    ```
 3. **Configurar variables de entorno**
-   - En la **raíz del proyecto**, duplique `.env.example` → `.env` y actualice los valores:
-     - `DB_URL`: cadena de conexión Neon/PostgreSQL.
-     - `API_KEY`: clave para la cabecera `x-api-key`.
-     - `RECENCY_WINDOW`: ventana (segundos) para análisis recientes.
-     - `MAX_CONCURRENT_ANALYSIS`: cantidad de análisis simultáneos permitidos.
-     - `ANALYSIS_TIMEOUT`: límite (segundos) por análisis.
+   - Copiar el archivo `.env` (provisto por el equipo) a la **raíz del proyecto**.
+   - El frontend no necesita configuración adicional: usa `http://localhost:8000` por defecto.
 
 ## Setup backend y base de datos
 
@@ -44,11 +46,14 @@ Primer paso del MVP para un sistema modular de análisis de logs de impresoras H
    - Usar esa URL en `.env` como `DB_URL` (formato `postgresql://user:password@host:port/dbname`).
 
 5. **Aplicar migraciones**
-   - Ejecutar el SQL contra la base (sustituir `<CONNECTION_STRING>` por tu `DB_URL` de `.env`), desde la raíz del proyecto:
+   - Ejecutar todos los archivos SQL en orden (sustituir `<CONNECTION_STRING>` por tu `DB_URL` de `.env`):
    ```powershell
    psql "<CONNECTION_STRING>" -f backend/migrations/001_init.sql
+   psql "<CONNECTION_STRING>" -f backend/migrations/002_add_rules_and_rule_tags.sql
+   psql "<CONNECTION_STRING>" -f backend/migrations/003_create_error_codes.sql
+   psql "<CONNECTION_STRING>" -f backend/migrations/004_create_saved_analyses.sql
    ```
-   - O abrir `backend/migrations/001_init.sql` en el cliente SQL de Neon/PostgreSQL y ejecutarlo manualmente.
+   - O ejecutar cada archivo en orden en el cliente SQL de Neon/PostgreSQL.
 
 ## Uso del parser
 
@@ -80,7 +85,7 @@ El parser normaliza los tipos (`Error/Warning/Info` → `ERROR/WARNING/INFO`) y 
 Desde la **raíz del repo**, con el venv de Python activado y Node instalado:
 
 ```bash
-npm install
+npm install        # Instala concurrently (raíz) + todas las deps del frontend automáticamente
 npm run dev
 ```
 

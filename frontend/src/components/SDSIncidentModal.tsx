@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export interface SdsIncidentData {
   code: string | null
@@ -39,7 +39,7 @@ function parseSdsText(text: string): SdsIncidentData {
       for (const label of labels) {
         if (trimmed.startsWith(label)) {
           const rest = trimmed.slice(label.length).replace(/^[\s:]+/, '').trim()
-          if (rest) (out as Record<string, string | null>)[key] = rest
+          if (rest) (out as unknown as Record<string, string | null>)[key] = rest
           break
         }
       }

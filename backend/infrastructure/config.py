@@ -18,7 +18,7 @@ class Settings(BaseModel):
     """Application-wide configuration loaded from the environment."""
 
     db_url: str = Field(..., alias="DB_URL")
-    api_key: str = Field(..., alias="API_KEY")
+    api_key: str = Field("dev", alias="API_KEY")
     recency_window: int = Field(3600, alias="RECENCY_WINDOW", ge=0)
     max_concurrent_analysis: int = Field(5, alias="MAX_CONCURRENT_ANALYSIS", ge=1)
     analysis_timeout: int = Field(30, alias="ANALYSIS_TIMEOUT", ge=1)
