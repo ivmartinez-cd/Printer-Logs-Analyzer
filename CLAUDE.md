@@ -123,14 +123,14 @@ VITE_API_BASE=http://localhost:8000
 ## Mejoras UI pendientes
 
 ### Alta prioridad
-- Gráfico Issue Volume: eje X con demasiadas etiquetas, ilegible
-- Top Errors: barras sin distinción de color por severidad (ERROR/WARNING/INFO)
-- Título "Issue Volume (todo el log)" mezcla español e inglés
+- ~~Gráfico Issue Volume: eje X con demasiadas etiquetas, ilegible~~ → resuelto
+- ~~Top Errors: barras sin distinción de color por severidad (ERROR/WARNING/INFO)~~ → resuelto
+- ~~Título "Issue Volume (todo el log)" mezcla español e inglés~~ → resuelto
 
 ### Media prioridad
-- Columna Clasificación en tabla demasiado ancha
-- Filas de tabla sin hover state visible
-- Botón Editar sin consistencia visual con Ver solución
+- ~~Columna Clasificación en tabla demasiado ancha~~ → resuelto
+- ~~Filas de tabla sin hover state visible~~ → resuelto
+- ~~Botón Editar sin consistencia visual con Ver solución~~ → resuelto
 
 ### Baja prioridad
 - ~~KPI "Impacted Printers" sigue en inglés~~ → resuelto
