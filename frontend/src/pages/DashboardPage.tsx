@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
 } from 'recharts'
 import { previewLogs, validateLogs, upsertErrorCode, createSavedAnalysis, listSavedAnalyses, getSavedAnalysis, compareSavedAnalysis, deleteSavedAnalysis } from '../services/api'
 import type {
@@ -164,7 +165,7 @@ function getTopIncidentsForChart(
   events: ApiEvent[],
   selectedDate: string | null,
   n: number
-): { name: string; count: number }[] {
+): { name: string; count: number; severity: string }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -180,7 +181,7 @@ function getTopIncidentsForChart(
   return withCount
     .sort((a, b) => b.countInWindow - a.countInWindow)
     .slice(0, n)
-    .map((x) => ({ name: x.inc.code, count: x.countInWindow }))
+    .map((x) => ({ name: x.inc.code, count: x.countInWindow, severity: x.inc.severity }))
 }
 
 function bucketEventsByHour(events: ApiEvent[], selectedDate: string | null): { time: string; count: number }[] {
@@ -393,16 +394,6 @@ export default function DashboardPage() {
   const filteredEvents = filterEventsByDate(events, selectedDate)
   const filteredIncidents = filterIncidentsByDate(incidents, events, selectedDate)
   const dateRange = getDateRangeFromEvents(events)
-  const SEVERITY_SCORE: Record<string, number> = { ERROR: 3, WARNING: 2, INFO: 1 }
-  const globalSeverityFromFiltered =
-    filteredEvents.length > 0
-      ? filteredEvents.reduce((best, e) => {
-          const s = (e.type?.toUpperCase() ?? 'INFO') as string
-          const score = SEVERITY_SCORE[s] ?? 1
-          const bestScore = SEVERITY_SCORE[best] ?? 1
-          return score > bestScore ? s : best
-        }, 'INFO')
-      : '—'
   const errorCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length
   const warningCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length
   const infoCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'INFO').length
@@ -843,7 +834,7 @@ export default function DashboardPage() {
           <div className="dashboard__charts-row">
             <section className="section dashboard__chart-left">
               <h2 className="section__title">
-                {selectedDate ? `Volumen de incidencias (${selectedDate})` : 'Volumen de incidencias (todo el log)'}
+                {selectedDate ? `Volumen de incidencias (${selectedDate})` : 'Volumen de incidencias (registro completo)'}
               </h2>
               <div className="chart-wrap">
                 {volumeData.length > 0 ? (
@@ -860,7 +851,13 @@ export default function DashboardPage() {
                         dataKey="time"
                         stroke="#9aa3b2"
                         tick={{ fontSize: 11 }}
-                        tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                        interval={Math.max(0, Math.ceil(volumeData.length / 10) - 1)}
+                        tickFormatter={(v) => {
+                          const d = new Date(v)
+                          return volumeData.length > 24
+                            ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                            : d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                        }}
                       />
                       <YAxis stroke="#9aa3b2" tick={{ fontSize: 11 }} />
                       <Tooltip
@@ -887,7 +884,16 @@ export default function DashboardPage() {
                       <Tooltip
                         contentStyle={{ background: '#151821', border: '1px solid #232734', borderRadius: 6 }}
                       />
-                      <Bar dataKey="count" fill="#4c8bf5" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                          {topCodes.map((entry, index) => {
+                            const color = entry.severity?.toUpperCase() === 'ERROR'
+                              ? '#ef4444'
+                              : entry.severity?.toUpperCase() === 'WARNING'
+                              ? '#f59e0b'
+                              : '#4c8bf5'
+                            return <Cell key={`cell-${index}`} fill={color} />
+                          })}
+                        </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
