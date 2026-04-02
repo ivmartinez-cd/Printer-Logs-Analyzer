@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import logging
 import time
 
@@ -28,8 +29,11 @@ from infrastructure.repositories.saved_analysis_repository import (
 
 MAX_LOGS_LENGTH = 2_000_000
 
-# Single-slot cache for preview: same input -> return cached result (no parse/DB/analysis).
-_preview_cache: Dict[str, Optional[object]] = {"hash": None, "response": None}
+# Hash of the parser source — used to bust the preview cache when the parser changes.
+_PARSER_VERSION = hashlib.sha256(inspect.getsource(LogParser).encode()).hexdigest()[:12]
+
+# Single-slot cache for preview: same input + same parser version -> return cached result.
+_preview_cache: Dict[str, Optional[object]] = {"hash": None, "parser_version": None, "response": None}
 
 
 class ParseLogsRequest(BaseModel):
@@ -228,7 +232,11 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     def parse_logs(payload: ParseLogsRequest) -> ParseLogsResponse:
         t0 = time.perf_counter()
         logs_hash = hashlib.sha256(payload.logs.encode("utf-8")).hexdigest()
-        if _preview_cache["hash"] == logs_hash and _preview_cache["response"] is not None:
+        if (
+            _preview_cache["hash"] == logs_hash
+            and _preview_cache["parser_version"] == _PARSER_VERSION
+            and _preview_cache["response"] is not None
+        ):
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
             print(f"[preview] cache_hit=true total_ms={elapsed_ms}")
             return _preview_cache["response"]
@@ -261,6 +269,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             errors=errors,
         )
         _preview_cache["hash"] = logs_hash
+        _preview_cache["parser_version"] = _PARSER_VERSION
         _preview_cache["response"] = response
 
         total_ms = int((time.perf_counter() - t0) * 1000)
