@@ -212,7 +212,7 @@ function bucketEventsByHour(events: ApiEvent[], selectedDate: string | null): { 
 interface LogPasteModalProps {
   loading: boolean
   error: string | null
-  onAnalyze: (logText: string) => void
+  onAnalyze: (logText: string, fileName?: string) => void
   onClose: () => void
 }
 
@@ -228,16 +228,50 @@ function getEventInfoForCode(result: ParseLogsResponse | null, code: string): { 
 
 function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProps) {
   const [logText, setLogText] = useState('')
+  const [fileName, setFileName] = useState<string | undefined>(undefined)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string
+      setLogText(text)
+      setFileName(file.name)
+      textareaRef.current?.focus()
+    }
+    reader.readAsText(file)
+  }
+
   return (
     <div className="log-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="log-modal-title">
       <div className="log-modal" onClick={(e) => e.stopPropagation()}>
         <div className="log-modal__header">
           <h2 id="log-modal-title" className="log-modal__title">Pegar logs HP</h2>
           <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">×</button>
+        </div>
+        <div className="log-modal__file-row">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".log,.txt,.tsv,text/plain"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            className="log-modal__btn-secondary"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+          >
+            Cargar archivo…
+          </button>
+          {fileName && <span className="log-modal__file-name">{fileName}</span>}
         </div>
         <textarea
           ref={textareaRef}
@@ -252,7 +286,7 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
           <button
             type="button"
             className="dashboard__btn"
-            onClick={() => onAnalyze(logText)}
+            onClick={() => onAnalyze(logText, fileName)}
             disabled={loading || !logText.trim()}
           >
             {loading ? 'Analizando…' : 'Analizar'}
@@ -299,13 +333,15 @@ export default function DashboardPage() {
   const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
+  const [logFileName, setLogFileName] = useState<string | null>(null)
   const toast = useToast()
 
-  async function handleAnalyze(logText: string) {
+  async function handleAnalyze(logText: string, fileName?: string) {
     if (!logText.trim()) return
     setError(null)
     setResult(null)
     setCodesNew([])
+    setLogFileName(fileName ?? null)
     setSelectedDate(null)
     setIncidentsSeverityFilter('')
     setIncidentsSearchFilter('')
@@ -478,7 +514,10 @@ export default function DashboardPage() {
         /* Sin resultado y vista dashboard: marco de bienvenida */
         <div className="dashboard__frame">
           <header className="dashboard__header dashboard__header--inside-frame">
-            <h1 className="dashboard__title">HP Logs Analyzer</h1>
+            <div className="dashboard__title-group">
+              <h1 className="dashboard__title">HP Logs Analyzer</h1>
+              {logFileName && <span className="dashboard__file-name">{logFileName}</span>}
+            </div>
             <time className="dashboard__datetime" dateTime={now.toISOString()}>
               {now.toLocaleString(undefined, {
                 dateStyle: 'long',
@@ -520,7 +559,10 @@ export default function DashboardPage() {
       ) : (result || viewMode === 'saved-list' || viewMode === 'saved-detail') ? (
         <>
           <header className="dashboard__header">
-            <h1 className="dashboard__title">HP Logs Analyzer</h1>
+            <div className="dashboard__title-group">
+              <h1 className="dashboard__title">HP Logs Analyzer</h1>
+              {logFileName && <span className="dashboard__file-name">{logFileName}</span>}
+            </div>
             <div className="dashboard__header-actions">
               <button
                 type="button"
