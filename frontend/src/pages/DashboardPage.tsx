@@ -545,7 +545,7 @@ export default function DashboardPage() {
                 </button>
               </div>
               <div className="dashboard__features">
-                <span className="dashboard__features-title">Después del análisis verás</span>
+                <span className="dashboard__features-title">¿Qué vas a ver?</span>
                 <div className="dashboard__features-grid">
                   <div className="dashboard__feature-item">
                     <span className="dashboard__feature-icon">📊</span>
