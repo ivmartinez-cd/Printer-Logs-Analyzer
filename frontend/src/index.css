@@ -73,8 +73,15 @@ body {
 
 .dashboard__title-group {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
+}
+
+.dashboard__title-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #6395ed;
 }
 
 .dashboard__file-name {
