@@ -27,6 +27,7 @@ import { ConfirmModal } from '../components/ConfirmModal'
 import { SaveIncidentModal } from '../components/SaveIncidentModal'
 import { SDSIncidentModal, type SdsIncidentData } from '../components/SDSIncidentModal'
 import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
+import { SolutionContentModal } from '../components/SolutionContentModal'
 import { useToast } from '../contexts/ToastContext'
 
 function useLiveTime() {
@@ -118,6 +119,7 @@ type IncidentRow = {
   start_time: string
   end_time: string
   sds_link: string | null
+  sds_solution_content: string | null
   eventsInWindow: ApiEvent[]
 }
 
@@ -150,6 +152,7 @@ function getIncidentTableRows(
         start_time: new Date(Math.min(...times)).toISOString(),
         end_time: new Date(Math.max(...times)).toISOString(),
         sds_link: inc.sds_link ?? null,
+        sds_solution_content: inc.sds_solution_content ?? null,
         eventsInWindow: inWindow,
       }
     })
@@ -335,6 +338,7 @@ export default function DashboardPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
   const [logFileName, setLogFileName] = useState<string | null>(null)
+  const [solutionModal, setSolutionModal] = useState<{ content: string; url?: string | null } | null>(null)
   const toast = useToast()
 
   async function handleAnalyze(logText: string, fileName?: string) {
@@ -375,11 +379,18 @@ export default function DashboardPage() {
     setError(null)
     setSavingCode(true)
     try {
-      await upsertErrorCode(body)
+      const res = await upsertErrorCode(body)
       if (!isEdit) setCodesNew((prev) => prev.filter((c) => c !== body.code))
       setAddCodeModalCode(null)
       setEditCodeInitial(null)
-      toast.showSuccess(isEdit ? `Código ${body.code} actualizado` : `Código ${body.code} agregado al catálogo`)
+      const baseMsg = isEdit ? `Código ${body.code} actualizado` : `Código ${body.code} agregado al catálogo`
+      if (res.warning) {
+        toast.showWarning(`${baseMsg}. ${res.warning}`)
+      } else if (body.solution_url && res.solution_content_saved) {
+        toast.showSuccess(`${baseMsg} — contenido de solución guardado`)
+      } else {
+        toast.showSuccess(baseMsg)
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       setError(msg)
@@ -1097,9 +1108,17 @@ export default function DashboardPage() {
                           <td className="dashboard-table__cell-solution">
                             <span className="dashboard-table__cell-actions">
                               <span className="dashboard-table__cell-actions-left">
-                                {inc.sds_link ? (
-                                  <a href={inc.sds_link} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link">
+                                {inc.sds_solution_content ? (
+                                  <button
+                                    type="button"
+                                    className="dashboard-table__solution-link"
+                                    onClick={() => setSolutionModal({ content: inc.sds_solution_content!, url: inc.sds_link })}
+                                  >
                                     Ver solución
+                                  </button>
+                                ) : inc.sds_link ? (
+                                  <a href={inc.sds_link} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link" title="Este link puede haber vencido">
+                                    Ver solución ⚠
                                   </a>
                                 ) : (
                                   <span className="dashboard-table__cell-actions-placeholder">—</span>
@@ -1237,9 +1256,17 @@ export default function DashboardPage() {
                         </td>
                         <td>{evt.code_description?.trim() || evt.code || '—'}</td>
                         <td className="dashboard-table__cell-solution">
-                          {evt.code_solution_url?.trim() ? (
-                            <a href={evt.code_solution_url.trim()} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link">
+                          {evt.code_solution_content?.trim() ? (
+                            <button
+                              type="button"
+                              className="dashboard-table__solution-link"
+                              onClick={() => setSolutionModal({ content: evt.code_solution_content!, url: evt.code_solution_url })}
+                            >
                               Ver solución
+                            </button>
+                          ) : evt.code_solution_url?.trim() ? (
+                            <a href={evt.code_solution_url.trim()} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link" title="Este link puede haber vencido">
+                              Ver solución ⚠
                             </a>
                           ) : (
                             '—'
@@ -1327,6 +1354,14 @@ export default function DashboardPage() {
             }
           }}
           onCancel={() => !deletingId && setDeleteConfirm(null)}
+        />
+      )}
+
+      {solutionModal && (
+        <SolutionContentModal
+          content={solutionModal.content}
+          url={solutionModal.url}
+          onClose={() => setSolutionModal(null)}
         />
       )}
 

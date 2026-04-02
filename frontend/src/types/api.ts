@@ -8,6 +8,7 @@ export interface Event {
   code_severity?: string | null
   code_description?: string | null
   code_solution_url?: string | null
+  code_solution_content?: string | null
 }
 
 export interface Incident {
@@ -22,6 +23,7 @@ export interface Incident {
   counter_range: [number, number]
   events: Event[]
   sds_link?: string
+  sds_solution_content?: string | null
 }
 
 export interface ParserError {

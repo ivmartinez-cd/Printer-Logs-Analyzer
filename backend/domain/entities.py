@@ -20,6 +20,7 @@ class Event(BaseModel):
     code_severity: Optional[str] = Field(None, description="Severity from error_codes catalog")
     code_description: Optional[str] = Field(None, description="Description from error_codes catalog")
     code_solution_url: Optional[str] = Field(None, description="Solution URL from error_codes catalog")
+    code_solution_content: Optional[str] = Field(None, description="Fetched text content of the solution page")
 
     model_config = {"frozen": True}
 
@@ -38,6 +39,7 @@ class Incident(BaseModel):
     counter_range: tuple[int, int]
     events: List[Event]
     sds_link: Optional[str] = None
+    sds_solution_content: Optional[str] = None
 
     model_config = {"frozen": True}
 

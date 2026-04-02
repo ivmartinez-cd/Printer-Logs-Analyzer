@@ -1245,3 +1245,58 @@ body {
 .dashboard__compare-block .table-wrap {
   margin-top: 8px;
 }
+
+/* solution-content-modal */
+.solution-content-modal {
+  max-width: 760px;
+  width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.solution-content-modal__source {
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 0.8125rem;
+  color: #9aa3b2;
+  border-bottom: 1px solid #232734;
+  word-break: break-all;
+}
+
+.solution-content-modal__url {
+  color: #4c8bf5;
+  text-decoration: none;
+}
+
+.solution-content-modal__url:hover {
+  text-decoration: underline;
+}
+
+.solution-content-modal__url-warning {
+  color: #e0a63a;
+  font-size: 0.75rem;
+}
+
+.solution-content-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 16px 20px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: #c9cdd6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #0f1115;
+}
+
+/* make .dashboard-table__solution-link work as button too */
+button.dashboard-table__solution-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}

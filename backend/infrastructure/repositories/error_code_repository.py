@@ -34,6 +34,7 @@ class ErrorCode:
     severity: str | None
     description: str | None
     solution_url: str | None
+    solution_content: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -70,12 +71,13 @@ class ErrorCodeRepository:
         severity: str | None = None,
         description: str | None = None,
         solution_url: str | None = None,
+        solution_content: str | None = None,
     ) -> ErrorCode:
         """Insert or update an error code. Falls back to local JSON when DB is down."""
         try:
-            return self._upsert_db(code, severity, description, solution_url)
+            return self._upsert_db(code, severity, description, solution_url, solution_content)
         except DatabaseUnavailableError:
-            return self._upsert_local(code, severity, description, solution_url)
+            return self._upsert_local(code, severity, description, solution_url, solution_content)
 
     # ------------------------------------------------------------------
     # Database helpers
@@ -86,7 +88,7 @@ class ErrorCodeRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, code, severity, description, solution_url, created_at, updated_at
+                    SELECT id, code, severity, description, solution_url, solution_content, created_at, updated_at
                     FROM error_codes
                     WHERE code = ANY(%s)
                     """,
@@ -100,8 +102,9 @@ class ErrorCodeRepository:
                 severity=row[2],
                 description=row[3],
                 solution_url=row[4],
-                created_at=row[5],
-                updated_at=row[6],
+                solution_content=row[5],
+                created_at=row[6],
+                updated_at=row[7],
             )
             for row in rows
         }
@@ -112,21 +115,23 @@ class ErrorCodeRepository:
         severity: str | None,
         description: str | None,
         solution_url: str | None,
+        solution_content: str | None,
     ) -> ErrorCode:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO error_codes (code, severity, description, solution_url)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO error_codes (code, severity, description, solution_url, solution_content)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (code) DO UPDATE SET
                         severity = COALESCE(EXCLUDED.severity, error_codes.severity),
                         description = COALESCE(NULLIF(EXCLUDED.description, ''), error_codes.description),
                         solution_url = COALESCE(NULLIF(EXCLUDED.solution_url, ''), error_codes.solution_url),
+                        solution_content = COALESCE(EXCLUDED.solution_content, error_codes.solution_content),
                         updated_at = NOW()
-                    RETURNING id, code, severity, description, solution_url, created_at, updated_at
+                    RETURNING id, code, severity, description, solution_url, solution_content, created_at, updated_at
                     """,
-                    (code, severity or None, description or None, solution_url or None),
+                    (code, severity or None, description or None, solution_url or None, solution_content or None),
                 )
                 row = cur.fetchone()
             conn.commit()
@@ -136,8 +141,9 @@ class ErrorCodeRepository:
             severity=row[2],
             description=row[3],
             solution_url=row[4],
-            created_at=row[5],
-            updated_at=row[6],
+            solution_content=row[5],
+            created_at=row[6],
+            updated_at=row[7],
         )
 
     # ------------------------------------------------------------------
@@ -157,6 +163,7 @@ class ErrorCodeRepository:
                     severity=item.get("severity"),
                     description=item.get("description"),
                     solution_url=item.get("solution_url"),
+                    solution_content=item.get("solution_content"),
                     created_at=_EPOCH,
                     updated_at=_EPOCH,
                 )
@@ -170,6 +177,7 @@ class ErrorCodeRepository:
         severity: str | None,
         description: str | None,
         solution_url: str | None,
+        solution_content: str | None,
     ) -> ErrorCode:
         """Insert or update an error code in the local JSON file."""
         source = _LOCAL_PATH if _LOCAL_PATH.exists() else _SEED_PATH
@@ -186,6 +194,8 @@ class ErrorCodeRepository:
                 existing["description"] = description
             if solution_url:
                 existing["solution_url"] = solution_url
+            if solution_content:
+                existing["solution_content"] = solution_content
             item_data = existing
         else:
             max_id = max((int(i["id"]) for i in items), default=0)
@@ -195,6 +205,7 @@ class ErrorCodeRepository:
                 "severity": severity,
                 "description": description,
                 "solution_url": solution_url,
+                "solution_content": solution_content,
             }
             items.append(item_data)
 
@@ -211,6 +222,7 @@ class ErrorCodeRepository:
             severity=item_data.get("severity"),
             description=item_data.get("description"),
             solution_url=item_data.get("solution_url"),
+            solution_content=item_data.get("solution_content"),
             created_at=_EPOCH,
             updated_at=now,
         )

@@ -41,6 +41,7 @@ class AnalysisService:
 
             classification = code
             sds_link = None
+            sds_solution_content = None
             for evt in group_sorted:
                 if evt.code_description and evt.code_description.strip():
                     classification = evt.code_description.strip()
@@ -48,6 +49,7 @@ class AnalysisService:
             for evt in group_sorted:
                 if evt.code_solution_url and evt.code_solution_url.strip():
                     sds_link = evt.code_solution_url.strip()
+                    sds_solution_content = getattr(evt, "code_solution_content", None)
                     break
 
             incidents.append(
@@ -63,6 +65,7 @@ class AnalysisService:
                     counter_range=(group_sorted[0].counter, group_sorted[-1].counter),
                     events=group_sorted,
                     sds_link=sds_link,
+                    sds_solution_content=sds_solution_content,
                 )
             )
 

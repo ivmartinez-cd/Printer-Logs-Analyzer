@@ -67,10 +67,17 @@ export async function validateLogs(
   return handleResponse<ValidateLogsResponse>(res)
 }
 
+export interface UpsertErrorCodeResult {
+  id: string
+  code: string
+  solution_content_saved: boolean
+  warning?: string
+}
+
 export async function upsertErrorCode(
   body: ErrorCodeUpsertBody,
   signal?: AbortSignal
-): Promise<unknown> {
+): Promise<UpsertErrorCodeResult> {
   const res = await fetch(`${API_BASE}/error-codes/upsert`, {
     method: 'POST',
     headers: apiHeaders(),
@@ -82,7 +89,7 @@ export async function upsertErrorCode(
     }),
     signal,
   })
-  return handleResponse(res)
+  return handleResponse<UpsertErrorCodeResult>(res)
 }
 
 // --- Saved analyses (incidents) ---

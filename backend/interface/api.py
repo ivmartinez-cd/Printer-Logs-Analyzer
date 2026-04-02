@@ -27,6 +27,35 @@ from infrastructure.repositories.saved_analysis_repository import (
 
 MAX_LOGS_LENGTH = 2_000_000
 
+_FETCH_TIMEOUT = 15  # seconds
+
+
+def _fetch_solution_content(url: str) -> str | None:
+    """Fetch the text content of a solution page. Returns None on any error."""
+    try:
+        import httpx
+        from bs4 import BeautifulSoup
+
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            )
+        }
+        response = httpx.get(url, timeout=_FETCH_TIMEOUT, follow_redirects=True, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        for tag in soup(["script", "style", "noscript", "head", "nav", "footer"]):
+            tag.decompose()
+        text = soup.get_text(separator="\n")
+        lines = [line.strip() for line in text.splitlines()]
+        cleaned = "\n".join(line for line in lines if line)
+        return cleaned[:50_000]  # cap at 50k chars
+    except Exception as exc:
+        logging.warning("Could not fetch solution content from %s: %s", url, exc)
+        return None
+
 
 def _normalize_log_text(text: str) -> str:
     """Replace runs of 2+ spaces with a single tab (HP portal copies tabs as spaces)."""
@@ -223,6 +252,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 data["code_severity"] = row.severity
                 data["code_description"] = row.description
                 data["code_solution_url"] = row.solution_url
+                data["code_solution_content"] = row.solution_content
                 enriched.append(Event(**data))
             else:
                 enriched.append(evt)
@@ -305,21 +335,32 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/error-codes/upsert", dependencies=[Depends(authenticate)])
     def upsert_error_code(body: ErrorCodeUpsertRequest) -> dict:
         """Insert or update an error code in the catalog."""
+        solution_content: str | None = None
+        content_fetch_warning: str | None = None
+        if body.solution_url and body.solution_url.strip():
+            solution_content = _fetch_solution_content(body.solution_url.strip())
+            if solution_content is None:
+                content_fetch_warning = "No se pudo obtener el contenido de la página (token vencido o URL inaccesible). Se guardó el link de todas formas."
         ec = error_code_repository.upsert(
             code=body.code,
             severity=body.severity,
             description=body.description,
             solution_url=body.solution_url,
+            solution_content=solution_content,
         )
-        return {
+        result: dict = {
             "id": ec.id,
             "code": ec.code,
             "severity": ec.severity,
             "description": ec.description,
             "solution_url": ec.solution_url,
+            "solution_content_saved": ec.solution_content is not None,
             "created_at": ec.created_at.isoformat(),
             "updated_at": ec.updated_at.isoformat(),
         }
+        if content_fetch_warning:
+            result["warning"] = content_fetch_warning
+        return result
 
     # --- Saved analyses (incidents) ---
 
@@ -431,6 +472,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 "counter_range": list(inc.counter_range),
                 "events": [e.model_dump() for e in inc.events],
                 "sds_link": inc.sds_link,
+                "sds_solution_content": inc.sds_solution_content,
             }
 
         return {
