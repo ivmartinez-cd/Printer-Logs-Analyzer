@@ -16,6 +16,7 @@ from application.services.analysis_service import AnalysisService
 from application.services.compare_service import calculate_trend
 from domain.entities import Event, Incident
 from infrastructure.config import Settings, get_settings
+from infrastructure.database import Database
 from infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
 from infrastructure.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
@@ -165,11 +166,14 @@ def _compute_diff(
     }
 
 
-def authenticate(api_key: str = Header(..., alias="x-api-key")) -> None:
-    """Simple header-based authentication for the MVP."""
+def authenticate(api_key: Optional[str] = Header(None, alias="x-api-key")) -> None:
+    """Simple header-based authentication for the MVP.
+
+    Returns 401 whether the key is missing or wrong (not 422).
+    """
     settings = get_settings()
-    if api_key != settings.api_key:
-        raise HTTPException(status_code=401, detail="Invalid API key")
+    if not api_key or api_key != settings.api_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
 def get_app(settings: Settings | None = None) -> FastAPI:
@@ -177,8 +181,9 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     parser = LogParser()
     analysis_service = AnalysisService()
-    error_code_repository = ErrorCodeRepository()
-    saved_analysis_repository = SavedAnalysisRepository()
+    database_instance = Database()
+    error_code_repository = ErrorCodeRepository(database_instance)
+    saved_analysis_repository = SavedAnalysisRepository(database_instance)
     app = FastAPI(
         title="HP Printer Logs Analyzer",
         version="0.1.0",
@@ -186,7 +191,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -194,7 +199,13 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health", summary="Basic health probe")
     def health() -> dict:
-        return {"status": "ok", "recency_window": settings.recency_window}
+        db_ok = database_instance.is_available()
+        return {
+            "status": "ok",
+            "recency_window": settings.recency_window,
+            "db_mode": "postgres" if db_ok else "local_fallback",
+            "db_available": db_ok,
+        }
 
     def _enrich_events_with_catalog(events: list[Event], catalog_map: Dict[str, ErrorCode]) -> list[Event]:
         enriched: list[Event] = []
