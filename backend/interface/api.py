@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
+
+logging.basicConfig(level=logging.DEBUG, format="%(name)s %(levelname)s: %(message)s")
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
