@@ -28,6 +28,14 @@ from infrastructure.repositories.saved_analysis_repository import (
 MAX_LOGS_LENGTH = 2_000_000
 
 
+def _normalize_log_text(text: str) -> str:
+    """Replace runs of 2+ spaces with a single tab (HP portal copies tabs as spaces)."""
+    import re
+    lines = text.splitlines()
+    normalized = [re.sub(r" {2,}", "\t", line) for line in lines]
+    return "\n".join(normalized)
+
+
 class ParseLogsRequest(BaseModel):
     """Request body containing the raw log payload."""
 
@@ -224,7 +232,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     def parse_logs(payload: ParseLogsRequest) -> ParseLogsResponse:
         t0 = time.perf_counter()
         t_parse_start = time.perf_counter()
-        report = parser.parse_text(payload.logs)
+        report = parser.parse_text(_normalize_log_text(payload.logs))
         parse_ms = int((time.perf_counter() - t_parse_start) * 1000)
 
         unique_codes = list(dict.fromkeys(e.code for e in report.events))
@@ -272,7 +280,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             )
 
         t_parse_start = time.perf_counter()
-        report = parser.parse_text(payload.logs)
+        report = parser.parse_text(_normalize_log_text(payload.logs))
         parse_ms = int((time.perf_counter() - t_parse_start) * 1000)
 
         codes_detected = sorted(set(e.code for e in report.events))
@@ -394,7 +402,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         if len(body.logs) > MAX_LOGS_LENGTH:
             raise HTTPException(status_code=400, detail="logs exceeds max length")
 
-        report = parser.parse_text(body.logs)
+        report = parser.parse_text(_normalize_log_text(body.logs))
         unique_codes = list(dict.fromkeys(e.code for e in report.events))
         catalog_map = error_code_repository.get_by_codes(unique_codes)
         events = _enrich_events_with_catalog(report.events, catalog_map)
