@@ -13,6 +13,12 @@ from domain.entities import Event
 logger = logging.getLogger(__name__)
 
 DATE_FORMAT = "%d-%b-%Y %H:%M:%S"
+
+_ES_MONTHS = {
+    "ene": "Jan", "feb": "Feb", "mar": "Mar", "abr": "Apr",
+    "may": "May", "jun": "Jun", "jul": "Jul", "ago": "Aug",
+    "sep": "Sep", "oct": "Oct", "nov": "Nov", "dic": "Dec",
+}
 HEADER_KEYWORDS = {"tipo", "type", "código", "codigo", "fecha", "date"}
 TYPE_MAP = {"error": "ERROR", "warning": "WARNING", "info": "INFO"}
 
@@ -147,6 +153,7 @@ class LogParser:
             day, month, year = date_part.split("-")
         except ValueError as exc:
             raise ValueError("Date portion must be DD-MMM-YYYY") from exc
+        month = _ES_MONTHS.get(month.lower(), month)
         month = month[:1].upper() + month[1:].lower()
         time_str = time_part.strip()
         if len(time_str) > 0 and time_str[1:2] == ":":
