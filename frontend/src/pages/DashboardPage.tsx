@@ -861,9 +861,9 @@ export default function DashboardPage() {
               <div className="kpi-card__sub">incidentes detectados en el log</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-card__label">Impresoras afectadas</div>
+              <div className="kpi-card__label">Códigos únicos de error</div>
               <div className="kpi-card__value">{uniqueCodes}</div>
-              <div className="kpi-card__sub">códigos únicos de error</div>
+              <div className="kpi-card__sub">distintos detectados en el log</div>
             </div>
             <div className="kpi-card">
               <div className="kpi-card__label">Eventos Registrados</div>
