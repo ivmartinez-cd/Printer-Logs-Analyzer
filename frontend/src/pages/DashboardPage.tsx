@@ -991,7 +991,7 @@ export default function DashboardPage() {
                             </button>
                           </td>
                           <td>{inc.code}</td>
-                          <td>{inc.classification || inc.code}</td>
+                          <td className="dashboard-table__cell-classification" title={inc.classification || inc.code}>{inc.classification || inc.code}</td>
                           <td>
                             <span className={`badge badge--${(inc.severity || 'info').toLowerCase()}`}>
                               {inc.severity}
