@@ -251,12 +251,13 @@ body {
   gap: 12px;
 }
 
-/* Estado inicial / bienvenida — centrado en pantalla */
+/* Estado inicial / bienvenida — centrado óptico (ligeramente más arriba del centro geométrico) */
 .dashboard__welcome-wrap {
   width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 9vh;
 }
 
 .dashboard__welcome {
