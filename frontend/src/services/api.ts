@@ -8,10 +8,30 @@ import type {
   CompareResponse,
 } from '../types/api'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const API_KEY = import.meta.env.VITE_API_KEY || ''
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  'http://localhost:8000'
+
+function normalizeEnvValue(value: string | undefined): string {
+  const trimmed = (value ?? '').trim()
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim()
+  }
+  return trimmed
+}
+
+const API_KEY = normalizeEnvValue(import.meta.env.VITE_API_KEY)
 
 function apiHeaders(): Record<string, string> {
+  if (!API_KEY) {
+    throw new Error(
+      'Configuracion invalida: falta VITE_API_KEY en frontend/.env (o esta vacia).'
+    )
+  }
   return {
     'Content-Type': 'application/json',
     'x-api-key': API_KEY,
