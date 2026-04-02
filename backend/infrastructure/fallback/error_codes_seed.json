@@ -1,0 +1,422 @@
+[
+  {
+    "id": "1",
+    "code": "10.00.15",
+    "severity": "ERROR",
+    "description": null,
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=truey has been removed or installed incorrectly."
+  },
+  {
+    "id": "2",
+    "code": "10.00.58",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "21",
+    "code": "10.00.60",
+    "severity": "WARNING",
+    "description": "The printer indicates when a supply level is low. Actual toner cartridge life might vary. You do not need to replace the toner cartridge at this time unless print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjTdAxmjPbt7Ti0pu8vzjIuwP+sJ26+GRWFBoGdPFK5eXsFkCeIplUr7tY7q6lfN7etzNQ8AuqBL51hnfcw=/ish_10301738-6752107-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "22",
+    "code": "10.00.70",
+    "severity": "WARNING",
+    "description": "The printer indicates when one of the supplies is printing past very low state. The actual remaining supply life might vary. You do not need to replace the toner cartridge at this time unless the print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9TikgvMvzjIuwP+sJ29CIUFRNw25JMeZyUcQFI8AJu0PY2Jq+6RxpsYA0uV9w4MSfm0OZJus=/ish_10367090-7156877-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "23",
+    "code": "10.01.60",
+    "severity": "WARNING",
+    "description": "The printer indicates when a supply level is low. Actual toner cartridge life might vary. You do not need to replace the toner cartridge at this time unless print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9Tikguc7zjIuwP+sJ267wQ18kvBV7NcQqVNwEXNsTtx3xrK7r0+I4+Om0ANiViaTYzMzWCQE=/ish_10367090-7156822-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "24",
+    "code": "10.03.58",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibp_Sywtv9Hvi4e6P+sLrvCYT2YBz0BvCultVIAmPMQ1sDuKpq3p1SXFP3edcXya0dZY+o3vgg==/ish_1690610-1730354-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "25",
+    "code": "10.03.60",
+    "severity": "WARNING",
+    "description": "The printer indicates when a supply level is low. Actual toner cartridge life might vary. You do not need to replace the toner cartridge at this time unless print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9Tikguc7zjIuwP+sJ26_wXWU0l3BsFcltTcI9O9Eym0qFoo2P+9wMKzxcGRDkOOdc9SU4SSU=/ish_10367090-7156822-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "26",
+    "code": "10.03.70",
+    "severity": "WARNING",
+    "description": "The printer indicates when one of the supplies is printing past very low state. The actual remaining supply life might vary. You do not need to replace the toner cartridge at this time unless the print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9Tikguc7zjIuwP+sJ26_wXWU0l3BsFcltTcI9O9Eym0qFoo2P+9wMKzxcGRDkOOdc9SU4SSU=/ish_10367090-7156822-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "27",
+    "code": "10.03.87",
+    "severity": "ERROR",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibp_Sywtv9Hvi4e6P+sLhuj1bU4GwhYOa9BFaoAVWv4CrhGBhrbtJFMnniKFTf0r4IvCr5FfQA==/ish_1690610-1730354-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "39",
+    "code": "10.23.15",
+    "severity": "ERROR",
+    "description": "The fuser is either not installed, or not correctly installed in the printer.",
+    "solution_url": null
+  },
+  {
+    "id": "40",
+    "code": "10.26.58",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": null
+  },
+  {
+    "id": "41",
+    "code": "10.26.59",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": null
+  },
+  {
+    "id": "3",
+    "code": "10.99.40",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "48",
+    "code": "13.A1.D1",
+    "severity": "ERROR",
+    "description": "Paper delay jam from tray 1.",
+    "solution_url": null
+  },
+  {
+    "id": "28",
+    "code": "13.A2.D2",
+    "severity": "ERROR",
+    "description": "Errors in the 13.* family are related to jams.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2KLl+SCstps3oh426P+lxm_ObQ15Ft1tRNvV4FdZsLowUnAbRpJsMExO+bjDgsioHoffC++Bd/ish_1690610-842345-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "4",
+    "code": "13.A3.D3",
+    "severity": "ERROR",
+    "description": "Optional tray paper feed jam.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "49",
+    "code": "13.B2.A1",
+    "severity": "ERROR",
+    "description": "Paper stay jam in the rear door at the image area.",
+    "solution_url": null
+  },
+  {
+    "id": "5",
+    "code": "13.B2.A2",
+    "severity": "ERROR",
+    "description": "Paper STAY jam in the top cover at the image area.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "50",
+    "code": "13.B2.D1",
+    "severity": "ERROR",
+    "description": "Paper delay jam in the rear door at the image area.",
+    "solution_url": null
+  },
+  {
+    "id": "42",
+    "code": "13.B2.D2",
+    "severity": "ERROR",
+    "description": "Paper delay jam at the image area.",
+    "solution_url": null
+  },
+  {
+    "id": "6",
+    "code": "13.B2.D3",
+    "severity": "ERROR",
+    "description": "Paper delay jam in top cover at image area.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "29",
+    "code": "13.B4.C1",
+    "severity": "ERROR",
+    "description": "Paper delay jam to loop sensor inside the right door.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85kTHZAhOvPbp9TigoucrzjIuwP+sJ28+teEc7oVcEJsxoUYQTC9oFrAD337iO7gu8OngEb_cD2afB9DRs5nI=/ish_12855694-7157026-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "58",
+    "code": "13.B9.A2",
+    "severity": "ERROR",
+    "description": "Fuser delivery stay jam.",
+    "solution_url": null
+  },
+  {
+    "id": "7",
+    "code": "13.B9.D2",
+    "severity": "ERROR",
+    "description": "Fuser delivery delay jam.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "8",
+    "code": "13.B9.D3",
+    "severity": "ERROR",
+    "description": "Fuser delivery delay jam.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "59",
+    "code": "13.D3.D2",
+    "severity": "ERROR",
+    "description": "The paper jammed while attempting to duplex.",
+    "solution_url": null
+  },
+  {
+    "id": "43",
+    "code": "13.E1.D2",
+    "severity": "ERROR",
+    "description": "Output delivery delay jam. Paper did not reach the output bin full sensor in time.",
+    "solution_url": null
+  },
+  {
+    "id": "51",
+    "code": "13.FF.FF",
+    "severity": "ERROR",
+    "description": "A power on residual paper jam has occurred.",
+    "solution_url": null
+  },
+  {
+    "id": "30",
+    "code": "31.03.42",
+    "severity": "WARNING",
+    "description": "Errors in the 31.* family are related to the document feeder.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibp_Sy4hs9Hvi4e6P+sLgPfzcH0PoGEFZs9URfg2B_pRsxvJv7qL_H+k5xtSp3E7_FqVHMqDpw==/ish_1690610-1730198-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "9",
+    "code": "32.08.A1",
+    "severity": "INFO",
+    "description": "An event related to starting the printer.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "10",
+    "code": "32.08.A2",
+    "severity": "INFO",
+    "description": "An event related to starting the printer.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "11",
+    "code": "32.08.A3",
+    "severity": "INFO",
+    "description": "An event related to starting the printer.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "12",
+    "code": "33.01.03",
+    "severity": "INFO",
+    "description": "A save or restore process has occurred.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "31",
+    "code": "34.01.01",
+    "severity": "INFO",
+    "description": null,
+    "solution_url": null
+  },
+  {
+    "id": "32",
+    "code": "34.02.01",
+    "severity": "INFO",
+    "description": null,
+    "solution_url": null
+  },
+  {
+    "id": "13",
+    "code": "40.08.00",
+    "severity": "INFO",
+    "description": "The USB storage accessory has been removed.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "33",
+    "code": "41.03.A1",
+    "severity": "ERROR",
+    "description": "The printer detected a different paper size than expected.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDXfBRirPbp_Qi4guMnzjIuwP+sJ296sc3UjmlRIIu5sftsBH9MIlj2G3uiR0+33na3oeL5FnFBioNWp2zI=/ish_12513120-7391835-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "44",
+    "code": "41.03.A2",
+    "severity": "ERROR",
+    "description": "Size mismatch. Detected media too long from Tray 2",
+    "solution_url": null
+  },
+  {
+    "id": "34",
+    "code": "41.03.B1",
+    "severity": "ERROR",
+    "description": "The printer detected a different paper size than expected.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDXfBRirPbp_Qi4guMnzjIuwP+sJ2_2jWUYHt0p6CqpScYUXXN4MpDf_v7nsrLcB2tlKVRMPBQOKgWfnV54=/ish_12513120-7391835-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "45",
+    "code": "41.03.B2",
+    "severity": "ERROR",
+    "description": "The printer detected a different paper size than expected.",
+    "solution_url": null
+  },
+  {
+    "id": "52",
+    "code": "42.33.01",
+    "severity": "WARNING",
+    "description": "Errors in the 42.* family indicate an internal system failure has occurred.",
+    "solution_url": null
+  },
+  {
+    "id": "14",
+    "code": "44.A0.A2",
+    "severity": "ERROR",
+    "description": "Errors in the 44.* family are related to the digital send functionality: fax, email, send to SharePoint, or save to folder.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "15",
+    "code": "47.03.10",
+    "severity": "INFO",
+    "description": "Print job internal error.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "16",
+    "code": "47.06.09",
+    "severity": "WARNING",
+    "description": "Print application internal error.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "60",
+    "code": "49.38.07",
+    "severity": "ERROR",
+    "description": "Generic error.",
+    "solution_url": null
+  },
+  {
+    "id": "35",
+    "code": "49.39.01",
+    "severity": "INFO",
+    "description": "A firmware error occurred.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85mDHbDBKvPbx+TSksu87zjIuwP+sJ26v0X0k0uEVWJN9IVO0dLvEQmwHaiIWP3UwNV60Z3smW9jYgcwB+ioY=/ish_12157884-1266402-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "53",
+    "code": "53.A1.10",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" paper delivery direction misalignment resolved.",
+    "solution_url": null
+  },
+  {
+    "id": "54",
+    "code": "53.A1.11",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" paper delivery direction misalignment warning.",
+    "solution_url": null
+  },
+  {
+    "id": "55",
+    "code": "53.A2.10",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" overload resolved.",
+    "solution_url": null
+  },
+  {
+    "id": "56",
+    "code": "53.A2.11",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" overload warning.",
+    "solution_url": null
+  },
+  {
+    "id": "46",
+    "code": "53.B0.02",
+    "severity": "WARNING",
+    "description": "Tray \"Z\" feed roller nearing end of life.",
+    "solution_url": null
+  },
+  {
+    "id": "36",
+    "code": "54.0E.01",
+    "severity": "INFO",
+    "description": "These are informational only messages for engine calibration events.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDXVBhmsPbt0Qi4vv8XzjIuwP+sJ26enXVUzvhZ3O6l8F8E_HP0NxzPf3quEzIag61orc2pvIHPHRGVw5R0=/ish_12519237-6891749-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "37",
+    "code": "54.0E.02",
+    "severity": "INFO",
+    "description": "These are informational only messages for engine calibration events.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDXVBhmsPbt0Qi4vv8XzjIuwP+sJ26enXVUzvhZ3O6l8F8E_HP0NxzPf3quEzIag61orc2pvIHPHRGVw5R0=/ish_12519237-6891749-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "57",
+    "code": "54.40.00",
+    "severity": "ERROR",
+    "description": "Errors in the 54.* family are related to the image-formation system.",
+    "solution_url": null
+  },
+  {
+    "id": "17",
+    "code": "60.00.02",
+    "severity": "ERROR",
+    "description": "A tray lifting error has occurred.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "18",
+    "code": "60.01.02",
+    "severity": "ERROR",
+    "description": "A tray lifting error has occurred.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "19",
+    "code": "90.15.01",
+    "severity": "WARNING",
+    "description": "Errors in the 90.* family are related to the control panel.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "20",
+    "code": "98.00.07",
+    "severity": "INFO",
+    "description": "Errors in the 98.* family are related to data corruption in the firmware.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "47",
+    "code": "99.03.20",
+    "severity": "INFO",
+    "description": "Errors in the 99.* family are related to the firmware upgrade process.",
+    "solution_url": null
+  },
+  {
+    "id": "38",
+    "code": "99.06.21",
+    "severity": "INFO",
+    "description": "Errors in the 99.* family are related to the firmware upgrade process.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDHVAhKpPbx7SC8qvs7zjIuwP+sJ29OCT0YtzllEEP1vfd1sC4FSgUHSvL_kqNhCmByrKdicmHH_Cz0KWQQ=/ish_12559682-1730252-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  }
+]
