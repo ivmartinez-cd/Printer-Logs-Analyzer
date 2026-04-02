@@ -815,25 +815,27 @@ export default function DashboardPage() {
               <div className="kpi-card__label">Error Status</div>
               <div className="kpi-card__values">
                 <span className="kpi-card__value kpi-card__value--error">{errorCount}</span>
+                <span className="kpi-card__values-sep">·</span>
                 <span className="kpi-card__value kpi-card__value--warning">{warningCount}</span>
+                <span className="kpi-card__values-sep">·</span>
                 <span className="kpi-card__value kpi-card__value--info">{infoCount}</span>
               </div>
-              <div className="kpi-card__sub">crit / warn / info</div>
+              <div className="kpi-card__sub">crítico · advertencia · info</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-card__label">Activity Impacts</div>
+              <div className="kpi-card__label">Incidencias Activas</div>
               <div className="kpi-card__value">{filteredIncidents.length}</div>
-              <div className="kpi-card__sub">incidencias en período</div>
+              <div className="kpi-card__sub">incidentes detectados en el log</div>
             </div>
             <div className="kpi-card">
               <div className="kpi-card__label">Impacted Printers</div>
               <div className="kpi-card__value">{uniqueCodes}</div>
-              <div className="kpi-card__sub">códigos únicos / {globalSeverityFromFiltered} global</div>
+              <div className="kpi-card__sub">códigos únicos de error</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-card__label">Resolved</div>
+              <div className="kpi-card__label">Eventos Registrados</div>
               <div className="kpi-card__value">{filteredEvents.length}</div>
-              <div className="kpi-card__sub">eventos en período</div>
+              <div className="kpi-card__sub">eventos registrados en el log</div>
             </div>
           </section>
 

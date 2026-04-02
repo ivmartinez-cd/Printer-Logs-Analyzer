@@ -579,8 +579,16 @@ body {
 
 .kpi-card__values {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.kpi-card__values-sep {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #3a3f50;
+  user-select: none;
 }
 
 .kpi-card__value--error {
