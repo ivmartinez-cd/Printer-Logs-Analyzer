@@ -480,46 +480,22 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ---
 
-## PRÓXIMA SESIÓN — Traducción automática de descripciones
+## Traducción automática de descripciones
 
-**Objetivo:** Traducir las descripciones de `error_codes` del inglés al español automáticamente al guardarlas en la DB.
+**Estado:** Implementado.
 
-**API elegida:** MyMemory (gratuita, sin key, 5000 palabras/día)
-- URL: `https://api.mymemory.translated.net/get?q=TEXT&langpair=en|es`
+Al guardar un código en `/error-codes/upsert`, el backend llama a MyMemory API y guarda la traducción en `description_es`.
 
-**Implementación planificada:**
-1. En `api.py`, en el endpoint `/error-codes/upsert`, después de guardar la descripción en inglés, hacer GET a MyMemory con la descripción
-2. Guardar la traducción en un nuevo campo `description_es` en `error_codes`
-3. Crear migración SQL: `ALTER TABLE error_codes ADD COLUMN IF NOT EXISTS description_es TEXT`
-4. En `DiagnosticPanel.tsx`, usar `description_es` si existe, sino `description` en inglés como fallback
+- `_translate_to_spanish(text)` en `api.py` — MyMemory, timeout 10 s, falla silenciosamente
+- Campo `description_es` en `error_codes` (migración `006_add_description_es.sql` — **correr manualmente en Neon**)
+- `ErrorCode.description_es` en el dataclass y todas las queries del repositorio
+- `Event.code_description_es` en `domain/entities.py` y `types/api.ts`
+- `DiagnosticPanel` usa `code_description_es ?? code_description` en todas las reglas
 
----
-
-## PRÓXIMA SESIÓN — Mejoras pendientes DiagnosticPanel
-
-### Mejora pendiente: Mensajes de diagnóstico con fecha y rango horario
-
-En `DiagnosticPanel.tsx`, la Regla 2 (ráfaga) necesita dos mejoras:
-
-#### 1. Formato con fecha y horario
-Cambiar el mensaje actual:
-`"⚡ N eventos de 'descripción larga...' en menos de 30 minutos"`
-
-Por este nuevo formato:
-`"⚡ El [D/M/YYYY] entre las [HH:MM] y las [HH:MM] se generaron [N] eventos de '[descripción corta]' ([código])"`
-
-Ejemplo esperado:
-`"⚡ El 3/4/2026 entre las 18:09 y las 18:26 se generaron 15 eventos de 'Paper delay jam at the image area' (13.B2.D2)"`
-
-#### 2. Descripción corta
-Implementar `truncateDescription(desc: string): string` que:
-- Corta en el primer punto si existe
-- Si sigue siendo mayor a 50 chars, corta en la palabra más cercana y agrega `"..."`
-- Siempre agrega el código entre paréntesis al final
-
-#### Implementación
-- Al detectar la ráfaga, capturar timestamp del primer y último evento del grupo
-- Formatear fecha como `D/M/YYYY` y horas como `HH:MM`
+**Migración pendiente de aplicar en producción (Neon):**
+```sql
+ALTER TABLE error_codes ADD COLUMN IF NOT EXISTS description_es TEXT;
+```
 
 ---
 

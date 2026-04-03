@@ -9,6 +9,21 @@ type DiagnosticAlert = {
   message: string
 }
 
+function truncateDescription(desc: string): string {
+  const dotIdx = desc.indexOf('.')
+  let shortened = dotIdx !== -1 ? desc.slice(0, dotIdx) : desc
+  if (shortened.length > 50) {
+    const words = shortened.split(' ')
+    let result = ''
+    for (const word of words) {
+      if ((result + (result ? ' ' : '') + word).length > 50) break
+      result += (result ? ' ' : '') + word
+    }
+    shortened = result + '...'
+  }
+  return shortened
+}
+
 function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   const alerts: DiagnosticAlert[] = []
 
@@ -19,7 +34,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   if (totalErrorOccurrences > 0) {
     const countByCode = new Map<string, { count: number; description: string | null }>()
     for (const evt of errorEvents) {
-      const entry = countByCode.get(evt.code) ?? { count: 0, description: evt.code_description ?? null }
+      const entry = countByCode.get(evt.code) ?? { count: 0, description: evt.code_description_es ?? evt.code_description ?? null }
       countByCode.set(evt.code, { count: entry.count + 1, description: entry.description })
     }
     for (const [code, { count, description }] of countByCode) {
@@ -47,7 +62,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     const arr = timesByCode.get(evt.code) ?? []
     arr.push(t)
     timesByCode.set(evt.code, arr)
-    if (!descByCode.has(evt.code)) descByCode.set(evt.code, evt.code_description ?? null)
+    if (!descByCode.has(evt.code)) descByCode.set(evt.code, evt.code_description_es ?? evt.code_description ?? null)
   }
   for (const [code, times] of timesByCode) {
     const sorted = [...times].sort((a, b) => a - b)
@@ -55,11 +70,19 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
       if (sorted[i + BURST_COUNT - 1] - sorted[i] < BURST_WINDOW_MS) {
         let windowCount = 0
         for (let j = i; j < sorted.length && sorted[j] - sorted[i] < BURST_WINDOW_MS; j++) windowCount++
-        const desc = descByCode.get(code) ?? code
+        const windowStart = sorted[i]
+        const windowEnd = sorted[i + windowCount - 1]
+        const rawDesc = descByCode.get(code) ?? null
+        const shortDesc = rawDesc ? truncateDescription(rawDesc) : code
+        const d1 = new Date(windowStart)
+        const d2 = new Date(windowEnd)
+        const date = `${d1.getDate()}/${d1.getMonth() + 1}/${d1.getFullYear()}`
+        const timeStart = `${String(d1.getHours()).padStart(2, '0')}:${String(d1.getMinutes()).padStart(2, '0')}`
+        const timeEnd = `${String(d2.getHours()).padStart(2, '0')}:${String(d2.getMinutes()).padStart(2, '0')}`
         alerts.push({
           key: `burst-${code}`,
           level: 'warning',
-          message: `⚡ ${windowCount} eventos de '${desc}' en menos de 30 minutos`,
+          message: `⚡ El ${date} entre las ${timeStart} y las ${timeEnd} se generaron ${windowCount} eventos de '${shortDesc}' (${code})`,
         })
         break
       }
@@ -92,7 +115,10 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   }
 
   // REGLA 4 — Firmware: descripción contiene "firmware"
-  const hasFirmwareErrors = events.some((e) => e.code_description?.toLowerCase().includes('firmware'))
+  const hasFirmwareErrors = events.some((e) => {
+    const d = e.code_description_es ?? e.code_description
+    return d?.toLowerCase().includes('firmware')
+  })
   if (hasFirmwareErrors) {
     alerts.push({
       key: 'firmware',
@@ -106,7 +132,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     ...new Set(
       events
         .filter((e) => {
-          const d = e.code_description?.toLowerCase() ?? ''
+          const d = (e.code_description_es ?? e.code_description)?.toLowerCase() ?? ''
           return d.includes('tray') || d.includes('bandeja')
         })
         .map((e) => e.code),

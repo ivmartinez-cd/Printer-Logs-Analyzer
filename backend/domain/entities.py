@@ -21,6 +21,7 @@ class Event(BaseModel):
     code_description: Optional[str] = Field(None, description="Description from error_codes catalog")
     code_solution_url: Optional[str] = Field(None, description="Solution URL from error_codes catalog")
     code_solution_content: Optional[str] = Field(None, description="Fetched text content of the solution page")
+    code_description_es: Optional[str] = Field(None, description="Spanish translation of description from error_codes catalog")
 
     model_config = {"frozen": True}
 
