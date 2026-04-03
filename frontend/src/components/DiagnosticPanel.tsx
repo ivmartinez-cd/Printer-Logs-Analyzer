@@ -1,0 +1,160 @@
+import { useState } from 'react'
+import type { Event as ApiEvent, Incident as ApiIncident } from '../types/api'
+
+type AlertLevel = 'error' | 'warning' | 'info' | 'success'
+
+type DiagnosticAlert = {
+  key: string
+  level: AlertLevel
+  message: string
+}
+
+function runDiagnostics(incidents: ApiIncident[], events: ApiEvent[]): DiagnosticAlert[] {
+  const alerts: DiagnosticAlert[] = []
+
+  const errorEvents = events.filter((e) => e.type.toUpperCase() === 'ERROR')
+  const totalErrorOccurrences = errorEvents.length
+
+  // REGLA 1 — Problema dominante: un código concentra >50% de todos los errores
+  if (totalErrorOccurrences > 0) {
+    const countByCode = new Map<string, { count: number; description: string | null }>()
+    for (const evt of errorEvents) {
+      const entry = countByCode.get(evt.code) ?? { count: 0, description: evt.code_description ?? null }
+      countByCode.set(evt.code, { count: entry.count + 1, description: entry.description })
+    }
+    for (const [code, { count, description }] of countByCode) {
+      const pct = Math.round((count / totalErrorOccurrences) * 100)
+      if (pct > 50) {
+        const descPart = description ? ` — ${description}` : ''
+        alerts.push({
+          key: 'dominant',
+          level: 'error',
+          message: `⚠️ Problema principal: ${code}${descPart} (${count} ocurrencias, ${pct}% del total de errores)`,
+        })
+        break
+      }
+    }
+  }
+
+  // REGLA 2 — Ráfaga: 5+ eventos del mismo código en < 30 minutos
+  const BURST_COUNT = 5
+  const BURST_WINDOW_MS = 30 * 60 * 1000
+  const timesByCode = new Map<string, number[]>()
+  for (const evt of events) {
+    const t = new Date(evt.timestamp).getTime()
+    if (Number.isNaN(t)) continue
+    const arr = timesByCode.get(evt.code) ?? []
+    arr.push(t)
+    timesByCode.set(evt.code, arr)
+  }
+  for (const [code, times] of timesByCode) {
+    const sorted = [...times].sort((a, b) => a - b)
+    for (let i = 0; i <= sorted.length - BURST_COUNT; i++) {
+      if (sorted[i + BURST_COUNT - 1] - sorted[i] < BURST_WINDOW_MS) {
+        let windowCount = 0
+        for (let j = i; j < sorted.length && sorted[j] - sorted[i] < BURST_WINDOW_MS; j++) windowCount++
+        alerts.push({
+          key: `burst-${code}`,
+          level: 'warning',
+          message: `⚡ Falla intermitente detectada en ${code}: ${windowCount} eventos en menos de 30 minutos — posible problema mecánico`,
+        })
+        break
+      }
+    }
+  }
+
+  // REGLA 3 — Escalamiento: segunda mitad del log tiene >2x errores que la primera
+  const allTimestamps = events
+    .map((e) => new Date(e.timestamp).getTime())
+    .filter((t) => !Number.isNaN(t))
+  if (allTimestamps.length >= 2) {
+    const minT = Math.min(...allTimestamps)
+    const maxT = Math.max(...allTimestamps)
+    const midT = (minT + maxT) / 2
+    const firstErrors = events.filter((e) => {
+      const t = new Date(e.timestamp).getTime()
+      return !Number.isNaN(t) && t < midT && e.type.toUpperCase() === 'ERROR'
+    }).length
+    const secondErrors = events.filter((e) => {
+      const t = new Date(e.timestamp).getTime()
+      return !Number.isNaN(t) && t >= midT && e.type.toUpperCase() === 'ERROR'
+    }).length
+    if (firstErrors > 0 && secondErrors > firstErrors * 2) {
+      alerts.push({
+        key: 'escalation',
+        level: 'error',
+        message: `📈 El problema está escalando: los errores aumentaron significativamente en la segunda mitad del período analizado`,
+      })
+    }
+  }
+
+  // REGLA 4 — Firmware: códigos que empiezan con "49."
+  const hasFirmwareErrors = events.some((e) => e.code.startsWith('49.'))
+  if (hasFirmwareErrors) {
+    alerts.push({
+      key: 'firmware',
+      level: 'warning',
+      message: `🔧 Se detectaron errores de firmware (49.xx.xx) — considerar actualización de firmware del equipo`,
+    })
+  }
+
+  // REGLA 5 — Múltiples bandejas: códigos 60.00.xx con distintos sufijos
+  const trayErrorCodes = [
+    ...new Set(events.filter((e) => /^60\.00\.\d+$/.test(e.code)).map((e) => e.code)),
+  ]
+  if (trayErrorCodes.length >= 2) {
+    alerts.push({
+      key: 'trays',
+      level: 'warning',
+      message: `🗂️ Errores en múltiples bandejas detectados — posible problema en el mecanismo de alimentación general`,
+    })
+  }
+
+  // REGLA 6 — Saludable: sin ninguna alerta
+  if (alerts.length === 0) {
+    alerts.push({
+      key: 'healthy',
+      level: 'success',
+      message: `✅ Sin patrones de alerta detectados — el equipo opera dentro de parámetros normales`,
+    })
+  }
+
+  // Ordenar por severidad y limitar a 5
+  const order: Record<AlertLevel, number> = { error: 0, warning: 1, info: 2, success: 3 }
+  return alerts.sort((a, b) => order[a.level] - order[b.level]).slice(0, 5)
+}
+
+interface DiagnosticPanelProps {
+  incidents: ApiIncident[]
+  events: ApiEvent[]
+}
+
+export function DiagnosticPanel({ incidents, events }: DiagnosticPanelProps) {
+  const [collapsed, setCollapsed] = useState(false)
+  const alerts = runDiagnostics(incidents, events)
+
+  return (
+    <div className="diagnostic-panel">
+      <button
+        type="button"
+        className="diagnostic-panel__header"
+        onClick={() => setCollapsed((c) => !c)}
+        aria-expanded={!collapsed}
+      >
+        <span className="diagnostic-panel__title">🔍 Diagnóstico automático</span>
+        <span className="diagnostic-panel__chevron" aria-hidden="true">
+          {collapsed ? '▼' : '▲'}
+        </span>
+      </button>
+      {!collapsed && (
+        <ul className="diagnostic-panel__list">
+          {alerts.map((alert) => (
+            <li key={alert.key} className={`diagnostic-panel__alert diagnostic-panel__alert--${alert.level}`}>
+              {alert.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}

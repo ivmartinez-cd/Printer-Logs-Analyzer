@@ -29,6 +29,7 @@ import { SaveIncidentModal } from '../components/SaveIncidentModal'
 import { SDSIncidentModal, type SdsIncidentData } from '../components/SDSIncidentModal'
 import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
+import { DiagnosticPanel } from '../components/DiagnosticPanel'
 import { useToast } from '../contexts/ToastContext'
 
 function useLiveTime() {
@@ -1169,6 +1170,9 @@ export default function DashboardPage() {
               <div className="kpi-card__sub">eventos registrados en el log</div>
             </div>
           </section>
+
+          {/* Diagnóstico automático basado en reglas */}
+          <DiagnosticPanel incidents={filteredIncidents} events={filteredEvents} />
 
           {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
           <div className="dashboard__charts-row">
