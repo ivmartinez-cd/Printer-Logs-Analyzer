@@ -236,7 +236,7 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 4. Se abre modal `ConfirmModal` "¿Agregar incidente SDS?" con "Sí, agregar" / "No, continuar"
    - "Sí, agregar" → abre `SDSIncidentModal`; al completarlo (`onContinue`) o cerrarlo (`onClose`), se llama `commitPendingResult()` que mueve `pendingResult` → `result` y muestra el dashboard con `SDSIncidentPanel`
    - "No, continuar" (o click fuera) → `commitPendingResult()` directamente; el dashboard se muestra sin panel SDS
-5. Render: AreaChart (eventos/hora), BarChart (top 10 códigos), tabla incidents, tabla events
+5. Render: KPIs → `DiagnosticPanel` → AreaChart (eventos/hora) → BarChart (top 10 códigos) → tabla incidents → tabla events
 6. Nuevo análisis limpia `result`, `pendingResult`, `sdsIncident`
 
 **Filtros y sorting:**
@@ -304,6 +304,7 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 | `SDSIncidentModal.tsx` | Textarea para pegar incident SDS; parsea texto → `SdsIncidentData` |
 | `SDSIncidentPanel.tsx` | Muestra data SDS parseada; calcula match SDS vs incidentes del log usando `event_context` + `more_info` |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
+| `DiagnosticPanel.tsx` | Panel colapsable de diagnóstico automático basado en reglas; aparece entre KPIs y gráficos; recibe `filteredIncidents` y `filteredEvents` (respeta filtro de fecha) |
 
 **Lógica de match SDS vs Log (`SDSIncidentPanel.tsx`):**
 - `getSdsCodesForMatch(sds)` devuelve un array de códigos a buscar en el log:
@@ -314,6 +315,23 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 - `incidentCodeMatchesSds` sigue soportando sufijo `z` para matching por prefijo (ej. `53.B0.0z` matchea `53.B0.01`, `53.B0.02`, etc.).
 | `SolutionContentModal.tsx` | Muestra contenido HTML de solución guardado; link al URL (puede estar vencido) |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
+
+### DiagnosticPanel (`components/DiagnosticPanel.tsx`)
+
+Panel colapsable (por defecto expandido) que aparece entre los KPIs y los gráficos. No llama a ninguna API — toda la lógica es cálculo puro en el frontend con `filteredIncidents` y `filteredEvents` (por eso respeta el filtro de fecha activo).
+
+**Reglas implementadas (en orden de severidad):**
+
+| # | Nombre | Condición | Nivel |
+|---|--------|-----------|-------|
+| 1 | Problema dominante | Un código ERROR concentra >50% del total de eventos de error | Rojo |
+| 2 | Ráfaga | 5+ eventos del mismo código en una ventana de 30 minutos | Amarillo |
+| 3 | Escalamiento | La 2ª mitad del período tiene >2× errores que la 1ª mitad | Rojo |
+| 4 | Firmware | Existe algún evento con código que empieza en `49.` | Amarillo |
+| 5 | Múltiples bandejas | 2+ códigos distintos del patrón `60.00.xx` | Amarillo |
+| 6 | Saludable | Ninguna de las reglas anteriores se disparó | Verde |
+
+Máximo 5 alertas visibles, ordenadas por severidad (error → warning → info → success). Si no hay alertas, siempre muestra la regla de "saludable".
 
 ### Keep-alive (`App.tsx`)
 
