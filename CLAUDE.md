@@ -228,7 +228,15 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 **Filtros y sorting:**
 - Incidents: filtro por severidad, búsqueda por texto, sort por columna (asc/desc)
 - Events: ídem
-- Filtro por fecha: selección de día filtra events e incidents al rango de ese día
+- Filtro por fecha: tres modos — día individual (date input), semana (botones "Esta semana" / "Semana anterior"), o "Todo"
+
+**Filtro de fecha — estado y tipo:**
+- `selectedDate: string | null` — día seleccionado ("YYYY-MM-DD") o null
+- `selectedWeekRange: { start: string; end: string } | null` — semana lunes–domingo o null
+- `activeFilter: DateFilter` — computed: `selectedWeekRange ?? selectedDate`
+- `DateFilter = string | { start: string; end: string } | null` — tipo unificado usado en todas las funciones de filtrado
+- Seleccionar día limpia `selectedWeekRange`; seleccionar semana limpia `selectedDate`; "Todo" limpia ambos
+- El título del gráfico muestra el rango de semana como `"3 mar – 9 mar"` (via `formatWeekRange`)
 
 **KPIs (sección `.kpis`, 4 cards):**
 1. **Estado de errores** — conteo `ERROR · WARNING · INFO` de incidentes filtrados
@@ -239,8 +247,10 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 El KPI "Último error crítico" usa `filteredEvents` (respeta el filtro de fecha activo), no requiere endpoint nuevo.
 
 **Helpers importantes:**
-- `getIncidentTableRows(incidents, events, selectedDate)` → `IncidentRow[]` — derivado de `result`, no memoizado
-- `filterIncidentsByDate`, `filterEventsByDate`, `getWindowForDate`
+- `getIncidentTableRows(incidents, events, filter: DateFilter)` → `IncidentRow[]` — derivado de `result`, no memoizado
+- `filterIncidentsByDate`, `filterEventsByDate`, `getWindowForDate` — todos aceptan `DateFilter`
+- `getWeekRange(date)` → `{ start, end }` — calcula lunes–domingo de la semana de `date`
+- `formatWeekRange(range)` → `"3 mar – 9 mar"` — formato legible del rango
 - `bucketEventsByHour` → datos para AreaChart
 - `getTopIncidentsForChart` → top N para BarChart
 
