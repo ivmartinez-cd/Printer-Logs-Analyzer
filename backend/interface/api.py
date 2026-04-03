@@ -235,11 +235,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
-    from fastapi.responses import Response
-
-    @app.options("/{full_path:path}")
-    def preflight_handler():
-        return Response(status_code=200)
 
     @app.get("/health", summary="Basic health probe")
     def health() -> dict:
