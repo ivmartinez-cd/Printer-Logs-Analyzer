@@ -25,6 +25,8 @@ from infrastructure.repositories.saved_analysis_repository import (
     SavedAnalysisSnapshot,
 )
 
+
+
 MAX_LOGS_LENGTH = 2_000_000
 
 _FETCH_TIMEOUT = 15  # seconds
@@ -227,7 +229,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"],
+        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174","https://printer-logs-analyzer.vercel.app"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
