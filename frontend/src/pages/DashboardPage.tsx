@@ -344,6 +344,7 @@ export default function DashboardPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
   const [logFileName, setLogFileName] = useState<string | null>(null)
   const [solutionModal, setSolutionModal] = useState<{ content: string; url?: string | null } | null>(null)
+  const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
   const toast = useToast()
 
   async function handleAnalyze(logText: string, fileName?: string) {
@@ -974,6 +975,31 @@ export default function DashboardPage() {
                   ? `Volumen de incidencias (${new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
                   : 'Volumen de incidencias (registro completo)'}
               </h2>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                {([['ERROR', '#ef4444'], ['WARNING', '#f59e0b'], ['INFO', '#3b82f6']] as const).map(([sev, color]) => {
+                  const active = visibleSeverities.has(sev)
+                  return (
+                    <button
+                      key={sev}
+                      onClick={() => {
+                        const next = new Set(visibleSeverities)
+                        if (next.has(sev)) { next.delete(sev) } else { next.add(sev) }
+                        setVisibleSeverities(next)
+                      }}
+                      style={{
+                        fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 4, cursor: 'pointer',
+                        border: `1px solid ${color}`,
+                        background: active ? color : 'transparent',
+                        color: active ? '#fff' : color,
+                        opacity: active ? 1 : 0.6,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {sev}
+                    </button>
+                  )
+                })}
+              </div>
               <div className="chart-wrap">
                 {volumeData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -994,12 +1020,14 @@ export default function DashboardPage() {
                       <YAxis stroke="#9aa3b2" tick={{ fontSize: 11 }} />
                       <Tooltip
                         contentStyle={{ background: '#151821', border: '1px solid #232734', borderRadius: 6 }}
+                        labelStyle={{ color: '#e5e7eb' }}
+                        itemStyle={{ color: '#e5e7eb' }}
                         labelFormatter={(v) => new Date(v).toLocaleString()}
                       />
                       <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
-                      <Area type="monotone" dataKey="ERROR" stackId="a" stroke="#ef4444" strokeWidth={2} fill="#ef4444" fillOpacity={0.7} />
-                      <Area type="monotone" dataKey="WARNING" stackId="a" stroke="#f59e0b" strokeWidth={2} fill="#f59e0b" fillOpacity={0.7} />
-                      <Area type="monotone" dataKey="INFO" stackId="a" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.7} />
+                      {visibleSeverities.has('ERROR') && <Area type="monotone" dataKey="ERROR" stackId="a" stroke="#ef4444" strokeWidth={2} fill="#ef4444" fillOpacity={0.7} />}
+                      {visibleSeverities.has('WARNING') && <Area type="monotone" dataKey="WARNING" stackId="a" stroke="#f59e0b" strokeWidth={2} fill="#f59e0b" fillOpacity={0.7} />}
+                      {visibleSeverities.has('INFO') && <Area type="monotone" dataKey="INFO" stackId="a" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.7} />}
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
@@ -1018,6 +1046,8 @@ export default function DashboardPage() {
                       <YAxis type="category" dataKey="name" stroke="#9aa3b2" tick={{ fontSize: 11 }} width={80} />
                       <Tooltip
                         contentStyle={{ background: '#151821', border: '1px solid #232734', borderRadius: 6 }}
+                        labelStyle={{ color: '#e5e7eb' }}
+                        itemStyle={{ color: '#e5e7eb' }}
                       />
                       <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                           {topCodes.map((entry, index) => {
