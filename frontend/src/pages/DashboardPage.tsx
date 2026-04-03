@@ -384,7 +384,9 @@ export default function DashboardPage() {
   const weekPickerRef = useRef<HTMLDivElement>(null)
   const [dayPickerOpen, setDayPickerOpen] = useState(false)
   const dayPickerRef = useRef<HTMLDivElement>(null)
-  const [sdsPromptVisible, setSdsPromptVisible] = useState(false)
+  const [pendingResult, setPendingResult] = useState<ParseLogsResponse | null>(null)
+  const [pendingCodesNew, setPendingCodesNew] = useState<string[]>([])
+  const [sdsPreModalOpen, setSdsPreModalOpen] = useState(false)
   const activeFilter: DateFilter = selectedWeekRange ?? selectedDate
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
@@ -445,8 +447,9 @@ export default function DashboardPage() {
     if (!logText.trim()) return
     setError(null)
     setResult(null)
+    setPendingResult(null)
+    setPendingCodesNew([])
     setCodesNew([])
-    setSdsPromptVisible(false)
     setSdsIncident(null)
     setLogFileName(fileName ?? null)
     setSelectedDate(null)
@@ -460,10 +463,10 @@ export default function DashboardPage() {
       const data = await previewLogs(logText)
       const validateRes = await validateLogs(logText).catch(() => ({ codes_new: [] as string[] }))
       const newCodes = validateRes.codes_new ?? []
-      setResult(data)
-      setCodesNew(newCodes)
+      setPendingResult(data)
+      setPendingCodesNew(newCodes)
       setLogModalOpen(false)
-      setSdsPromptVisible(true)
+      setSdsPreModalOpen(true)
       if (newCodes.length > 0) {
         toast.showWarning(`Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`)
       } else {
@@ -476,6 +479,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function commitPendingResult() {
+    setResult(pendingResult)
+    setCodesNew(pendingCodesNew)
+    setPendingResult(null)
+    setPendingCodesNew([])
   }
 
   async function handleSaveCodeToCatalog(body: ErrorCodeUpsertBody, isEdit: boolean = false) {
@@ -916,28 +926,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {sdsPromptVisible && result && viewMode === 'dashboard' && (
-            <div className="sds-prompt-banner" role="status">
-              <span className="sds-prompt-banner__text">¿Querés agregar un incidente SDS?</span>
-              <div className="sds-prompt-banner__actions">
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
-                  onClick={() => { setSdsPromptVisible(false); setSdsModalOpen(true) }}
-                >
-                  Sí, agregar
-                </button>
-                <button
-                  type="button"
-                  className="sds-prompt-banner__dismiss"
-                  onClick={() => setSdsPromptVisible(false)}
-                >
-                  Ahora no
-                </button>
-              </div>
             </div>
           )}
 
@@ -1572,8 +1560,29 @@ export default function DashboardPage() {
           onContinue={(data) => {
             setSdsIncident(data)
             setSdsModalOpen(false)
+            if (pendingResult !== null) commitPendingResult()
           }}
-          onClose={() => setSdsModalOpen(false)}
+          onClose={() => {
+            setSdsModalOpen(false)
+            if (pendingResult !== null) commitPendingResult()
+          }}
+        />
+      )}
+
+      {sdsPreModalOpen && (
+        <ConfirmModal
+          title="¿Agregar incidente SDS?"
+          message="¿Querés asociar un incidente del SDS a este análisis?"
+          confirmLabel="Sí, agregar"
+          cancelLabel="No, continuar"
+          onConfirm={() => {
+            setSdsPreModalOpen(false)
+            setSdsModalOpen(true)
+          }}
+          onCancel={() => {
+            setSdsPreModalOpen(false)
+            commitPendingResult()
+          }}
         />
       )}
 
