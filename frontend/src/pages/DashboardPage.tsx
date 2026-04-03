@@ -393,14 +393,20 @@ export default function DashboardPage() {
               ? { ...evt, code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url, code_solution_content: res.solution_content ?? evt.code_solution_content }
               : evt
           ),
-          incidents: prev.incidents.map((inc) => ({
-            ...inc,
-            events: inc.events.map((evt) =>
+          incidents: prev.incidents.map((inc) => {
+            const updatedEvents = inc.events.map((evt) =>
               evt.code === body.code
                 ? { ...evt, code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url, code_solution_content: res.solution_content ?? evt.code_solution_content }
                 : evt
-            ),
-          })),
+            )
+            if (inc.code !== body.code) return { ...inc, events: updatedEvents }
+            return {
+              ...inc,
+              events: updatedEvents,
+              sds_link: res.solution_url ?? body.solution_url ?? inc.sds_link,
+              sds_solution_content: res.solution_content ?? inc.sds_solution_content,
+            }
+          }),
         }
       })
       const baseMsg = isEdit ? `Código ${body.code} actualizado` : `Código ${body.code} agregado al catálogo`
