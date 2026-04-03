@@ -219,6 +219,16 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 
 **Vistas:** controladas por `viewMode`: `dashboard` | `saved-list` | `saved-detail`
 
+**Header del dashboard (cuando hay `result` o se está en saved-list/saved-detail):**
+- Muestra ícono de impresora SVG (mismo que en la pantalla de bienvenida) + título "HP Logs Analyzer"
+- Si `logFileName` está disponible, se muestra a la derecha del título como `dashboard__file-name`
+- `border-bottom` sutil + `padding-bottom: 20px` separan el header del contenido
+- Botones ("Incidentes guardados", "Analizar otro log", "Guardar incidente") tienen tamaño uniforme (`padding: 10px 20px`, `font-size: 0.875rem`) via `.dashboard__header-actions .dashboard__btn`
+
+**Subheader "Panel de errores":**
+- Muestra `Panel de errores · <logFileName>` cuando `logFileName` está disponible
+- Contiene los controles de filtro de fecha
+
 **Flujo principal:**
 1. Usuario clickea "Pegar logs y analizar" → abre `LogPasteModal` directamente
 2. `handleAnalyze()` → `POST /parser/preview` + `POST /parser/validate`
