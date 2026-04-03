@@ -480,6 +480,21 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ---
 
+## PRÓXIMA SESIÓN — Traducción automática de descripciones
+
+**Objetivo:** Traducir las descripciones de `error_codes` del inglés al español automáticamente al guardarlas en la DB.
+
+**API elegida:** MyMemory (gratuita, sin key, 5000 palabras/día)
+- URL: `https://api.mymemory.translated.net/get?q=TEXT&langpair=en|es`
+
+**Implementación planificada:**
+1. En `api.py`, en el endpoint `/error-codes/upsert`, después de guardar la descripción en inglés, hacer GET a MyMemory con la descripción
+2. Guardar la traducción en un nuevo campo `description_es` en `error_codes`
+3. Crear migración SQL: `ALTER TABLE error_codes ADD COLUMN IF NOT EXISTS description_es TEXT`
+4. En `DiagnosticPanel.tsx`, usar `description_es` si existe, sino `description` en inglés como fallback
+
+---
+
 ## Deuda técnica conocida
 
 - `DashboardPage.tsx` es un componente monolítico de ~2000 líneas — debería dividirse
