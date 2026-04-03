@@ -51,18 +51,48 @@ function formatDateTime(iso: string): string {
   }
 }
 
-/** selectedDate: null = Todo el log; "YYYY-MM-DD" = solo ese día (calendario local). */
-function getWindowForDate(events: ApiEvent[], selectedDate: string | null): { minTs: number; maxTs: number } | null {
+/**
+ * DateFilter:
+ *   null                          → Todo el log
+ *   "YYYY-MM-DD"                  → solo ese día
+ *   { start: "YYYY-MM-DD", end }  → rango de semana (lunes–domingo)
+ */
+type DateFilter = string | { start: string; end: string } | null
+
+function getWindowForDate(events: ApiEvent[], filter: DateFilter): { minTs: number; maxTs: number } | null {
   if (events.length === 0) return null
   const times = events.map((e) => new Date(e.timestamp).getTime()).filter((t) => !Number.isNaN(t))
   if (times.length === 0) return null
   const minTs = Math.min(...times)
   const maxTs = Math.max(...times)
-  if (!selectedDate) return { minTs, maxTs }
-  const [y, m, d] = selectedDate.split('-').map(Number)
-  const startOfDay = new Date(y, m - 1, d, 0, 0, 0, 0).getTime()
-  const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999).getTime()
-  return { minTs: startOfDay, maxTs: endOfDay }
+  if (!filter) return { minTs, maxTs }
+  if (typeof filter === 'string') {
+    const [y, m, d] = filter.split('-').map(Number)
+    return { minTs: new Date(y, m - 1, d, 0, 0, 0, 0).getTime(), maxTs: new Date(y, m - 1, d, 23, 59, 59, 999).getTime() }
+  }
+  const [sy, sm, sd] = filter.start.split('-').map(Number)
+  const [ey, em, ed] = filter.end.split('-').map(Number)
+  return { minTs: new Date(sy, sm - 1, sd, 0, 0, 0, 0).getTime(), maxTs: new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime() }
+}
+
+function getWeekRange(date: Date): { start: string; end: string } {
+  const day = date.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(date)
+  monday.setDate(date.getDate() + diff)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return { start: fmt(monday), end: fmt(sunday) }
+}
+
+function formatWeekRange(range: { start: string; end: string }): string {
+  const fmt = (s: string) => {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+  }
+  return `${fmt(range.start)} – ${fmt(range.end)}`
 }
 
 /** Rango de fechas del log en formato YYYY-MM-DD para min/max del input date. */
@@ -84,7 +114,7 @@ function getDateRangeFromEvents(events: ApiEvent[]): { minDate: string; maxDate:
   return { minDate: toStr(min), maxDate: toStr(max) }
 }
 
-function filterEventsByDate(events: ApiEvent[], selectedDate: string | null): ApiEvent[] {
+function filterEventsByDate(events: ApiEvent[], selectedDate: DateFilter): ApiEvent[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -97,7 +127,7 @@ function filterEventsByDate(events: ApiEvent[], selectedDate: string | null): Ap
 function filterIncidentsByDate(
   incidents: ApiIncident[],
   events: ApiEvent[],
-  selectedDate: string | null
+  selectedDate: DateFilter
 ): ApiIncident[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
@@ -127,7 +157,7 @@ type IncidentRow = {
 function getIncidentTableRows(
   incidents: ApiIncident[],
   events: ApiEvent[],
-  selectedDate: string | null
+  selectedDate: DateFilter
 ): IncidentRow[] {
   const filtered = filterIncidentsByDate(incidents, events, selectedDate)
   const window = getWindowForDate(events, selectedDate)
@@ -167,7 +197,7 @@ function getIncidentTableRows(
 function getTopIncidentsForChart(
   incidents: ApiIncident[],
   events: ApiEvent[],
-  selectedDate: string | null,
+  selectedDate: DateFilter,
   n: number
 ): { name: string; count: number; severity: string }[] {
   const window = getWindowForDate(events, selectedDate)
@@ -188,7 +218,7 @@ function getTopIncidentsForChart(
     .map((x) => ({ name: x.inc.code, count: x.countInWindow, severity: x.inc.severity }))
 }
 
-function bucketEventsByHour(events: ApiEvent[], selectedDate: string | null): { time: string; ERROR: number; WARNING: number; INFO: number }[] {
+function bucketEventsByHour(events: ApiEvent[], selectedDate: DateFilter): { time: string; ERROR: number; WARNING: number; INFO: number }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -330,6 +360,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedWeekRange, setSelectedWeekRange] = useState<{ start: string; end: string } | null>(null)
+  const activeFilter: DateFilter = selectedWeekRange ?? selectedDate
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
   const [sdsIncident, setSdsIncident] = useState<SdsIncidentData | null>(null)
@@ -487,8 +519,8 @@ export default function DashboardPage() {
   const events = result?.events ?? []
   const incidents = result?.incidents ?? []
   const parseErrorsCount = result?.errors?.length ?? 0
-  const filteredEvents = filterEventsByDate(events, selectedDate)
-  const filteredIncidents = filterIncidentsByDate(incidents, events, selectedDate)
+  const filteredEvents = filterEventsByDate(events, activeFilter)
+  const filteredIncidents = filterIncidentsByDate(incidents, events, activeFilter)
   const dateRange = getDateRangeFromEvents(events)
   const errorCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length
   const warningCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length
@@ -502,9 +534,9 @@ export default function DashboardPage() {
         hour: '2-digit', minute: '2-digit',
       })
     : null
-  const volumeData = bucketEventsByHour(events, selectedDate)
-  const topCodes = getTopIncidentsForChart(incidents, events, selectedDate, 5)
-  const incidentRowsBase = getIncidentTableRows(incidents, events, selectedDate)
+  const volumeData = bucketEventsByHour(events, activeFilter)
+  const topCodes = getTopIncidentsForChart(incidents, events, activeFilter, 5)
+  const incidentRowsBase = getIncidentTableRows(incidents, events, activeFilter)
   const incidentRowsFiltered = incidentRowsBase.filter((inc) => {
     if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter) return false
     const q = incidentsSearchFilter.trim().toLowerCase()
@@ -945,15 +977,29 @@ export default function DashboardPage() {
                 min={dateRange?.minDate}
                 max={dateRange?.maxDate}
                 value={selectedDate ?? ''}
-                onChange={(e) => setSelectedDate(e.target.value || null)}
+                onChange={(e) => { setSelectedWeekRange(null); setSelectedDate(e.target.value || null) }}
                 aria-label="Filtrar por fecha del log"
               />
               <button
                 type="button"
-                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${selectedDate === null ? 'dashboard__btn--todo-active' : ''}`}
-                onClick={() => setSelectedDate(null)}
+                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${activeFilter === null ? 'dashboard__btn--todo-active' : ''}`}
+                onClick={() => { setSelectedDate(null); setSelectedWeekRange(null) }}
               >
                 Todo
+              </button>
+              <button
+                type="button"
+                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${selectedWeekRange !== null && selectedWeekRange.start === getWeekRange(new Date()).start ? 'dashboard__btn--todo-active' : ''}`}
+                onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date())) }}
+              >
+                Esta semana
+              </button>
+              <button
+                type="button"
+                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${(() => { const prev = getWeekRange(new Date(Date.now() - 7 * 86400000)); return selectedWeekRange !== null && selectedWeekRange.start === prev.start })() ? 'dashboard__btn--todo-active' : ''}`}
+                onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date(Date.now() - 7 * 86400000))) }}
+              >
+                Semana anterior
               </button>
               <time className="dashboard__datetime" dateTime={now.toISOString()}>
                 {now.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
@@ -1008,9 +1054,11 @@ export default function DashboardPage() {
           <div className="dashboard__charts-row">
             <section className="section dashboard__chart-left">
               <h2 className="section__title">
-                {selectedDate
-                  ? `Volumen de incidencias (${new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
-                  : 'Volumen de incidencias (registro completo)'}
+                {activeFilter === null
+                  ? 'Volumen de incidencias (registro completo)'
+                  : typeof activeFilter === 'string'
+                    ? `Volumen de incidencias (${new Date(activeFilter + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
+                    : `Volumen de incidencias (${formatWeekRange(activeFilter)})`}
               </h2>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 {([['ERROR', '#ef4444'], ['WARNING', '#f59e0b'], ['INFO', '#3b82f6']] as const).map(([sev, color]) => {
