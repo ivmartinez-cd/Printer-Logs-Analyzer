@@ -96,7 +96,7 @@ export function SDSIncidentModal({ onContinue, onClose }: SDSIncidentModalProps)
             className="dashboard__btn dashboard__btn--primary"
             onClick={handleContinue}
           >
-            Continuar
+            Agregar
           </button>
           <button type="button" className="log-modal__btn-secondary" onClick={onClose}>
             Cancelar

@@ -109,6 +109,11 @@ function weekInputToRange(weekStr: string): { start: string; end: string } {
   return getWeekRange(monday)
 }
 
+function formatDayFilter(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+}
+
 /** Rango de fechas del log en formato YYYY-MM-DD para min/max del input date. */
 function getDateRangeFromEvents(events: ApiEvent[]): { minDate: string; maxDate: string } | null {
   if (events.length === 0) return null
@@ -377,6 +382,9 @@ export default function DashboardPage() {
   const [selectedWeekRange, setSelectedWeekRange] = useState<{ start: string; end: string } | null>(null)
   const [weekPickerOpen, setWeekPickerOpen] = useState(false)
   const weekPickerRef = useRef<HTMLDivElement>(null)
+  const [dayPickerOpen, setDayPickerOpen] = useState(false)
+  const dayPickerRef = useRef<HTMLDivElement>(null)
+  const [sdsPromptVisible, setSdsPromptVisible] = useState(false)
   const activeFilter: DateFilter = selectedWeekRange ?? selectedDate
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
@@ -422,11 +430,24 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [weekPickerOpen])
 
+  useEffect(() => {
+    if (!dayPickerOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (dayPickerRef.current && !dayPickerRef.current.contains(e.target as Node)) {
+        setDayPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [dayPickerOpen])
+
   async function handleAnalyze(logText: string, fileName?: string) {
     if (!logText.trim()) return
     setError(null)
     setResult(null)
     setCodesNew([])
+    setSdsPromptVisible(false)
+    setSdsIncident(null)
     setLogFileName(fileName ?? null)
     setSelectedDate(null)
     setIncidentsSeverityFilter('')
@@ -442,6 +463,7 @@ export default function DashboardPage() {
       setResult(data)
       setCodesNew(newCodes)
       setLogModalOpen(false)
+      setSdsPromptVisible(true)
       if (newCodes.length > 0) {
         toast.showWarning(`Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`)
       } else {
@@ -659,7 +681,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   className="dashboard__btn dashboard__btn--primary dashboard__btn--welcome"
-                  onClick={() => setSdsModalOpen(true)}
+                  onClick={() => setLogModalOpen(true)}
                 >
                   Pegar logs y analizar
                 </button>
@@ -725,7 +747,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="dashboard__btn dashboard__btn--primary dashboard__btn--header-cta"
-                onClick={() => setSdsModalOpen(true)}
+                onClick={() => setLogModalOpen(true)}
               >
                 Analizar otro log
               </button>
@@ -897,6 +919,28 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {sdsPromptVisible && result && viewMode === 'dashboard' && (
+            <div className="sds-prompt-banner" role="status">
+              <span className="sds-prompt-banner__text">¿Querés agregar un incidente SDS?</span>
+              <div className="sds-prompt-banner__actions">
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
+                  onClick={() => { setSdsPromptVisible(false); setSdsModalOpen(true) }}
+                >
+                  Sí, agregar
+                </button>
+                <button
+                  type="button"
+                  className="sds-prompt-banner__dismiss"
+                  onClick={() => setSdsPromptVisible(false)}
+                >
+                  Ahora no
+                </button>
+              </div>
+            </div>
+          )}
+
           {viewMode === 'dashboard' && (
           <>
           {parseErrorsCount > 0 && (
@@ -1054,19 +1098,36 @@ export default function DashboardPage() {
                     )
                   })()}
                 </div>
+                {/* Picker de día con popover — dentro del grupo */}
+                <div className="date-filter-picker-wrap" ref={dayPickerRef}>
+                  <button
+                    type="button"
+                    className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${selectedDate !== null ? ' dashboard__btn--todo-active' : ''}`}
+                    onClick={() => setDayPickerOpen((o) => !o)}
+                    title="Filtrar por día específico"
+                  >
+                    {selectedDate !== null ? formatDayFilter(selectedDate) : '📅'}
+                  </button>
+                  {dayPickerOpen && (
+                    <div className="date-filter-popover">
+                      <span className="date-filter-popover__label">Seleccioná un día</span>
+                      <input
+                        type="date"
+                        className="dashboard__date-input"
+                        min={dateRange?.minDate}
+                        max={dateRange?.maxDate}
+                        value={selectedDate ?? ''}
+                        onChange={(e) => {
+                          setSelectedWeekRange(null)
+                          setSelectedDate(e.target.value || null)
+                          setDayPickerOpen(false)
+                        }}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              {/* Input de día individual — discreto, al final */}
-              <input
-                id="dashboard-date-filter"
-                type="date"
-                className="dashboard__date-input dashboard__date-input--discrete"
-                min={dateRange?.minDate}
-                max={dateRange?.maxDate}
-                value={selectedDate ?? ''}
-                onChange={(e) => { setSelectedWeekRange(null); setSelectedDate(e.target.value || null) }}
-                aria-label="Filtrar por día específico"
-                title="Filtrar por día específico"
-              />
               <time className="dashboard__datetime" dateTime={now.toISOString()}>
                 {now.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
               </time>
@@ -1511,7 +1572,6 @@ export default function DashboardPage() {
           onContinue={(data) => {
             setSdsIncident(data)
             setSdsModalOpen(false)
-            setLogModalOpen(true)
           }}
           onClose={() => setSdsModalOpen(false)}
         />

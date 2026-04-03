@@ -904,17 +904,42 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* Input de fecha individual — más discreto */
-.dashboard__date-input--discrete {
-  opacity: 0.55;
-  font-size: 12px;
-  padding: 4px 8px;
-  transition: opacity 0.15s;
+/* Banner de prompt SDS (post-análisis) */
+.sds-prompt-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(99, 149, 237, 0.08);
+  border: 1px solid rgba(99, 149, 237, 0.3);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #b8d0f5;
 }
 
-.dashboard__date-input--discrete:hover,
-.dashboard__date-input--discrete:focus {
-  opacity: 1;
+.sds-prompt-banner__text {
+  flex: 1;
+}
+
+.sds-prompt-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sds-prompt-banner__dismiss {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.sds-prompt-banner__dismiss:hover {
+  color: #9aa3b2;
 }
 
 .section__title {
