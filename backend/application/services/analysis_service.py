@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable, List
 
-from domain.entities import AnalysisResult, Event, Incident
+from backend.domain.entities import AnalysisResult, Event, Incident
 
 SEVERITY_SCORE = {"INFO": 1, "WARNING": 2, "ERROR": 3}
 

@@ -8,7 +8,7 @@ from typing import Iterator, Optional
 import psycopg2
 from psycopg2.extensions import connection
 
-from infrastructure.config import get_settings
+from backend.infrastructure.config import get_settings
 
 
 class DatabaseUnavailableError(Exception):

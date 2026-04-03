@@ -13,14 +13,14 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from application.parsers.log_parser import LogParser
-from application.services.analysis_service import AnalysisService
-from application.services.compare_service import calculate_trend
-from domain.entities import Event, Incident
-from infrastructure.config import Settings, get_settings
-from infrastructure.database import Database
-from infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
-from infrastructure.repositories.saved_analysis_repository import (
+from backend.application.parsers.log_parser import LogParser
+from backend.application.services.analysis_service import AnalysisService
+from backend.application.services.compare_service import calculate_trend
+from backend.domain.entities import Event, Incident
+from backend.infrastructure.config import Settings, get_settings
+from backend.infrastructure.database import Database
+from backend.infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
+from backend.infrastructure.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
     SavedAnalysisSnapshot,
 )

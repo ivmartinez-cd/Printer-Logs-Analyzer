@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, List
 
-from domain.entities import Event
+from backend.domain.entities import Event
 
 logger = logging.getLogger(__name__)
 

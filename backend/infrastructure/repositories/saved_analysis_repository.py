@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, List
 from uuid import UUID, uuid4
 
-from infrastructure.database import Database, DatabaseUnavailableError
+from backend.infrastructure.database import Database, DatabaseUnavailableError
 
 _LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "saved_analyses_local.json"
 

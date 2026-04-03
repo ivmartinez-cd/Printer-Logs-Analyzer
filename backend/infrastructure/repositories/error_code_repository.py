@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from infrastructure.database import Database, DatabaseUnavailableError
+from backend.infrastructure.database import Database, DatabaseUnavailableError
 
 # Paths are relative to this file's location:
 #   backend/infrastructure/repositories/error_code_repository.py
