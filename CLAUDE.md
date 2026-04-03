@@ -220,27 +220,32 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 **Vistas:** controladas por `viewMode`: `dashboard` | `saved-list` | `saved-detail`
 
 **Flujo principal:**
-1. Usuario pega logs o sube archivo en `LogPasteModal`
+1. Usuario clickea "Pegar logs y analizar" → abre `LogPasteModal` directamente
 2. `handleAnalyze()` → `POST /parser/preview` + `POST /parser/validate`
 3. Respuesta: `{ events[], incidents[], global_severity, errors[] }`
 4. Render: AreaChart (eventos/hora), BarChart (top 10 códigos), tabla incidents, tabla events
+5. Tras análisis exitoso aparece `.sds-prompt-banner`: "¿Querés agregar un incidente SDS?" con "Sí, agregar" / "Ahora no"
+   - "Sí, agregar" → abre `SDSIncidentModal`, que al confirmar setea `sdsIncident` y renderiza `SDSIncidentPanel`
+   - "Ahora no" → descarta el banner; el panel SDS no aparece
+   - Nuevo análisis limpia `sdsIncident` y el banner
 
 **Filtros y sorting:**
 - Incidents: filtro por severidad, búsqueda por texto, sort por columna (asc/desc)
 - Events: ídem
-- Filtro por fecha: cuatro modos — "Todo", "Esta semana", "Semana anterior", "Elegir semana" (popover con `input[type="week"]`), más input de día individual discreto al final
+- Filtro por fecha: cinco modos — "Todo", "Esta semana", "Semana anterior", "Elegir semana" (popover con `input[type="week"]`), "📅" día específico (popover con `input[type="date"]`) — todos dentro del mismo grupo de botones
 
 **Filtro de fecha — estado y tipo:**
 - `selectedDate: string | null` — día seleccionado ("YYYY-MM-DD") o null
 - `selectedWeekRange: { start: string; end: string } | null` — semana lunes–domingo o null
-- `weekPickerOpen: boolean` — controla el popover del picker de semana custom
+- `weekPickerOpen: boolean` — controla el popover del picker de semana
+- `dayPickerOpen: boolean` — controla el popover del picker de día
 - `activeFilter: DateFilter` — computed: `selectedWeekRange ?? selectedDate`
 - `DateFilter = string | { start: string; end: string } | null` — tipo unificado usado en todas las funciones de filtrado
 - Seleccionar día limpia `selectedWeekRange`; seleccionar semana limpia `selectedDate`; "Todo" limpia ambos
 - El título del gráfico muestra el rango de semana como `"3 mar – 9 mar"` (via `formatWeekRange`)
 
 **Layout del selector de fecha (`.date-filter-group`):**
-Los cuatro botones van agrupados en un único bloque con borde exterior y divisores internos (sin bordes individuales). El botón activo tiene fondo azul translúcido + borde azul. El input de día queda fuera del grupo, al final, con opacidad reducida (`.dashboard__date-input--discrete`).
+Los cinco botones van agrupados en un único bloque con borde exterior y divisores internos (sin bordes individuales). El botón activo tiene fondo azul translúcido + borde azul. No hay input suelto fuera del grupo.
 
 **Botón "Elegir semana":**
 - Abre un popover (`.date-filter-popover`) con `input[type="week"]` nativo del browser
@@ -248,6 +253,12 @@ Los cuatro botones van agrupados en un único bloque con borde exterior y diviso
 - Se activa (azul) cuando `selectedWeekRange` no coincide con "Esta semana" ni "Semana anterior"
 - Cuando está activo muestra el rango: `"3 – 9 mar"` en lugar del texto fijo
 - El popover se cierra al hacer click fuera (effect `mousedown` + `weekPickerRef`)
+
+**Botón "📅" (día específico):**
+- Quinto botón del grupo, integrado con el mismo estilo
+- Abre un popover con `input[type="date"]` con `min`/`max` del rango del log
+- Cuando activo muestra la fecha formateada: `"15 mar"` (via `formatDayFilter`)
+- El popover se cierra al hacer click fuera (effect `mousedown` + `dayPickerRef`)
 
 **KPIs (sección `.kpis`, 4 cards):**
 1. **Estado de errores** — conteo `ERROR · WARNING · INFO` de incidentes filtrados
