@@ -970,12 +970,14 @@ export default function DashboardPage() {
           <div className="dashboard__charts-row">
             <section className="section dashboard__chart-left">
               <h2 className="section__title">
-                {selectedDate ? `Volumen de incidencias (${selectedDate})` : 'Volumen de incidencias (registro completo)'}
+                {selectedDate
+                  ? `Volumen de incidencias (${new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
+                  : 'Volumen de incidencias (registro completo)'}
               </h2>
               <div className="chart-wrap">
                 {volumeData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={volumeData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }} stackOffset="none">
+                    <AreaChart data={volumeData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#232734" />
                       <XAxis
                         dataKey="time"
@@ -995,9 +997,9 @@ export default function DashboardPage() {
                         labelFormatter={(v) => new Date(v).toLocaleString()}
                       />
                       <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
-                      <Area type="monotone" dataKey="INFO" stackId="1" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.6} />
-                      <Area type="monotone" dataKey="WARNING" stackId="1" stroke="#f59e0b" strokeWidth={2} fill="#f59e0b" fillOpacity={0.6} />
-                      <Area type="monotone" dataKey="ERROR" stackId="1" stroke="#ef4444" strokeWidth={2} fill="#ef4444" fillOpacity={0.6} />
+                      <Area type="monotone" dataKey="INFO" stackId="a" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.6} />
+                      <Area type="monotone" dataKey="WARNING" stackId="a" stroke="#f59e0b" strokeWidth={2} fill="#f59e0b" fillOpacity={0.6} />
+                      <Area type="monotone" dataKey="ERROR" stackId="a" stroke="#ef4444" strokeWidth={2} fill="#ef4444" fillOpacity={0.6} />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
