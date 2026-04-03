@@ -124,11 +124,12 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     })
   }
 
-  // REGLA 5 — Múltiples bandejas: descripción contiene "tray" o "bandeja", 2+ códigos distintos
+  // REGLA 5 — Múltiples bandejas: solo eventos ERROR con descripción que incluye "tray" o "bandeja", 2+ códigos distintos
   const trayErrorCodes = [
     ...new Set(
       events
         .filter((e) => {
+          if (e.type.toUpperCase() !== 'ERROR') return false
           const d = e.code_description?.toLowerCase() ?? ''
           return d.includes('tray') || d.includes('bandeja')
         })
