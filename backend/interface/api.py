@@ -354,6 +354,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             "severity": ec.severity,
             "description": ec.description,
             "solution_url": ec.solution_url,
+            "solution_content": ec.solution_content,
             "solution_content_saved": ec.solution_content is not None,
             "created_at": ec.created_at.isoformat(),
             "updated_at": ec.updated_at.isoformat(),

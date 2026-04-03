@@ -383,6 +383,26 @@ export default function DashboardPage() {
       if (!isEdit) setCodesNew((prev) => prev.filter((c) => c !== body.code))
       setAddCodeModalCode(null)
       setEditCodeInitial(null)
+      // Update events in the current result so the UI reflects the new solution data immediately
+      setResult((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          events: prev.events.map((evt) =>
+            evt.code === body.code
+              ? { ...evt, code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url, code_solution_content: res.solution_content ?? evt.code_solution_content }
+              : evt
+          ),
+          incidents: prev.incidents.map((inc) => ({
+            ...inc,
+            events: inc.events.map((evt) =>
+              evt.code === body.code
+                ? { ...evt, code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url, code_solution_content: res.solution_content ?? evt.code_solution_content }
+                : evt
+            ),
+          })),
+        }
+      })
       const baseMsg = isEdit ? `Código ${body.code} actualizado` : `Código ${body.code} agregado al catálogo`
       if (res.warning) {
         toast.showWarning(`${baseMsg}. ${res.warning}`)

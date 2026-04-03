@@ -70,6 +70,8 @@ export async function validateLogs(
 export interface UpsertErrorCodeResult {
   id: string
   code: string
+  solution_url?: string | null
+  solution_content?: string | null
   solution_content_saved: boolean
   warning?: string
 }
