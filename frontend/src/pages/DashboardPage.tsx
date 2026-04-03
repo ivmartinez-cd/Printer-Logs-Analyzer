@@ -1172,7 +1172,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Diagnóstico automático basado en reglas */}
-          <DiagnosticPanel incidents={filteredIncidents} events={filteredEvents} />
+          <DiagnosticPanel events={filteredEvents} />
 
           {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
           <div className="dashboard__charts-row">

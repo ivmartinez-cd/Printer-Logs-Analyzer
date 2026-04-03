@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Event as ApiEvent, Incident as ApiIncident } from '../types/api'
+import type { Event as ApiEvent } from '../types/api'
 
 type AlertLevel = 'error' | 'warning' | 'info' | 'success'
 
@@ -9,7 +9,7 @@ type DiagnosticAlert = {
   message: string
 }
 
-function runDiagnostics(incidents: ApiIncident[], events: ApiEvent[]): DiagnosticAlert[] {
+function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   const alerts: DiagnosticAlert[] = []
 
   const errorEvents = events.filter((e) => e.type.toUpperCase() === 'ERROR')
@@ -125,13 +125,12 @@ function runDiagnostics(incidents: ApiIncident[], events: ApiEvent[]): Diagnosti
 }
 
 interface DiagnosticPanelProps {
-  incidents: ApiIncident[]
   events: ApiEvent[]
 }
 
-export function DiagnosticPanel({ incidents, events }: DiagnosticPanelProps) {
+export function DiagnosticPanel({ events }: DiagnosticPanelProps) {
   const [collapsed, setCollapsed] = useState(false)
-  const alerts = runDiagnostics(incidents, events)
+  const alerts = runDiagnostics(events)
 
   return (
     <div className="diagnostic-panel">
