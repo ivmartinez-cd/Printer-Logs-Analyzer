@@ -40,12 +40,14 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   const BURST_COUNT = 5
   const BURST_WINDOW_MS = 30 * 60 * 1000
   const timesByCode = new Map<string, number[]>()
+  const descByCode = new Map<string, string | null>()
   for (const evt of events) {
     const t = new Date(evt.timestamp).getTime()
     if (Number.isNaN(t)) continue
     const arr = timesByCode.get(evt.code) ?? []
     arr.push(t)
     timesByCode.set(evt.code, arr)
+    if (!descByCode.has(evt.code)) descByCode.set(evt.code, evt.code_description ?? null)
   }
   for (const [code, times] of timesByCode) {
     const sorted = [...times].sort((a, b) => a - b)
@@ -53,10 +55,11 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
       if (sorted[i + BURST_COUNT - 1] - sorted[i] < BURST_WINDOW_MS) {
         let windowCount = 0
         for (let j = i; j < sorted.length && sorted[j] - sorted[i] < BURST_WINDOW_MS; j++) windowCount++
+        const desc = descByCode.get(code) ?? code
         alerts.push({
           key: `burst-${code}`,
           level: 'warning',
-          message: `⚡ Falla intermitente detectada en ${code}: ${windowCount} eventos en menos de 30 minutos — posible problema mecánico`,
+          message: `⚡ ${windowCount} eventos de '${desc}' en menos de 30 minutos`,
         })
         break
       }
@@ -88,19 +91,26 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     }
   }
 
-  // REGLA 4 — Firmware: códigos que empiezan con "49."
-  const hasFirmwareErrors = events.some((e) => e.code.startsWith('49.'))
+  // REGLA 4 — Firmware: descripción contiene "firmware"
+  const hasFirmwareErrors = events.some((e) => e.code_description?.toLowerCase().includes('firmware'))
   if (hasFirmwareErrors) {
     alerts.push({
       key: 'firmware',
       level: 'warning',
-      message: `🔧 Se detectaron errores de firmware (49.xx.xx) — considerar actualización de firmware del equipo`,
+      message: `🔧 Se detectaron errores de firmware — considerar actualización de firmware del equipo`,
     })
   }
 
-  // REGLA 5 — Múltiples bandejas: códigos 60.00.xx con distintos sufijos
+  // REGLA 5 — Múltiples bandejas: descripción contiene "tray" o "bandeja", 2+ códigos distintos
   const trayErrorCodes = [
-    ...new Set(events.filter((e) => /^60\.00\.\d+$/.test(e.code)).map((e) => e.code)),
+    ...new Set(
+      events
+        .filter((e) => {
+          const d = e.code_description?.toLowerCase() ?? ''
+          return d.includes('tray') || d.includes('bandeja')
+        })
+        .map((e) => e.code),
+    ),
   ]
   if (trayErrorCodes.length >= 2) {
     alerts.push({
