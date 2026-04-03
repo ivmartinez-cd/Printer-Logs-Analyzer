@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import type { SdsIncidentData } from './SDSIncidentModal'
 
-type SdsVsLogStatus = 'match' | 'partial' | 'no_match'
+type SdsVsLogStatus = 'match' | 'partial' | 'no_match' | 'general'
 
 interface IncidentRowForSds {
   code: string
@@ -112,12 +112,20 @@ function getEventosRelacionadosCount(sds: SdsIncidentData, incidentsFull: Incide
   return matching.reduce((sum, i) => sum + (i.occurrences ?? 1), 0)
 }
 
+function hasEventContext(sds: SdsIncidentData): boolean {
+  const ctx = sds.event_context?.trim()
+  return !!ctx && ctx !== '—'
+}
+
 function computeSdsVsLog(
   sds: SdsIncidentData,
   incidentRows: IncidentRowForSds[],
   incidentsFull: IncidentFullForSds[],
   eventosRelacionadosCount: number
 ): { status: SdsVsLogStatus; explanation: string } {
+  if (!hasEventContext(sds)) {
+    return { status: 'general', explanation: 'SDS de tipo general — sin código de evento específico' }
+  }
   const sdsCodes = getSdsCodesForMatch(sds)
   if (sdsCodes.length === 0) {
     return { status: 'no_match', explanation: 'no hay código de evento definido' }
@@ -165,16 +173,19 @@ export function SDSIncidentPanel({
 }: SDSIncidentPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
   const estadoSds = getEstadoSds(sdsIncident.created_at)
-  const eventosRelacionadosCount = getEventosRelacionadosCount(sdsIncident, incidentsFull)
-  const sdsVsLog = computeSdsVsLog(sdsIncident, incidentRows, incidentsFull, eventosRelacionadosCount)
-  const lastEventRelated = getLastEventRelated(sdsIncident, incidentsFull)
+  const isGeneral = !hasEventContext(sdsIncident)
+  const eventosRelacionadosCount = isGeneral ? null : getEventosRelacionadosCount(sdsIncident, incidentsFull)
+  const sdsVsLog = computeSdsVsLog(sdsIncident, incidentRows, incidentsFull, eventosRelacionadosCount ?? 0)
+  const lastEventRelated = isGeneral ? '—' : getLastEventRelated(sdsIncident, incidentsFull)
 
   const sdsVsLogLabel =
     sdsVsLog.status === 'match'
       ? '✔ Coincide'
       : sdsVsLog.status === 'partial'
         ? '⚠ Parcial'
-        : '❌ No coincide'
+        : sdsVsLog.status === 'general'
+          ? 'ℹ️ SDS de tipo general'
+          : '❌ No coincide'
 
   const rows: { label: string; value: React.ReactNode; muted?: boolean }[] = [
     { label: 'Código', value: sdsIncident.code },
@@ -185,7 +196,7 @@ export function SDSIncidentPanel({
     { label: 'Firmware', value: sdsIncident.firmware },
     { label: 'Contador', value: sdsIncident.impressions },
     { label: 'Último evento', value: lastEventRelated },
-    { label: 'Eventos relacionados', value: eventosRelacionadosCount },
+    { label: 'Eventos relacionados', value: eventosRelacionadosCount ?? '—' },
     { label: 'Estado SDS', value: estadoSds.label, muted: estadoSds.label === '⚪ Viejo' },
   ]
 

@@ -582,6 +582,10 @@ body {
   color: #ef4444;
 }
 
+.sds-incident-panel__value[data-status="general"] {
+  color: #60a5fa;
+}
+
 .sds-incident-panel__value--muted {
   color: #6b7280;
 }
