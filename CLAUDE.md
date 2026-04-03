@@ -264,12 +264,26 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 | `SolutionContentModal.tsx` | Muestra contenido HTML de solución guardado; link al URL (puede estar vencido) |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
+### Keep-alive (`App.tsx`)
+
+Al montar la app, se llama a `GET /health` inmediatamente y luego cada 8 minutos via `setInterval`. Previene que Render duerma el servidor durante uso activo. La función `pingHealth` en `api.ts` falla silenciosamente (`.catch(() => {})`).
+
+### Loading state durante cold start (`LogPasteModal`)
+
+Cuando `loading` es `true`:
+- El botón muestra spinner CSS + "Analizando… (primer uso puede tardar ~20s)"
+- Si el request tarda más de 5 segundos, aparece debajo: "El servidor está iniciando, por favor esperá…" (en amarillo)
+- El mensaje desaparece al terminar (éxito o error)
+
+Implementado con un `useEffect` sobre `loading` que arma un `setTimeout` de 5 s para setear `slowWarning`.
+
 ### Cliente HTTP (`services/api.ts`)
 
 - `API_BASE`: `VITE_API_URL` → `VITE_API_BASE` → `http://localhost:8000`
 - `API_KEY`: `VITE_API_KEY` → `dev`
 - Header siempre inyectado: `x-api-key`
 - Error handling: extrae `detail` del JSON de error si está disponible
+- `pingHealth()`: GET `/health` sin auth, falla silenciosamente — usada para keep-alive
 
 ### Tipos (`types/api.ts`)
 
