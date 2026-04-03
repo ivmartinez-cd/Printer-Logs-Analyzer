@@ -139,7 +139,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     alerts.push({
       key: 'trays',
       level: 'warning',
-      message: `🗂️ Errores en múltiples bandejas detectados — posible problema en el mecanismo de alimentación general`,
+      message: `🗂️ Errores en múltiples bandejas detectados: ${trayErrorCodes.join(', ')} — posible problema en el mecanismo de alimentación general`,
     })
   }
 
