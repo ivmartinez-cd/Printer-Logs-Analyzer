@@ -48,6 +48,9 @@ body {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #1e2433;
+  background: transparent;
 }
 
 .dashboard__header-actions {
@@ -59,8 +62,13 @@ body {
 
 .dashboard__btn--header-cta {
   padding: 10px 20px;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
+}
+
+.dashboard__header-actions .dashboard__btn {
+  padding: 10px 20px;
+  font-size: 0.875rem;
 }
 
 .dashboard__title {
