@@ -97,19 +97,44 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     const minT = Math.min(...allTimestamps)
     const maxT = Math.max(...allTimestamps)
     const midT = (minT + maxT) / 2
-    const firstErrors = events.filter((e) => {
+    const errorEvents = events.filter((e) => e.type.toUpperCase() === 'ERROR')
+    const firstErrors = errorEvents.filter((e) => {
       const t = new Date(e.timestamp).getTime()
-      return !Number.isNaN(t) && t < midT && e.type.toUpperCase() === 'ERROR'
+      return !Number.isNaN(t) && t < midT
     }).length
-    const secondErrors = events.filter((e) => {
+    const secondErrors = errorEvents.filter((e) => {
       const t = new Date(e.timestamp).getTime()
-      return !Number.isNaN(t) && t >= midT && e.type.toUpperCase() === 'ERROR'
+      return !Number.isNaN(t) && t >= midT
     }).length
     if (firstErrors > 0 && secondErrors > firstErrors * 2) {
+      // Encontrar el código que más creció entre primera y segunda mitad
+      const codes = [...new Set(errorEvents.map((e) => e.code))]
+      let topCode = ''
+      let topFirst = 0
+      let topSecond = 0
+      let topGrowth = 0
+      for (const code of codes) {
+        const f = errorEvents.filter((e) => {
+          const t = new Date(e.timestamp).getTime()
+          return e.code === code && !Number.isNaN(t) && t < midT
+        }).length
+        const s = errorEvents.filter((e) => {
+          const t = new Date(e.timestamp).getTime()
+          return e.code === code && !Number.isNaN(t) && t >= midT
+        }).length
+        const growth = s - f
+        if (growth > topGrowth) {
+          topGrowth = growth
+          topCode = code
+          topFirst = f
+          topSecond = s
+        }
+      }
+      const detail = topCode ? `: ${topCode} pasó de ${topFirst} a ${topSecond} eventos en la segunda mitad del período` : ''
       alerts.push({
         key: 'escalation',
         level: 'error',
-        message: `📈 El problema está escalando: los errores aumentaron significativamente en la segunda mitad del período analizado`,
+        message: `📈 El problema está escalando${detail}`,
       })
     }
   }
