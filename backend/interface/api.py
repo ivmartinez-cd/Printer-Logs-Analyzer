@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 
-logging.basicConfig(level=logging.DEBUG, format="%(name)s %(levelname)s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s")
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -229,7 +229,13 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["https://printer-logs-analyzer.vercel.app"],
+        allow_origins=[
+            "https://printer-logs-analyzer.vercel.app",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -286,7 +292,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             for e in report.errors
         ]
         total_ms = int((time.perf_counter() - t0) * 1000)
-        print(f"[preview] parse_ms={parse_ms} db_ms={db_ms} analysis_ms={analysis_ms} total_ms={total_ms}")
+        logging.info("[preview] parse_ms=%d db_ms=%d analysis_ms=%d total_ms=%d", parse_ms, db_ms, analysis_ms, total_ms)
         return ParseLogsResponse(
             events=events,
             incidents=analysis.incidents,
@@ -326,7 +332,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             for e in report.errors
         ]
         total_ms = int((time.perf_counter() - t0) * 1000)
-        print(f"[validate] parse_ms={parse_ms} db_ms={db_ms} total_ms={total_ms}")
+        logging.info("[validate] parse_ms=%d db_ms=%d total_ms=%d", parse_ms, db_ms, total_ms)
 
         return ValidateLogsResponse(
             total_lines=total_lines,

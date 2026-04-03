@@ -156,7 +156,7 @@ Todos excepto `/health` requieren header `x-api-key`. Sin key o key incorrecta �
 | DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
 | POST | `/saved-analyses/{id}/compare` | Comparar logs nuevos contra snapshot guardado |
 
-**CORS** — orígenes permitidos: `localhost:5173`, `127.0.0.1:5173`, `localhost:5174`, `127.0.0.1:5174`.
+**CORS** — orígenes permitidos: `https://printer-logs-analyzer.vercel.app`, `localhost:5173`, `127.0.0.1:5173`, `localhost:5174`, `127.0.0.1:5174`.
 
 **Fetch de contenido SDS** (`/error-codes/upsert`): cuando se provee `solution_url`, el backend fetchea el HTML de la página con `httpx` (timeout 15 s, límite 50 KB), lo extrae con `BeautifulSoup`, y lo guarda en `solution_content`. Esto permite mostrar el contenido aunque el link HP expire.
 
@@ -194,7 +194,7 @@ Correr manualmente contra PostgreSQL. Ejecutadas en orden:
 
 ### Variables de entorno
 
-**Backend (`.env` en raíz):**
+**Backend (`.env` en raíz — solo para dev local):**
 ```
 DB_URL=postgresql://...     # Neon/PostgreSQL
 API_KEY=...                 # Simple auth (mismo valor en VITE_API_KEY)
@@ -203,10 +203,10 @@ MAX_CONCURRENT_ANALYSIS=5   # Declarado en Settings pero no usado activamente
 ANALYSIS_TIMEOUT=30         # Declarado en Settings pero no usado activamente
 ```
 
-**Frontend (`frontend/.env`):**
+**Frontend (`frontend/.env` — solo para dev local):**
 ```
-VITE_API_KEY=dev
 VITE_API_BASE=http://localhost:8000    # También acepta VITE_API_URL (compatibilidad)
+VITE_API_KEY=...                       # Mismo valor que API_KEY del backend
 ```
 
 ---
@@ -318,6 +318,56 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 **Bug: crash del servidor en Windows al imprimir logs con cp1252**
 - Causa: prints de debug con caracteres Unicode en Python con encoding cp1252.
 - Fix: eliminar todos los prints de debug del parser y api.py.
+
+---
+
+## Deploy en producción
+
+### URLs
+
+| Servicio | URL |
+|----------|-----|
+| Frontend (Vercel) | `https://printer-logs-analyzer.vercel.app` |
+| Backend (Render) | `https://printer-logs-analyzer.onrender.com` |
+
+### Variables de entorno en producción
+
+**Render (backend)** — configurar en *Environment* del servicio:
+
+| Variable | Descripción |
+|----------|-------------|
+| `DB_URL` | Connection string de Neon PostgreSQL |
+| `API_KEY` | Clave compartida con el frontend |
+
+No se necesitan `RECENCY_WINDOW`, `MAX_CONCURRENT_ANALYSIS` ni `ANALYSIS_TIMEOUT` (tienen defaults).
+
+**Vercel (frontend)** — configurar en *Project Settings → Environment Variables*:
+
+| Variable | Valor |
+|----------|-------|
+| `VITE_API_BASE` | `https://printer-logs-analyzer.onrender.com` |
+| `VITE_API_KEY` | Mismo valor que `API_KEY` del backend |
+
+Las variables `VITE_*` se embeben en el bundle en build-time; si se cambian en Vercel hay que hacer redeploy manual.
+
+### Diferencias entre local y producción
+
+| Aspecto | Local | Producción |
+|---------|-------|-----------|
+| Backend URL | `http://localhost:8000` | `https://printer-logs-analyzer.onrender.com` |
+| Frontend URL | `http://localhost:5173` | `https://printer-logs-analyzer.vercel.app` |
+| Vars de entorno | `.env` en raíz / `frontend/.env` | Dashboard de Render / Vercel |
+| Hot-reload | Sí (uvicorn `--reload`) | No (proceso permanente) |
+| DB fallback | Activo si sin red a Neon | Siempre conectado (Neon mismo datacenter) |
+| CORS | localhost + Vercel | localhost + Vercel |
+
+### Start command en Render
+
+```
+uvicorn backend.interface.api:app --host 0.0.0.0 --port $PORT
+```
+
+Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ---
 
