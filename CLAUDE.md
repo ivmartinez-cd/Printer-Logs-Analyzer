@@ -222,12 +222,12 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 **Flujo principal:**
 1. Usuario clickea "Pegar logs y analizar" → abre `LogPasteModal` directamente
 2. `handleAnalyze()` → `POST /parser/preview` + `POST /parser/validate`
-3. Respuesta: `{ events[], incidents[], global_severity, errors[] }`
-4. Render: AreaChart (eventos/hora), BarChart (top 10 códigos), tabla incidents, tabla events
-5. Tras análisis exitoso aparece `.sds-prompt-banner`: "¿Querés agregar un incidente SDS?" con "Sí, agregar" / "Ahora no"
-   - "Sí, agregar" → abre `SDSIncidentModal`, que al confirmar setea `sdsIncident` y renderiza `SDSIncidentPanel`
-   - "Ahora no" → descarta el banner; el panel SDS no aparece
-   - Nuevo análisis limpia `sdsIncident` y el banner
+3. Respuesta guardada en `pendingResult` / `pendingCodesNew` (el dashboard todavía no se muestra)
+4. Se abre modal `ConfirmModal` "¿Agregar incidente SDS?" con "Sí, agregar" / "No, continuar"
+   - "Sí, agregar" → abre `SDSIncidentModal`; al completarlo (`onContinue`) o cerrarlo (`onClose`), se llama `commitPendingResult()` que mueve `pendingResult` → `result` y muestra el dashboard con `SDSIncidentPanel`
+   - "No, continuar" (o click fuera) → `commitPendingResult()` directamente; el dashboard se muestra sin panel SDS
+5. Render: AreaChart (eventos/hora), BarChart (top 10 códigos), tabla incidents, tabla events
+6. Nuevo análisis limpia `result`, `pendingResult`, `sdsIncident`
 
 **Filtros y sorting:**
 - Incidents: filtro por severidad, búsqueda por texto, sort por columna (asc/desc)
