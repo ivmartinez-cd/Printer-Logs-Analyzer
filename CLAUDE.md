@@ -327,9 +327,11 @@ Panel colapsable (por defecto expandido) que aparece entre los KPIs y los gráfi
 | 1 | Problema dominante | Un código ERROR concentra >50% del total de eventos de error | Rojo |
 | 2 | Ráfaga | 5+ eventos del mismo código en una ventana de 30 minutos | Amarillo |
 | 3 | Escalamiento | La 2ª mitad del período tiene >2× errores que la 1ª mitad | Rojo |
-| 4 | Firmware | Existe algún evento con código que empieza en `49.` | Amarillo |
-| 5 | Múltiples bandejas | 2+ códigos distintos del patrón `60.00.xx` | Amarillo |
+| 4 | Firmware | Algún evento tiene `code_description` que incluye `"firmware"` | Amarillo |
+| 5 | Múltiples bandejas | 2+ códigos distintos con `code_description` que incluye `"tray"` o `"bandeja"` | Amarillo |
 | 6 | Saludable | Ninguna de las reglas anteriores se disparó | Verde |
+
+Las reglas 4 y 5 usan la descripción del catálogo (`code_description`) en vez de prefijos de código hardcodeados. Si un código no tiene descripción en DB, las reglas simplemente no se disparan para ese código.
 
 Máximo 5 alertas visibles, ordenadas por severidad (error → warning → info → success). Si no hay alertas, siempre muestra la regla de "saludable".
 
@@ -421,6 +423,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 **Bug: SDS sin `event_context` mostraba "❌ No coincide" en vez de mensaje apropiado**
 - Causa: `computeSdsVsLog` trataba `sdsCodes.length === 0` como `no_match`, sin distinguir entre "no hay código" y "hay código pero no matchea".
 - Fix: agregar `hasEventContext(sds)` que detecta `event_context` vacío/null/`"—"`. Cuando es falso, `computeSdsVsLog` retorna `status: 'general'` antes de intentar match. El render muestra `ℹ️ SDS de tipo general — sin código de evento específico` en azul, y los campos "Eventos relacionados" y "Último evento" muestran `—`. "Estado SDS" no cambia (depende de fecha, no del código).
+
+**Bug: DiagnosticPanel usaba prefijos de código hardcodeados para firmware y bandejas**
+- Causa: Regla 4 detectaba firmware por `code.startsWith('49.')` y Regla 5 detectaba bandejas por regex `/^60\.00\.\d+$/` — acoplado a patrones de código HP específicos que pueden no aplicar en todos los modelos.
+- Fix: Regla 4 usa `code_description?.toLowerCase().includes('firmware')`; Regla 5 busca `"tray"` o `"bandeja"` en la descripción. Regla 2 (ráfaga) también usa la descripción del catálogo en el mensaje en vez del código crudo.
 
 ---
 
