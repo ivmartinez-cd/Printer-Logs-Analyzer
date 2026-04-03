@@ -6,6 +6,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -187,28 +188,32 @@ function getTopIncidentsForChart(
     .map((x) => ({ name: x.inc.code, count: x.countInWindow, severity: x.inc.severity }))
 }
 
-function bucketEventsByHour(events: ApiEvent[], selectedDate: string | null): { time: string; count: number }[] {
+function bucketEventsByHour(events: ApiEvent[], selectedDate: string | null): { time: string; ERROR: number; WARNING: number; INFO: number }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
   const hourMs = 60 * 60 * 1000
   const numHours = Math.ceil((maxTs - minTs) / hourMs) || 1
-  const counts = new Map<number, number>()
+  const buckets = new Map<number, { ERROR: number; WARNING: number; INFO: number }>()
   for (let h = 0; h < numHours; h++) {
-    counts.set(minTs + h * hourMs, 0)
+    buckets.set(minTs + h * hourMs, { ERROR: 0, WARNING: 0, INFO: 0 })
   }
   for (const e of events) {
     const t = new Date(e.timestamp).getTime()
     if (Number.isNaN(t) || t < minTs || t > maxTs) continue
     const hourIndex = Math.min(numHours - 1, Math.floor((t - minTs) / hourMs))
     const bucketStart = minTs + hourIndex * hourMs
-    counts.set(bucketStart, (counts.get(bucketStart) ?? 0) + 1)
+    const bucket = buckets.get(bucketStart)!
+    const sev = (e.type ?? '').toUpperCase()
+    if (sev === 'ERROR') bucket.ERROR++
+    else if (sev === 'WARNING') bucket.WARNING++
+    else bucket.INFO++
   }
-  return Array.from(counts.entries())
+  return Array.from(buckets.entries())
     .sort(([a], [b]) => a - b)
-    .map(([bucketStart, count]) => ({
+    .map(([bucketStart, counts]) => ({
       time: new Date(bucketStart).toISOString().slice(0, 13) + ':00:00.000Z',
-      count,
+      ...counts,
     }))
 }
 
@@ -970,13 +975,7 @@ export default function DashboardPage() {
               <div className="chart-wrap">
                 {volumeData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={volumeData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-                      <defs>
-                        <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#4c8bf5" stopOpacity={0.4} />
-                          <stop offset="100%" stopColor="#4c8bf5" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
+                    <AreaChart data={volumeData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }} stackOffset="none">
                       <CartesianGrid strokeDasharray="3 3" stroke="#232734" />
                       <XAxis
                         dataKey="time"
@@ -995,7 +994,10 @@ export default function DashboardPage() {
                         contentStyle={{ background: '#151821', border: '1px solid #232734', borderRadius: 6 }}
                         labelFormatter={(v) => new Date(v).toLocaleString()}
                       />
-                      <Area type="monotone" dataKey="count" stroke="#4c8bf5" strokeWidth={2} fill="url(#volumeGradient)" />
+                      <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
+                      <Area type="monotone" dataKey="INFO" stackId="1" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.6} />
+                      <Area type="monotone" dataKey="WARNING" stackId="1" stroke="#f59e0b" strokeWidth={2} fill="#f59e0b" fillOpacity={0.6} />
+                      <Area type="monotone" dataKey="ERROR" stackId="1" stroke="#ef4444" strokeWidth={2} fill="#ef4444" fillOpacity={0.6} />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
