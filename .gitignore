@@ -15,3 +15,4 @@ a.md
 *.tsbuildinfo
 frontend/vite.config.js
 backend/data/
+backend/debug_payload.json
