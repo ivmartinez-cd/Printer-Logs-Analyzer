@@ -418,6 +418,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: `runDiagnostics` declaraba `incidents: ApiIncident[]` como primer parámetro pero todas las reglas operan exclusivamente sobre `events`. TypeScript strict lo marca como error.
 - Fix: eliminar `incidents` de la firma de `runDiagnostics`, de `DiagnosticPanelProps` y del call site en `DashboardPage`. También eliminar el import de `ApiIncident`.
 
+**Bug: SDS sin `event_context` mostraba "❌ No coincide" en vez de mensaje apropiado**
+- Causa: `computeSdsVsLog` trataba `sdsCodes.length === 0` como `no_match`, sin distinguir entre "no hay código" y "hay código pero no matchea".
+- Fix: agregar `hasEventContext(sds)` que detecta `event_context` vacío/null/`"—"`. Cuando es falso, `computeSdsVsLog` retorna `status: 'general'` antes de intentar match. El render muestra `ℹ️ SDS de tipo general — sin código de evento específico` en azul, y los campos "Eventos relacionados" y "Último evento" muestran `—`. "Estado SDS" no cambia (depende de fecha, no del código).
+
 ---
 
 ## Deploy en producción
