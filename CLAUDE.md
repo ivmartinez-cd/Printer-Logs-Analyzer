@@ -228,15 +228,26 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 **Filtros y sorting:**
 - Incidents: filtro por severidad, búsqueda por texto, sort por columna (asc/desc)
 - Events: ídem
-- Filtro por fecha: tres modos — día individual (date input), semana (botones "Esta semana" / "Semana anterior"), o "Todo"
+- Filtro por fecha: cuatro modos — "Todo", "Esta semana", "Semana anterior", "Elegir semana" (popover con `input[type="week"]`), más input de día individual discreto al final
 
 **Filtro de fecha — estado y tipo:**
 - `selectedDate: string | null` — día seleccionado ("YYYY-MM-DD") o null
 - `selectedWeekRange: { start: string; end: string } | null` — semana lunes–domingo o null
+- `weekPickerOpen: boolean` — controla el popover del picker de semana custom
 - `activeFilter: DateFilter` — computed: `selectedWeekRange ?? selectedDate`
 - `DateFilter = string | { start: string; end: string } | null` — tipo unificado usado en todas las funciones de filtrado
 - Seleccionar día limpia `selectedWeekRange`; seleccionar semana limpia `selectedDate`; "Todo" limpia ambos
 - El título del gráfico muestra el rango de semana como `"3 mar – 9 mar"` (via `formatWeekRange`)
+
+**Layout del selector de fecha (`.date-filter-group`):**
+Los cuatro botones van agrupados en un único bloque con borde exterior y divisores internos (sin bordes individuales). El botón activo tiene fondo azul translúcido + borde azul. El input de día queda fuera del grupo, al final, con opacidad reducida (`.dashboard__date-input--discrete`).
+
+**Botón "Elegir semana":**
+- Abre un popover (`.date-filter-popover`) con `input[type="week"]` nativo del browser
+- Al seleccionar, llama a `weekInputToRange(weekStr)` para convertir `"YYYY-Www"` → `{ start, end }`, luego cierra el popover
+- Se activa (azul) cuando `selectedWeekRange` no coincide con "Esta semana" ni "Semana anterior"
+- Cuando está activo muestra el rango: `"3 – 9 mar"` en lugar del texto fijo
+- El popover se cierra al hacer click fuera (effect `mousedown` + `weekPickerRef`)
 
 **KPIs (sección `.kpis`, 4 cards):**
 1. **Estado de errores** — conteo `ERROR · WARNING · INFO` de incidentes filtrados
@@ -251,6 +262,7 @@ El KPI "Último error crítico" usa `filteredEvents` (respeta el filtro de fecha
 - `filterIncidentsByDate`, `filterEventsByDate`, `getWindowForDate` — todos aceptan `DateFilter`
 - `getWeekRange(date)` → `{ start, end }` — calcula lunes–domingo de la semana de `date`
 - `formatWeekRange(range)` → `"3 mar – 9 mar"` — formato legible del rango
+- `weekInputToRange(weekStr)` → `{ start, end }` — convierte `"YYYY-Www"` (formato de `input[type="week"]`) a rango lunes–domingo usando ISO 8601
 - `bucketEventsByHour` → datos para AreaChart
 - `getTopIncidentsForChart` → top N para BarChart
 
