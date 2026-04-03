@@ -230,6 +230,14 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 - Events: ídem
 - Filtro por fecha: selección de día filtra events e incidents al rango de ese día
 
+**KPIs (sección `.kpis`, 4 cards):**
+1. **Estado de errores** — conteo `ERROR · WARNING · INFO` de incidentes filtrados
+2. **Incidencias Activas** — `filteredIncidents.length`
+3. **Último error crítico** — código del `Event` con `type=ERROR` más reciente en `filteredEvents`; muestra código en rojo + fecha/hora en el subtítulo; "Sin errores" en verde si no hay ningún ERROR
+4. **Eventos Registrados** — `filteredEvents.length`
+
+El KPI "Último error crítico" usa `filteredEvents` (respeta el filtro de fecha activo), no requiere endpoint nuevo.
+
 **Helpers importantes:**
 - `getIncidentTableRows(incidents, events, selectedDate)` → `IncidentRow[]` — derivado de `result`, no memoizado
 - `filterIncidentsByDate`, `filterEventsByDate`, `getWindowForDate`
