@@ -840,6 +840,83 @@ body {
   color: #8fb4f5;
 }
 
+/* Grupo de botones de filtro de fecha */
+.date-filter-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid #232734;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.date-filter-group .dashboard__btn--todo {
+  border: none;
+  border-right: 1px solid #232734;
+  border-radius: 0;
+}
+
+.date-filter-group .dashboard__btn--todo:last-child,
+.date-filter-group .date-filter-picker-wrap:last-child .dashboard__btn--todo {
+  border-right: none;
+}
+
+.date-filter-group .dashboard__btn--todo:hover {
+  background: #232734;
+  color: #e6e8ee;
+}
+
+.date-filter-group .dashboard__btn--todo-active {
+  background: rgba(76, 139, 245, 0.2);
+  border-right-color: rgba(76, 139, 245, 0.3);
+  color: #8fb4f5;
+}
+
+.date-filter-group .dashboard__btn--todo-active:hover {
+  background: rgba(76, 139, 245, 0.28);
+  color: #8fb4f5;
+}
+
+/* Picker de semana (popover) */
+.date-filter-picker-wrap {
+  position: relative;
+}
+
+.date-filter-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #1a1d27;
+  border: 1px solid #3d4452;
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.date-filter-popover__label {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Input de fecha individual — más discreto */
+.dashboard__date-input--discrete {
+  opacity: 0.55;
+  font-size: 12px;
+  padding: 4px 8px;
+  transition: opacity 0.15s;
+}
+
+.dashboard__date-input--discrete:hover,
+.dashboard__date-input--discrete:focus {
+  opacity: 1;
+}
+
 .section__title {
   margin: 0 0 16px;
   font-size: 1rem;

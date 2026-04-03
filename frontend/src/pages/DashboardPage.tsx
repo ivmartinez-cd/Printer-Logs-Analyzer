@@ -95,6 +95,20 @@ function formatWeekRange(range: { start: string; end: string }): string {
   return `${fmt(range.start)} – ${fmt(range.end)}`
 }
 
+function weekInputToRange(weekStr: string): { start: string; end: string } {
+  // weekStr format: "2024-W12"
+  const match = weekStr.match(/^(\d{4})-W(\d{2})$/)
+  if (!match) return getWeekRange(new Date())
+  const year = Number(match[1])
+  const week = Number(match[2])
+  // ISO 8601: Jan 4th is always in week 1; find that week's Monday
+  const jan4 = new Date(year, 0, 4)
+  const jan4Day = (jan4.getDay() + 6) % 7 // Mon=0
+  const monday = new Date(jan4)
+  monday.setDate(jan4.getDate() - jan4Day + (week - 1) * 7)
+  return getWeekRange(monday)
+}
+
 /** Rango de fechas del log en formato YYYY-MM-DD para min/max del input date. */
 function getDateRangeFromEvents(events: ApiEvent[]): { minDate: string; maxDate: string } | null {
   if (events.length === 0) return null
@@ -361,6 +375,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedWeekRange, setSelectedWeekRange] = useState<{ start: string; end: string } | null>(null)
+  const [weekPickerOpen, setWeekPickerOpen] = useState(false)
+  const weekPickerRef = useRef<HTMLDivElement>(null)
   const activeFilter: DateFilter = selectedWeekRange ?? selectedDate
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
@@ -394,6 +410,17 @@ export default function DashboardPage() {
   const [solutionModal, setSolutionModal] = useState<{ content: string; url?: string | null } | null>(null)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
   const toast = useToast()
+
+  useEffect(() => {
+    if (!weekPickerOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (weekPickerRef.current && !weekPickerRef.current.contains(e.target as Node)) {
+        setWeekPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [weekPickerOpen])
 
   async function handleAnalyze(logText: string, fileName?: string) {
     if (!logText.trim()) return
@@ -963,44 +990,83 @@ export default function DashboardPage() {
 
           {codesNew.length === 0 && (
           <>
-          {/* Subheader: Errors Dashboard | filtro día | date */}
+          {/* Subheader: Errors Dashboard | filtros | date */}
           <div className="dashboard__subheader">
             <span className="dashboard__subheader-title">Panel de errores</span>
             <div className="dashboard__subheader-actions">
-              <label className="dashboard__day-filter-label" htmlFor="dashboard-date-filter">
-                Ver datos:
-              </label>
+              <label className="dashboard__day-filter-label">Ver datos:</label>
+              {/* Botones de filtro de semana agrupados */}
+              <div className="date-filter-group">
+                <button
+                  type="button"
+                  className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${activeFilter === null ? ' dashboard__btn--todo-active' : ''}`}
+                  onClick={() => { setSelectedDate(null); setSelectedWeekRange(null) }}
+                >
+                  Todo
+                </button>
+                <button
+                  type="button"
+                  className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${selectedWeekRange?.start === getWeekRange(new Date()).start ? ' dashboard__btn--todo-active' : ''}`}
+                  onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date())) }}
+                >
+                  Esta semana
+                </button>
+                <button
+                  type="button"
+                  className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${(() => { const prev = getWeekRange(new Date(Date.now() - 7 * 86400000)); return selectedWeekRange?.start === prev.start })() ? ' dashboard__btn--todo-active' : ''}`}
+                  onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date(Date.now() - 7 * 86400000))) }}
+                >
+                  Semana anterior
+                </button>
+                {/* Picker de semana con popover */}
+                <div className="date-filter-picker-wrap" ref={weekPickerRef}>
+                  {(() => {
+                    const thisWeekStart = getWeekRange(new Date()).start
+                    const prevWeekStart = getWeekRange(new Date(Date.now() - 7 * 86400000)).start
+                    const isCustomWeek = selectedWeekRange !== null && selectedWeekRange.start !== thisWeekStart && selectedWeekRange.start !== prevWeekStart
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${isCustomWeek ? ' dashboard__btn--todo-active' : ''}`}
+                          onClick={() => setWeekPickerOpen((o) => !o)}
+                          title="Elegir una semana específica"
+                        >
+                          {isCustomWeek && selectedWeekRange ? formatWeekRange(selectedWeekRange) : 'Elegir semana ▾'}
+                        </button>
+                        {weekPickerOpen && (
+                          <div className="date-filter-popover">
+                            <span className="date-filter-popover__label">Seleccioná una semana</span>
+                            <input
+                              type="week"
+                              className="dashboard__date-input"
+                              onChange={(e) => {
+                                if (!e.target.value) return
+                                setSelectedDate(null)
+                                setSelectedWeekRange(weekInputToRange(e.target.value))
+                                setWeekPickerOpen(false)
+                              }}
+                              autoFocus
+                            />
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
+                </div>
+              </div>
+              {/* Input de día individual — discreto, al final */}
               <input
                 id="dashboard-date-filter"
                 type="date"
-                className="dashboard__date-input"
+                className="dashboard__date-input dashboard__date-input--discrete"
                 min={dateRange?.minDate}
                 max={dateRange?.maxDate}
                 value={selectedDate ?? ''}
                 onChange={(e) => { setSelectedWeekRange(null); setSelectedDate(e.target.value || null) }}
-                aria-label="Filtrar por fecha del log"
+                aria-label="Filtrar por día específico"
+                title="Filtrar por día específico"
               />
-              <button
-                type="button"
-                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${activeFilter === null ? 'dashboard__btn--todo-active' : ''}`}
-                onClick={() => { setSelectedDate(null); setSelectedWeekRange(null) }}
-              >
-                Todo
-              </button>
-              <button
-                type="button"
-                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${selectedWeekRange !== null && selectedWeekRange.start === getWeekRange(new Date()).start ? 'dashboard__btn--todo-active' : ''}`}
-                onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date())) }}
-              >
-                Esta semana
-              </button>
-              <button
-                type="button"
-                className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo ${(() => { const prev = getWeekRange(new Date(Date.now() - 7 * 86400000)); return selectedWeekRange !== null && selectedWeekRange.start === prev.start })() ? 'dashboard__btn--todo-active' : ''}`}
-                onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date(Date.now() - 7 * 86400000))) }}
-              >
-                Semana anterior
-              </button>
               <time className="dashboard__datetime" dateTime={now.toISOString()}>
                 {now.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
               </time>
