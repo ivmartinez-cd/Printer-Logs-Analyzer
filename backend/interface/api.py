@@ -229,11 +229,17 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174","https://printer-logs-analyzer.vercel.app"],
+        allow_origins=["https://printer-logs-analyzer.vercel.app"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    from fastapi.responses import Response
+
+    @app.options("/{full_path:path}")
+    def preflight_handler():
+        return Response(status_code=200)
 
     @app.get("/health", summary="Basic health probe")
     def health() -> dict:
