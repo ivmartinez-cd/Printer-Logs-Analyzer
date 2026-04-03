@@ -292,8 +292,16 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 | `AddCodeToCatalogModal.tsx` | Form para agregar/editar código: severity, description, solution_url |
 | `SaveIncidentModal.tsx` | Form para guardar análisis: name + equipment_identifier opcional |
 | `SDSIncidentModal.tsx` | Textarea para pegar incident SDS; parsea texto → `SdsIncidentData` |
-| `SDSIncidentPanel.tsx` | Muestra data SDS parseada; calcula match SDS vs incidentes del log |
+| `SDSIncidentPanel.tsx` | Muestra data SDS parseada; calcula match SDS vs incidentes del log usando `event_context` + `more_info` |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
+
+**Lógica de match SDS vs Log (`SDSIncidentPanel.tsx`):**
+- `getSdsCodesForMatch(sds)` devuelve un array de códigos a buscar en el log:
+  1. `event_context` ("Contexto del código de evento") como código primario — ej. `60.00.02`
+  2. Códigos en `more_info` ("Más información") separados por `or` — ej. `"60.00.02 or 60.01.02"` → `["60.00.02", "60.01.02"]`
+- El campo `code` ("Código" interno SDS, ej. `TriageInput2`) **no se usa** para el match.
+- Si **cualquiera** de esos códigos existe en los incidentes del log → `✔ Coincide`, mostrando los códigos encontrados + conteo de eventos.
+- `incidentCodeMatchesSds` sigue soportando sufijo `z` para matching por prefijo (ej. `53.B0.0z` matchea `53.B0.01`, `53.B0.02`, etc.).
 | `SolutionContentModal.tsx` | Muestra contenido HTML de solución guardado; link al URL (puede estar vencido) |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
@@ -373,6 +381,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 **Bug: crash del servidor en Windows al imprimir logs con cp1252**
 - Causa: prints de debug con caracteres Unicode en Python con encoding cp1252.
 - Fix: eliminar todos los prints de debug del parser y api.py.
+
+**Bug: match SDS vs Log no funcionaba — usaba campo "Código" interno en lugar del código del log**
+- Causa: `getSdsCodeForMatch` usaba `more_info ?? code` (ej. `TriageInput2`), que es un identificador interno SDS sin relación con los códigos del log.
+- Fix: reemplazar por `getSdsCodesForMatch` que usa `event_context` como primario y parsea `more_info` buscando múltiples códigos separados por `or`. El campo `code` ya no interviene en el matching.
 
 ---
 
