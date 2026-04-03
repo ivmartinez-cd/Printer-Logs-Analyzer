@@ -495,6 +495,34 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ---
 
+## PRÓXIMA SESIÓN — Mejoras pendientes DiagnosticPanel
+
+### Mejora pendiente: Mensajes de diagnóstico con fecha y rango horario
+
+En `DiagnosticPanel.tsx`, la Regla 2 (ráfaga) necesita dos mejoras:
+
+#### 1. Formato con fecha y horario
+Cambiar el mensaje actual:
+`"⚡ N eventos de 'descripción larga...' en menos de 30 minutos"`
+
+Por este nuevo formato:
+`"⚡ El [D/M/YYYY] entre las [HH:MM] y las [HH:MM] se generaron [N] eventos de '[descripción corta]' ([código])"`
+
+Ejemplo esperado:
+`"⚡ El 3/4/2026 entre las 18:09 y las 18:26 se generaron 15 eventos de 'Paper delay jam at the image area' (13.B2.D2)"`
+
+#### 2. Descripción corta
+Implementar `truncateDescription(desc: string): string` que:
+- Corta en el primer punto si existe
+- Si sigue siendo mayor a 50 chars, corta en la palabra más cercana y agrega `"..."`
+- Siempre agrega el código entre paréntesis al final
+
+#### Implementación
+- Al detectar la ráfaga, capturar timestamp del primer y último evento del grupo
+- Formatear fecha como `D/M/YYYY` y horas como `HH:MM`
+
+---
+
 ## Deuda técnica conocida
 
 - `DashboardPage.tsx` es un componente monolítico de ~2000 líneas — debería dividirse
