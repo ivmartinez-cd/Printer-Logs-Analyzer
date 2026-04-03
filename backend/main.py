@@ -2,12 +2,11 @@
 
 import uvicorn
 
-from interface.api import app
+from backend.interface.api import app
 
 
 def run() -> None:
-    """Launch uvicorn server with sensible defaults."""
-    uvicorn.run("interface.api:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.interface.api:app", host="0.0.0.0", port=10000)
 
 
 if __name__ == "__main__":
