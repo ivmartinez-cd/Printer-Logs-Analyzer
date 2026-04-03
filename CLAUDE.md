@@ -304,7 +304,7 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 | `SDSIncidentModal.tsx` | Textarea para pegar incident SDS; parsea texto → `SdsIncidentData` |
 | `SDSIncidentPanel.tsx` | Muestra data SDS parseada; calcula match SDS vs incidentes del log usando `event_context` + `more_info` |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
-| `DiagnosticPanel.tsx` | Panel colapsable de diagnóstico automático basado en reglas; aparece entre KPIs y gráficos; recibe `filteredIncidents` y `filteredEvents` (respeta filtro de fecha) |
+| `DiagnosticPanel.tsx` | Panel colapsable de diagnóstico automático basado en reglas; aparece entre KPIs y gráficos; recibe solo `filteredEvents` (respeta filtro de fecha) |
 
 **Lógica de match SDS vs Log (`SDSIncidentPanel.tsx`):**
 - `getSdsCodesForMatch(sds)` devuelve un array de códigos a buscar en el log:
@@ -318,7 +318,7 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 
 ### DiagnosticPanel (`components/DiagnosticPanel.tsx`)
 
-Panel colapsable (por defecto expandido) que aparece entre los KPIs y los gráficos. No llama a ninguna API — toda la lógica es cálculo puro en el frontend con `filteredIncidents` y `filteredEvents` (por eso respeta el filtro de fecha activo).
+Panel colapsable (por defecto expandido) que aparece entre los KPIs y los gráficos. No llama a ninguna API — toda la lógica es cálculo puro en el frontend con `filteredEvents` (respeta el filtro de fecha activo). No recibe `incidents` — todas las reglas operan sobre eventos.
 
 **Reglas implementadas (en orden de severidad):**
 
@@ -413,6 +413,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 **Bug: match SDS vs Log no funcionaba — usaba campo "Código" interno en lugar del código del log**
 - Causa: `getSdsCodeForMatch` usaba `more_info ?? code` (ej. `TriageInput2`), que es un identificador interno SDS sin relación con los códigos del log.
 - Fix: reemplazar por `getSdsCodesForMatch` que usa `event_context` como primario y parsea `more_info` buscando múltiples códigos separados por `or`. El campo `code` ya no interviene en el matching.
+
+**Bug: build de Vercel fallaba por prop `incidents` no usada en `DiagnosticPanel`**
+- Causa: `runDiagnostics` declaraba `incidents: ApiIncident[]` como primer parámetro pero todas las reglas operan exclusivamente sobre `events`. TypeScript strict lo marca como error.
+- Fix: eliminar `incidents` de la firma de `runDiagnostics`, de `DiagnosticPanelProps` y del call site en `DashboardPage`. También eliminar el import de `ApiIncident`.
 
 ---
 
