@@ -160,3 +160,7 @@ export async function deleteSavedAnalysis(
     throw new Error(typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed')
   }
 }
+
+export async function pingHealth(): Promise<void> {
+  await fetch(`${API_BASE}/health`).catch(() => {})
+}

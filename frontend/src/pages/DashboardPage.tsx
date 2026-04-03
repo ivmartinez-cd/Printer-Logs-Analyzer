@@ -237,11 +237,20 @@ function getEventInfoForCode(result: ParseLogsResponse | null, code: string): { 
 function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProps) {
   const [logText, setLogText] = useState('')
   const [fileName, setFileName] = useState<string | undefined>(undefined)
+  const [slowWarning, setSlowWarning] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
+  useEffect(() => {
+    if (!loading) {
+      setSlowWarning(false)
+      return
+    }
+    const id = setTimeout(() => setSlowWarning(true), 5000)
+    return () => clearTimeout(id)
+  }, [loading])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -297,12 +306,19 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
             onClick={() => onAnalyze(logText, fileName)}
             disabled={loading || !logText.trim()}
           >
-            {loading ? 'Analizando…' : 'Analizar'}
+            {loading ? (
+              <>
+                <span className="log-modal__spinner" aria-hidden="true" /> Analizando… (primer uso puede tardar ~20s)
+              </>
+            ) : 'Analizar'}
           </button>
           <button type="button" className="log-modal__btn-secondary" onClick={onClose} disabled={loading}>
             Cerrar
           </button>
         </div>
+        {slowWarning && (
+          <p className="log-modal__slow-warning">El servidor está iniciando, por favor esperá…</p>
+        )}
       </div>
     </div>
   )

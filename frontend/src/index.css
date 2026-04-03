@@ -520,6 +520,29 @@ body {
   cursor: not-allowed;
 }
 
+.log-modal__spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.log-modal__slow-warning {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #f59e0b;
+  text-align: center;
+}
+
 .confirm-modal .confirm-modal__message {
   margin: 0;
   padding: 16px 20px;
