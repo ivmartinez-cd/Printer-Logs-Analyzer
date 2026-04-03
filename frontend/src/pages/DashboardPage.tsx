@@ -477,7 +477,15 @@ export default function DashboardPage() {
   const errorCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length
   const warningCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length
   const infoCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'INFO').length
-  const uniqueCodes = new Set(filteredEvents.map((e) => e.code)).size
+  const lastErrorEvent = [...filteredEvents]
+    .filter((e) => e.type.toUpperCase() === 'ERROR')
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] ?? null
+  const lastErrorLabel = lastErrorEvent
+    ? new Date(lastErrorEvent.timestamp).toLocaleString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : null
   const volumeData = bucketEventsByHour(events, selectedDate)
   const topCodes = getTopIncidentsForChart(incidents, events, selectedDate, 5)
   const incidentRowsBase = getIncidentTableRows(incidents, events, selectedDate)
@@ -956,9 +964,22 @@ export default function DashboardPage() {
               <div className="kpi-card__sub">incidentes detectados en el log</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-card__label">Códigos únicos de error</div>
-              <div className="kpi-card__value">{uniqueCodes}</div>
-              <div className="kpi-card__sub">distintos detectados en el log</div>
+              <div className="kpi-card__label">Último error crítico</div>
+              {lastErrorEvent ? (
+                <>
+                  <div className="kpi-card__value kpi-card__value--error" style={{ fontSize: '1rem', fontWeight: 700 }}>
+                    {lastErrorEvent.code}
+                  </div>
+                  <div className="kpi-card__sub">{lastErrorLabel} · último error registrado</div>
+                </>
+              ) : (
+                <>
+                  <div className="kpi-card__value" style={{ fontSize: '1rem', color: 'var(--color-success, #22c55e)' }}>
+                    Sin errores
+                  </div>
+                  <div className="kpi-card__sub">último error registrado</div>
+                </>
+              )}
             </div>
             <div className="kpi-card">
               <div className="kpi-card__label">Eventos Registrados</div>
