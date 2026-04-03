@@ -81,16 +81,34 @@ function formatLastEvent(dateStr: string): string {
   return `${datePart} (${relPart})`
 }
 
-/** Código a usar para comparar con el log: "Más información" (53.B0.0z) si existe, sino "Código" (ReplaceTrayPickRollers). */
-function getSdsCodeForMatch(sds: SdsIncidentData): string {
-  return (sds.more_info ?? sds.code ?? '').trim()
+/**
+ * Extrae todos los códigos a usar para el match contra el log:
+ * 1. "Contexto evento" (event_context) como código primario — ej. "60.00.02"
+ * 2. Códigos en "Más información" separados por "or" — ej. "60.00.02 or 60.01.02"
+ * El campo "Código" (identificador interno SDS como TriageInput2) NO se usa para el match.
+ */
+function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
+  const codes: string[] = []
+
+  const ctx = sds.event_context?.trim()
+  if (ctx) codes.push(ctx)
+
+  const moreInfo = sds.more_info?.trim()
+  if (moreInfo) {
+    const parts = moreInfo.split(/\s+or\s+/i).map((s) => s.trim()).filter(Boolean)
+    for (const part of parts) {
+      if (!codes.includes(part)) codes.push(part)
+    }
+  }
+
+  return codes
 }
 
-/** Total de eventos del log que coinciden con el SDS (mismo matching). */
+/** Total de eventos del log que coinciden con cualquiera de los códigos SDS. */
 function getEventosRelacionadosCount(sds: SdsIncidentData, incidentsFull: IncidentFullForSds[]): number {
-  const sdsCodeForMatch = getSdsCodeForMatch(sds)
-  if (!sdsCodeForMatch) return 0
-  const matching = incidentsFull.filter((i) => incidentCodeMatchesSds(i.code, sdsCodeForMatch))
+  const sdsCodes = getSdsCodesForMatch(sds)
+  if (sdsCodes.length === 0) return 0
+  const matching = incidentsFull.filter((i) => sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c)))
   return matching.reduce((sum, i) => sum + (i.occurrences ?? 1), 0)
 }
 
@@ -100,30 +118,33 @@ function computeSdsVsLog(
   incidentsFull: IncidentFullForSds[],
   eventosRelacionadosCount: number
 ): { status: SdsVsLogStatus; explanation: string } {
-  const sdsCodeForMatch = getSdsCodeForMatch(sds)
-  if (!sdsCodeForMatch) {
-    return { status: 'no_match', explanation: 'no hay eventos del código' }
+  const sdsCodes = getSdsCodesForMatch(sds)
+  if (sdsCodes.length === 0) {
+    return { status: 'no_match', explanation: 'no hay código de evento definido' }
   }
 
-  const hasMatchInFiltered = incidentRows.some((r) => incidentCodeMatchesSds(r.code, sdsCodeForMatch))
-  const hasMatchInFull = incidentsFull.some((i) => incidentCodeMatchesSds(i.code, sdsCodeForMatch))
+  const matchedInFiltered = sdsCodes.filter((c) => incidentRows.some((r) => incidentCodeMatchesSds(r.code, c)))
+  const matchedInFull = sdsCodes.filter((c) => incidentsFull.some((i) => incidentCodeMatchesSds(i.code, c)))
 
-  if (hasMatchInFiltered) {
-    return { status: 'match', explanation: `${eventosRelacionadosCount} eventos detectados` }
+  if (matchedInFiltered.length > 0) {
+    return {
+      status: 'match',
+      explanation: `${matchedInFiltered.join(', ')} — ${eventosRelacionadosCount} eventos detectados`,
+    }
   }
-  if (hasMatchInFull) {
-    return { status: 'partial', explanation: `${eventosRelacionadosCount} eventos detectados` }
+  if (matchedInFull.length > 0) {
+    return {
+      status: 'partial',
+      explanation: `${matchedInFull.join(', ')} — ${eventosRelacionadosCount} eventos detectados`,
+    }
   }
   return { status: 'no_match', explanation: 'no hay eventos del código' }
 }
 
-function getLastEventRelated(
-  sds: SdsIncidentData,
-  incidentsFull: IncidentFullForSds[]
-): string {
-  const sdsCodeForMatch = getSdsCodeForMatch(sds)
-  if (!sdsCodeForMatch) return '—'
-  const matching = incidentsFull.filter((i) => incidentCodeMatchesSds(i.code, sdsCodeForMatch))
+function getLastEventRelated(sds: SdsIncidentData, incidentsFull: IncidentFullForSds[]): string {
+  const sdsCodes = getSdsCodesForMatch(sds)
+  if (sdsCodes.length === 0) return '—'
+  const matching = incidentsFull.filter((i) => sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c)))
   if (matching.length === 0) return '—'
   const latest = matching.sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime())[0]
   if (!latest?.end_time) return '—'
