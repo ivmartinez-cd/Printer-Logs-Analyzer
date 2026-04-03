@@ -480,25 +480,6 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ---
 
-## Traducción automática de descripciones
-
-**Estado:** Implementado.
-
-Al guardar un código en `/error-codes/upsert`, el backend llama a MyMemory API y guarda la traducción en `description_es`.
-
-- `_translate_to_spanish(text)` en `api.py` — MyMemory, timeout 10 s, falla silenciosamente
-- Campo `description_es` en `error_codes` (migración `006_add_description_es.sql` — **correr manualmente en Neon**)
-- `ErrorCode.description_es` en el dataclass y todas las queries del repositorio
-- `Event.code_description_es` en `domain/entities.py` y `types/api.ts`
-- `DiagnosticPanel` usa `code_description_es ?? code_description` en todas las reglas
-
-**Migración pendiente de aplicar en producción (Neon):**
-```sql
-ALTER TABLE error_codes ADD COLUMN IF NOT EXISTS description_es TEXT;
-```
-
----
-
 ## Deuda técnica conocida
 
 - `DashboardPage.tsx` es un componente monolítico de ~2000 líneas — debería dividirse

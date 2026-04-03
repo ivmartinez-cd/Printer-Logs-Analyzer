@@ -35,7 +35,6 @@ class ErrorCode:
     description: str | None
     solution_url: str | None
     solution_content: str | None
-    description_es: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -73,13 +72,12 @@ class ErrorCodeRepository:
         description: str | None = None,
         solution_url: str | None = None,
         solution_content: str | None = None,
-        description_es: str | None = None,
     ) -> ErrorCode:
         """Insert or update an error code. Falls back to local JSON when DB is down."""
         try:
-            return self._upsert_db(code, severity, description, solution_url, solution_content, description_es)
+            return self._upsert_db(code, severity, description, solution_url, solution_content)
         except DatabaseUnavailableError:
-            return self._upsert_local(code, severity, description, solution_url, solution_content, description_es)
+            return self._upsert_local(code, severity, description, solution_url, solution_content)
 
     # ------------------------------------------------------------------
     # Database helpers
@@ -90,7 +88,7 @@ class ErrorCodeRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, code, severity, description, solution_url, solution_content, description_es, created_at, updated_at
+                    SELECT id, code, severity, description, solution_url, solution_content, created_at, updated_at
                     FROM error_codes
                     WHERE code = ANY(%s)
                     """,
@@ -105,9 +103,8 @@ class ErrorCodeRepository:
                 description=row[3],
                 solution_url=row[4],
                 solution_content=row[5],
-                description_es=row[6],
-                created_at=row[7],
-                updated_at=row[8],
+                created_at=row[6],
+                updated_at=row[7],
             )
             for row in rows
         }
@@ -119,24 +116,22 @@ class ErrorCodeRepository:
         description: str | None,
         solution_url: str | None,
         solution_content: str | None,
-        description_es: str | None = None,
     ) -> ErrorCode:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO error_codes (code, severity, description, solution_url, solution_content, description_es)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO error_codes (code, severity, description, solution_url, solution_content)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (code) DO UPDATE SET
                         severity = COALESCE(EXCLUDED.severity, error_codes.severity),
                         description = COALESCE(NULLIF(EXCLUDED.description, ''), error_codes.description),
                         solution_url = COALESCE(NULLIF(EXCLUDED.solution_url, ''), error_codes.solution_url),
                         solution_content = COALESCE(EXCLUDED.solution_content, error_codes.solution_content),
-                        description_es = COALESCE(EXCLUDED.description_es, error_codes.description_es),
                         updated_at = NOW()
-                    RETURNING id, code, severity, description, solution_url, solution_content, description_es, created_at, updated_at
+                    RETURNING id, code, severity, description, solution_url, solution_content, created_at, updated_at
                     """,
-                    (code, severity or None, description or None, solution_url or None, solution_content or None, description_es or None),
+                    (code, severity or None, description or None, solution_url or None, solution_content or None),
                 )
                 row = cur.fetchone()
             conn.commit()
@@ -147,9 +142,8 @@ class ErrorCodeRepository:
             description=row[3],
             solution_url=row[4],
             solution_content=row[5],
-            description_es=row[6],
-            created_at=row[7],
-            updated_at=row[8],
+            created_at=row[6],
+            updated_at=row[7],
         )
 
     # ------------------------------------------------------------------
@@ -170,7 +164,6 @@ class ErrorCodeRepository:
                     description=item.get("description"),
                     solution_url=item.get("solution_url"),
                     solution_content=item.get("solution_content"),
-                    description_es=item.get("description_es"),
                     created_at=_EPOCH,
                     updated_at=_EPOCH,
                 )
@@ -185,7 +178,6 @@ class ErrorCodeRepository:
         description: str | None,
         solution_url: str | None,
         solution_content: str | None,
-        description_es: str | None = None,
     ) -> ErrorCode:
         """Insert or update an error code in the local JSON file."""
         source = _LOCAL_PATH if _LOCAL_PATH.exists() else _SEED_PATH
@@ -204,8 +196,6 @@ class ErrorCodeRepository:
                 existing["solution_url"] = solution_url
             if solution_content:
                 existing["solution_content"] = solution_content
-            if description_es:
-                existing["description_es"] = description_es
             item_data = existing
         else:
             max_id = max((int(i["id"]) for i in items), default=0)
@@ -216,7 +206,6 @@ class ErrorCodeRepository:
                 "description": description,
                 "solution_url": solution_url,
                 "solution_content": solution_content,
-                "description_es": description_es,
             }
             items.append(item_data)
 
@@ -234,7 +223,6 @@ class ErrorCodeRepository:
             description=item_data.get("description"),
             solution_url=item_data.get("solution_url"),
             solution_content=item_data.get("solution_content"),
-            description_es=item_data.get("description_es"),
             created_at=_EPOCH,
             updated_at=now,
         )

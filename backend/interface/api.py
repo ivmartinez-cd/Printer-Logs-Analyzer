@@ -32,28 +32,6 @@ MAX_LOGS_LENGTH = 2_000_000
 _FETCH_TIMEOUT = 15  # seconds
 
 
-def _translate_to_spanish(text: str) -> str | None:
-    """Translate text from English to Spanish using MyMemory API. Returns None on failure."""
-    if not text or not text.strip():
-        return None
-    try:
-        import httpx
-        response = httpx.get(
-            "https://api.mymemory.translated.net/get",
-            params={"q": text[:500], "langpair": "en|es"},
-            timeout=10,
-        )
-        data = response.json()
-        if data.get("responseStatus") == 200:
-            translated = data.get("responseData", {}).get("translatedText")
-            if translated:
-                return translated
-        return None
-    except Exception as exc:
-        logging.warning("Could not translate description to Spanish: %s", exc)
-        return None
-
-
 def _fetch_solution_content(url: str) -> str | None:
     """Fetch the text content of a solution page. Returns None on any error."""
     try:
@@ -284,7 +262,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 data["code_description"] = row.description
                 data["code_solution_url"] = row.solution_url
                 data["code_solution_content"] = row.solution_content
-                data["code_description_es"] = row.description_es
                 enriched.append(Event(**data))
             else:
                 enriched.append(evt)
@@ -373,23 +350,18 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             solution_content = _fetch_solution_content(body.solution_url.strip())
             if solution_content is None:
                 content_fetch_warning = "No se pudo obtener el contenido de la página (token vencido o URL inaccesible). Se guardó el link de todas formas."
-        description_es: str | None = None
-        if body.description and body.description.strip():
-            description_es = _translate_to_spanish(body.description.strip())
         ec = error_code_repository.upsert(
             code=body.code,
             severity=body.severity,
             description=body.description,
             solution_url=body.solution_url,
             solution_content=solution_content,
-            description_es=description_es,
         )
         result: dict = {
             "id": ec.id,
             "code": ec.code,
             "severity": ec.severity,
             "description": ec.description,
-            "description_es": ec.description_es,
             "solution_url": ec.solution_url,
             "solution_content": ec.solution_content,
             "solution_content_saved": ec.solution_content is not None,

@@ -9,7 +9,6 @@ export interface Event {
   code_description?: string | null
   code_solution_url?: string | null
   code_solution_content?: string | null
-  code_description_es?: string | null
 }
 
 export interface Incident {

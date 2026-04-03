@@ -34,7 +34,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   if (totalErrorOccurrences > 0) {
     const countByCode = new Map<string, { count: number; description: string | null }>()
     for (const evt of errorEvents) {
-      const entry = countByCode.get(evt.code) ?? { count: 0, description: evt.code_description_es ?? evt.code_description ?? null }
+      const entry = countByCode.get(evt.code) ?? { count: 0, description: evt.code_description ?? null }
       countByCode.set(evt.code, { count: entry.count + 1, description: entry.description })
     }
     for (const [code, { count, description }] of countByCode) {
@@ -62,7 +62,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     const arr = timesByCode.get(evt.code) ?? []
     arr.push(t)
     timesByCode.set(evt.code, arr)
-    if (!descByCode.has(evt.code)) descByCode.set(evt.code, evt.code_description_es ?? evt.code_description ?? null)
+    if (!descByCode.has(evt.code)) descByCode.set(evt.code, evt.code_description ?? null)
   }
   for (const [code, times] of timesByCode) {
     const sorted = [...times].sort((a, b) => a - b)
@@ -115,10 +115,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   }
 
   // REGLA 4 — Firmware: descripción contiene "firmware"
-  const hasFirmwareErrors = events.some((e) => {
-    const d = e.code_description_es ?? e.code_description
-    return d?.toLowerCase().includes('firmware')
-  })
+  const hasFirmwareErrors = events.some((e) => e.code_description?.toLowerCase().includes('firmware'))
   if (hasFirmwareErrors) {
     alerts.push({
       key: 'firmware',
@@ -132,7 +129,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     ...new Set(
       events
         .filter((e) => {
-          const d = (e.code_description_es ?? e.code_description)?.toLowerCase() ?? ''
+          const d = e.code_description?.toLowerCase() ?? ''
           return d.includes('tray') || d.includes('bandeja')
         })
         .map((e) => e.code),
