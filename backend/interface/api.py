@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import time
+from urllib.parse import urlparse as _urlparse
 
 logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s")
 from datetime import datetime, timezone
@@ -30,6 +32,38 @@ from backend.infrastructure.repositories.saved_analysis_repository import (
 MAX_LOGS_LENGTH = 2_000_000
 
 _FETCH_TIMEOUT = 15  # seconds
+
+# RFC-1918 / loopback / link-local ranges blocked to prevent SSRF
+_PRIVATE_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),
+]
+
+
+def _validate_ssrf_url(url: str) -> None:
+    """Raise HTTPException(422) if the URL is not safe to fetch."""
+    try:
+        parsed = _urlparse(url)
+    except Exception:
+        raise HTTPException(status_code=422, detail="URL mal formada.")
+
+    if parsed.scheme != "https":
+        raise HTTPException(status_code=422, detail="Solo se permiten URLs con scheme https://.")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise HTTPException(status_code=422, detail="URL mal formada: sin hostname.")
+
+    # Reject bare IP literals pointing to private/loopback ranges
+    try:
+        addr = ipaddress.ip_address(hostname)
+        if any(addr in net for net in _PRIVATE_NETWORKS):
+            raise HTTPException(status_code=422, detail="La URL apunta a una dirección IP privada o reservada.")
+    except ValueError:
+        pass  # hostname is a domain name — not an IP literal, allow through
 
 
 def _fetch_solution_content(url: str) -> str | None:
@@ -347,6 +381,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         solution_content: str | None = None
         content_fetch_warning: str | None = None
         if body.solution_url and body.solution_url.strip():
+            _validate_ssrf_url(body.solution_url.strip())
             solution_content = _fetch_solution_content(body.solution_url.strip())
             if solution_content is None:
                 content_fetch_warning = "No se pudo obtener el contenido de la página (token vencido o URL inaccesible). Se guardó el link de todas formas."
