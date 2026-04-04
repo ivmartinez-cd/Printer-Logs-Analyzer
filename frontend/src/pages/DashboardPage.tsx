@@ -1291,8 +1291,8 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                     </tr>
                   </thead>
                   <tbody>
-                    {tableRows.map((evt, i) => (
-                      <tr key={i}>
+                    {tableRows.map((evt) => (
+                      <tr key={`${evt.code}-${evt.timestamp}`}>
                         <td>{formatDateTime(evt.timestamp)}</td>
                         <td>{evt.code}</td>
                         <td>
