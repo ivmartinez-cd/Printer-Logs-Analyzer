@@ -209,7 +209,7 @@ class SavedAnalysisRepository:
 
     @staticmethod
     def _row_to_snapshot(row: tuple) -> SavedAnalysisSnapshot:
-        incidents = row[3] if isinstance(row[3], list) else json.loads(row[3]) if row[3] else []
+        incidents = row[3] if row[3] is not None else []
         return SavedAnalysisSnapshot(
             id=row[0] if isinstance(row[0], UUID) else UUID(str(row[0])),
             name=row[1],
