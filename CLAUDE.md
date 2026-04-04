@@ -506,6 +506,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `<LiveClock short />` estaba renderizado tanto en el header principal (`dashboard__datetime`) como al final del subheader de filtros de fecha.
 - Fix: eliminar el `<LiveClock>` del subheader; queda solo en el header principal.
 
+**Bug: tabla de eventos usaba índice como key causando bugs de reconciliación en React**
+- Causa: `tableRows.map((evt, i) => <tr key={i}>)` — al filtrar eventos, React podía reutilizar nodos DOM incorrectos porque el índice no es estable.
+- Fix: reemplazar por `key={\`${evt.code}-${evt.timestamp}\`}` — combinación estable y única para cada evento.
+
 ---
 
 ## Deploy en producción
