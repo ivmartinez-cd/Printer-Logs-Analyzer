@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
   AreaChart,
   Area,
@@ -32,13 +32,20 @@ import { SolutionContentModal } from '../components/SolutionContentModal'
 import { DiagnosticPanel } from '../components/DiagnosticPanel'
 import { useToast } from '../contexts/ToastContext'
 
-function useLiveTime() {
+function LiveClock({ className, short = false }: { className?: string; short?: boolean }) {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
-  return now
+  return (
+    <time className={className} dateTime={now.toISOString()}>
+      {now.toLocaleString(undefined, short
+        ? { dateStyle: 'short', timeStyle: 'short' }
+        : { dateStyle: 'long', timeStyle: 'medium' }
+      )}
+    </time>
+  )
 }
 
 function formatDateTime(iso: string): string {
@@ -375,7 +382,6 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
 }
 
 export default function DashboardPage() {
-  const now = useLiveTime()
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -576,97 +582,121 @@ export default function DashboardPage() {
     }
   }
 
-  const events = result?.events ?? []
-  const incidents = result?.incidents ?? []
+  const events = useMemo(() => result?.events ?? [], [result])
+  const incidents = useMemo(() => result?.incidents ?? [], [result])
   const parseErrorsCount = result?.errors?.length ?? 0
-  const filteredEvents = filterEventsByDate(events, activeFilter)
-  const filteredIncidents = filterIncidentsByDate(incidents, events, activeFilter)
-  const dateRange = getDateRangeFromEvents(events)
+
+  const filteredEvents = useMemo(
+    () => filterEventsByDate(events, activeFilter),
+    [events, activeFilter]
+  )
+  const filteredIncidents = useMemo(
+    () => filterIncidentsByDate(incidents, events, activeFilter),
+    [incidents, events, activeFilter]
+  )
+  const dateRange = useMemo(() => getDateRangeFromEvents(events), [events])
   const errorCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length
   const warningCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length
   const infoCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'INFO').length
-  const lastErrorEvent = [...filteredEvents]
-    .filter((e) => e.type.toUpperCase() === 'ERROR')
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] ?? null
+  const lastErrorEvent = useMemo(
+    () =>
+      [...filteredEvents]
+        .filter((e) => e.type.toUpperCase() === 'ERROR')
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] ?? null,
+    [filteredEvents]
+  )
   const lastErrorLabel = lastErrorEvent
     ? new Date(lastErrorEvent.timestamp).toLocaleString('es-AR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
       })
     : null
-  const volumeData = bucketEventsByHour(events, activeFilter)
-  const topCodes = getTopIncidentsForChart(incidents, events, activeFilter, 5)
-  const incidentRowsBase = getIncidentTableRows(incidents, events, activeFilter)
-  const incidentRowsFiltered = incidentRowsBase.filter((inc) => {
-    if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter) return false
-    const q = incidentsSearchFilter.trim().toLowerCase()
-    if (q) {
-      const code = (inc.code ?? '').toLowerCase()
-      const classification = (inc.classification ?? '').toLowerCase()
-      if (!code.includes(q) && !classification.includes(q)) return false
-    }
-    return true
-  })
-  const incidentRows = [...incidentRowsFiltered].sort((a, b) => {
+  const volumeData = useMemo(
+    () => bucketEventsByHour(events, activeFilter),
+    [events, activeFilter]
+  )
+  const topCodes = useMemo(
+    () => getTopIncidentsForChart(incidents, events, activeFilter, 5),
+    [incidents, events, activeFilter]
+  )
+  const incidentRowsBase = useMemo(
+    () => getIncidentTableRows(incidents, events, activeFilter),
+    [incidents, events, activeFilter]
+  )
+  const incidentRows = useMemo(() => {
+    const filtered = incidentRowsBase.filter((inc) => {
+      if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter) return false
+      const q = incidentsSearchFilter.trim().toLowerCase()
+      if (q) {
+        const code = (inc.code ?? '').toLowerCase()
+        const classification = (inc.classification ?? '').toLowerCase()
+        if (!code.includes(q) && !classification.includes(q)) return false
+      }
+      return true
+    })
     const { column, dir } = incidentsSort
     const mult = dir === 'asc' ? 1 : -1
-    let cmp = 0
-    switch (column) {
-      case 'code':
-        cmp = (a.code ?? '').localeCompare(b.code ?? '')
-        break
-      case 'classification':
-        cmp = (a.classification ?? '').localeCompare(b.classification ?? '')
-        break
-      case 'severity':
-        cmp = (a.severity ?? '').localeCompare(b.severity ?? '')
-        break
-      case 'occurrences':
-        cmp = a.occurrences - b.occurrences
-        break
-      case 'start_time':
-        cmp = new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-        break
-      case 'end_time':
-      default:
-        cmp = new Date(a.end_time).getTime() - new Date(b.end_time).getTime()
-        break
-    }
-    return cmp * mult
-  })
-  const tableRowsBase = [...filteredEvents].filter((evt) => {
-    if (eventsSeverityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== eventsSeverityFilter) return false
-    const q = eventsSearchFilter.trim().toLowerCase()
-    if (q) {
-      const code = (evt.code ?? '').toLowerCase()
-      const msg = (evt.code_description ?? evt.help_reference ?? '').toLowerCase()
-      if (!code.includes(q) && !msg.includes(q)) return false
-    }
-    return true
-  })
-  const tableRows = [...tableRowsBase].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
+      let cmp = 0
+      switch (column) {
+        case 'code':
+          cmp = (a.code ?? '').localeCompare(b.code ?? '')
+          break
+        case 'classification':
+          cmp = (a.classification ?? '').localeCompare(b.classification ?? '')
+          break
+        case 'severity':
+          cmp = (a.severity ?? '').localeCompare(b.severity ?? '')
+          break
+        case 'occurrences':
+          cmp = a.occurrences - b.occurrences
+          break
+        case 'start_time':
+          cmp = new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          break
+        case 'end_time':
+        default:
+          cmp = new Date(a.end_time).getTime() - new Date(b.end_time).getTime()
+          break
+      }
+      return cmp * mult
+    })
+  }, [incidentRowsBase, incidentsSeverityFilter, incidentsSearchFilter, incidentsSort])
+  const tableRows = useMemo(() => {
     const { column, dir } = eventsSort
     const mult = dir === 'asc' ? 1 : -1
-    let cmp = 0
-    switch (column) {
-      case 'timestamp':
-        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        break
-      case 'code':
-        cmp = (a.code ?? '').localeCompare(b.code ?? '')
-        break
-      case 'severity':
-        cmp = (a.type ?? '').localeCompare(b.type ?? '')
-        break
-      case 'message':
-        cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(b.code_description ?? b.help_reference ?? '')
-        break
-      default:
-        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        break
-    }
-    return cmp * mult
-  })
+    const filtered = filteredEvents.filter((evt) => {
+      if (eventsSeverityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== eventsSeverityFilter) return false
+      const q = eventsSearchFilter.trim().toLowerCase()
+      if (q) {
+        const code = (evt.code ?? '').toLowerCase()
+        const msg = (evt.code_description ?? evt.help_reference ?? '').toLowerCase()
+        if (!code.includes(q) && !msg.includes(q)) return false
+      }
+      return true
+    })
+    return [...filtered].sort((a, b) => {
+      let cmp = 0
+      switch (column) {
+        case 'timestamp':
+          cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          break
+        case 'code':
+          cmp = (a.code ?? '').localeCompare(b.code ?? '')
+          break
+        case 'severity':
+          cmp = (a.type ?? '').localeCompare(b.type ?? '')
+          break
+        case 'message':
+          cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(b.code_description ?? b.help_reference ?? '')
+          break
+        default:
+          cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          break
+      }
+      return cmp * mult
+    })
+  }, [filteredEvents, eventsSeverityFilter, eventsSearchFilter, eventsSort])
 
   return (
     <div className="dashboard">
@@ -776,12 +806,7 @@ export default function DashboardPage() {
                   Guardar incidente
                 </button>
               )}
-              <time className="dashboard__datetime" dateTime={now.toISOString()}>
-                {now.toLocaleString(undefined, {
-                  dateStyle: 'long',
-                  timeStyle: 'medium',
-                })}
-              </time>
+              <LiveClock className="dashboard__datetime" />
             </div>
           </header>
 
