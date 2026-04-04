@@ -39,6 +39,7 @@ export function DateFilterBar({
   setSelectedWeekRange,
 }: DateFilterBarProps) {
   const thisWeekStart = getWeekRange(new Date()).start
+  // eslint-disable-next-line react-hooks/purity
   const prevWeekStart = getWeekRange(new Date(Date.now() - 7 * 86400000)).start
   const isCustomWeek =
     selectedWeekRange !== null &&

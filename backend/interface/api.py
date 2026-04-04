@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import ipaddress
 import logging
 import time
-from urllib.parse import urlparse as _urlparse
 
 logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s")
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -25,81 +23,17 @@ from backend.application.services.analysis_service import AnalysisService
 from backend.application.services.compare_service import calculate_trend
 from backend.domain.entities import EnrichedEvent, Event, Incident
 from backend.infrastructure.config import Settings, get_settings
+from backend.infrastructure.content_fetcher import fetch_solution_content, validate_ssrf_url
 from backend.infrastructure.database import Database
 from backend.infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
 from backend.infrastructure.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
     SavedAnalysisSnapshot,
 )
-
+from backend.interface.auth import authenticate as _authenticate_from_module
 
 
 MAX_LOGS_LENGTH = 2_000_000
-
-_FETCH_TIMEOUT = 15  # seconds
-
-# RFC-1918 / loopback / link-local ranges blocked to prevent SSRF
-_PRIVATE_NETWORKS = [
-    ipaddress.ip_network("10.0.0.0/8"),
-    ipaddress.ip_network("172.16.0.0/12"),
-    ipaddress.ip_network("192.168.0.0/16"),
-    ipaddress.ip_network("127.0.0.0/8"),
-    ipaddress.ip_network("169.254.0.0/16"),
-]
-
-
-def _validate_ssrf_url(url: str) -> None:
-    """Raise HTTPException(422) if the URL is not safe to fetch."""
-    try:
-        parsed = _urlparse(url)
-        scheme = parsed.scheme
-        hostname = parsed.hostname  # raises ValueError on invalid IPv6 literals
-    except Exception:
-        raise HTTPException(status_code=422, detail="URL mal formada.")
-
-    if scheme != "https":
-        raise HTTPException(status_code=422, detail="Solo se permiten URLs con scheme https://.")
-
-    if not hostname:
-        raise HTTPException(status_code=422, detail="URL mal formada: sin hostname.")
-
-    # Reject bare IP literals pointing to private/loopback ranges
-    try:
-        addr = ipaddress.ip_address(hostname)
-        if any(addr in net for net in _PRIVATE_NETWORKS):
-            raise HTTPException(status_code=422, detail="La URL apunta a una dirección IP privada o reservada.")
-    except ValueError:
-        pass  # hostname is a domain name — not an IP literal, allow through
-
-
-async def _fetch_solution_content(url: str) -> str | None:
-    """Fetch the text content of a solution page. Returns None on any error."""
-    try:
-        import bleach
-        import httpx
-        from bs4 import BeautifulSoup
-
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
-            )
-        }
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=_FETCH_TIMEOUT, follow_redirects=True, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        for tag in soup(["script", "style", "noscript", "head", "nav", "footer"]):
-            tag.decompose()
-        text = soup.get_text(separator="\n")
-        lines = [line.strip() for line in text.splitlines()]
-        cleaned = "\n".join(line for line in lines if line)
-        sanitized = bleach.clean(cleaned, tags=[], attributes={}, strip=True)
-        return sanitized[:50_000]  # cap at 50k chars
-    except Exception as exc:
-        logging.warning("Could not fetch solution content from %s: %s", url, exc)
-        return None
 
 
 def _normalize_log_text(text: str) -> str:
@@ -247,14 +181,7 @@ def _compute_diff(
     }
 
 
-def authenticate(api_key: Optional[str] = Header(None, alias="x-api-key")) -> None:
-    """Simple header-based authentication for the MVP.
-
-    Returns 401 whether the key is missing or wrong (not 422).
-    """
-    settings = get_settings()
-    if not api_key or api_key != settings.api_key:
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+authenticate = _authenticate_from_module
 
 
 def get_app(settings: Settings | None = None) -> FastAPI:
@@ -282,8 +209,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             "http://127.0.0.1:5174",
         ],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "DELETE"],
+        allow_headers=["Content-Type", "x-api-key"],
     )
 
 
@@ -330,7 +257,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         try:
             analysis = analysis_service.analyze(events)
         except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+            logging.error("Analysis failed: %s", exc)
+            raise HTTPException(status_code=503, detail="Analysis failed") from exc
         analysis_ms = int((time.perf_counter() - t_analysis_start) * 1000)
 
         errors = [
@@ -395,8 +323,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         solution_content: str | None = None
         content_fetch_warning: str | None = None
         if body.solution_url and body.solution_url.strip():
-            _validate_ssrf_url(body.solution_url.strip())
-            solution_content = await _fetch_solution_content(body.solution_url.strip())
+            validate_ssrf_url(body.solution_url.strip())
+            solution_content = await fetch_solution_content(body.solution_url.strip())
             if solution_content is None:
                 content_fetch_warning = "No se pudo obtener el contenido de la página (token vencido o URL inaccesible). Se guardó el link de todas formas."
         ec = error_code_repository.upsert(
@@ -509,7 +437,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         try:
             analysis = analysis_service.analyze(events)
         except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+            logging.error("Analysis failed: %s", exc)
+            raise HTTPException(status_code=503, detail="Analysis failed") from exc
 
         errors = [
             ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)

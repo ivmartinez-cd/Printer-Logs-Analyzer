@@ -34,11 +34,14 @@ export function AddCodeToCatalogModal({
   const [solutionUrl, setSolutionUrl] = useState(initialSolutionUrl)
   const [severity, setSeverity] = useState(initialSeverity)
 
+  // Sync local state when the modal opens for a different code — intentional setState in effect
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setDescription(initialDescription)
     setSeverity(initialSeverity)
     setSolutionUrl(initialSolutionUrl)
   }, [code, initialDescription, initialSeverity, initialSolutionUrl])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

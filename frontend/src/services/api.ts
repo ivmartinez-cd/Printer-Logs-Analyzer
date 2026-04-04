@@ -49,7 +49,7 @@ async function apiFetch(
     return await fetch(url, { ...options, signal })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'TimeoutError') {
-      throw new Error('La solicitud tardó demasiado (>30 s). Verificá tu conexión e intentá de nuevo.')
+      throw new Error('La solicitud tardó demasiado (>30 s). Verificá tu conexión e intentá de nuevo.', { cause: err })
     }
     throw err
   }
@@ -186,16 +186,6 @@ export async function deleteSavedAnalysis(
 export interface HealthStatus {
   db_available: boolean
   db_mode: 'postgres' | 'local_fallback'
-}
-
-export async function pingHealth(): Promise<void> {
-  await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => {})
-}
-
-export async function pingHealthTimed(): Promise<number> {
-  const start = Date.now()
-  await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => {})
-  return Date.now() - start
 }
 
 export async function getHealth(): Promise<HealthStatus | null> {

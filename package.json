@@ -6,7 +6,11 @@
     "postinstall": "npm install --prefix frontend",
     "dev": "concurrently -n fe,be -c blue,yellow \"npm run dev --prefix frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --prefix frontend",
-    "dev:backend": "taskkill /F /IM python.exe 2>nul & timeout /t 1 /nobreak >nul & cd backend && uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0"
+    "dev:backend": "taskkill /F /IM python.exe 2>nul & timeout /t 1 /nobreak >nul & cd backend && uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0",
+    "lint": "npm run lint --prefix frontend",
+    "typecheck": "npm run typecheck --prefix frontend",
+    "test:frontend": "npm run test --prefix frontend",
+    "test:backend": "python -m pytest backend/tests/ -v"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

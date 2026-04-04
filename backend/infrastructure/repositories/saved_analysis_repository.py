@@ -146,7 +146,10 @@ class SavedAnalysisRepository:
         if not _LOCAL_PATH.exists():
             return []
         with open(_LOCAL_PATH, encoding="utf-8") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
 
     def _save_local(self, items: list) -> None:
         _LOCAL_PATH.parent.mkdir(exist_ok=True)

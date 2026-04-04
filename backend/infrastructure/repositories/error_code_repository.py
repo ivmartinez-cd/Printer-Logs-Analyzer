@@ -159,7 +159,10 @@ class ErrorCodeRepository:
         if self._fallback_cache is None:
             path = _LOCAL_PATH if _LOCAL_PATH.exists() else _SEED_PATH
             with open(path, encoding="utf-8") as f:
-                items = json.load(f)
+                try:
+                    items = json.load(f)
+                except json.JSONDecodeError:
+                    items = []
             self._fallback_cache = {
                 item["code"]: ErrorCode(
                     id=str(item["id"]),

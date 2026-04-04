@@ -1,0 +1,33 @@
+import { useState } from 'react'
+import type { SdsIncidentData } from '../components/SDSIncidentModal'
+
+export function useModals() {
+  const [logModalOpen, setLogModalOpen] = useState(false)
+  const [sdsPreModalOpen, setSdsPreModalOpen] = useState(false)
+  const [sdsModalOpen, setSdsModalOpen] = useState(false)
+  const [sdsIncident, setSdsIncident] = useState<SdsIncidentData | null>(null)
+  const [addCodeModalCode, setAddCodeModalCode] = useState<string | null>(null)
+  const [editCodeInitial, setEditCodeInitial] = useState<{
+    code: string
+    description: string
+    severity: string
+    solutionUrl: string
+  } | null>(null)
+  const [saveIncidentModalOpen, setSaveIncidentModalOpen] = useState(false)
+  const [compareModalOpen, setCompareModalOpen] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
+  const [solutionModal, setSolutionModal] = useState<{ content: string; url?: string | null } | null>(null)
+
+  return {
+    logModalOpen, setLogModalOpen,
+    sdsPreModalOpen, setSdsPreModalOpen,
+    sdsModalOpen, setSdsModalOpen,
+    sdsIncident, setSdsIncident,
+    addCodeModalCode, setAddCodeModalCode,
+    editCodeInitial, setEditCodeInitial,
+    saveIncidentModalOpen, setSaveIncidentModalOpen,
+    compareModalOpen, setCompareModalOpen,
+    deleteConfirm, setDeleteConfirm,
+    solutionModal, setSolutionModal,
+  }
+}

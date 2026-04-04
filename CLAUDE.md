@@ -39,7 +39,15 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 
 `--reload-dir .` es necesario en Windows para que hot-reload funcione correctamente.
 
-No hay comandos de lint ni tests — no existe suite de tests todavía.
+### Lint, tests y typecheck
+
+```bash
+# Desde la raíz
+npm run lint           # ESLint en frontend/src
+npm run typecheck      # tsc --noEmit en frontend
+npm run test:frontend  # vitest run (35 tests)
+npm run test:backend   # pytest backend/tests/ -v (49 tests)
+```
 
 ---
 
@@ -49,10 +57,13 @@ Monorepo: React/TypeScript frontend + Python/FastAPI backend, conectados por RES
 
 ```
 Printer-Logs-Analyzer/
+├── .editorconfig                 # Indent, charset, EOL para todos los editores
 ├── .env                          # Variables de entorno (DB_URL, API_KEY, etc.)
-├── package.json                  # Scripts root (dev, dev:frontend, dev:backend)
+├── package.json                  # Scripts root (dev, lint, typecheck, test:*)
 ├── backend/
-│   ├── interface/api.py          # FastAPI app, todos los endpoints
+│   ├── interface/
+│   │   ├── api.py                # FastAPI app, todos los endpoints
+│   │   └── auth.py               # Dependencia FastAPI de autenticación por API key
 │   ├── domain/entities.py        # Pydantic models (Event, EnrichedEvent, Incident, AnalysisResult)
 │   ├── application/
 │   │   ├── parsers/log_parser.py         # Parser TSV/espacios con soporte español
@@ -60,24 +71,32 @@ Printer-Logs-Analyzer/
 │   │       ├── analysis_service.py       # Agrupa eventos por código → Incident
 │   │       └── compare_service.py        # Compara dos snapshots → tendencia
 │   ├── infrastructure/
-│   │   ├── config.py                     # Settings desde .env (Pydantic)
+│   │   ├── config.py                     # Settings desde .env (Pydantic) — solo DB_URL y API_KEY
+│   │   ├── content_fetcher.py            # validate_ssrf_url + fetch_solution_content (async)
 │   │   ├── database.py                   # psycopg2, timeout 5s, DatabaseUnavailableError
 │   │   ├── fallback/error_codes_seed.json  # Catálogo bundled (read-only)
 │   │   └── repositories/
 │   │       ├── error_code_repository.py      # CRUD error_codes (DB + JSON fallback)
 │   │       └── saved_analysis_repository.py  # CRUD saved_analyses (DB + JSON fallback)
+│   ├── tests/                    # pytest — 49 tests (parser, services, repos fallback)
 │   ├── migrations/               # 5 migraciones SQL (correr manualmente)
 │   ├── data/                     # Gitignored — JSON local en modo fallback
 │   └── requirements.txt          # fastapi, uvicorn, psycopg2-binary, httpx, beautifulsoup4, bleach, etc.
 └── frontend/
+    ├── eslint.config.js          # ESLint flat config (JS + TypeScript + react-hooks)
     ├── src/
-    │   ├── pages/DashboardPage.tsx   # UI principal (~1000 líneas)
-    │   ├── components/               # Modales, paneles y vistas extraídas
-    │   ├── hooks/useDateFilter.ts    # Estado de filtro de fecha + helpers puros
+    │   ├── pages/DashboardPage.tsx   # UI principal (~950 líneas)
+    │   ├── components/               # Modales, paneles, tablas y gráficos
+    │   ├── hooks/
+    │   │   ├── useDateFilter.ts      # Estado de filtro de fecha + helpers puros
+    │   │   ├── useAnalysis.ts        # Estado y handlers de análisis (handleAnalyze, etc.)
+    │   │   ├── useModals.ts          # Estado centralizado de los 10 modales
+    │   │   └── useExportPdf.ts       # Lógica de exportar PDF + refs de secciones DOM
     │   ├── services/api.ts           # Cliente HTTP typed, inyecta x-api-key
     │   ├── types/api.ts              # Interfaces TS que espejean los modelos Pydantic
     │   └── contexts/ToastContext.tsx # Notificaciones globales
-    └── package.json                  # React 18.3, Recharts 2.13, Vite 5.4, jsPDF 4.2, html2canvas 1.4
+    ├── src/__tests__/            # vitest — 35 tests (useDateFilter, SDS matching)
+    └── package.json              # React 18.3, Recharts 2.13, Vite 5.4, jsPDF 4.2, html2canvas 1.4
 ```
 
 ---
@@ -145,6 +164,14 @@ Lógica de tendencia entre snapshot guardado y análisis nuevo:
 - **Mejoró**: desapareció al menos un ERROR, total ERRORs bajó, no hay ERRORs nuevos
 - **Estable**: cualquier otro caso
 
+### Módulos de infraestructura extraídos
+
+**`interface/auth.py`** — dependencia FastAPI que valida el header `x-api-key`. Importada en `api.py` como `Depends(authenticate)`. Lanza HTTP 401 si falta o es incorrecta.
+
+**`infrastructure/content_fetcher.py`** — dos funciones:
+- `validate_ssrf_url(url)` — valida scheme `https`, hostname presente, IP no privada/reservada. Lanza HTTP 422 si falla.
+- `async fetch_solution_content(url)` — fetcha con `httpx.AsyncClient`, extrae texto con BeautifulSoup, sanitiza con `bleach.clean`. Retorna `str | None`. Límite 50 KB.
+
 ### API endpoints (`interface/api.py`)
 
 Todos excepto `/health` requieren header `x-api-key`. Sin key o key incorrecta → HTTP 401.
@@ -210,9 +237,6 @@ Correr manualmente contra PostgreSQL. Ejecutadas en orden:
 ```
 DB_URL=postgresql://...     # Neon/PostgreSQL
 API_KEY=...                 # Simple auth (mismo valor en VITE_API_KEY)
-RECENCY_WINDOW=3600         # Declarado en Settings pero no usado activamente
-MAX_CONCURRENT_ANALYSIS=5   # Declarado en Settings pero no usado activamente
-ANALYSIS_TIMEOUT=30         # Declarado en Settings pero no usado activamente
 ```
 
 **Frontend (`frontend/.env` — solo para dev local):**
@@ -227,7 +251,7 @@ VITE_API_KEY=...                       # Mismo valor que API_KEY del backend
 
 ### DashboardPage.tsx (página principal)
 
-Componente principal (~1000 líneas). Contiene la lógica de negocio de UI y orquesta los sub-componentes. Las vistas `saved-list` y `saved-detail`, la barra de filtros de fecha y toda la lógica de filtrado viven en archivos separados.
+Componente principal (~950 líneas). Orquesta los sub-componentes y hooks; la lógica de análisis, modales, exportación PDF y filtrado de fecha viven en hooks separados. Las vistas `saved-list` y `saved-detail` y la barra de filtros de fecha viven en archivos separados.
 
 **Vistas:** controladas por `viewMode`: `dashboard` | `saved-list` | `saved-detail`
 
@@ -249,7 +273,7 @@ Componente principal (~1000 líneas). Contiene la lógica de negocio de UI y orq
 4. Se abre modal `ConfirmModal` "¿Agregar incidente SDS?" con "Sí, agregar" / "No, continuar"
    - "Sí, agregar" → abre `SDSIncidentModal`; al completarlo (`onContinue`) o cerrarlo (`onClose`), se llama `commitPendingResult()` que mueve `pendingResult` → `result` y muestra el dashboard con `SDSIncidentPanel`
    - "No, continuar" (o click fuera) → `commitPendingResult()` directamente; el dashboard se muestra sin panel SDS
-5. Render: KPIs → `DiagnosticPanel` → AreaChart (eventos/hora) → BarChart (top 10 códigos) → tabla incidents → tabla events
+5. Render: `<KPICards>` → `<DiagnosticPanel>` → `<IncidentsChart>` (AreaChart) → `<TopErrorsChart>` (BarChart) → `<IncidentsTable>` → `<EventsTable>`
 6. Nuevo análisis limpia `result`, `pendingResult`, `sdsIncident`
 
 **Filtros y sorting:**
@@ -317,13 +341,28 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 - Estado: `compareLogText`, `compareFileName`, `comparing`, `compareResult`
 - Al confirmar → `POST /saved-analyses/{id}/compare` → setea `compareResult` y cierra el modal
 
-**Exportar PDF** (`handleExportPDF`):
+**Exportar PDF** — hook `useExportPdf(logFileName)` (`hooks/useExportPdf.ts`):
+- Devuelve `{ exportingPdf, handleExportPDF, kpisRef, diagnosticRef, barChartRef, incidentsTableRef }`
 - Solo disponible cuando hay `result` activo
 - Genera un PDF A4 con: encabezado (título + fecha + nombre de archivo), KPIs, DiagnosticPanel, gráfico de errores frecuentes (BarChart), tabla de incidencias
-- Usa `useRef` en cada sección DOM (`kpisRef`, `diagnosticRef`, `barChartRef`, `incidentsTableRef`) y las captura con `html2canvas` (scale 2)
+- Usa `useRef` en cada sección DOM y las captura con `html2canvas` (scale 2)
 - jsPDF y html2canvas se importan de forma lazy (`await import(...)`) — no inflan el bundle inicial
 - Si una sección capturada no cabe en la página actual de jsPDF, se agrega una página nueva automáticamente
 - El nombre del PDF se deriva del `logFileName` (ej: `reporte-printer-log.pdf`)
+
+### Hook `useAnalysis` (`frontend/src/hooks/useAnalysis.ts`)
+
+Centraliza el estado y los handlers del flujo de análisis. Recibe setters de modales como parámetros para no acoplarse a `useModals`.
+
+**Estado expuesto:** `loading`, `error`, `setError`, `result`, `pendingResult`, `codesNew`, `setCodesNew`, `savingCode`, `savingIncident`
+
+**Handlers:** `handleAnalyze`, `commitPendingResult`, `handleSaveCodeToCatalog`, `handleSaveIncident`
+
+`handleSaveCodeToCatalog` actualiza `result` directamente post-upsert (sin re-fetch): actualiza `events[]`, `incidents[].events[]`, y `incidents[].sds_link`/`sds_solution_content`.
+
+### Hook `useModals` (`frontend/src/hooks/useModals.ts`)
+
+Centraliza los 10 estados de modales: `logModalOpen`, `sdsPreModalOpen`, `sdsModalOpen`, `sdsIncident`, `addCodeModalCode`, `editCodeInitial`, `saveIncidentModalOpen`, `compareModalOpen`, `deleteConfirm`, `solutionModal`. Devuelve state + setters para cada uno.
 
 ### Hook `useDateFilter` (`frontend/src/hooks/useDateFilter.ts`)
 
@@ -337,6 +376,11 @@ Centraliza todo lo relacionado con el filtro de fecha:
 
 | Componente | Propósito |
 |------------|-----------|
+| `KPICards.tsx` | 4 cards de KPI: Estado de errores, Incidencias Activas, Último error crítico, Eventos Registrados |
+| `IncidentsTable.tsx` | Tabla de incidentes con expand/collapse de filas, sort, filtros, "ver más" en mensajes. Exporta tipo `IncidentRow`. |
+| `EventsTable.tsx` | Tabla de eventos colapsable con filtro de severidad, búsqueda y sort |
+| `IncidentsChart.tsx` | AreaChart de eventos/hora con toggles de severidad |
+| `TopErrorsChart.tsx` | BarChart de top 10 códigos de error coloreado por severidad |
 | `AddCodeToCatalogModal.tsx` | Form para agregar/editar código: severity, description, solution_url |
 | `SaveIncidentModal.tsx` | Form para guardar análisis: name + equipment_identifier opcional |
 | `SDSIncidentModal.tsx` | Textarea para pegar incident SDS; parsea texto → `SdsIncidentData` |
@@ -404,7 +448,7 @@ Cuando `loading` es `true`:
 - Si el servidor estaba frío al iniciar la app **y** el request tarda más de 3 s, aparece debajo: "El servidor está iniciando, por favor esperá…" (en amarillo)
 - El mensaje desaparece al terminar (éxito o error)
 
-`App.tsx` mide el tiempo del ping inicial a `/health` con `pingHealthTimed()`. Si tardó > 3 s, setea `serverWasCold = true` y se lo pasa a `DashboardPage` → `LogPasteModal`. El `useEffect` de `slowWarning` solo arma el `setTimeout` (3 s) cuando `serverWasCold` es `true`.
+`App.tsx` mide el tiempo del ping inicial a `/health` con `getHealth()`. Si tardó > 3 s, setea `serverWasCold = true` y se lo pasa a `DashboardPage` → `LogPasteModal`. El `useEffect` de `slowWarning` solo arma el `setTimeout` (3 s) cuando `serverWasCold` es `true`.
 
 ### Cliente HTTP (`services/api.ts`)
 
@@ -412,7 +456,6 @@ Cuando `loading` es `true`:
 - `API_KEY`: `VITE_API_KEY` → `dev`
 - Header siempre inyectado: `x-api-key`
 - Error handling: extrae `detail` del JSON de error si está disponible
-- `pingHealth()`: GET `/health` sin auth, falla silenciosamente — legacy, ya no usada en App.tsx
 - `getHealth()`: GET `/health`, retorna `HealthStatus | null` — usada para keep-alive + indicador DB
 - `apiFetch()`: wrapper interno sobre `fetch` que aplica `AbortSignal.timeout(30 s)` automáticamente; si el caller pasa su propio `signal`, se combinan con `AbortSignal.any`. `TimeoutError` se traduce a mensaje de error en español. Los pings de health usan timeout propio de 10 s.
 
@@ -646,8 +689,6 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ## Deuda técnica conocida
 
-- `DashboardPage.tsx` sigue siendo grande (~1000 líneas); las secciones de KPIs, gráficos e incidentes podrían extraerse también
-- `RECENCY_WINDOW`, `MAX_CONCURRENT_ANALYSIS`, `ANALYSIS_TIMEOUT` están en `Settings` pero no se usan
-- Las tablas `config_versions`, `rules`, `rule_tags` existen en DB pero no se usan (legacy de v1)
-- No hay tests
-- No hay linting configurado
+- Las tablas `config_versions`, `rules`, `rule_tags` existen en DB pero no se usan (legacy de v1) — migraciones 001 y 002 las crean; no se eliminan para no correr DDL destructivo en producción
+- `/parser/validate` no tiene rate limiting (a diferencia de `/parser/preview` con 60/min y `/error-codes/upsert` con 30/min) — decisión pendiente de documentar
+- No hay Prettier configurado (solo ESLint + TypeScript strict mode)
