@@ -581,6 +581,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: en lugar de capturar `t_db_start = time.perf_counter()` antes de llamar a `get_by_codes`, se calculaba `db_ms` como `(time.perf_counter() - t_parse_start) * 1000 - parse_ms` — restando el tiempo de parse al tiempo acumulado desde `t_parse_start`, lo que da valores erróneos (especialmente si el parse es largo o la DB es rápida).
 - Fix: introducir `t_db_start = time.perf_counter()` justo antes de `get_by_codes` y calcular `db_ms = int((time.perf_counter() - t_db_start) * 1000)`, igual que en `/parser/preview`.
 
+**Fix: validación formato URL antes de fetch — string arbitrario causaba 500**
+- Causa: `_validate_ssrf_url` accedía a `parsed.scheme` y `parsed.hostname` fuera del bloque `try/except`. `parsed.hostname` lanza `ValueError` para entradas malformadas (ej. IPv6 inválido `"https://[::1"`), que propagaba como HTTP 500.
+- Fix: mover las lecturas de `parsed.scheme` y `parsed.hostname` dentro del `try` block. Cualquier error de parsing queda capturado y devuelve HTTP 422 "URL mal formada."
+
 **Fix: sanitizar contenido HTML antes de guardarlo en DB (`_fetch_solution_content`)**
 - Causa: `soup.get_text()` produce texto plano, pero si en el futuro se renderiza como HTML (ej. en `SolutionContentModal`), cualquier HTML residual podría ejecutarse como XSS.
 - Fix: pasar el texto extraído por `bleach.clean(cleaned, tags=[], attributes={}, strip=True)` antes de devolver el contenido. `bleach` elimina cualquier etiqueta HTML que pudiera colarse. Nueva dependencia: `bleach==6.3.0` en `requirements.txt`.

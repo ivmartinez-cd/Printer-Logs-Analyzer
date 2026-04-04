@@ -52,13 +52,14 @@ def _validate_ssrf_url(url: str) -> None:
     """Raise HTTPException(422) if the URL is not safe to fetch."""
     try:
         parsed = _urlparse(url)
+        scheme = parsed.scheme
+        hostname = parsed.hostname  # raises ValueError on invalid IPv6 literals
     except Exception:
         raise HTTPException(status_code=422, detail="URL mal formada.")
 
-    if parsed.scheme != "https":
+    if scheme != "https":
         raise HTTPException(status_code=422, detail="Solo se permiten URLs con scheme https://.")
 
-    hostname = parsed.hostname
     if not hostname:
         raise HTTPException(status_code=422, detail="URL mal formada: sin hostname.")
 
