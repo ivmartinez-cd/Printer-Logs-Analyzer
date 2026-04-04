@@ -58,13 +58,24 @@ Monorepo: React/TypeScript frontend + Python/FastAPI backend, conectados por RES
 ```
 Printer-Logs-Analyzer/
 ├── .editorconfig                 # Indent, charset, EOL para todos los editores
-├── .env                          # Variables de entorno (DB_URL, API_KEY, etc.)
+├── .env                          # Variables de entorno (DB_URL, API_KEY) — gitignored
+├── .gitignore
 ├── package.json                  # Scripts root (dev, lint, typecheck, test:*)
+├── docs/                         # Documentación del producto
+│   ├── ESTADO-ACTUAL.md          # Descripción del estado actual de la app
+│   ├── vision.md                 # Visión y roadmap del producto
+│   └── powershell-execution-policy.md  # Guía para dev en Windows
+├── samples/                      # Archivos de ejemplo para desarrollo/testing
+│   ├── hp_log.txt                # Log real de HP para probar el parser
+│   └── request.json              # Body JSON de ejemplo para la API
 ├── backend/
+│   ├── main.py                   # Entrypoint uvicorn para correr localmente
+│   ├── requirements.txt
 │   ├── interface/
 │   │   ├── api.py                # FastAPI app, todos los endpoints
-│   │   └── auth.py               # Dependencia FastAPI de autenticación por API key
-│   ├── domain/entities.py        # Pydantic models (Event, EnrichedEvent, Incident, AnalysisResult)
+│   │   └── auth.py               # Dependencia de autenticación por API key
+│   ├── domain/
+│   │   └── entities.py           # Pydantic models (Event, EnrichedEvent, Incident, AnalysisResult)
 │   ├── application/
 │   │   ├── parsers/log_parser.py         # Parser TSV/espacios con soporte español
 │   │   └── services/
@@ -78,12 +89,16 @@ Printer-Logs-Analyzer/
 │   │   └── repositories/
 │   │       ├── error_code_repository.py      # CRUD error_codes (DB + JSON fallback)
 │   │       └── saved_analysis_repository.py  # CRUD saved_analyses (DB + JSON fallback)
+│   ├── scripts/
+│   │   └── run_parser.py         # CLI helper para testear el parser localmente
 │   ├── tests/                    # pytest — 49 tests (parser, services, repos fallback)
 │   ├── migrations/               # 5 migraciones SQL (correr manualmente)
-│   ├── data/                     # Gitignored — JSON local en modo fallback
-│   └── requirements.txt          # fastapi, uvicorn, psycopg2-binary, httpx, beautifulsoup4, bleach, etc.
+│   └── data/                     # Gitignored — JSON local en modo fallback
 └── frontend/
+    ├── .npmrc                    # legacy-peer-deps=true (ESLint peer dep compat)
     ├── eslint.config.js          # ESLint flat config (JS + TypeScript + react-hooks)
+    ├── vite.config.ts            # Vite: plugin react, manualChunks
+    ├── vitest.config.ts          # Vitest: environment node, tests en src/__tests__/
     ├── src/
     │   ├── pages/DashboardPage.tsx   # UI principal (~950 líneas)
     │   ├── components/               # Modales, paneles, tablas y gráficos

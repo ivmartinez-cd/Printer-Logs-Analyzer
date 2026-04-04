@@ -1,18 +1,33 @@
+# Python
 .venv/
-node_modules/
 __pycache__/
 *.pyc
+.mypy_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Env / secrets
 .env
 .env.local
-*.log
+
+# OS
 .DS_Store
+
+# Editors
 .idea/
 .vscode/
-.mypy_cache/
-pytest_cache/
-a.md
+
+# Claude Code
 .claude/
+
+# Generated / build artifacts
+*.log
 *.tsbuildinfo
 frontend/vite.config.js
+frontend/dist/
+
+# Backend local data (fallback JSON, debug)
 backend/data/
 backend/debug_payload.json
