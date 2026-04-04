@@ -27,8 +27,8 @@ export function getWindowForDate(
   if (events.length === 0) return null
   const times = events.map((e) => new Date(e.timestamp).getTime()).filter((t) => !Number.isNaN(t))
   if (times.length === 0) return null
-  const minTs = Math.min(...times)
-  const maxTs = Math.max(...times)
+  const minTs = times.reduce((a, b) => Math.min(a, b))
+  const maxTs = times.reduce((a, b) => Math.max(a, b))
   if (!filter) return { minTs, maxTs }
   if (typeof filter === 'string') {
     const [y, m, d] = filter.split('-').map(Number)
@@ -96,8 +96,8 @@ export function getDateRangeFromEvents(
     })
     .filter((n) => !Number.isNaN(n))
   if (dates.length === 0) return null
-  const min = Math.min(...dates)
-  const max = Math.max(...dates)
+  const min = dates.reduce((a, b) => Math.min(a, b))
+  const max = dates.reduce((a, b) => Math.max(a, b))
   const toStr = (n: number) => {
     const y = Math.floor(n / 10000)
     const mo = Math.floor((n % 10000) / 100)

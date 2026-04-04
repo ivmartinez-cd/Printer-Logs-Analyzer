@@ -533,6 +533,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Contexto: la columna "Mensaje / Ayuda" en el detalle expandido de un incidente truncaba a 80 chars sin forma de ver el resto.
 - Fix: cuando el texto supera 80 chars, se muestra truncado con tooltip nativo (`title` con el mensaje completo) y un botón "ver más" que expande el texto en la misma celda. Al expandir aparece "ver menos" para colapsar. Estado `expandedMsgs: Set<string>` en `DashboardPage`; key por `${inc.id}-${idx}-msg`. Estilos en `.dashboard-table__msg-toggle` (botón sin borde, texto azul 11px subrayado).
 
+**Bug: stack overflow en `getWindowForDate` y `getDateRangeFromEvents` con miles de eventos**
+- Causa: `Math.min(...times)` y `Math.max(...times)` usan spread sobre el array completo; con miles de elementos se supera el límite de argumentos del call stack y el proceso crashea.
+- Fix: reemplazar por `times.reduce((a, b) => Math.min(a, b))` / `reduce((a, b) => Math.max(a, b))` en ambas funciones de `useDateFilter.ts`. El reduce itera sin expandir el stack.
+
 ---
 
 ## Deploy en producción
