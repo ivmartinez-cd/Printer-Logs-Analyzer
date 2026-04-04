@@ -53,7 +53,7 @@ Printer-Logs-Analyzer/
 ├── package.json                  # Scripts root (dev, dev:frontend, dev:backend)
 ├── backend/
 │   ├── interface/api.py          # FastAPI app, todos los endpoints
-│   ├── domain/entities.py        # Pydantic models (Event, Incident, AnalysisResult)
+│   ├── domain/entities.py        # Pydantic models (Event, EnrichedEvent, Incident, AnalysisResult)
 │   ├── application/
 │   │   ├── parsers/log_parser.py         # Parser TSV/espacios con soporte español
 │   │   └── services/
@@ -88,19 +88,23 @@ Printer-Logs-Analyzer/
 
 Todos los modelos son Pydantic con `model_config = {"frozen": True}`.
 
-**Event:**
+**Event:** campos del log crudo
 - `type`: `ERROR | WARNING | INFO`
 - `code`: string (ej. `53.B0.02`)
 - `timestamp`: datetime
 - `counter`: int
 - `firmware`: str | None
 - `help_reference`: str | None
-- `code_severity`, `code_description`, `code_solution_url`, `code_solution_content`: del catálogo
+
+**EnrichedEvent(Event):** extiende `Event` con datos del catálogo
+- `code_severity`, `code_description`, `code_solution_url`, `code_solution_content`
+- Producido por `_enrich_events_with_catalog` en `api.py` antes del análisis
+- Es el tipo que circula dentro de `Incident.events` y en toda la capa de aplicación
 
 **Incident:**
 - `id`: `"{code}-{start_time.isoformat()}"`
 - `code`, `classification` (del catálogo o el código), `severity`, `severity_weight`
-- `occurrences`, `start_time`, `end_time`, `counter_range`, `events`
+- `occurrences`, `start_time`, `end_time`, `counter_range`, `events: List[EnrichedEvent]`
 - `sds_link`: primer `code_solution_url` del grupo de eventos
 - `sds_solution_content`: primer `code_solution_content` del grupo (misma fuente)
 
@@ -409,9 +413,12 @@ Cuando `loading` es `true`:
 ### Tipos (`types/api.ts`)
 
 Espejo de los modelos Pydantic del backend. Interfaces principales:
-`Event`, `Incident`, `ParseLogsResponse`, `ValidateLogsResponse`, `ErrorCodeUpsertBody`,
+`Event`, `EnrichedEvent` (extiende `Event` con campos del catálogo), `Incident`,
+`ParseLogsResponse`, `ValidateLogsResponse`, `ErrorCodeUpsertBody`,
 `SavedAnalysisIncidentItem`, `SavedAnalysisSummary`, `SavedAnalysisFull`,
 `CompareDiff`, `CompareResponse`
+
+`Incident.events` y `ParseLogsResponse.events` son `EnrichedEvent[]`. Los componentes y hooks usan `EnrichedEvent as ApiEvent`.
 
 ### Build
 
