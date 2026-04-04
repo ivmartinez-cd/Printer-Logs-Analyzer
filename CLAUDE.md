@@ -520,6 +520,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Contexto: los toasts se cerraban solos a los 5 s pero no había forma de descartarlos antes.
 - Fix: `removeToast` expuesta en `ToastContextValue`; `ToastContainer` renderiza un `<button class="toast__close">` por cada toast que llama a `removeToast(t.id)`. El `.toast` pasó a `display: flex` para alinear mensaje y botón; estilos `.toast__close` y `.toast__close:hover` agregados en `index.css`.
 
+**Fix: tabla de eventos colapsada por defecto y con nombre confuso**
+- Causa: `eventsTableCollapsed` arrancaba en `true` y el título era "Últimos errores registrados", pero la tabla contiene todos los eventos filtrados, no los últimos N.
+- Fix: `useState(false)` para expandir por defecto; título cambiado a "Eventos del período".
+
 ---
 
 ## Deploy en producción
