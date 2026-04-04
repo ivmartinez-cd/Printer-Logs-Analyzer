@@ -148,9 +148,12 @@ export function HelpModal({ onClose }: HelpModalProps) {
                 </span>
               </div>
               <div className="help-modal__kpi-item">
-                <span className="help-modal__kpi-label">Eventos Registrados</span>
+                <span className="help-modal__kpi-label">Tasa de errores</span>
                 <span className="help-modal__kpi-desc">
-                  Total de eventos individuales en el período filtrado.
+                  Frecuencia de errores en función de las páginas impresas: <em>"1 error c/N pág."</em>{' '}
+                  Calculado como <em>ERRORs ÷ (contador máx − contador mín)</em> del período. Permite
+                  comparar la salud de equipos independientemente del volumen de uso. Muestra "—" si
+                  el log no incluye datos de contador.
                 </span>
               </div>
             </div>
