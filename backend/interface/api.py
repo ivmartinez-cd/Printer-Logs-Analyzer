@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
 from backend.application.services.compare_service import calculate_trend
-from backend.domain.entities import Event, Incident
+from backend.domain.entities import EnrichedEvent, Event, Incident
 from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.database import Database
 from backend.infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
@@ -287,19 +287,17 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             "db_available": db_ok,
         }
 
-    def _enrich_events_with_catalog(events: list[Event], catalog_map: Dict[str, ErrorCode]) -> list[Event]:
-        enriched: list[Event] = []
+    def _enrich_events_with_catalog(events: list[Event], catalog_map: Dict[str, ErrorCode]) -> list[EnrichedEvent]:
+        enriched: list[EnrichedEvent] = []
         for evt in events:
             row = catalog_map.get(evt.code)
+            data = evt.model_dump()
             if row:
-                data = evt.model_dump()
                 data["code_severity"] = row.severity
                 data["code_description"] = row.description
                 data["code_solution_url"] = row.solution_url
                 data["code_solution_content"] = row.solution_content
-                enriched.append(Event(**data))
-            else:
-                enriched.append(evt)
+            enriched.append(EnrichedEvent(**data))
         return enriched
 
     @app.post("/parser/preview", response_model=ParseLogsResponse, dependencies=[Depends(authenticate)])

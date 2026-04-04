@@ -5,6 +5,9 @@ export interface Event {
   counter: number
   firmware: string | null
   help_reference: string | null
+}
+
+export interface EnrichedEvent extends Event {
   code_severity?: string | null
   code_description?: string | null
   code_solution_url?: string | null
@@ -21,7 +24,7 @@ export interface Incident {
   start_time: string
   end_time: string
   counter_range: [number, number]
-  events: Event[]
+  events: EnrichedEvent[]
   sds_link?: string
   sds_solution_content?: string | null
 }
@@ -33,7 +36,7 @@ export interface ParserError {
 }
 
 export interface ParseLogsResponse {
-  events: Event[]
+  events: EnrichedEvent[]
   incidents: Incident[]
   global_severity: string
   errors: ParserError[]

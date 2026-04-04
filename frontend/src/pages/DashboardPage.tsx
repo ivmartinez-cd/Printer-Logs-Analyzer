@@ -16,7 +16,7 @@ import { previewLogs, validateLogs, upsertErrorCode, createSavedAnalysis, listSa
 import type { HealthStatus } from '../services/api'
 import type {
   ParseLogsResponse,
-  Event as ApiEvent,
+  EnrichedEvent as ApiEvent,
   Incident as ApiIncident,
   ErrorCodeUpsertBody,
   SavedAnalysisSummary,
@@ -1230,7 +1230,7 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
                         {isExpanded && inc.eventsInWindow.map((evt, idx) => {
                           const prevCounter = idx > 0 ? inc.eventsInWindow[idx - 1].counter : null
                           const delta = prevCounter !== null ? evt.counter - prevCounter : null
-                          const msg = evt.help_reference ?? (evt as ApiEvent & { code_description?: string }).code_description ?? '—'
+                          const msg = evt.help_reference ?? evt.code_description ?? '—'
                           const msgKey = `${inc.id}-${idx}-msg`
                           return (
                             <tr key={`${inc.id}-${idx}`} className="dashboard-table__row-detail">

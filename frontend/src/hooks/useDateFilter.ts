@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Event as ApiEvent, Incident as ApiIncident } from '../types/api'
+import type { EnrichedEvent as ApiEvent, Incident as ApiIncident } from '../types/api'
 
 /**
  * DateFilter:

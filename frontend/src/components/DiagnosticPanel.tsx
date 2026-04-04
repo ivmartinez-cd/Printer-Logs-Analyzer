@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Event as ApiEvent } from '../types/api'
+import type { EnrichedEvent as ApiEvent } from '../types/api'
 
 type AlertLevel = 'error' | 'warning' | 'info' | 'success'
 

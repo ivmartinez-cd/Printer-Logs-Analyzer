@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class Event(BaseModel):
-    """Immutable printer log event."""
+    """Immutable printer log event as parsed from raw log text."""
 
     type: str = Field(..., description="Category of the log entry")
     code: str = Field(..., description="Device-specific code reported in the log")
@@ -17,12 +17,17 @@ class Event(BaseModel):
     counter: int = Field(..., description="Device counter at the time of the event")
     firmware: Optional[str] = Field(None, description="Firmware version tagged in the log")
     help_reference: Optional[str] = Field(None, description="Optional troubleshooting hint or URL")
+
+    model_config = {"frozen": True}
+
+
+class EnrichedEvent(Event):
+    """Event enriched with data from the error_codes catalog."""
+
     code_severity: Optional[str] = Field(None, description="Severity from error_codes catalog")
     code_description: Optional[str] = Field(None, description="Description from error_codes catalog")
     code_solution_url: Optional[str] = Field(None, description="Solution URL from error_codes catalog")
     code_solution_content: Optional[str] = Field(None, description="Fetched text content of the solution page")
-
-    model_config = {"frozen": True}
 
 
 class Incident(BaseModel):
@@ -37,7 +42,7 @@ class Incident(BaseModel):
     start_time: datetime
     end_time: datetime
     counter_range: tuple[int, int]
-    events: List[Event]
+    events: List[EnrichedEvent]
     sds_link: Optional[str] = None
     sds_solution_content: Optional[str] = None
 

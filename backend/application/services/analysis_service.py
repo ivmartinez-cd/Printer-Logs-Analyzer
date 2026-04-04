@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable, List
 
-from backend.domain.entities import AnalysisResult, Event, Incident
+from backend.domain.entities import AnalysisResult, EnrichedEvent, Incident
 
 SEVERITY_SCORE = {"INFO": 1, "WARNING": 2, "ERROR": 3}
 
@@ -16,13 +16,13 @@ class AnalysisService:
     def __init__(self) -> None:
         pass
 
-    def analyze(self, events: Iterable[Event]) -> AnalysisResult:
+    def analyze(self, events: Iterable[EnrichedEvent]) -> AnalysisResult:
         """Group events by code, build one incident per code. No rules."""
         ordered = sorted(events, key=lambda evt: evt.timestamp)
         if not ordered:
             return AnalysisResult(incidents=[], global_severity="INFO", metadata={"events_considered": 0})
 
-        by_code: dict[str, List[Event]] = defaultdict(list)
+        by_code: dict[str, List[EnrichedEvent]] = defaultdict(list)
         for evt in ordered:
             by_code[evt.code].append(evt)
 
