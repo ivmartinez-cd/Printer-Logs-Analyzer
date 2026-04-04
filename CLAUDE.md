@@ -573,7 +573,7 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 
 **Bug: "El servidor está iniciando…" aparecía siempre a los 5 s aunque el servidor estuviera caliente**
 - Causa: `slowWarning` se activaba con un `setTimeout` de 5 s cada vez que `loading` era `true`, independientemente del estado real del servidor.
-- Fix: `App.tsx` mide el tiempo del ping inicial a `/health` con `pingHealthTimed()`. Solo si tardó > 3 s se setea `serverWasCold = true`. `LogPasteModal` recibe esta prop y solo arma el timeout de `slowWarning` cuando es `true`. Texto del botón cambiado a "Analizando log…" sin mencionar el servidor.
+- Fix: `App.tsx` mide el tiempo del ping inicial a `/health` con `getHealth()`. Solo si tardó > 3 s se setea `serverWasCold = true`. `LogPasteModal` recibe esta prop y solo arma el timeout de `slowWarning` cuando es `true`. Texto del botón cambiado a "Analizando log…" sin mencionar el servidor.
 
 **Bug: contrato de tendencia desalineado entre backend y frontend**
 - Causa: el backend retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes), pero `types/api.ts` lo tipaba como `'mejoró' | 'igual' | 'peor'` — tres valores distintos que nunca podían matchear en runtime.
@@ -667,8 +667,6 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 | `DB_URL` | Connection string de Neon PostgreSQL |
 | `API_KEY` | Clave compartida con el frontend |
 | `ENV` | Setear a `production` en Render |
-
-No se necesitan `RECENCY_WINDOW`, `MAX_CONCURRENT_ANALYSIS` ni `ANALYSIS_TIMEOUT` (tienen defaults).
 
 Si `API_KEY` no está seteada, el backend usa `"dev"` como fallback. Si además `ENV=production`, `from_env()` loguea un WARNING al arrancar: `⚠️ ADVERTENCIA: Usando API key por defecto 'dev' en producción`.
 
