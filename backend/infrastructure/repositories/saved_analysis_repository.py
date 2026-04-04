@@ -8,6 +8,7 @@ still be saved and compared behind a corporate firewall.
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,9 @@ from uuid import UUID, uuid4
 from backend.infrastructure.database import Database, DatabaseUnavailableError
 
 _LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "saved_analyses_local.json"
+
+# Serializes concurrent writes to the local JSON fallback file.
+_local_write_lock = threading.Lock()
 
 
 @dataclass
@@ -156,19 +160,20 @@ class SavedAnalysisRepository:
         global_severity: str,
         equipment_identifier: str | None,
     ) -> SavedAnalysisSnapshot:
-        items = self._load_local()
-        now = datetime.now(timezone.utc)
-        new_id = uuid4()
-        item = {
-            "id": str(new_id),
-            "name": name,
-            "equipment_identifier": equipment_identifier,
-            "incidents": incidents,
-            "global_severity": global_severity,
-            "created_at": now.isoformat(),
-        }
-        items.insert(0, item)
-        self._save_local(items)
+        with _local_write_lock:
+            items = self._load_local()
+            now = datetime.now(timezone.utc)
+            new_id = uuid4()
+            item = {
+                "id": str(new_id),
+                "name": name,
+                "equipment_identifier": equipment_identifier,
+                "incidents": incidents,
+                "global_severity": global_severity,
+                "created_at": now.isoformat(),
+            }
+            items.insert(0, item)
+            self._save_local(items)
         return SavedAnalysisSnapshot(
             id=new_id,
             name=name,
@@ -190,11 +195,12 @@ class SavedAnalysisRepository:
         return [self._dict_to_snapshot(i) for i in items]
 
     def _delete_local(self, id: UUID) -> bool:
-        items = self._load_local()
-        filtered = [i for i in items if i["id"] != str(id)]
-        if len(filtered) == len(items):
-            return False
-        self._save_local(filtered)
+        with _local_write_lock:
+            items = self._load_local()
+            filtered = [i for i in items if i["id"] != str(id)]
+            if len(filtered) == len(items):
+                return False
+            self._save_local(filtered)
         return True
 
     # ------------------------------------------------------------------

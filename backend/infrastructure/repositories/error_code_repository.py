@@ -7,6 +7,7 @@ local JSON file so the application keeps working behind a corporate firewall.
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,9 @@ _SEED_PATH = _FALLBACK_DIR / "error_codes_seed.json"
 _LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "error_codes_local.json"
 
 _EPOCH = datetime(2000, 1, 1, tzinfo=timezone.utc)
+
+# Serializes concurrent writes to the local JSON fallback file.
+_local_write_lock = threading.Lock()
 
 
 @dataclass
@@ -180,6 +184,17 @@ class ErrorCodeRepository:
         solution_content: str | None,
     ) -> ErrorCode:
         """Insert or update an error code in the local JSON file."""
+        with _local_write_lock:
+            return self._upsert_local_locked(code, severity, description, solution_url, solution_content)
+
+    def _upsert_local_locked(
+        self,
+        code: str,
+        severity: str | None,
+        description: str | None,
+        solution_url: str | None,
+        solution_content: str | None,
+    ) -> ErrorCode:
         source = _LOCAL_PATH if _LOCAL_PATH.exists() else _SEED_PATH
         with open(source, encoding="utf-8") as f:
             items: list = json.load(f)
