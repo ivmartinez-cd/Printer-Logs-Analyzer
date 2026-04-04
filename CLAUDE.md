@@ -452,6 +452,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: el backend retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes), pero `types/api.ts` lo tipaba como `'mejoró' | 'igual' | 'peor'` — tres valores distintos que nunca podían matchear en runtime.
 - Fix: actualizar `CompareDiff.tendencia` en `types/api.ts` a `'mejoro' | 'estable' | 'empeoro'` para que coincida exactamente con lo que el backend envía. El backend es la fuente de verdad.
 
+**Feature: botón "Ignorar y ver resultados" en sección de códigos nuevos**
+- Contexto: cuando el análisis detecta códigos desconocidos, el dashboard (Panel de errores, gráficos, tablas) queda oculto hasta que se gestionan todos los códigos nuevos.
+- Fix: se agregó el botón al final de la sección `.dashboard__codes-new-section`. Al hacer click llama `setCodesNew([])`, que vacía el array y muestra el dashboard inmediatamente sin modificar el análisis ni los códigos detectados.
+
 ---
 
 ## Deploy en producción
