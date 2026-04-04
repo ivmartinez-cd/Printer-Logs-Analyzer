@@ -524,6 +524,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `eventsTableCollapsed` arrancaba en `true` y el título era "Últimos errores registrados", pero la tabla contiene todos los eventos filtrados, no los últimos N.
 - Fix: `useState(false)` para expandir por defecto; título cambiado a "Eventos del período".
 
+**Feature: expandir mensaje completo en detalle de incidente**
+- Contexto: la columna "Mensaje / Ayuda" en el detalle expandido de un incidente truncaba a 80 chars sin forma de ver el resto.
+- Fix: cuando el texto supera 80 chars, se muestra truncado con tooltip nativo (`title` con el mensaje completo) y un botón "ver más" que expande el texto en la misma celda. Al expandir aparece "ver menos" para colapsar. Estado `expandedMsgs: Set<string>` en `DashboardPage`; key por `${inc.id}-${idx}-msg`. Estilos en `.dashboard-table__msg-toggle` (botón sin borde, texto azul 11px subrayado).
+
 ---
 
 ## Deploy en producción
