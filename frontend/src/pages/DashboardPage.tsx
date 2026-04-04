@@ -301,6 +301,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const [incidentsSort, setIncidentsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'end_time', dir: 'desc' })
   const [eventsSort, setEventsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'timestamp', dir: 'desc' })
   const [expandedIncidentIds, setExpandedIncidentIds] = useState<Set<string>>(new Set())
+  const [expandedMsgs, setExpandedMsgs] = useState<Set<string>>(new Set())
   const [editCodeInitial, setEditCodeInitial] = useState<{ code: string; description: string; severity: string; solutionUrl: string } | null>(null)
   const [saveIncidentModalOpen, setSaveIncidentModalOpen] = useState(false)
   const [savingIncident, setSavingIncident] = useState(false)
@@ -1202,6 +1203,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                           const prevCounter = idx > 0 ? inc.eventsInWindow[idx - 1].counter : null
                           const delta = prevCounter !== null ? evt.counter - prevCounter : null
                           const msg = evt.help_reference ?? (evt as ApiEvent & { code_description?: string }).code_description ?? '—'
+                          const msgKey = `${inc.id}-${idx}-msg`
                           return (
                             <tr key={`${inc.id}-${idx}`} className="dashboard-table__row-detail">
                               <td className="dashboard-table__cell-expand" />
@@ -1211,7 +1213,29 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                                 {delta !== null ? (delta >= 0 ? `+${delta}` : delta) : '—'}
                               </td>
                               <td>{evt.firmware ?? '—'}</td>
-                              <td colSpan={3} className="dashboard-table__cell-detail-msg">{msg.length > 80 ? `${msg.slice(0, 80)}…` : msg}</td>
+                              <td colSpan={3} className="dashboard-table__cell-detail-msg">
+                                {msg.length > 80 ? (
+                                  expandedMsgs.has(msgKey) ? (
+                                    <span>
+                                      {msg}{' '}
+                                      <button
+                                        type="button"
+                                        className="dashboard-table__msg-toggle"
+                                        onClick={() => setExpandedMsgs(s => { const n = new Set(s); n.delete(msgKey); return n })}
+                                      >ver menos</button>
+                                    </span>
+                                  ) : (
+                                    <span title={msg}>
+                                      {msg.slice(0, 80)}…{' '}
+                                      <button
+                                        type="button"
+                                        className="dashboard-table__msg-toggle"
+                                        onClick={() => setExpandedMsgs(s => new Set(s).add(msgKey))}
+                                      >ver más</button>
+                                    </span>
+                                  )
+                                ) : msg}
+                              </td>
                             </tr>
                           )
                         })}

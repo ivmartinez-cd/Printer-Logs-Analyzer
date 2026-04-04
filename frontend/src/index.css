@@ -1295,6 +1295,22 @@ body {
   max-width: 280px;
 }
 
+.dashboard-table__msg-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 11px;
+  color: #4a9eff;
+  cursor: pointer;
+  text-decoration: underline;
+  line-height: inherit;
+}
+
+.dashboard-table__msg-toggle:hover {
+  color: #82c0ff;
+}
+
 .dashboard-table__th-solution {
   font-weight: 600;
   color: #9aa3b2;
