@@ -335,6 +335,16 @@ Las reglas 4 y 5 usan la descripción del catálogo (`code_description`) en vez 
 
 Máximo 5 alertas visibles, ordenadas por severidad (error → warning → info → success). Si no hay alertas, siempre muestra la regla de "saludable".
 
+**Sección "¿Qué hacer?" (`getRecommendation`):**
+
+Aparece debajo de la lista de alertas (cuando el panel está expandido). Derivada de las alertas activas:
+
+| Condición | Resultado |
+|-----------|-----------|
+| Hay alerta `dominant` **Y** al menos una `burst-*` **Y** alerta `escalation` | 🔴 Visita técnica recomendada |
+| Hay alertas pero no se cumple la condición anterior | 🟡 Monitorear — revisar en 48hs |
+| Solo alerta `healthy` (sin problemas) | 🟢 Sin acción necesaria |
+
 ### ErrorBoundary (`App.tsx`)
 
 `ErrorBoundary` es un componente de clase que envuelve todo el árbol de la app. Si un error no manejado llega hasta aquí, muestra un mensaje amigable ("Algo salió mal. Por favor recargá la página.") con un botón que llama a `window.location.reload()`. Sin él, un crash deja la pantalla en blanco.
