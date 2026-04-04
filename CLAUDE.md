@@ -448,6 +448,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: el header del saved-detail usaba `<time dateTime={now.toISOString()}>` con `now` inline, pero `now` solo existe dentro de `LiveClock`. Al refactorizar `useLiveTime` → `LiveClock`, este `<time>` inline quedó sin migrar.
 - Fix: reemplazar el `<time>` inline por `<LiveClock className="dashboard__datetime" short />`, igual que el header del dashboard principal.
 
+**Bug: contrato de tendencia desalineado entre backend y frontend**
+- Causa: el backend retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes), pero `types/api.ts` lo tipaba como `'mejoró' | 'igual' | 'peor'` — tres valores distintos que nunca podían matchear en runtime.
+- Fix: actualizar `CompareDiff.tendencia` en `types/api.ts` a `'mejoro' | 'estable' | 'empeoro'` para que coincida exactamente con lo que el backend envía. El backend es la fuente de verdad.
+
 ---
 
 ## Deploy en producción
