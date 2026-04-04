@@ -66,7 +66,7 @@ def _validate_ssrf_url(url: str) -> None:
         pass  # hostname is a domain name — not an IP literal, allow through
 
 
-def _fetch_solution_content(url: str) -> str | None:
+async def _fetch_solution_content(url: str) -> str | None:
     """Fetch the text content of a solution page. Returns None on any error."""
     try:
         import httpx
@@ -79,7 +79,8 @@ def _fetch_solution_content(url: str) -> str | None:
                 "Chrome/124.0.0.0 Safari/537.36"
             )
         }
-        response = httpx.get(url, timeout=_FETCH_TIMEOUT, follow_redirects=True, headers=headers)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=_FETCH_TIMEOUT, follow_redirects=True, headers=headers)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         for tag in soup(["script", "style", "noscript", "head", "nav", "footer"]):
@@ -378,7 +379,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         )
 
     @app.post("/error-codes/upsert", dependencies=[Depends(authenticate)])
-    def upsert_error_code(body: ErrorCodeUpsertRequest) -> dict:
+    async def upsert_error_code(body: ErrorCodeUpsertRequest) -> dict:
         """Insert or update an error code in the catalog."""
         solution_content: str | None = None
         content_fetch_warning: str | None = None
