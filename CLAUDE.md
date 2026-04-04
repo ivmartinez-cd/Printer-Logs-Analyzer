@@ -541,6 +541,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `analyze()` ordena todos los eventos globalmente (`ordered = sorted(...)`) y luego los distribuye por código en `by_code`. Sin embargo, dentro del loop de grupos se volvía a hacer `group_sorted = sorted(group, ...)`, que era un no-op porque los eventos ya estaban en orden de inserción (timestamp ascendente).
 - Fix: eliminar `group_sorted`; usar `group` directamente. Los accesos a `group[0]` / `group[-1]` y los iteradores son equivalentes con el orden garantizado por `ordered`.
 
+**Bug: race condition en escritura del JSON de fallback**
+- Causa: dos requests concurrentes de upsert/create/delete podían leer el archivo JSON, modificarlo en memoria y sobreescribirse mutuamente, perdiendo uno de los cambios.
+- Fix: `threading.Lock()` a nivel de módulo (`_local_write_lock`) en `error_code_repository.py` y `saved_analysis_repository.py`. Serializa el ciclo read-modify-write completo en `_upsert_local`, `_create_local` y `_delete_local`.
+
 ---
 
 ## Deploy en producción
