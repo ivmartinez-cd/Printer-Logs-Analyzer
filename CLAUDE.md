@@ -332,7 +332,8 @@ Centraliza todo lo relacionado con el filtro de fecha:
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `DiagnosticPanel.tsx` | Panel colapsable de diagnóstico automático basado en reglas; aparece entre KPIs y gráficos; recibe solo `filteredEvents` (respeta filtro de fecha) |
 | `DateFilterBar.tsx` | Subheader con los 5 botones de filtro de fecha (Todo / Esta semana / Semana anterior / Elegir semana / 📅); recibe props del hook `useDateFilter` |
-| `SavedAnalysisList.tsx` | Vista `saved-list`: tabla de análisis guardados con búsqueda; recibe callbacks `onBack`, `onOpen`, `onDelete` |
+| `SavedAnalysisList.tsx` | Vista `saved-list`: tabla de análisis guardados con búsqueda; recibe callbacks `onBack`, `onOpen`, `onDelete`; muestra sección "Evolución por equipo" cuando hay grupos de 3+ snapshots con el mismo `equipment_identifier` |
+| `EquipmentTimeline.tsx` | Panel colapsable por equipo: agrupa snapshots del mismo `equipment_identifier`, fetchea detalles en paralelo al expandir, renderiza LineChart (Recharts) con evolución de errores y advertencias entre snapshots |
 | `SavedAnalysisDetail.tsx` | Vista `saved-detail`: tabla de incidentes del snapshot + bloque de comparación; maneja estado loading (sin `savedDetail`) y cargado |
 
 **Lógica de match SDS vs Log (`SDSIncidentPanel.tsx`):**
