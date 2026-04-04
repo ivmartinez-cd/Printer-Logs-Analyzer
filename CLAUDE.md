@@ -440,6 +440,14 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: `await previewLogs(logText)` seguido de `await validateLogs(logText)` — el segundo request no empezaba hasta que terminaba el primero, aunque son completamente independientes.
 - Fix: `Promise.all([previewLogs(logText), validateLogs(logText).catch(...)])` — ambos requests se lanzan en paralelo; la latencia total del análisis es la del más lento en vez de la suma de ambos.
 
+**Bug: `_fetch_solution_content` en api.py no validaba la URL antes de hacer GET (SSRF)**
+- Causa: el endpoint `/error-codes/upsert` pasaba cualquier `solution_url` directamente a `httpx.get()` sin validar scheme ni destino — permitía fetch a IPs privadas, loopback, `http://`, `file://`, etc.
+- Fix: `_validate_ssrf_url(url)` lanzada antes del fetch; rechaza con HTTP 422 si: scheme no es `https`, URL sin hostname, o hostname es IP literal en rangos privados/reservados (10.x, 172.16–31.x, 192.168.x, 127.x, 169.254.x). Usa `ipaddress` + `urllib.parse` de stdlib.
+
+**Bug: build Vercel fallaba — `now` no definido en header de saved-detail**
+- Causa: el header del saved-detail usaba `<time dateTime={now.toISOString()}>` con `now` inline, pero `now` solo existe dentro de `LiveClock`. Al refactorizar `useLiveTime` → `LiveClock`, este `<time>` inline quedó sin migrar.
+- Fix: reemplazar el `<time>` inline por `<LiveClock className="dashboard__datetime" short />`, igual que el header del dashboard principal.
+
 ---
 
 ## Deploy en producción
