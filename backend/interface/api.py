@@ -275,7 +275,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         )
 
     @app.post("/parser/validate", response_model=ValidateLogsResponse, dependencies=[Depends(authenticate)])
-    def validate_logs(payload: ValidateLogsRequest) -> ValidateLogsResponse:
+    @limiter.limit("60/minute")
+    def validate_logs(request: Request, payload: ValidateLogsRequest) -> ValidateLogsResponse:
         t0 = time.perf_counter()
         if len(payload.logs) > MAX_LOGS_LENGTH:
             raise HTTPException(
