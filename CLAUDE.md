@@ -298,6 +298,12 @@ Después de un upsert exitoso, se actualiza `result` directamente (sin re-fetch)
 
 El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_content` (nivel incidente), no `inc.events[].code_solution_content`. Si solo se actualiza uno, el botón no re-renderiza.
 
+**Modal de comparación** (`compareModalOpen`):
+- Se abre desde `SavedAnalysisDetail` con `onCompare` — limpia `compareLogText` y `compareFileName`
+- Igual que `LogPasteModal`, ofrece botón "Cargar archivo…" (input oculto + `compareFileInputRef`) y textarea para pegar texto
+- Estado: `compareLogText`, `compareFileName`, `comparing`, `compareResult`
+- Al confirmar → `POST /saved-analyses/{id}/compare` → setea `compareResult` y cierra el modal
+
 **Exportar PDF** (`handleExportPDF`):
 - Solo disponible cuando hay `result` activo
 - Genera un PDF A4 con: encabezado (título + fecha + nombre de archivo), KPIs, DiagnosticPanel, gráfico de errores frecuentes (BarChart), tabla de incidencias
