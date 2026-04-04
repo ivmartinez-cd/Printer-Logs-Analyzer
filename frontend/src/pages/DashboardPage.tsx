@@ -311,7 +311,9 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
   const [compareModalOpen, setCompareModalOpen] = useState(false)
   const [compareLogText, setCompareLogText] = useState('')
+  const [compareFileName, setCompareFileName] = useState<string | undefined>(undefined)
   const [comparing, setComparing] = useState(false)
+  const compareFileInputRef = useRef<HTMLInputElement>(null)
   const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
   const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -782,7 +784,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                 setCompareResult(null)
               }}
               onDelete={setDeleteConfirm}
-              onCompare={() => { setCompareLogText(''); setCompareModalOpen(true) }}
+              onCompare={() => { setCompareLogText(''); setCompareFileName(undefined); setCompareModalOpen(true) }}
             />
           )}
 
@@ -1438,6 +1440,33 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
             <div className="log-modal__header">
               <h2 id="compare-modal-title" className="log-modal__title">Comparar con log nuevo</h2>
               <button type="button" className="log-modal__close" onClick={() => !comparing && setCompareModalOpen(false)} aria-label="Cerrar" disabled={comparing}>×</button>
+            </div>
+            <div className="log-modal__file-row">
+              <input
+                ref={compareFileInputRef}
+                type="file"
+                accept=".log,.txt,.tsv,text/plain"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = (ev) => {
+                    setCompareLogText(ev.target?.result as string)
+                    setCompareFileName(file.name)
+                  }
+                  reader.readAsText(file)
+                }}
+              />
+              <button
+                type="button"
+                className="log-modal__btn-secondary"
+                onClick={() => compareFileInputRef.current?.click()}
+                disabled={comparing}
+              >
+                Cargar archivo…
+              </button>
+              {compareFileName && <span className="log-modal__file-name">{compareFileName}</span>}
             </div>
             <textarea
               className="log-modal__textarea"
