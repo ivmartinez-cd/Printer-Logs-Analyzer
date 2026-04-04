@@ -71,8 +71,9 @@ Printer-Logs-Analyzer/
 │   └── requirements.txt          # fastapi, uvicorn, psycopg2-binary, httpx, beautifulsoup4, etc.
 └── frontend/
     ├── src/
-    │   ├── pages/DashboardPage.tsx   # UI principal (~2000 líneas, componente monolítico)
-    │   ├── components/               # Modales y paneles
+    │   ├── pages/DashboardPage.tsx   # UI principal (~1000 líneas)
+    │   ├── components/               # Modales, paneles y vistas extraídas
+    │   ├── hooks/useDateFilter.ts    # Estado de filtro de fecha + helpers puros
     │   ├── services/api.ts           # Cliente HTTP typed, inyecta x-api-key
     │   ├── types/api.ts              # Interfaces TS que espejean los modelos Pydantic
     │   └── contexts/ToastContext.tsx # Notificaciones globales
@@ -213,9 +214,9 @@ VITE_API_KEY=...                       # Mismo valor que API_KEY del backend
 
 ## Frontend
 
-### DashboardPage.tsx (página única)
+### DashboardPage.tsx (página principal)
 
-Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
+Componente principal (~1000 líneas). Contiene la lógica de negocio de UI y orquesta los sub-componentes. Las vistas `saved-list` y `saved-detail`, la barra de filtros de fecha y toda la lógica de filtrado viven en archivos separados.
 
 **Vistas:** controladas por `viewMode`: `dashboard` | `saved-list` | `saved-detail`
 
@@ -305,6 +306,14 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 - Si una sección capturada no cabe en la página actual de jsPDF, se agrega una página nueva automáticamente
 - El nombre del PDF se deriva del `logFileName` (ej: `reporte-printer-log.pdf`)
 
+### Hook `useDateFilter` (`frontend/src/hooks/useDateFilter.ts`)
+
+Centraliza todo lo relacionado con el filtro de fecha:
+
+- **Tipo `DateFilter`**: `null` (todo) | `"YYYY-MM-DD"` (día) | `{ start, end }` (semana)
+- **Funciones puras exportadas**: `getWindowForDate`, `getWeekRange`, `formatWeekRange`, `weekInputToRange`, `formatDayFilter`, `getDateRangeFromEvents`, `filterEventsByDate`, `filterIncidentsByDate`, `formatDateTime`
+- **Hook `useDateFilter()`**: devuelve `selectedDate`, `selectedWeekRange`, `activeFilter`, `weekPickerOpen/Ref`, `dayPickerOpen/Ref`, setters individuales y `reset()` — incluye los dos `useEffect` de click-outside
+
 ### Componentes (`frontend/src/components/`)
 
 | Componente | Propósito |
@@ -315,6 +324,9 @@ El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_conten
 | `SDSIncidentPanel.tsx` | Muestra data SDS parseada; calcula match SDS vs incidentes del log usando `event_context` + `more_info` |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `DiagnosticPanel.tsx` | Panel colapsable de diagnóstico automático basado en reglas; aparece entre KPIs y gráficos; recibe solo `filteredEvents` (respeta filtro de fecha) |
+| `DateFilterBar.tsx` | Subheader con los 5 botones de filtro de fecha (Todo / Esta semana / Semana anterior / Elegir semana / 📅); recibe props del hook `useDateFilter` |
+| `SavedAnalysisList.tsx` | Vista `saved-list`: tabla de análisis guardados con búsqueda; recibe callbacks `onBack`, `onOpen`, `onDelete` |
+| `SavedAnalysisDetail.tsx` | Vista `saved-detail`: tabla de incidentes del snapshot + bloque de comparación; maneja estado loading (sin `savedDetail`) y cargado |
 
 **Lógica de match SDS vs Log (`SDSIncidentPanel.tsx`):**
 - `getSdsCodesForMatch(sds)` devuelve un array de códigos a buscar en el log:
@@ -548,7 +560,7 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 
 ## Deuda técnica conocida
 
-- `DashboardPage.tsx` es un componente monolítico de ~2000 líneas — debería dividirse
+- `DashboardPage.tsx` sigue siendo grande (~1000 líneas); las secciones de KPIs, gráficos e incidentes podrían extraerse también
 - `RECENCY_WINDOW`, `MAX_CONCURRENT_ANALYSIS`, `ANALYSIS_TIMEOUT` están en `Settings` pero no se usan
 - Las tablas `config_versions`, `rules`, `rule_tags` existen en DB pero no se usan (legacy de v1)
 - No hay tests
