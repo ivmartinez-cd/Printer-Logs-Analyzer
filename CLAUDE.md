@@ -299,6 +299,8 @@ Después de un upsert exitoso, se actualiza `result` directamente (sin re-fetch)
 
 El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_content` (nivel incidente), no `inc.events[].code_solution_content`. Si solo se actualiza uno, el botón no re-renderiza.
 
+**Columna "Código" en tabla de incidentes:** es un `<button class="dashboard-table__code-link">` que abre directamente el modal de edición del catálogo (`setEditCodeInitial`) para ese código. Mismo handler que el botón "Editar" al final de la fila.
+
 **Modal de comparación** (`compareModalOpen`):
 - Se abre desde `SavedAnalysisDetail` con `onCompare` — limpia `compareLogText` y `compareFileName`
 - Igual que `LogPasteModal`, ofrece botón "Cargar archivo…" (input oculto + `compareFileInputRef`) y textarea para pegar texto

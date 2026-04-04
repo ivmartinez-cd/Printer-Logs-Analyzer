@@ -1144,7 +1144,21 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                               {isExpanded ? '▼' : '▶'}
                             </button>
                           </td>
-                          <td>{inc.code}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="dashboard-table__code-link"
+                              onClick={() => setEditCodeInitial({
+                                code: inc.code,
+                                description: inc.classification || '',
+                                severity: inc.severity || 'INFO',
+                                solutionUrl: inc.sds_link || '',
+                              })}
+                              title="Editar en el catálogo"
+                            >
+                              {inc.code}
+                            </button>
+                          </td>
                           <td className="dashboard-table__cell-classification" title={inc.classification || inc.code}>{inc.classification || inc.code}</td>
                           <td>
                             <span className={`badge badge--${(inc.severity || 'info').toLowerCase()}`}>
