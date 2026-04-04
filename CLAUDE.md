@@ -76,7 +76,7 @@ Printer-Logs-Analyzer/
     │   ├── services/api.ts           # Cliente HTTP typed, inyecta x-api-key
     │   ├── types/api.ts              # Interfaces TS que espejean los modelos Pydantic
     │   └── contexts/ToastContext.tsx # Notificaciones globales
-    └── package.json                  # React 18.3, Recharts 2.13, Vite 5.4
+    └── package.json                  # React 18.3, Recharts 2.13, Vite 5.4, jsPDF 4.2, html2canvas 1.4
 ```
 
 ---
@@ -223,7 +223,8 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 - Muestra ícono de impresora SVG (mismo que en la pantalla de bienvenida) + título "HP Logs Analyzer"
 - Si `logFileName` está disponible, se muestra a la derecha del título como `dashboard__file-name`
 - `border-bottom` sutil + `padding-bottom: 20px` separan el header del contenido
-- Botones ("Incidentes guardados", "Analizar otro log", "Guardar incidente") tienen tamaño uniforme (`padding: 10px 20px`, `font-size: 0.875rem`) via `.dashboard__header-actions .dashboard__btn`
+- Botones ("Incidentes guardados", "Analizar otro log", "Guardar incidente", "Exportar PDF") tienen tamaño uniforme (`padding: 10px 20px`, `font-size: 0.875rem`) via `.dashboard__header-actions .dashboard__btn`
+- "Exportar PDF" solo aparece cuando hay `result` activo; genera un PDF con jsPDF + html2canvas (carga lazy para no inflar el bundle inicial)
 
 **Subheader "Panel de errores":**
 - Muestra `Panel de errores · <logFileName>` cuando `logFileName` está disponible
@@ -294,6 +295,14 @@ Después de un upsert exitoso, se actualiza `result` directamente (sin re-fetch)
 - `result.incidents[].sds_link` y `sds_solution_content` para incidentes con el mismo `code` (crítico para el botón "Ver solución" de la fila del incidente)
 
 El botón "Ver solución" en la tabla de incidentes lee `inc.sds_solution_content` (nivel incidente), no `inc.events[].code_solution_content`. Si solo se actualiza uno, el botón no re-renderiza.
+
+**Exportar PDF** (`handleExportPDF`):
+- Solo disponible cuando hay `result` activo
+- Genera un PDF A4 con: encabezado (título + fecha + nombre de archivo), KPIs, DiagnosticPanel, gráfico de errores frecuentes (BarChart), tabla de incidencias
+- Usa `useRef` en cada sección DOM (`kpisRef`, `diagnosticRef`, `barChartRef`, `incidentsTableRef`) y las captura con `html2canvas` (scale 2)
+- jsPDF y html2canvas se importan de forma lazy (`await import(...)`) — no inflan el bundle inicial
+- Si una sección capturada no cabe en la página actual de jsPDF, se agrega una página nueva automáticamente
+- El nombre del PDF se deriva del `logFileName` (ej: `reporte-printer-log.pdf`)
 
 ### Componentes (`frontend/src/components/`)
 
@@ -383,6 +392,8 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - `vendor-react` — React core
 - `vendor-charts` — Recharts (grande; chunk separado para caché eficiente)
 - `index` — código de la app
+
+jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExportPDF` — no están en ningún chunk estático y solo se descargan cuando el usuario clickea "Exportar PDF".
 
 ---
 
