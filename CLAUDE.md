@@ -432,6 +432,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: Regla 3 contaba todos los eventos sin filtrar por tipo; Regla 5 también evaluaba WARNING e INFO con "tray"/"bandeja" en la descripción (ej. 53.A2.20, 53.A2.21).
 - Fix: ambas reglas filtran exclusivamente eventos `type.toUpperCase() === 'ERROR'`. Regla 3 además identifica el código que más creció (mayor diferencia segunda−primera mitad) y lo muestra en el mensaje: `📈 El problema está escalando: [código] pasó de [N] a [M] eventos en la segunda mitad del período`. Regla 5 muestra los códigos específicos que dispararon la alerta.
 
+**Bug: re-render de DashboardPage cada segundo por useLiveTime**
+- Causa: `useLiveTime` era un custom hook usado directamente en `DashboardPage` que llamaba `setState` cada 1 s, forzando re-render completo del componente raíz — y recalculando `bucketEventsByHour`, `getTopIncidentsForChart`, `getIncidentTableRows` y `filterEventsByDate` en cada tick.
+- Fix: reemplazar `useLiveTime` por componente `LiveClock` aislado (el ticker vive en su propio árbol). Envolver todos los cálculos pesados en `useMemo` con sus dependencias reales: `filteredEvents`, `filteredIncidents`, `dateRange`, `lastErrorEvent`, `volumeData`, `topCodes`, `incidentRowsBase`, `incidentRows`, `tableRows`.
+
 ---
 
 ## Deploy en producción
