@@ -183,6 +183,26 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   return alerts.sort((a, b) => order[a.level] - order[b.level]).slice(0, 5)
 }
 
+type Recommendation = {
+  level: 'critical' | 'monitor' | 'ok'
+  message: string
+}
+
+function getRecommendation(alerts: DiagnosticAlert[]): Recommendation {
+  const hasDominant = alerts.some((a) => a.key === 'dominant')
+  const hasBurst = alerts.some((a) => a.key.startsWith('burst-'))
+  const hasEscalation = alerts.some((a) => a.key === 'escalation')
+  const isHealthy = alerts.every((a) => a.key === 'healthy')
+
+  if (hasDominant && hasBurst && hasEscalation) {
+    return { level: 'critical', message: '🔴 Visita técnica recomendada' }
+  }
+  if (!isHealthy) {
+    return { level: 'monitor', message: '🟡 Monitorear — revisar en 48hs' }
+  }
+  return { level: 'ok', message: '🟢 Sin acción necesaria' }
+}
+
 interface DiagnosticPanelProps {
   events: ApiEvent[]
 }
@@ -190,6 +210,7 @@ interface DiagnosticPanelProps {
 export function DiagnosticPanel({ events }: DiagnosticPanelProps) {
   const [collapsed, setCollapsed] = useState(false)
   const alerts = runDiagnostics(events)
+  const recommendation = getRecommendation(alerts)
 
   return (
     <div className="diagnostic-panel">
@@ -205,13 +226,19 @@ export function DiagnosticPanel({ events }: DiagnosticPanelProps) {
         </span>
       </button>
       {!collapsed && (
-        <ul className="diagnostic-panel__list">
-          {alerts.map((alert) => (
-            <li key={alert.key} className={`diagnostic-panel__alert diagnostic-panel__alert--${alert.level}`}>
-              {alert.message}
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="diagnostic-panel__list">
+            {alerts.map((alert) => (
+              <li key={alert.key} className={`diagnostic-panel__alert diagnostic-panel__alert--${alert.level}`}>
+                {alert.message}
+              </li>
+            ))}
+          </ul>
+          <div className={`diagnostic-panel__recommendation diagnostic-panel__recommendation--${recommendation.level}`}>
+            <span className="diagnostic-panel__recommendation-label">¿Qué hacer?</span>
+            <span className="diagnostic-panel__recommendation-text">{recommendation.message}</span>
+          </div>
+        </>
       )}
     </div>
   )

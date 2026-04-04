@@ -759,6 +759,43 @@ body {
   color: #86efac;
 }
 
+.diagnostic-panel__recommendation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-top: 1px solid #2d3a52;
+  padding-top: 10px;
+}
+
+.diagnostic-panel__recommendation-label {
+  color: #6b7a8e;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.diagnostic-panel__recommendation--critical {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.diagnostic-panel__recommendation--monitor {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+.diagnostic-panel__recommendation--ok {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+
 /* ── KPIs ──────────────────────────────────────────────────────── */
 .kpis {
   display: grid;
