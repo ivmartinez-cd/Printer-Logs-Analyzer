@@ -468,6 +468,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: `/parser/validate` y `/saved-analyses/{id}/compare` verificaban `len(logs) > MAX_LOGS_LENGTH` y retornaban HTTP 400, pero `/parser/preview` no tenía ese check y aceptaba payloads de cualquier tamaño.
 - Fix: agregar `if len(payload.logs) > MAX_LOGS_LENGTH: raise HTTPException(400)` al inicio de `parse_logs`, igual que en los otros dos endpoints.
 
+**Bug: reloj duplicado — aparecía en header principal y en subheader de filtros**
+- Causa: `<LiveClock short />` estaba renderizado tanto en el header principal (`dashboard__datetime`) como al final del subheader de filtros de fecha.
+- Fix: eliminar el `<LiveClock>` del subheader; queda solo en el header principal.
+
 ---
 
 ## Deploy en producción
