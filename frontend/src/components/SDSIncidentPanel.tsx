@@ -95,7 +95,10 @@ function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
 
   const moreInfo = sds.more_info?.trim()
   if (moreInfo) {
-    const parts = moreInfo.split(/\s+or\s+/i).map((s) => s.trim()).filter(Boolean)
+    const parts = moreInfo
+      .split(/\s+or\s+/i)
+      .map((s) => s.trim())
+      .filter(Boolean)
     for (const part of parts) {
       if (!codes.includes(part)) codes.push(part)
     }
@@ -105,10 +108,15 @@ function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
 }
 
 /** Total de eventos del log que coinciden con cualquiera de los códigos SDS. */
-function getEventosRelacionadosCount(sds: SdsIncidentData, incidentsFull: IncidentFullForSds[]): number {
+function getEventosRelacionadosCount(
+  sds: SdsIncidentData,
+  incidentsFull: IncidentFullForSds[]
+): number {
   const sdsCodes = getSdsCodesForMatch(sds)
   if (sdsCodes.length === 0) return 0
-  const matching = incidentsFull.filter((i) => sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c)))
+  const matching = incidentsFull.filter((i) =>
+    sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c))
+  )
   return matching.reduce((sum, i) => sum + (i.occurrences ?? 1), 0)
 }
 
@@ -124,15 +132,22 @@ function computeSdsVsLog(
   eventosRelacionadosCount: number
 ): { status: SdsVsLogStatus; explanation: string } {
   if (!hasEventContext(sds)) {
-    return { status: 'general', explanation: 'SDS de tipo general — sin código de evento específico' }
+    return {
+      status: 'general',
+      explanation: 'SDS de tipo general — sin código de evento específico',
+    }
   }
   const sdsCodes = getSdsCodesForMatch(sds)
   if (sdsCodes.length === 0) {
     return { status: 'no_match', explanation: 'no hay código de evento definido' }
   }
 
-  const matchedInFiltered = sdsCodes.filter((c) => incidentRows.some((r) => incidentCodeMatchesSds(r.code, c)))
-  const matchedInFull = sdsCodes.filter((c) => incidentsFull.some((i) => incidentCodeMatchesSds(i.code, c)))
+  const matchedInFiltered = sdsCodes.filter((c) =>
+    incidentRows.some((r) => incidentCodeMatchesSds(r.code, c))
+  )
+  const matchedInFull = sdsCodes.filter((c) =>
+    incidentsFull.some((i) => incidentCodeMatchesSds(i.code, c))
+  )
 
   if (matchedInFiltered.length > 0) {
     return {
@@ -152,9 +167,13 @@ function computeSdsVsLog(
 function getLastEventRelated(sds: SdsIncidentData, incidentsFull: IncidentFullForSds[]): string {
   const sdsCodes = getSdsCodesForMatch(sds)
   if (sdsCodes.length === 0) return '—'
-  const matching = incidentsFull.filter((i) => sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c)))
+  const matching = incidentsFull.filter((i) =>
+    sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c))
+  )
   if (matching.length === 0) return '—'
-  const latest = matching.sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime())[0]
+  const latest = matching.sort(
+    (a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime()
+  )[0]
   if (!latest?.end_time) return '—'
   return formatLastEvent(latest.end_time)
 }
@@ -174,8 +193,15 @@ export function SDSIncidentPanel({
   const [collapsed, setCollapsed] = useState(true)
   const estadoSds = getEstadoSds(sdsIncident.created_at)
   const isGeneral = !hasEventContext(sdsIncident)
-  const eventosRelacionadosCount = isGeneral ? null : getEventosRelacionadosCount(sdsIncident, incidentsFull)
-  const sdsVsLog = computeSdsVsLog(sdsIncident, incidentRows, incidentsFull, eventosRelacionadosCount ?? 0)
+  const eventosRelacionadosCount = isGeneral
+    ? null
+    : getEventosRelacionadosCount(sdsIncident, incidentsFull)
+  const sdsVsLog = computeSdsVsLog(
+    sdsIncident,
+    incidentRows,
+    incidentsFull,
+    eventosRelacionadosCount ?? 0
+  )
   const lastEventRelated = isGeneral ? '—' : getLastEventRelated(sdsIncident, incidentsFull)
 
   const sdsVsLogLabel =
@@ -226,14 +252,19 @@ export function SDSIncidentPanel({
               {rows.map(({ label, value, muted }) => (
                 <tr key={label}>
                   <td className="sds-incident-panel__label">{label}</td>
-                  <td className={`sds-incident-panel__value${muted ? ' sds-incident-panel__value--muted' : ''}`}>
+                  <td
+                    className={`sds-incident-panel__value${muted ? ' sds-incident-panel__value--muted' : ''}`}
+                  >
                     {value ?? '—'}
                   </td>
                 </tr>
               ))}
               <tr className="sds-incident-panel__vs-row">
                 <td className="sds-incident-panel__label">SDS vs Log</td>
-                <td className="sds-incident-panel__value sds-incident-panel__value--with-explanation" data-status={sdsVsLog.status}>
+                <td
+                  className="sds-incident-panel__value sds-incident-panel__value--with-explanation"
+                  data-status={sdsVsLog.status}
+                >
                   <span className="sds-incident-panel__vs-status">{sdsVsLogLabel}</span>
                   <span className="sds-incident-panel__vs-explanation">{sdsVsLog.explanation}</span>
                 </td>

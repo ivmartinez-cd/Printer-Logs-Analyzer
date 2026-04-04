@@ -7,6 +7,7 @@
     "dev": "concurrently -n fe,be -c blue,yellow \"npm run dev --prefix frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "taskkill /F /IM python.exe 2>nul & timeout /t 1 /nobreak >nul & cd backend && uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0",
+    "format": "npm run format --prefix frontend",
     "lint": "npm run lint --prefix frontend",
     "typecheck": "npm run typecheck --prefix frontend",
     "test:frontend": "npm run test --prefix frontend",

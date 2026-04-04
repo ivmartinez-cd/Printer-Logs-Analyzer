@@ -9,9 +9,7 @@ import type {
 } from '../types/api'
 
 const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE ||
-  'http://localhost:8000'
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
 function normalizeEnvValue(value: string | undefined): string {
   const trimmed = (value ?? '').trim()
@@ -49,6 +47,7 @@ async function apiFetch(
     return await fetch(url, { ...options, signal })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'TimeoutError') {
+      // eslint-disable-next-line preserve-caught-error -- Error.cause requires ES2022, project targets ES2020
       throw new Error('La solicitud tardó demasiado (>30 s). Verificá tu conexión e intentá de nuevo.')
     }
     throw err
@@ -58,15 +57,14 @@ async function apiFetch(
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed')
+    throw new Error(
+      typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed'
+    )
   }
   return res.json()
 }
 
-export async function previewLogs(
-  logs: string,
-  signal?: AbortSignal
-): Promise<ParseLogsResponse> {
+export async function previewLogs(logs: string, signal?: AbortSignal): Promise<ParseLogsResponse> {
   const res = await apiFetch(`${API_BASE}/parser/preview`, {
     method: 'POST',
     headers: apiHeaders(),
@@ -131,9 +129,7 @@ export async function createSavedAnalysis(
   return handleResponse<SavedAnalysisSummary>(res)
 }
 
-export async function listSavedAnalyses(
-  signal?: AbortSignal
-): Promise<SavedAnalysisSummary[]> {
+export async function listSavedAnalyses(signal?: AbortSignal): Promise<SavedAnalysisSummary[]> {
   const res = await apiFetch(`${API_BASE}/saved-analyses`, {
     method: 'GET',
     headers: apiHeaders(),
@@ -168,10 +164,7 @@ export async function compareSavedAnalysis(
   return handleResponse<CompareResponse>(res)
 }
 
-export async function deleteSavedAnalysis(
-  id: string,
-  signal?: AbortSignal
-): Promise<void> {
+export async function deleteSavedAnalysis(id: string, signal?: AbortSignal): Promise<void> {
   const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: apiHeaders(),
@@ -179,7 +172,9 @@ export async function deleteSavedAnalysis(
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed')
+    throw new Error(
+      typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed'
+    )
   }
 }
 
@@ -192,7 +187,7 @@ export async function getHealth(): Promise<HealthStatus | null> {
   try {
     const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(10_000) })
     if (!res.ok) return null
-    return await res.json() as HealthStatus
+    return (await res.json()) as HealthStatus
   } catch {
     return null
   }

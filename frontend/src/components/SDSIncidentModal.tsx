@@ -18,7 +18,10 @@ const SDS_KEYS: { key: keyof SdsIncidentData; labels: string[] }[] = [
   { key: 'created_at', labels: ['Creado'] },
   { key: 'firmware', labels: ['Versión del firmware', 'Version del firmware'] },
   { key: 'impressions', labels: ['N.º total de impresiones', 'N. total de impresiones'] },
-  { key: 'event_context', labels: ['Contexto del código de evento', 'Contexto del codigo de evento'] },
+  {
+    key: 'event_context',
+    labels: ['Contexto del código de evento', 'Contexto del codigo de evento'],
+  },
 ]
 
 function parseSdsText(text: string): SdsIncidentData {
@@ -38,7 +41,10 @@ function parseSdsText(text: string): SdsIncidentData {
     for (const { key, labels } of SDS_KEYS) {
       for (const label of labels) {
         if (trimmed.startsWith(label)) {
-          const rest = trimmed.slice(label.length).replace(/^[\s:]+/, '').trim()
+          const rest = trimmed
+            .slice(label.length)
+            .replace(/^[\s:]+/, '')
+            .trim()
           if (rest) (out as unknown as Record<string, string | null>)[key] = rest
           break
         }

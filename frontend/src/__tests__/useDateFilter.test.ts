@@ -67,7 +67,7 @@ describe('filterEventsByDate', () => {
   it('returns events within a week range', () => {
     const result = filterEventsByDate(events, { start: '2024-03-14', end: '2024-03-16' })
     expect(result).toHaveLength(2)
-    const codes = result.map(e => e.code)
+    const codes = result.map((e) => e.code)
     expect(codes).toContain('A')
     expect(codes).toContain('B')
   })
@@ -93,7 +93,7 @@ describe('filterIncidentsByDate', () => {
     makeIncident('A', '2024-03-14T10:00:00', '2024-03-14T12:00:00'),
     makeIncident('B', '2024-03-20T09:00:00', '2024-03-20T11:00:00'),
   ]
-  const events = incidents.flatMap(i => i.events)
+  const events = incidents.flatMap((i) => i.events)
 
   it('returns all incidents when filter is null', () => {
     expect(filterIncidentsByDate(incidents, events, null)).toHaveLength(2)
@@ -106,7 +106,10 @@ describe('filterIncidentsByDate', () => {
   })
 
   it('filters incidents by week range', () => {
-    const result = filterIncidentsByDate(incidents, events, { start: '2024-03-14', end: '2024-03-16' })
+    const result = filterIncidentsByDate(incidents, events, {
+      start: '2024-03-14',
+      end: '2024-03-16',
+    })
     expect(result).toHaveLength(1)
     expect(result[0].code).toBe('A')
   })

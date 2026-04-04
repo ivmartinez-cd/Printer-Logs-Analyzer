@@ -34,7 +34,10 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   if (totalErrorOccurrences > 0) {
     const countByCode = new Map<string, { count: number; description: string | null }>()
     for (const evt of errorEvents) {
-      const entry = countByCode.get(evt.code) ?? { count: 0, description: evt.code_description ?? null }
+      const entry = countByCode.get(evt.code) ?? {
+        count: 0,
+        description: evt.code_description ?? null,
+      }
       countByCode.set(evt.code, { count: entry.count + 1, description: entry.description })
     }
     for (const [code, { count, description }] of countByCode) {
@@ -69,7 +72,8 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
     for (let i = 0; i <= sorted.length - BURST_COUNT; i++) {
       if (sorted[i + BURST_COUNT - 1] - sorted[i] < BURST_WINDOW_MS) {
         let windowCount = 0
-        for (let j = i; j < sorted.length && sorted[j] - sorted[i] < BURST_WINDOW_MS; j++) windowCount++
+        for (let j = i; j < sorted.length && sorted[j] - sorted[i] < BURST_WINDOW_MS; j++)
+          windowCount++
         const windowStart = sorted[i]
         const windowEnd = sorted[i + windowCount - 1]
         const rawDesc = descByCode.get(code) ?? null
@@ -130,7 +134,9 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
           topSecond = s
         }
       }
-      const detail = topCode ? `: ${topCode} pasó de ${topFirst} a ${topSecond} eventos en la segunda mitad del período` : ''
+      const detail = topCode
+        ? `: ${topCode} pasó de ${topFirst} a ${topSecond} eventos en la segunda mitad del período`
+        : ''
       alerts.push({
         key: 'escalation',
         level: 'error',
@@ -140,7 +146,9 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
   }
 
   // REGLA 4 — Firmware: descripción contiene "firmware"
-  const hasFirmwareErrors = events.some((e) => e.code_description?.toLowerCase().includes('firmware'))
+  const hasFirmwareErrors = events.some((e) =>
+    e.code_description?.toLowerCase().includes('firmware')
+  )
   if (hasFirmwareErrors) {
     alerts.push({
       key: 'firmware',
@@ -158,7 +166,7 @@ function runDiagnostics(events: ApiEvent[]): DiagnosticAlert[] {
           const d = e.code_description?.toLowerCase() ?? ''
           return d.includes('tray') || d.includes('bandeja')
         })
-        .map((e) => e.code),
+        .map((e) => e.code)
     ),
   ]
   if (trayErrorCodes.length >= 2) {
@@ -229,12 +237,17 @@ export function DiagnosticPanel({ events }: DiagnosticPanelProps) {
         <>
           <ul className="diagnostic-panel__list">
             {alerts.map((alert) => (
-              <li key={alert.key} className={`diagnostic-panel__alert diagnostic-panel__alert--${alert.level}`}>
+              <li
+                key={alert.key}
+                className={`diagnostic-panel__alert diagnostic-panel__alert--${alert.level}`}
+              >
                 {alert.message}
               </li>
             ))}
           </ul>
-          <div className={`diagnostic-panel__recommendation diagnostic-panel__recommendation--${recommendation.level}`}>
+          <div
+            className={`diagnostic-panel__recommendation diagnostic-panel__recommendation--${recommendation.level}`}
+          >
             <span className="diagnostic-panel__recommendation-label">¿Qué hacer?</span>
             <span className="diagnostic-panel__recommendation-text">{recommendation.message}</span>
           </div>

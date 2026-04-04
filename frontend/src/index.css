@@ -3,7 +3,12 @@
 }
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   background: #0d1117;
   color: #e6e8ee;
   font-size: 14px;
@@ -573,7 +578,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .log-modal__slow-warning {
@@ -602,19 +609,19 @@ body {
   width: 140px;
 }
 
-.sds-incident-panel__value[data-status="match"] {
+.sds-incident-panel__value[data-status='match'] {
   color: #22c55e;
 }
 
-.sds-incident-panel__value[data-status="partial"] {
+.sds-incident-panel__value[data-status='partial'] {
   color: #eab308;
 }
 
-.sds-incident-panel__value[data-status="no_match"] {
+.sds-incident-panel__value[data-status='no_match'] {
   color: #ef4444;
 }
 
-.sds-incident-panel__value[data-status="general"] {
+.sds-incident-panel__value[data-status='general'] {
   color: #60a5fa;
 }
 

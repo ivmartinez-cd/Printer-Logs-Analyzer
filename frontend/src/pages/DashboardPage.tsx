@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { listSavedAnalyses, getSavedAnalysis, compareSavedAnalysis, deleteSavedAnalysis } from '../services/api'
+import {
+  listSavedAnalyses,
+  getSavedAnalysis,
+  compareSavedAnalysis,
+  deleteSavedAnalysis,
+} from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
   ParseLogsResponse,
@@ -45,14 +50,15 @@ function LiveClock({ className, short = false }: { className?: string; short?: b
   }, [])
   return (
     <time className={className} dateTime={now.toISOString()}>
-      {now.toLocaleString(undefined, short
-        ? { dateStyle: 'short', timeStyle: 'short' }
-        : { dateStyle: 'long', timeStyle: 'medium' }
+      {now.toLocaleString(
+        undefined,
+        short
+          ? { dateStyle: 'short', timeStyle: 'short' }
+          : { dateStyle: 'long', timeStyle: 'medium' }
       )}
     </time>
   )
 }
-
 
 function getIncidentTableRows(
   incidents: ApiIncident[],
@@ -118,7 +124,10 @@ function getTopIncidentsForChart(
     .map((x) => ({ name: x.inc.code, count: x.countInWindow, severity: x.inc.severity }))
 }
 
-function bucketEventsByHour(events: ApiEvent[], selectedDate: DateFilter): { time: string; ERROR: number; WARNING: number; INFO: number }[] {
+function bucketEventsByHour(
+  events: ApiEvent[],
+  selectedDate: DateFilter
+): { time: string; ERROR: number; WARNING: number; INFO: number }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -156,7 +165,10 @@ interface LogPasteModalProps {
 }
 
 /** Obtiene descripción y severidad del primer evento del resultado para un código. */
-function getEventInfoForCode(result: ParseLogsResponse | null, code: string): { description: string; severity: string } {
+function getEventInfoForCode(
+  result: ParseLogsResponse | null,
+  code: string
+): { description: string; severity: string } {
   if (!result?.events?.length) return { description: '', severity: 'INFO' }
   const ev = result.events.find((e) => e.code === code)
   return {
@@ -198,11 +210,21 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   }
 
   return (
-    <div className="log-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="log-modal-title">
+    <div
+      className="log-modal-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="log-modal-title"
+    >
       <div className="log-modal" onClick={(e) => e.stopPropagation()}>
         <div className="log-modal__header">
-          <h2 id="log-modal-title" className="log-modal__title">Pegar logs HP</h2>
-          <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">×</button>
+          <h2 id="log-modal-title" className="log-modal__title">
+            Pegar logs HP
+          </h2>
+          <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
+            ×
+          </button>
         </div>
         <div className="log-modal__file-row">
           <input
@@ -242,9 +264,16 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
               <>
                 <span className="log-modal__spinner" aria-hidden="true" /> Analizando log…
               </>
-            ) : 'Analizar'}
+            ) : (
+              'Analizar'
+            )}
           </button>
-          <button type="button" className="log-modal__btn-secondary" onClick={onClose} disabled={loading}>
+          <button
+            type="button"
+            className="log-modal__btn-secondary"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cerrar
           </button>
         </div>
@@ -260,25 +289,49 @@ function DbStatusBadge({ status }: { status: HealthStatus | null }) {
   if (!status) return null
   const online = status.db_available
   return (
-    <span className={`db-status-badge ${online ? 'db-status-badge--ok' : 'db-status-badge--offline'}`}>
+    <span
+      className={`db-status-badge ${online ? 'db-status-badge--ok' : 'db-status-badge--offline'}`}
+    >
       <span className="db-status-badge__dot" aria-hidden="true" />
       {online ? 'DB conectada' : 'DB offline · modo local'}
     </span>
   )
 }
 
-export default function DashboardPage({ serverWasCold, healthStatus }: { serverWasCold: boolean; healthStatus: HealthStatus | null }) {
+export default function DashboardPage({
+  serverWasCold,
+  healthStatus,
+}: {
+  serverWasCold: boolean
+  healthStatus: HealthStatus | null
+}) {
   const dateFilter = useDateFilter()
-  const { selectedDate, setSelectedDate, selectedWeekRange, setSelectedWeekRange, activeFilter,
-    weekPickerOpen, setWeekPickerOpen, weekPickerRef,
-    dayPickerOpen, setDayPickerOpen, dayPickerRef } = dateFilter
+  const {
+    selectedDate,
+    setSelectedDate,
+    selectedWeekRange,
+    setSelectedWeekRange,
+    activeFilter,
+    weekPickerOpen,
+    setWeekPickerOpen,
+    weekPickerRef,
+    dayPickerOpen,
+    setDayPickerOpen,
+    dayPickerRef,
+  } = dateFilter
   const [eventsTableCollapsed, setEventsTableCollapsed] = useState(false)
   const [incidentsSeverityFilter, setIncidentsSeverityFilter] = useState<string>('')
   const [incidentsSearchFilter, setIncidentsSearchFilter] = useState('')
   const [eventsSeverityFilter, setEventsSeverityFilter] = useState<string>('')
   const [eventsSearchFilter, setEventsSearchFilter] = useState('')
-  const [incidentsSort, setIncidentsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'end_time', dir: 'desc' })
-  const [eventsSort, setEventsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({ column: 'timestamp', dir: 'desc' })
+  const [incidentsSort, setIncidentsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
+    column: 'end_time',
+    dir: 'desc',
+  })
+  const [eventsSort, setEventsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
+    column: 'timestamp',
+    dir: 'desc',
+  })
   const [viewMode, setViewMode] = useState<'dashboard' | 'saved-list' | 'saved-detail'>('dashboard')
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
   const [savedListSearch, setSavedListSearch] = useState('')
@@ -292,32 +345,52 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
   const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [logFileName, setLogFileName] = useState<string | null>(null)
-  const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
+  const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
+    new Set(['ERROR', 'WARNING', 'INFO'])
+  )
 
   const toast = useToast()
   const modals = useModals()
   const {
-    logModalOpen, setLogModalOpen,
-    sdsPreModalOpen, setSdsPreModalOpen,
-    sdsModalOpen, setSdsModalOpen,
-    sdsIncident, setSdsIncident,
-    addCodeModalCode, setAddCodeModalCode,
-    editCodeInitial, setEditCodeInitial,
-    saveIncidentModalOpen, setSaveIncidentModalOpen,
-    compareModalOpen, setCompareModalOpen,
-    deleteConfirm, setDeleteConfirm,
-    solutionModal, setSolutionModal,
+    logModalOpen,
+    setLogModalOpen,
+    sdsPreModalOpen,
+    setSdsPreModalOpen,
+    sdsModalOpen,
+    setSdsModalOpen,
+    sdsIncident,
+    setSdsIncident,
+    addCodeModalCode,
+    setAddCodeModalCode,
+    editCodeInitial,
+    setEditCodeInitial,
+    saveIncidentModalOpen,
+    setSaveIncidentModalOpen,
+    compareModalOpen,
+    setCompareModalOpen,
+    deleteConfirm,
+    setDeleteConfirm,
+    solutionModal,
+    setSolutionModal,
   } = modals
 
-  const { exportingPdf, handleExportPDF, kpisRef, diagnosticRef, barChartRef, incidentsTableRef } = useExportPdf(logFileName)
+  const { exportingPdf, handleExportPDF, kpisRef, diagnosticRef, barChartRef, incidentsTableRef } =
+    useExportPdf(logFileName)
 
   const {
-    loading, error, setError,
+    loading,
+    error,
+    setError,
     result,
-    pendingResult, codesNew, setCodesNew,
-    savingCode, savingIncident,
-    handleAnalyze, commitPendingResult,
-    handleSaveCodeToCatalog, handleSaveIncident,
+    pendingResult,
+    codesNew,
+    setCodesNew,
+    savingCode,
+    savingIncident,
+    handleAnalyze,
+    commitPendingResult,
+    handleSaveCodeToCatalog,
+    handleSaveIncident,
   } = useAnalysis({
     setLogFileName,
     resetDateFilter: dateFilter.reset,
@@ -351,19 +424,20 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
     () =>
       [...filteredEvents]
         .filter((e) => e.type.toUpperCase() === 'ERROR')
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] ?? null,
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] ??
+      null,
     [filteredEvents]
   )
   const lastErrorLabel = lastErrorEvent
     ? new Date(lastErrorEvent.timestamp).toLocaleString('es-AR', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       })
     : null
-  const volumeData = useMemo(
-    () => bucketEventsByHour(events, activeFilter),
-    [events, activeFilter]
-  )
+  const volumeData = useMemo(() => bucketEventsByHour(events, activeFilter), [events, activeFilter])
   const topCodes = useMemo(
     () => getTopIncidentsForChart(incidents, events, activeFilter, 5),
     [incidents, events, activeFilter]
@@ -374,7 +448,8 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
   )
   const incidentRows = useMemo(() => {
     const filtered = incidentRowsBase.filter((inc) => {
-      if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter) return false
+      if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter)
+        return false
       const q = incidentsSearchFilter.trim().toLowerCase()
       if (q) {
         const code = (inc.code ?? '').toLowerCase()
@@ -415,7 +490,8 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
     const { column, dir } = eventsSort
     const mult = dir === 'asc' ? 1 : -1
     const filtered = filteredEvents.filter((evt) => {
-      if (eventsSeverityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== eventsSeverityFilter) return false
+      if (eventsSeverityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== eventsSeverityFilter)
+        return false
       const q = eventsSearchFilter.trim().toLowerCase()
       if (q) {
         const code = (evt.code ?? '').toLowerCase()
@@ -437,7 +513,9 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
           cmp = (a.type ?? '').localeCompare(b.type ?? '')
           break
         case 'message':
-          cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(b.code_description ?? b.help_reference ?? '')
+          cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(
+            b.code_description ?? b.help_reference ?? ''
+          )
           break
         default:
           cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -454,7 +532,16 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
         <div className="dashboard__frame">
           <header className="dashboard__header dashboard__header--inside-frame">
             <div className="dashboard__title-group">
-              <svg className="dashboard__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                className="dashboard__title-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <polyline points="6 9 6 2 18 2 18 9" />
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                 <rect x="6" y="14" width="12" height="8" />
@@ -466,7 +553,8 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
           <div className="dashboard__welcome-wrap">
             <section className="dashboard__welcome">
               <p className="dashboard__tagline">
-                Analiza logs de impresoras HP, detecta errores por severidad y visualiza tendencias en segundos.
+                Analiza logs de impresoras HP, detecta errores por severidad y visualiza tendencias
+                en segundos.
               </p>
               <div className="dashboard__welcome-actions">
                 <button
@@ -479,7 +567,14 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
                 <button
                   type="button"
                   className="dashboard__btn dashboard__btn--secondary dashboard__btn--welcome-secondary"
-                  onClick={() => { setViewMode('saved-list'); setSavedList(null); setSavedListSearch(''); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+                  onClick={() => {
+                    setViewMode('saved-list')
+                    setSavedList(null)
+                    setSavedListSearch('')
+                    listSavedAnalyses()
+                      .then(setSavedList)
+                      .catch(() => setSavedList([]))
+                  }}
                 >
                   Ver logs guardados
                 </button>
@@ -520,11 +615,20 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
             </section>
           </div>
         </div>
-      ) : (result || viewMode === 'saved-list' || viewMode === 'saved-detail') ? (
+      ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
           <header className="dashboard__header">
             <div className="dashboard__title-group">
-              <svg className="dashboard__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                className="dashboard__title-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <polyline points="6 9 6 2 18 2 18 9" />
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                 <rect x="6" y="14" width="12" height="8" />
@@ -536,7 +640,14 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
               <button
                 type="button"
                 className="dashboard__btn dashboard__btn--secondary"
-                onClick={() => { setViewMode('saved-list'); setSavedList(null); setSavedListSearch(''); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+                onClick={() => {
+                  setViewMode('saved-list')
+                  setSavedList(null)
+                  setSavedListSearch('')
+                  listSavedAnalyses()
+                    .then(setSavedList)
+                    .catch(() => setSavedList([]))
+                }}
               >
                 Incidentes guardados
               </button>
@@ -583,7 +694,9 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
                 setSavedDetail(null)
                 setCompareResult(null)
                 setViewMode('saved-detail')
-                getSavedAnalysis(id).then(setSavedDetail).catch(() => toast.showError('Error al cargar'))
+                getSavedAnalysis(id)
+                  .then(setSavedDetail)
+                  .catch(() => toast.showError('Error al cargar'))
               }}
               onDelete={setDeleteConfirm}
             />
@@ -601,198 +714,238 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
                 setCompareResult(null)
               }}
               onDelete={setDeleteConfirm}
-              onCompare={() => { setCompareLogText(''); setCompareFileName(undefined); setCompareModalOpen(true) }}
+              onCompare={() => {
+                setCompareLogText('')
+                setCompareFileName(undefined)
+                setCompareModalOpen(true)
+              }}
             />
           )}
 
           {viewMode === 'dashboard' && (
-          <>
-          {parseErrorsCount > 0 && (
-            <div className="dashboard__parse-errors-banner" role="alert">
-              <button
-                className="dashboard__parse-errors-toggle"
-                onClick={() => setParseErrorsExpanded((v) => !v)}
-                aria-expanded={parseErrorsExpanded}
-              >
-                <span>Se omitieron {parseErrorsCount} líneas por formato inválido</span>
-                <span className="dashboard__parse-errors-chevron">{parseErrorsExpanded ? '▲' : '▼'}</span>
-              </button>
-              {parseErrorsExpanded && (
-                <table className="dashboard__parse-errors-table">
-                  <thead>
-                    <tr>
-                      <th>Línea</th>
-                      <th>Texto crudo</th>
-                      <th>Motivo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(result?.errors ?? []).map((e) => (
-                      <tr key={e.line_number}>
-                        <td>{e.line_number}</td>
-                        <td><code>{e.raw_line}</code></td>
-                        <td>{e.reason}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <>
+              {parseErrorsCount > 0 && (
+                <div className="dashboard__parse-errors-banner" role="alert">
+                  <button
+                    className="dashboard__parse-errors-toggle"
+                    onClick={() => setParseErrorsExpanded((v) => !v)}
+                    aria-expanded={parseErrorsExpanded}
+                  >
+                    <span>Se omitieron {parseErrorsCount} líneas por formato inválido</span>
+                    <span className="dashboard__parse-errors-chevron">
+                      {parseErrorsExpanded ? '▲' : '▼'}
+                    </span>
+                  </button>
+                  {parseErrorsExpanded && (
+                    <table className="dashboard__parse-errors-table">
+                      <thead>
+                        <tr>
+                          <th>Línea</th>
+                          <th>Texto crudo</th>
+                          <th>Motivo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(result?.errors ?? []).map((e) => (
+                          <tr key={e.line_number}>
+                            <td>{e.line_number}</td>
+                            <td>
+                              <code>{e.raw_line}</code>
+                            </td>
+                            <td>{e.reason}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               )}
-            </div>
-          )}
 
-          {result && codesNew.length > 0 && (
-            <div className="dashboard__codes-new-section" role="status">
-              <p className="dashboard__codes-new-intro">
-                Se detectaron {codesNew.length} código{codesNew.length !== 1 ? 's' : ''} nuevo{codesNew.length !== 1 ? 's' : ''} que no están en el catálogo. Agrega cada uno con su URL de solución si la tienes.
-              </p>
-              <ul className="dashboard__codes-new-list">
-                {codesNew.map((code) => {
-                  const { description } = getEventInfoForCode(result, code)
-                  return (
-                    <li key={code} className="dashboard__codes-new-item">
-                      <span className="dashboard__codes-new-code">{code}</span>
-                      {description && (
-                        <span className="dashboard__codes-new-desc" title={description}>
-                          {description.slice(0, 60)}{description.length > 60 ? '…' : ''}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
-                        onClick={() => setAddCodeModalCode(code)}
-                        disabled={savingCode}
-                      >
-                        Agregar al catálogo
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--secondary"
-                onClick={() => setCodesNew([])}
-              >
-                Ignorar y ver resultados
-              </button>
-            </div>
-          )}
+              {result && codesNew.length > 0 && (
+                <div className="dashboard__codes-new-section" role="status">
+                  <p className="dashboard__codes-new-intro">
+                    Se detectaron {codesNew.length} código{codesNew.length !== 1 ? 's' : ''} nuevo
+                    {codesNew.length !== 1 ? 's' : ''} que no están en el catálogo. Agrega cada uno
+                    con su URL de solución si la tienes.
+                  </p>
+                  <ul className="dashboard__codes-new-list">
+                    {codesNew.map((code) => {
+                      const { description } = getEventInfoForCode(result, code)
+                      return (
+                        <li key={code} className="dashboard__codes-new-item">
+                          <span className="dashboard__codes-new-code">{code}</span>
+                          {description && (
+                            <span className="dashboard__codes-new-desc" title={description}>
+                              {description.slice(0, 60)}
+                              {description.length > 60 ? '…' : ''}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
+                            onClick={() => setAddCodeModalCode(code)}
+                            disabled={savingCode}
+                          >
+                            Agregar al catálogo
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  <button
+                    type="button"
+                    className="dashboard__btn dashboard__btn--secondary"
+                    onClick={() => setCodesNew([])}
+                  >
+                    Ignorar y ver resultados
+                  </button>
+                </div>
+              )}
 
-          {addCodeModalCode && result && (
-            <AddCodeToCatalogModal
-              code={addCodeModalCode}
-              initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
-              initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
-              onSave={(body) => handleSaveCodeToCatalog(body, false)}
-              onClose={() => !savingCode && setAddCodeModalCode(null)}
-              saving={savingCode}
-            />
-          )}
+              {addCodeModalCode && result && (
+                <AddCodeToCatalogModal
+                  code={addCodeModalCode}
+                  initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
+                  initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
+                  onSave={(body) => handleSaveCodeToCatalog(body, false)}
+                  onClose={() => !savingCode && setAddCodeModalCode(null)}
+                  saving={savingCode}
+                />
+              )}
 
-          {editCodeInitial && (
-            <AddCodeToCatalogModal
-              code={editCodeInitial.code}
-              initialDescription={editCodeInitial.description}
-              initialSeverity={editCodeInitial.severity}
-              initialSolutionUrl={editCodeInitial.solutionUrl}
-              title="Editar código en el catálogo"
-              submitLabel="Guardar"
-              onSave={(body) => handleSaveCodeToCatalog(body, true)}
-              onClose={() => !savingCode && setEditCodeInitial(null)}
-              saving={savingCode}
-            />
-          )}
+              {editCodeInitial && (
+                <AddCodeToCatalogModal
+                  code={editCodeInitial.code}
+                  initialDescription={editCodeInitial.description}
+                  initialSeverity={editCodeInitial.severity}
+                  initialSolutionUrl={editCodeInitial.solutionUrl}
+                  title="Editar código en el catálogo"
+                  submitLabel="Guardar"
+                  onSave={(body) => handleSaveCodeToCatalog(body, true)}
+                  onClose={() => !savingCode && setEditCodeInitial(null)}
+                  saving={savingCode}
+                />
+              )}
 
-          {codesNew.length === 0 && (
-          <>
-          {/* Subheader: Panel de errores | filtros de fecha */}
-          <DateFilterBar
-            logFileName={logFileName}
-            activeFilter={activeFilter}
-            selectedDate={selectedDate}
-            selectedWeekRange={selectedWeekRange}
-            dateRange={dateRange}
-            weekPickerOpen={weekPickerOpen}
-            setWeekPickerOpen={setWeekPickerOpen}
-            weekPickerRef={weekPickerRef}
-            dayPickerOpen={dayPickerOpen}
-            setDayPickerOpen={setDayPickerOpen}
-            dayPickerRef={dayPickerRef}
-            setSelectedDate={setSelectedDate}
-            setSelectedWeekRange={setSelectedWeekRange}
-          />
+              {codesNew.length === 0 && (
+                <>
+                  {/* Subheader: Panel de errores | filtros de fecha */}
+                  <DateFilterBar
+                    logFileName={logFileName}
+                    activeFilter={activeFilter}
+                    selectedDate={selectedDate}
+                    selectedWeekRange={selectedWeekRange}
+                    dateRange={dateRange}
+                    weekPickerOpen={weekPickerOpen}
+                    setWeekPickerOpen={setWeekPickerOpen}
+                    weekPickerRef={weekPickerRef}
+                    dayPickerOpen={dayPickerOpen}
+                    setDayPickerOpen={setDayPickerOpen}
+                    dayPickerRef={dayPickerRef}
+                    setSelectedDate={setSelectedDate}
+                    setSelectedWeekRange={setSelectedWeekRange}
+                  />
 
-          {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
-          <section ref={kpisRef}>
-            <KPICards
-              filteredIncidents={filteredIncidents}
-              filteredEvents={filteredEvents}
-              lastErrorEvent={lastErrorEvent}
-              lastErrorLabel={lastErrorLabel}
-            />
-          </section>
+                  {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
+                  <section ref={kpisRef}>
+                    <KPICards
+                      filteredIncidents={filteredIncidents}
+                      filteredEvents={filteredEvents}
+                      lastErrorEvent={lastErrorEvent}
+                      lastErrorLabel={lastErrorLabel}
+                    />
+                  </section>
 
-          {/* Diagnóstico automático basado en reglas */}
-          <div ref={diagnosticRef}>
-            <DiagnosticPanel events={filteredEvents} />
-          </div>
+                  {/* Diagnóstico automático basado en reglas */}
+                  <div ref={diagnosticRef}>
+                    <DiagnosticPanel events={filteredEvents} />
+                  </div>
 
-          {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
-          <div className="dashboard__charts-row">
-            <IncidentsChart
-              volumeData={volumeData}
-              activeFilter={activeFilter}
-              visibleSeverities={visibleSeverities}
-              onSeverityToggle={(sev) => setVisibleSeverities((prev) => {
-                const next = new Set(prev)
-                if (next.has(sev)) next.delete(sev); else next.add(sev)
-                return next
-              })}
-            />
-            <div ref={barChartRef}>
-              <TopErrorsChart topCodes={topCodes} />
-            </div>
-          </div>
+                  {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
+                  <div className="dashboard__charts-row">
+                    <IncidentsChart
+                      volumeData={volumeData}
+                      activeFilter={activeFilter}
+                      visibleSeverities={visibleSeverities}
+                      onSeverityToggle={(sev) =>
+                        setVisibleSeverities((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(sev)) next.delete(sev)
+                          else next.add(sev)
+                          return next
+                        })
+                      }
+                    />
+                    <div ref={barChartRef}>
+                      <TopErrorsChart topCodes={topCodes} />
+                    </div>
+                  </div>
 
-          {/* Fila 3 — Tabla de incidencias */}
-          <section ref={incidentsTableRef}>
-            <IncidentsTable
-              incidentRows={incidentRows}
-              severityFilter={incidentsSeverityFilter}
-              onSeverityFilterChange={setIncidentsSeverityFilter}
-              searchFilter={incidentsSearchFilter}
-              onSearchFilterChange={setIncidentsSearchFilter}
-              sort={incidentsSort}
-              onSortChange={(col) => setIncidentsSort((s) => ({ column: col, dir: s.column === col && s.dir === 'asc' ? 'desc' : 'asc' }))}
-              onEditCode={(code, classification, severity, solutionUrl) => setEditCodeInitial({ code, description: classification, severity, solutionUrl })}
-              onViewSolution={(content, url) => setSolutionModal({ content, url })}
-            />
-          </section>
+                  {/* Fila 3 — Tabla de incidencias */}
+                  <section ref={incidentsTableRef}>
+                    <IncidentsTable
+                      incidentRows={incidentRows}
+                      severityFilter={incidentsSeverityFilter}
+                      onSeverityFilterChange={setIncidentsSeverityFilter}
+                      searchFilter={incidentsSearchFilter}
+                      onSearchFilterChange={setIncidentsSearchFilter}
+                      sort={incidentsSort}
+                      onSortChange={(col) =>
+                        setIncidentsSort((s) => ({
+                          column: col,
+                          dir: s.column === col && s.dir === 'asc' ? 'desc' : 'asc',
+                        }))
+                      }
+                      onEditCode={(code, classification, severity, solutionUrl) =>
+                        setEditCodeInitial({
+                          code,
+                          description: classification,
+                          severity,
+                          solutionUrl,
+                        })
+                      }
+                      onViewSolution={(content, url) => setSolutionModal({ content, url })}
+                    />
+                  </section>
 
-          {/* Fila 4 — Tabla de eventos recientes (colapsable) */}
-          <EventsTable
-            tableRows={tableRows}
-            isCollapsed={eventsTableCollapsed}
-            onToggleCollapse={() => setEventsTableCollapsed((c) => !c)}
-            severityFilter={eventsSeverityFilter}
-            onSeverityFilterChange={setEventsSeverityFilter}
-            searchFilter={eventsSearchFilter}
-            onSearchFilterChange={setEventsSearchFilter}
-            sort={eventsSort}
-            onSortChange={(col) => setEventsSort((s) => ({ column: col, dir: s.column === col && s.dir === 'asc' ? 'desc' : 'asc' }))}
-            onViewSolution={(content, url) => setSolutionModal({ content, url })}
-          />
+                  {/* Fila 4 — Tabla de eventos recientes (colapsable) */}
+                  <EventsTable
+                    tableRows={tableRows}
+                    isCollapsed={eventsTableCollapsed}
+                    onToggleCollapse={() => setEventsTableCollapsed((c) => !c)}
+                    severityFilter={eventsSeverityFilter}
+                    onSeverityFilterChange={setEventsSeverityFilter}
+                    searchFilter={eventsSearchFilter}
+                    onSearchFilterChange={setEventsSearchFilter}
+                    sort={eventsSort}
+                    onSortChange={(col) =>
+                      setEventsSort((s) => ({
+                        column: col,
+                        dir: s.column === col && s.dir === 'asc' ? 'desc' : 'asc',
+                      }))
+                    }
+                    onViewSolution={(content, url) => setSolutionModal({ content, url })}
+                  />
 
-          {sdsIncident && (
-            <SDSIncidentPanel
-              sdsIncident={sdsIncident}
-              incidentRows={incidentRows.map((r) => ({ code: r.code, classification: r.classification || r.code }))}
-              incidentsFull={result?.incidents?.map((inc) => ({ code: inc.code, end_time: inc.end_time, occurrences: inc.occurrences })) ?? []}
-            />
-          )}
-          </>
-          )}
-          </>
+                  {sdsIncident && (
+                    <SDSIncidentPanel
+                      sdsIncident={sdsIncident}
+                      incidentRows={incidentRows.map((r) => ({
+                        code: r.code,
+                        classification: r.classification || r.code,
+                      }))}
+                      incidentsFull={
+                        result?.incidents?.map((inc) => ({
+                          code: inc.code,
+                          end_time: inc.end_time,
+                          occurrences: inc.occurrences,
+                        })) ?? []
+                      }
+                    />
+                  )}
+                </>
+              )}
+            </>
           )}
         </>
       ) : null}
@@ -861,7 +1014,7 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
             setDeletingId(deleteConfirm.id)
             try {
               await deleteSavedAnalysis(deleteConfirm.id)
-              setSavedList(prev => (prev ? prev.filter(x => x.id !== deleteConfirm.id) : []))
+              setSavedList((prev) => (prev ? prev.filter((x) => x.id !== deleteConfirm.id) : []))
               if (selectedSavedId === deleteConfirm.id) {
                 setViewMode('saved-list')
                 setSavedDetail(null)
@@ -889,11 +1042,27 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
       )}
 
       {compareModalOpen && selectedSavedId && (
-        <div className="log-modal-overlay" onClick={() => !comparing && setCompareModalOpen(false)} role="dialog" aria-modal="true" aria-labelledby="compare-modal-title">
+        <div
+          className="log-modal-overlay"
+          onClick={() => !comparing && setCompareModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="compare-modal-title"
+        >
           <div className="log-modal" onClick={(e) => e.stopPropagation()}>
             <div className="log-modal__header">
-              <h2 id="compare-modal-title" className="log-modal__title">Comparar con log nuevo</h2>
-              <button type="button" className="log-modal__close" onClick={() => !comparing && setCompareModalOpen(false)} aria-label="Cerrar" disabled={comparing}>×</button>
+              <h2 id="compare-modal-title" className="log-modal__title">
+                Comparar con log nuevo
+              </h2>
+              <button
+                type="button"
+                className="log-modal__close"
+                onClick={() => !comparing && setCompareModalOpen(false)}
+                aria-label="Cerrar"
+                disabled={comparing}
+              >
+                ×
+              </button>
             </div>
             <div className="log-modal__file-row">
               <input
@@ -951,7 +1120,12 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
               >
                 {comparing ? 'Comparando…' : 'Comparar'}
               </button>
-              <button type="button" className="log-modal__btn-secondary" onClick={() => !comparing && setCompareModalOpen(false)} disabled={comparing}>
+              <button
+                type="button"
+                className="log-modal__btn-secondary"
+                onClick={() => !comparing && setCompareModalOpen(false)}
+                disabled={comparing}
+              >
                 Cerrar
               </button>
             </div>

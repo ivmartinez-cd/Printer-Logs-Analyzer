@@ -15,7 +15,10 @@ export function useExportPdf(logFileName: string | null) {
     try {
       const { jsPDF } = await import('jspdf')
       const html2canvasModule = await import('html2canvas')
-      const html2canvas = html2canvasModule.default as (el: HTMLElement, opts?: object) => Promise<HTMLCanvasElement>
+      const html2canvas = html2canvasModule.default as (
+        el: HTMLElement,
+        opts?: object
+      ) => Promise<HTMLCanvasElement>
 
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const pageWidth = pdf.internal.pageSize.getWidth()

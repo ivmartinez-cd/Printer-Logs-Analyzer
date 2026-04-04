@@ -1,6 +1,12 @@
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from 'recharts'
 import { formatWeekRange, type DateFilter } from '../hooks/useDateFilter'
 
@@ -18,25 +24,41 @@ interface IncidentsChartProps {
   onSeverityToggle: (severity: string) => void
 }
 
-export function IncidentsChart({ volumeData, activeFilter, visibleSeverities, onSeverityToggle }: IncidentsChartProps) {
-  const title = activeFilter === null
-    ? 'Volumen de incidencias (registro completo)'
-    : typeof activeFilter === 'string'
-      ? `Volumen de incidencias (${new Date(activeFilter + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
-      : `Volumen de incidencias (${formatWeekRange(activeFilter)})`
+export function IncidentsChart({
+  volumeData,
+  activeFilter,
+  visibleSeverities,
+  onSeverityToggle,
+}: IncidentsChartProps) {
+  const title =
+    activeFilter === null
+      ? 'Volumen de incidencias (registro completo)'
+      : typeof activeFilter === 'string'
+        ? `Volumen de incidencias (${new Date(activeFilter + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
+        : `Volumen de incidencias (${formatWeekRange(activeFilter)})`
 
   return (
     <section className="section dashboard__chart-left">
       <h2 className="section__title">{title}</h2>
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        {([['ERROR', '#ef4444'], ['WARNING', '#f59e0b'], ['INFO', '#3b82f6']] as const).map(([sev, color]) => {
+        {(
+          [
+            ['ERROR', '#ef4444'],
+            ['WARNING', '#f59e0b'],
+            ['INFO', '#3b82f6'],
+          ] as const
+        ).map(([sev, color]) => {
           const active = visibleSeverities.has(sev)
           return (
             <button
               key={sev}
               onClick={() => onSeverityToggle(sev)}
               style={{
-                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 4, cursor: 'pointer',
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: 4,
+                cursor: 'pointer',
                 border: `1px solid ${color}`,
                 background: active ? color : 'transparent',
                 color: active ? '#fff' : color,
@@ -68,15 +90,49 @@ export function IncidentsChart({ volumeData, activeFilter, visibleSeverities, on
               />
               <YAxis stroke="#9aa3b2" tick={{ fontSize: 11 }} />
               <Tooltip
-                contentStyle={{ background: '#151821', border: '1px solid #232734', borderRadius: 6 }}
+                contentStyle={{
+                  background: '#151821',
+                  border: '1px solid #232734',
+                  borderRadius: 6,
+                }}
                 labelStyle={{ color: '#e5e7eb' }}
                 itemStyle={{ color: '#e5e7eb' }}
                 labelFormatter={(v) => new Date(v).toLocaleString()}
               />
               <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
-              {visibleSeverities.has('ERROR') && <Area type="monotone" dataKey="ERROR" stackId="a" stroke="#ef4444" strokeWidth={2} fill="#ef4444" fillOpacity={0.7} />}
-              {visibleSeverities.has('WARNING') && <Area type="monotone" dataKey="WARNING" stackId="a" stroke="#f59e0b" strokeWidth={2} fill="#f59e0b" fillOpacity={0.7} />}
-              {visibleSeverities.has('INFO') && <Area type="monotone" dataKey="INFO" stackId="a" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.7} />}
+              {visibleSeverities.has('ERROR') && (
+                <Area
+                  type="monotone"
+                  dataKey="ERROR"
+                  stackId="a"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  fill="#ef4444"
+                  fillOpacity={0.7}
+                />
+              )}
+              {visibleSeverities.has('WARNING') && (
+                <Area
+                  type="monotone"
+                  dataKey="WARNING"
+                  stackId="a"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  fill="#f59e0b"
+                  fillOpacity={0.7}
+                />
+              )}
+              {visibleSeverities.has('INFO') && (
+                <Area
+                  type="monotone"
+                  dataKey="INFO"
+                  stackId="a"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  fill="#3b82f6"
+                  fillOpacity={0.7}
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
         ) : (

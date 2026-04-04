@@ -34,7 +34,9 @@ export function EventsTable({
         onClick={onToggleCollapse}
       >
         <span>Eventos del período</span>
-        <span className="section__toggle-icon" aria-hidden>{isCollapsed ? '▶' : '▼'}</span>
+        <span className="section__toggle-icon" aria-hidden>
+          {isCollapsed ? '▶' : '▼'}
+        </span>
       </button>
       {!isCollapsed && (
         <>
@@ -79,7 +81,12 @@ export function EventsTable({
                   ].map(({ key, label }) => {
                     const sortState = sort.column === key ? sort.dir : null
                     return (
-                      <th key={key} {...(sortState ? { 'aria-sort': sortState === 'asc' ? 'ascending' : 'descending' } : {})}>
+                      <th
+                        key={key}
+                        {...(sortState
+                          ? { 'aria-sort': sortState === 'asc' ? 'ascending' : 'descending' }
+                          : {})}
+                      >
                         <button
                           type="button"
                           className="dashboard-table__sort-header"
@@ -112,12 +119,20 @@ export function EventsTable({
                         <button
                           type="button"
                           className="dashboard-table__solution-link"
-                          onClick={() => onViewSolution(evt.code_solution_content!, evt.code_solution_url)}
+                          onClick={() =>
+                            onViewSolution(evt.code_solution_content!, evt.code_solution_url)
+                          }
                         >
                           Ver solución
                         </button>
                       ) : evt.code_solution_url?.trim() ? (
-                        <a href={evt.code_solution_url.trim()} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link" title="Este link puede haber vencido">
+                        <a
+                          href={evt.code_solution_url.trim()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="dashboard-table__solution-link"
+                          title="Este link puede haber vencido"
+                        >
                           Ver solución ⚠
                         </a>
                       ) : (

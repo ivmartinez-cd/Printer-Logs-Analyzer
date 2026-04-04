@@ -7,9 +7,16 @@ interface KPICardsProps {
   lastErrorLabel: string | null
 }
 
-export function KPICards({ filteredIncidents, filteredEvents, lastErrorEvent, lastErrorLabel }: KPICardsProps) {
+export function KPICards({
+  filteredIncidents,
+  filteredEvents,
+  lastErrorEvent,
+  lastErrorLabel,
+}: KPICardsProps) {
   const errorCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length
-  const warningCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length
+  const warningCount = filteredIncidents.filter(
+    (i) => i.severity.toUpperCase() === 'WARNING'
+  ).length
   const infoCount = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'INFO').length
 
   return (
@@ -34,14 +41,20 @@ export function KPICards({ filteredIncidents, filteredEvents, lastErrorEvent, la
         <div className="kpi-card__label">Último error crítico</div>
         {lastErrorEvent ? (
           <>
-            <div className="kpi-card__value kpi-card__value--error" style={{ fontSize: '1rem', fontWeight: 700 }}>
+            <div
+              className="kpi-card__value kpi-card__value--error"
+              style={{ fontSize: '1rem', fontWeight: 700 }}
+            >
               {lastErrorEvent.code}
             </div>
             <div className="kpi-card__sub">{lastErrorLabel} · último error registrado</div>
           </>
         ) : (
           <>
-            <div className="kpi-card__value" style={{ fontSize: '1rem', color: 'var(--color-success, #22c55e)' }}>
+            <div
+              className="kpi-card__value"
+              style={{ fontSize: '1rem', color: 'var(--color-success, #22c55e)' }}
+            >
               Sin errores
             </div>
             <div className="kpi-card__sub">último error registrado</div>

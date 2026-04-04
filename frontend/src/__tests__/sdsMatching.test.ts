@@ -41,7 +41,10 @@ function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
   if (ctx) codes.push(ctx)
   const moreInfo = sds.more_info?.trim()
   if (moreInfo) {
-    const parts = moreInfo.split(/\s+or\s+/i).map((s) => s.trim()).filter(Boolean)
+    const parts = moreInfo
+      .split(/\s+or\s+/i)
+      .map((s) => s.trim())
+      .filter(Boolean)
     for (const part of parts) {
       if (!codes.includes(part)) codes.push(part)
     }
@@ -112,7 +115,7 @@ describe('getSdsCodesForMatch', () => {
       more_info: '60.00.02 or 60.01.02',
     }
     const codes = getSdsCodesForMatch(sds)
-    expect(codes.filter(c => c === '60.00.02')).toHaveLength(1)
+    expect(codes.filter((c) => c === '60.00.02')).toHaveLength(1)
   })
 
   it('returns empty array when no event_context and no more_info', () => {

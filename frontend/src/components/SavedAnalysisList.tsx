@@ -25,8 +25,7 @@ export function SavedAnalysisList({
     const q = savedListSearch.trim().toLowerCase()
     if (!q) return true
     return (
-      s.name.toLowerCase().includes(q) ||
-      (s.equipment_identifier ?? '').toLowerCase().includes(q)
+      s.name.toLowerCase().includes(q) || (s.equipment_identifier ?? '').toLowerCase().includes(q)
     )
   })
 
@@ -48,11 +47,7 @@ export function SavedAnalysisList({
 
   return (
     <div className="dashboard__saved-section">
-      <button
-        type="button"
-        className="dashboard__btn dashboard__btn--secondary"
-        onClick={onBack}
-      >
+      <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={onBack}>
         ← Volver al dashboard
       </button>
       <h2 className="dashboard__subheader-title">Incidentes guardados</h2>

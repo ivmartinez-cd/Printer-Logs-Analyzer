@@ -16,7 +16,9 @@ interface UseAnalysisOptions {
   setLogModalOpen: (open: boolean) => void
   setSdsPreModalOpen: (open: boolean) => void
   setAddCodeModalCode: (code: string | null) => void
-  setEditCodeInitial: (v: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
+  setEditCodeInitial: (
+    v: { code: string; description: string; severity: string; solutionUrl: string } | null
+  ) => void
   setSaveIncidentModalOpen: (open: boolean) => void
 }
 
@@ -64,7 +66,9 @@ export function useAnalysis({
       setLogModalOpen(false)
       setSdsPreModalOpen(true)
       if (newCodes.length > 0) {
-        toast.showWarning(`Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`)
+        toast.showWarning(
+          `Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`
+        )
       } else {
         toast.showSuccess('Análisis completado')
       }
@@ -98,13 +102,22 @@ export function useAnalysis({
           ...prev,
           events: prev.events.map((evt) =>
             evt.code === body.code
-              ? { ...evt, code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url, code_solution_content: res.solution_content ?? evt.code_solution_content }
+              ? {
+                  ...evt,
+                  code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url,
+                  code_solution_content: res.solution_content ?? evt.code_solution_content,
+                }
               : evt
           ),
           incidents: prev.incidents.map((inc) => {
             const updatedEvents = inc.events.map((evt) =>
               evt.code === body.code
-                ? { ...evt, code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url, code_solution_content: res.solution_content ?? evt.code_solution_content }
+                ? {
+                    ...evt,
+                    code_solution_url:
+                      res.solution_url ?? body.solution_url ?? evt.code_solution_url,
+                    code_solution_content: res.solution_content ?? evt.code_solution_content,
+                  }
                 : evt
             )
             if (inc.code !== body.code) return { ...inc, events: updatedEvents }
@@ -117,7 +130,9 @@ export function useAnalysis({
           }),
         }
       })
-      const baseMsg = isEdit ? `Código ${body.code} actualizado` : `Código ${body.code} agregado al catálogo`
+      const baseMsg = isEdit
+        ? `Código ${body.code} actualizado`
+        : `Código ${body.code} agregado al catálogo`
       if (res.warning) {
         toast.showWarning(`${baseMsg}. ${res.warning}`)
       } else if (body.solution_url && res.solution_content_saved) {
@@ -171,11 +186,19 @@ export function useAnalysis({
   }
 
   return {
-    loading, error, setError,
-    result, setResult,
-    pendingResult, codesNew, setCodesNew,
-    savingCode, savingIncident,
-    handleAnalyze, commitPendingResult,
-    handleSaveCodeToCatalog, handleSaveIncident,
+    loading,
+    error,
+    setError,
+    result,
+    setResult,
+    pendingResult,
+    codesNew,
+    setCodesNew,
+    savingCode,
+    savingIncident,
+    handleAnalyze,
+    commitPendingResult,
+    handleSaveCodeToCatalog,
+    handleSaveIncident,
   }
 }

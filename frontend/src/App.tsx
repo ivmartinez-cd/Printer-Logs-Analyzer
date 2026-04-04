@@ -21,17 +21,21 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          gap: '16px',
-          fontFamily: 'sans-serif',
-          color: '#374151',
-        }}>
-          <p style={{ fontSize: '1.125rem', margin: 0 }}>Algo salió mal. Por favor recargá la página.</p>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
+            gap: '16px',
+            fontFamily: 'sans-serif',
+            color: '#374151',
+          }}
+        >
+          <p style={{ fontSize: '1.125rem', margin: 0 }}>
+            Algo salió mal. Por favor recargá la página.
+          </p>
           <button
             onClick={() => window.location.reload()}
             style={{

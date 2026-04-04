@@ -98,7 +98,12 @@ export function IncidentsTable({
               ].map(({ key, label }) => {
                 const sortState = sort.column === key ? sort.dir : null
                 return (
-                  <th key={key} {...(sortState ? { 'aria-sort': sortState === 'asc' ? 'ascending' : 'descending' } : {})}>
+                  <th
+                    key={key}
+                    {...(sortState
+                      ? { 'aria-sort': sortState === 'asc' ? 'ascending' : 'descending' }
+                      : {})}
+                  >
                     <button
                       type="button"
                       className="dashboard-table__sort-header"
@@ -137,13 +142,23 @@ export function IncidentsTable({
                       <button
                         type="button"
                         className="dashboard-table__code-link"
-                        onClick={() => onEditCode(inc.code, inc.classification || '', inc.severity || 'INFO', inc.sds_link || '')}
+                        onClick={() =>
+                          onEditCode(
+                            inc.code,
+                            inc.classification || '',
+                            inc.severity || 'INFO',
+                            inc.sds_link || ''
+                          )
+                        }
                         title="Editar en el catálogo"
                       >
                         {inc.code}
                       </button>
                     </td>
-                    <td className="dashboard-table__cell-classification" title={inc.classification || inc.code}>
+                    <td
+                      className="dashboard-table__cell-classification"
+                      title={inc.classification || inc.code}
+                    >
                       {inc.classification || inc.code}
                     </td>
                     <td>
@@ -161,12 +176,20 @@ export function IncidentsTable({
                             <button
                               type="button"
                               className="dashboard-table__solution-link"
-                              onClick={() => onViewSolution(inc.sds_solution_content!, inc.sds_link)}
+                              onClick={() =>
+                                onViewSolution(inc.sds_solution_content!, inc.sds_link)
+                              }
                             >
                               Ver solución
                             </button>
                           ) : inc.sds_link ? (
-                            <a href={inc.sds_link} target="_blank" rel="noopener noreferrer" className="dashboard-table__solution-link" title="Este link puede haber vencido">
+                            <a
+                              href={inc.sds_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="dashboard-table__solution-link"
+                              title="Este link puede haber vencido"
+                            >
                               Ver solución ⚠
                             </a>
                           ) : (
@@ -176,7 +199,14 @@ export function IncidentsTable({
                         <button
                           type="button"
                           className="dashboard__btn dashboard__btn--secondary dashboard__btn--edit"
-                          onClick={() => onEditCode(inc.code, inc.classification || '', inc.severity || 'INFO', inc.sds_link || '')}
+                          onClick={() =>
+                            onEditCode(
+                              inc.code,
+                              inc.classification || '',
+                              inc.severity || 'INFO',
+                              inc.sds_link || ''
+                            )
+                          }
                           title="Editar código en el catálogo"
                         >
                           Editar
@@ -189,51 +219,73 @@ export function IncidentsTable({
                       <th className="dashboard-table__cell-expand" scope="col" />
                       <th scope="col">Fecha y hora</th>
                       <th scope="col">Contador</th>
-                      <th scope="col" title="Diferencia con la ocurrencia anterior">Δ</th>
+                      <th scope="col" title="Diferencia con la ocurrencia anterior">
+                        Δ
+                      </th>
                       <th scope="col">Firmware</th>
-                      <th scope="col" colSpan={3}>Mensaje / Ayuda</th>
+                      <th scope="col" colSpan={3}>
+                        Mensaje / Ayuda
+                      </th>
                     </tr>
                   )}
-                  {isExpanded && inc.eventsInWindow.map((evt, idx) => {
-                    const prevCounter = idx > 0 ? inc.eventsInWindow[idx - 1].counter : null
-                    const delta = prevCounter !== null ? evt.counter - prevCounter : null
-                    const msg = evt.help_reference ?? evt.code_description ?? '—'
-                    const msgKey = `${inc.id}-${idx}-msg`
-                    return (
-                      <tr key={`${inc.id}-${idx}`} className="dashboard-table__row-detail">
-                        <td className="dashboard-table__cell-expand" />
-                        <td className="dashboard-table__cell-detail-label">{formatDateTime(evt.timestamp)}</td>
-                        <td className="dashboard-table__cell-detail-num">{evt.counter}</td>
-                        <td className="dashboard-table__cell-detail-delta" title="Diferencia de contador desde la ocurrencia anterior">
-                          {delta !== null ? (delta >= 0 ? `+${delta}` : delta) : '—'}
-                        </td>
-                        <td>{evt.firmware ?? '—'}</td>
-                        <td colSpan={3} className="dashboard-table__cell-detail-msg">
-                          {msg.length > 80 ? (
-                            expandedMsgs.has(msgKey) ? (
-                              <span>
-                                {msg}{' '}
-                                <button
-                                  type="button"
-                                  className="dashboard-table__msg-toggle"
-                                  onClick={() => setExpandedMsgs(s => { const n = new Set(s); n.delete(msgKey); return n })}
-                                >ver menos</button>
-                              </span>
+                  {isExpanded &&
+                    inc.eventsInWindow.map((evt, idx) => {
+                      const prevCounter = idx > 0 ? inc.eventsInWindow[idx - 1].counter : null
+                      const delta = prevCounter !== null ? evt.counter - prevCounter : null
+                      const msg = evt.help_reference ?? evt.code_description ?? '—'
+                      const msgKey = `${inc.id}-${idx}-msg`
+                      return (
+                        <tr key={`${inc.id}-${idx}`} className="dashboard-table__row-detail">
+                          <td className="dashboard-table__cell-expand" />
+                          <td className="dashboard-table__cell-detail-label">
+                            {formatDateTime(evt.timestamp)}
+                          </td>
+                          <td className="dashboard-table__cell-detail-num">{evt.counter}</td>
+                          <td
+                            className="dashboard-table__cell-detail-delta"
+                            title="Diferencia de contador desde la ocurrencia anterior"
+                          >
+                            {delta !== null ? (delta >= 0 ? `+${delta}` : delta) : '—'}
+                          </td>
+                          <td>{evt.firmware ?? '—'}</td>
+                          <td colSpan={3} className="dashboard-table__cell-detail-msg">
+                            {msg.length > 80 ? (
+                              expandedMsgs.has(msgKey) ? (
+                                <span>
+                                  {msg}{' '}
+                                  <button
+                                    type="button"
+                                    className="dashboard-table__msg-toggle"
+                                    onClick={() =>
+                                      setExpandedMsgs((s) => {
+                                        const n = new Set(s)
+                                        n.delete(msgKey)
+                                        return n
+                                      })
+                                    }
+                                  >
+                                    ver menos
+                                  </button>
+                                </span>
+                              ) : (
+                                <span title={msg}>
+                                  {msg.slice(0, 80)}…{' '}
+                                  <button
+                                    type="button"
+                                    className="dashboard-table__msg-toggle"
+                                    onClick={() => setExpandedMsgs((s) => new Set(s).add(msgKey))}
+                                  >
+                                    ver más
+                                  </button>
+                                </span>
+                              )
                             ) : (
-                              <span title={msg}>
-                                {msg.slice(0, 80)}…{' '}
-                                <button
-                                  type="button"
-                                  className="dashboard-table__msg-toggle"
-                                  onClick={() => setExpandedMsgs(s => new Set(s).add(msgKey))}
-                                >ver más</button>
-                              </span>
-                            )
-                          ) : msg}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                              msg
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
                 </React.Fragment>
               )
             })}

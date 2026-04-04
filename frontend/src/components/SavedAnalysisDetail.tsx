@@ -21,11 +21,7 @@ export function SavedAnalysisDetail({
   if (!savedDetail) {
     return (
       <div className="dashboard__saved-section">
-        <button
-          type="button"
-          className="dashboard__btn dashboard__btn--secondary"
-          onClick={onBack}
-        >
+        <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={onBack}>
           ← Volver a la lista
         </button>
         <p className="dashboard__muted dashboard__muted--top">Cargando…</p>
@@ -35,11 +31,7 @@ export function SavedAnalysisDetail({
 
   return (
     <div className="dashboard__saved-section">
-      <button
-        type="button"
-        className="dashboard__btn dashboard__btn--secondary"
-        onClick={onBack}
-      >
+      <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={onBack}>
         ← Volver a la lista
       </button>
       <h2 className="dashboard__subheader-title">{savedDetail.name}</h2>
@@ -108,8 +100,7 @@ export function SavedAnalysisDetail({
             </div>
             {compareResult.diff.codigos_nuevos.length > 0 && (
               <div>
-                <strong>Códigos nuevos:</strong>{' '}
-                {compareResult.diff.codigos_nuevos.join(', ')}
+                <strong>Códigos nuevos:</strong> {compareResult.diff.codigos_nuevos.join(', ')}
               </div>
             )}
             {compareResult.diff.codigos_desaparecidos.length > 0 && (

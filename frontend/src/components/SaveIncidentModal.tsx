@@ -6,11 +6,7 @@ export interface SaveIncidentModalProps {
   saving: boolean
 }
 
-export function SaveIncidentModal({
-  onSave,
-  onClose,
-  saving,
-}: SaveIncidentModalProps) {
+export function SaveIncidentModal({ onSave, onClose, saving }: SaveIncidentModalProps) {
   const [name, setName] = useState('')
   const [equipment, setEquipment] = useState('')
 

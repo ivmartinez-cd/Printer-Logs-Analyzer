@@ -32,13 +32,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const addToast = useCallback((type: ToastType, message: string) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-    const item: ToastItem = { id, type, message }
-    setToasts((prev) => [...prev, item])
-    const timeoutId = setTimeout(() => removeToast(id), AUTO_DISMISS_MS)
-    timeoutRefs.current[id] = timeoutId
-  }, [removeToast])
+  const addToast = useCallback(
+    (type: ToastType, message: string) => {
+      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      const item: ToastItem = { id, type, message }
+      setToasts((prev) => [...prev, item])
+      const timeoutId = setTimeout(() => removeToast(id), AUTO_DISMISS_MS)
+      timeoutRefs.current[id] = timeoutId
+    },
+    [removeToast]
+  )
 
   const showSuccess = useCallback((message: string) => addToast('success', message), [addToast])
   const showWarning = useCallback((message: string) => addToast('warning', message), [addToast])

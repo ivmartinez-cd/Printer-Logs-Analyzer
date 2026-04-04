@@ -1,4 +1,3 @@
-
 export interface SolutionContentModalProps {
   content: string
   url?: string | null
@@ -14,20 +13,12 @@ export function SolutionContentModal({ content, url, onClose }: SolutionContentM
       aria-modal="true"
       aria-labelledby="solution-modal-title"
     >
-      <div
-        className="log-modal solution-content-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="log-modal solution-content-modal" onClick={(e) => e.stopPropagation()}>
         <div className="log-modal__header">
           <h2 id="solution-modal-title" className="log-modal__title">
             Contenido de solución guardado
           </h2>
-          <button
-            type="button"
-            className="log-modal__close"
-            onClick={onClose}
-            aria-label="Cerrar"
-          >
+          <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
             ×
           </button>
         </div>
@@ -43,7 +34,9 @@ export function SolutionContentModal({ content, url, onClose }: SolutionContentM
             >
               {url}
             </a>{' '}
-            <span className="solution-content-modal__url-warning">(el link puede haber vencido)</span>
+            <span className="solution-content-modal__url-warning">
+              (el link puede haber vencido)
+            </span>
           </p>
         )}
         <pre className="solution-content-modal__body">{content}</pre>

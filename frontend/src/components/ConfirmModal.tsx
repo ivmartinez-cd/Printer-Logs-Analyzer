@@ -1,4 +1,3 @@
-
 export interface ConfirmModalProps {
   /** Título del modal */
   title: string

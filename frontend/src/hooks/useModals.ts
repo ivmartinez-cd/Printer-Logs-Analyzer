@@ -16,18 +16,31 @@ export function useModals() {
   const [saveIncidentModalOpen, setSaveIncidentModalOpen] = useState(false)
   const [compareModalOpen, setCompareModalOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
-  const [solutionModal, setSolutionModal] = useState<{ content: string; url?: string | null } | null>(null)
+  const [solutionModal, setSolutionModal] = useState<{
+    content: string
+    url?: string | null
+  } | null>(null)
 
   return {
-    logModalOpen, setLogModalOpen,
-    sdsPreModalOpen, setSdsPreModalOpen,
-    sdsModalOpen, setSdsModalOpen,
-    sdsIncident, setSdsIncident,
-    addCodeModalCode, setAddCodeModalCode,
-    editCodeInitial, setEditCodeInitial,
-    saveIncidentModalOpen, setSaveIncidentModalOpen,
-    compareModalOpen, setCompareModalOpen,
-    deleteConfirm, setDeleteConfirm,
-    solutionModal, setSolutionModal,
+    logModalOpen,
+    setLogModalOpen,
+    sdsPreModalOpen,
+    setSdsPreModalOpen,
+    sdsModalOpen,
+    setSdsModalOpen,
+    sdsIncident,
+    setSdsIncident,
+    addCodeModalCode,
+    setAddCodeModalCode,
+    editCodeInitial,
+    setEditCodeInitial,
+    saveIncidentModalOpen,
+    setSaveIncidentModalOpen,
+    compareModalOpen,
+    setCompareModalOpen,
+    deleteConfirm,
+    setDeleteConfirm,
+    solutionModal,
+    setSolutionModal,
   }
 }
