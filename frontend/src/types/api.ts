@@ -101,7 +101,7 @@ export interface CompareDiff {
     delta: number
   }>
   diferencia_dias: number
-  tendencia: 'mejoró' | 'igual' | 'peor'
+  tendencia: 'mejoro' | 'estable' | 'empeoro'
 }
 
 export interface CompareResponse {
