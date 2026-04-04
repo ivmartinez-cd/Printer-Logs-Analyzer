@@ -1,5 +1,6 @@
 import { formatDateTime } from '../hooks/useDateFilter'
 import type { SavedAnalysisSummary } from '../types/api'
+import { EquipmentTimeline } from './EquipmentTimeline'
 
 interface SavedAnalysisListProps {
   savedList: SavedAnalysisSummary[] | null
@@ -28,6 +29,22 @@ export function SavedAnalysisList({
       (s.equipment_identifier ?? '').toLowerCase().includes(q)
     )
   })
+
+  // Groups with 3+ snapshots for the same non-empty equipment_identifier
+  const timelineGroups: { equipmentId: string; snapshots: SavedAnalysisSummary[] }[] = []
+  if (savedList && savedList.length >= 3) {
+    const byEquipment = new Map<string, SavedAnalysisSummary[]>()
+    for (const s of savedList) {
+      const key = (s.equipment_identifier ?? '').trim()
+      if (!key) continue
+      const group = byEquipment.get(key) ?? []
+      group.push(s)
+      byEquipment.set(key, group)
+    }
+    for (const [equipmentId, snaps] of byEquipment) {
+      if (snaps.length >= 3) timelineGroups.push({ equipmentId, snapshots: snaps })
+    }
+  }
 
   return (
     <div className="dashboard__saved-section">
@@ -97,6 +114,14 @@ export function SavedAnalysisList({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {timelineGroups.length > 0 && (
+        <div className="equipment-timeline__section">
+          <h3 className="equipment-timeline__section-title">Evolución por equipo</h3>
+          {timelineGroups.map(({ equipmentId, snapshots }) => (
+            <EquipmentTimeline key={equipmentId} equipmentId={equipmentId} snapshots={snapshots} />
+          ))}
         </div>
       )}
     </div>
