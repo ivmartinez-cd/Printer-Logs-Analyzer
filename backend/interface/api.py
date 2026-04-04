@@ -74,6 +74,7 @@ def _validate_ssrf_url(url: str) -> None:
 async def _fetch_solution_content(url: str) -> str | None:
     """Fetch the text content of a solution page. Returns None on any error."""
     try:
+        import bleach
         import httpx
         from bs4 import BeautifulSoup
 
@@ -93,7 +94,8 @@ async def _fetch_solution_content(url: str) -> str | None:
         text = soup.get_text(separator="\n")
         lines = [line.strip() for line in text.splitlines()]
         cleaned = "\n".join(line for line in lines if line)
-        return cleaned[:50_000]  # cap at 50k chars
+        sanitized = bleach.clean(cleaned, tags=[], attributes={}, strip=True)
+        return sanitized[:50_000]  # cap at 50k chars
     except Exception as exc:
         logging.warning("Could not fetch solution content from %s: %s", url, exc)
         return None

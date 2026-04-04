@@ -68,7 +68,7 @@ Printer-Logs-Analyzer/
 │   │       └── saved_analysis_repository.py  # CRUD saved_analyses (DB + JSON fallback)
 │   ├── migrations/               # 5 migraciones SQL (correr manualmente)
 │   ├── data/                     # Gitignored — JSON local en modo fallback
-│   └── requirements.txt          # fastapi, uvicorn, psycopg2-binary, httpx, beautifulsoup4, etc.
+│   └── requirements.txt          # fastapi, uvicorn, psycopg2-binary, httpx, beautifulsoup4, bleach, etc.
 └── frontend/
     ├── src/
     │   ├── pages/DashboardPage.tsx   # UI principal (~1000 líneas)
@@ -580,6 +580,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 **Bug: `db_ms` calculado incorrectamente en `/parser/validate`**
 - Causa: en lugar de capturar `t_db_start = time.perf_counter()` antes de llamar a `get_by_codes`, se calculaba `db_ms` como `(time.perf_counter() - t_parse_start) * 1000 - parse_ms` — restando el tiempo de parse al tiempo acumulado desde `t_parse_start`, lo que da valores erróneos (especialmente si el parse es largo o la DB es rápida).
 - Fix: introducir `t_db_start = time.perf_counter()` justo antes de `get_by_codes` y calcular `db_ms = int((time.perf_counter() - t_db_start) * 1000)`, igual que en `/parser/preview`.
+
+**Fix: sanitizar contenido HTML antes de guardarlo en DB (`_fetch_solution_content`)**
+- Causa: `soup.get_text()` produce texto plano, pero si en el futuro se renderiza como HTML (ej. en `SolutionContentModal`), cualquier HTML residual podría ejecutarse como XSS.
+- Fix: pasar el texto extraído por `bleach.clean(cleaned, tags=[], attributes={}, strip=True)` antes de devolver el contenido. `bleach` elimina cualquier etiqueta HTML que pudiera colarse. Nueva dependencia: `bleach==6.3.0` en `requirements.txt`.
 
 ---
 
