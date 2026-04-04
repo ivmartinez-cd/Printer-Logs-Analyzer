@@ -381,9 +381,11 @@ Aparece debajo de la lista de alertas (cuando el panel está expandido). Derivad
 
 `ErrorBoundary` es un componente de clase que envuelve todo el árbol de la app. Si un error no manejado llega hasta aquí, muestra un mensaje amigable ("Algo salió mal. Por favor recargá la página.") con un botón que llama a `window.location.reload()`. Sin él, un crash deja la pantalla en blanco.
 
-### Keep-alive (`App.tsx`)
+### Keep-alive y estado DB (`App.tsx`)
 
-Al montar la app, se llama a `GET /health` inmediatamente y luego cada 8 minutos via `setInterval`. Previene que Render duerma el servidor durante uso activo. La función `pingHealth` en `api.ts` falla silenciosamente (`.catch(() => {})`).
+Al montar la app, se llama a `GET /health` via `getHealth()` y luego cada 8 minutos. Esto sirve para dos propósitos: prevenir que Render duerma el servidor, y obtener `db_available` / `db_mode` del health check. El resultado se guarda en `healthStatus: HealthStatus | null` y se pasa a `DashboardPage`.
+
+`DashboardPage` renderiza un `<DbStatusBadge>` en todos los headers (bienvenida y principal). Muestra `🟢 DB conectada` (verde) si `db_available === true`, o `🔴 DB offline · modo local` (rojo) si `false`. El badge es `null` mientras no haya respuesta del servidor. `getHealth()` falla silenciosamente y retorna `null` en caso de error.
 
 ### Loading state durante cold start (`LogPasteModal`)
 
@@ -400,7 +402,8 @@ Cuando `loading` es `true`:
 - `API_KEY`: `VITE_API_KEY` → `dev`
 - Header siempre inyectado: `x-api-key`
 - Error handling: extrae `detail` del JSON de error si está disponible
-- `pingHealth()`: GET `/health` sin auth, falla silenciosamente — usada para keep-alive
+- `pingHealth()`: GET `/health` sin auth, falla silenciosamente — legacy, ya no usada en App.tsx
+- `getHealth()`: GET `/health`, retorna `HealthStatus | null` — usada para keep-alive + indicador DB
 - `apiFetch()`: wrapper interno sobre `fetch` que aplica `AbortSignal.timeout(30 s)` automáticamente; si el caller pasa su propio `signal`, se combinan con `AbortSignal.any`. `TimeoutError` se traduce a mensaje de error en español. Los pings de health usan timeout propio de 10 s.
 
 ### Tipos (`types/api.ts`)
