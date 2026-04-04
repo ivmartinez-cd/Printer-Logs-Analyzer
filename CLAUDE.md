@@ -594,8 +594,11 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 |----------|-------------|
 | `DB_URL` | Connection string de Neon PostgreSQL |
 | `API_KEY` | Clave compartida con el frontend |
+| `ENV` | Setear a `production` en Render |
 
 No se necesitan `RECENCY_WINDOW`, `MAX_CONCURRENT_ANALYSIS` ni `ANALYSIS_TIMEOUT` (tienen defaults).
+
+Si `API_KEY` no está seteada, el backend usa `"dev"` como fallback. Si además `ENV=production`, `from_env()` loguea un WARNING al arrancar: `⚠️ ADVERTENCIA: Usando API key por defecto 'dev' en producción`.
 
 **Vercel (frontend)** — configurar en *Project Settings → Environment Variables*:
 
