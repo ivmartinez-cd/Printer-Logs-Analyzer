@@ -467,8 +467,10 @@ export default function DashboardPage() {
     setExpandedIncidentIds(new Set())
     setLoading(true)
     try {
-      const data = await previewLogs(logText)
-      const validateRes = await validateLogs(logText).catch(() => ({ codes_new: [] as string[] }))
+      const [data, validateRes] = await Promise.all([
+        previewLogs(logText),
+        validateLogs(logText).catch(() => ({ codes_new: [] as string[] })),
+      ])
       const newCodes = validateRes.codes_new ?? []
       setPendingResult(data)
       setPendingCodesNew(newCodes)
