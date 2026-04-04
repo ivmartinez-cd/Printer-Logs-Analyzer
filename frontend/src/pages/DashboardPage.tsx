@@ -427,6 +427,11 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const [logFileName, setLogFileName] = useState<string | null>(null)
   const [solutionModal, setSolutionModal] = useState<{ content: string; url?: string | null } | null>(null)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const kpisRef = useRef<HTMLElement>(null)
+  const diagnosticRef = useRef<HTMLDivElement>(null)
+  const barChartRef = useRef<HTMLElement>(null)
+  const incidentsTableRef = useRef<HTMLElement>(null)
   const toast = useToast()
 
   useEffect(() => {
@@ -450,6 +455,60 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dayPickerOpen])
+
+  async function handleExportPDF() {
+    if (!result) return
+    setExportingPdf(true)
+    try {
+      const { jsPDF } = await import('jspdf')
+      const html2canvasModule = await import('html2canvas')
+      const html2canvas = html2canvasModule.default as (el: HTMLElement, opts?: object) => Promise<HTMLCanvasElement>
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 14
+      const contentWidth = pageWidth - margin * 2
+
+      pdf.setFontSize(16)
+      pdf.setTextColor(30, 30, 30)
+      pdf.text('HP Logs Analyzer — Reporte de análisis', margin, margin + 6)
+      pdf.setFontSize(9)
+      pdf.setTextColor(100, 100, 100)
+      const dateStr = new Date().toLocaleString('es-AR', { dateStyle: 'long', timeStyle: 'short' })
+      pdf.text(`Generado: ${dateStr}`, margin, margin + 13)
+      if (logFileName) pdf.text(`Archivo: ${logFileName}`, margin, margin + 19)
+
+      let yPos = margin + 28
+
+      const sections: Array<React.RefObject<HTMLElement | HTMLDivElement>> = [
+        kpisRef, diagnosticRef, barChartRef, incidentsTableRef,
+      ]
+      for (const ref of sections) {
+        const el = ref.current as HTMLElement | null
+        if (!el) continue
+        const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false })
+        const imgData = canvas.toDataURL('image/png')
+        const imgH = (canvas.height / canvas.width) * contentWidth
+        if (yPos + imgH > pageHeight - margin) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.addImage(imgData, 'PNG', margin, yPos, contentWidth, imgH)
+        yPos += imgH + 6
+      }
+
+      const fileName = logFileName
+        ? `reporte-${logFileName.replace(/\.[^.]+$/, '')}.pdf`
+        : 'reporte-hp-logs.pdf'
+      pdf.save(fileName)
+    } catch (err) {
+      console.error('Error al exportar PDF:', err)
+      toast.showError('Error al generar el PDF')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   async function handleAnalyze(logText: string, fileName?: string) {
     if (!logText.trim()) return
@@ -809,6 +868,16 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                   Guardar incidente
                 </button>
               )}
+              {result && (
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--secondary"
+                  onClick={handleExportPDF}
+                  disabled={exportingPdf}
+                >
+                  {exportingPdf ? 'Generando PDF…' : 'Exportar PDF'}
+                </button>
+              )}
               <LiveClock className="dashboard__datetime" />
             </div>
           </header>
@@ -1161,7 +1230,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
           </div>
 
           {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
-          <section className="kpis">
+          <section className="kpis" ref={kpisRef}>
             <div className="kpi-card">
               <div className="kpi-card__label">Estado de errores</div>
               <div className="kpi-card__values">
@@ -1204,7 +1273,9 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
           </section>
 
           {/* Diagnóstico automático basado en reglas */}
-          <DiagnosticPanel events={filteredEvents} />
+          <div ref={diagnosticRef}>
+            <DiagnosticPanel events={filteredEvents} />
+          </div>
 
           {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
           <div className="dashboard__charts-row">
@@ -1276,7 +1347,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                 )}
               </div>
             </section>
-            <section className="section dashboard__chart-right">
+            <section className="section dashboard__chart-right" ref={barChartRef}>
               <h2 className="section__title">Errores más frecuentes</h2>
               <div className="chart-wrap">
                 {topCodes.length > 0 ? (
@@ -1310,7 +1381,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
           </div>
 
           {/* Fila 3 — Tabla de incidencias (lo primero que se ve) */}
-          <section className="section dashboard__table-section">
+          <section className="section dashboard__table-section" ref={incidentsTableRef}>
             <h2 className="section__title">Incidencias</h2>
             <div className="table-toolbar">
               <label className="table-toolbar__label" htmlFor="incidents-severity-filter">
