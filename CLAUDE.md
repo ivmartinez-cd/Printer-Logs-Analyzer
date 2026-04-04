@@ -346,11 +346,11 @@ Al montar la app, se llama a `GET /health` inmediatamente y luego cada 8 minutos
 ### Loading state durante cold start (`LogPasteModal`)
 
 Cuando `loading` es `true`:
-- El botón muestra spinner CSS + "Analizando… (primer uso puede tardar ~20s)"
-- Si el request tarda más de 5 segundos, aparece debajo: "El servidor está iniciando, por favor esperá…" (en amarillo)
+- El botón muestra spinner CSS + "Analizando log…"
+- Si el servidor estaba frío al iniciar la app **y** el request tarda más de 3 s, aparece debajo: "El servidor está iniciando, por favor esperá…" (en amarillo)
 - El mensaje desaparece al terminar (éxito o error)
 
-Implementado con un `useEffect` sobre `loading` que arma un `setTimeout` de 5 s para setear `slowWarning`.
+`App.tsx` mide el tiempo del ping inicial a `/health` con `pingHealthTimed()`. Si tardó > 3 s, setea `serverWasCold = true` y se lo pasa a `DashboardPage` → `LogPasteModal`. El `useEffect` de `slowWarning` solo arma el `setTimeout` (3 s) cuando `serverWasCold` es `true`.
 
 ### Cliente HTTP (`services/api.ts`)
 
@@ -451,6 +451,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 **Bug: build Vercel fallaba — `now` no definido en header de saved-detail**
 - Causa: el header del saved-detail usaba `<time dateTime={now.toISOString()}>` con `now` inline, pero `now` solo existe dentro de `LiveClock`. Al refactorizar `useLiveTime` → `LiveClock`, este `<time>` inline quedó sin migrar.
 - Fix: reemplazar el `<time>` inline por `<LiveClock className="dashboard__datetime" short />`, igual que el header del dashboard principal.
+
+**Bug: "El servidor está iniciando…" aparecía siempre a los 5 s aunque el servidor estuviera caliente**
+- Causa: `slowWarning` se activaba con un `setTimeout` de 5 s cada vez que `loading` era `true`, independientemente del estado real del servidor.
+- Fix: `App.tsx` mide el tiempo del ping inicial a `/health` con `pingHealthTimed()`. Solo si tardó > 3 s se setea `serverWasCold = true`. `LogPasteModal` recibe esta prop y solo arma el timeout de `slowWarning` cuando es `true`. Texto del botón cambiado a "Analizando log…" sin mencionar el servidor.
 
 **Bug: contrato de tendencia desalineado entre backend y frontend**
 - Causa: el backend retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes), pero `types/api.ts` lo tipaba como `'mejoró' | 'igual' | 'peor'` — tres valores distintos que nunca podían matchear en runtime.
