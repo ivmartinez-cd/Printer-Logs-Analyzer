@@ -360,8 +360,9 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         parse_ms = int((time.perf_counter() - t_parse_start) * 1000)
 
         codes_detected = sorted(set(e.code for e in report.events))
+        t_db_start = time.perf_counter()
         catalog_map = error_code_repository.get_by_codes(codes_detected)
-        db_ms = int((time.perf_counter() - t_parse_start) * 1000) - parse_ms
+        db_ms = int((time.perf_counter() - t_db_start) * 1000)
 
         codes_new = [c for c in codes_detected if c not in catalog_map]
         errors = [

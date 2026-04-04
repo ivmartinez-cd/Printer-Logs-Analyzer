@@ -558,6 +558,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `_parse_lines` pasaba `is_first_line=idx == 1` a `_parse_line`, donde `idx` es el número de línea raw. Si el usuario pegaba el log con una línea en blanco al inicio, el header caía en `idx=2` y `is_first_line=False`, generando un error de parse en lugar de ignorarlo.
 - Fix: reemplazar el flag `is_first_line` por `is_candidate_header` basado en un contador `non_empty_count`. Las primeras 3 líneas no vacías se consideran candidatas a header (`non_empty_count <= 3`). Esto tolera hasta 2 líneas en blanco iniciales sin afectar logs válidos que empiezan antes de la línea 3.
 
+**Bug: `db_ms` calculado incorrectamente en `/parser/validate`**
+- Causa: en lugar de capturar `t_db_start = time.perf_counter()` antes de llamar a `get_by_codes`, se calculaba `db_ms` como `(time.perf_counter() - t_parse_start) * 1000 - parse_ms` — restando el tiempo de parse al tiempo acumulado desde `t_parse_start`, lo que da valores erróneos (especialmente si el parse es largo o la DB es rápida).
+- Fix: introducir `t_db_start = time.perf_counter()` justo antes de `get_by_codes` y calcular `db_ms = int((time.perf_counter() - t_db_start) * 1000)`, igual que en `/parser/preview`.
+
 ---
 
 ## Deploy en producción
