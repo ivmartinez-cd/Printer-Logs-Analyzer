@@ -415,6 +415,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const [savingIncident, setSavingIncident] = useState(false)
   const [viewMode, setViewMode] = useState<'dashboard' | 'saved-list' | 'saved-detail'>('dashboard')
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
+  const [savedListSearch, setSavedListSearch] = useState('')
   const [savedDetail, setSavedDetail] = useState<SavedAnalysisFull | null>(null)
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
   const [compareModalOpen, setCompareModalOpen] = useState(false)
@@ -791,7 +792,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                 <button
                   type="button"
                   className="dashboard__btn dashboard__btn--secondary dashboard__btn--welcome-secondary"
-                  onClick={() => { setViewMode('saved-list'); setSavedList(null); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+                  onClick={() => { setViewMode('saved-list'); setSavedList(null); setSavedListSearch(''); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
                 >
                   Ver logs guardados
                 </button>
@@ -848,7 +849,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
               <button
                 type="button"
                 className="dashboard__btn dashboard__btn--secondary"
-                onClick={() => { setViewMode('saved-list'); setSavedList(null); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
+                onClick={() => { setViewMode('saved-list'); setSavedList(null); setSavedListSearch(''); listSavedAnalyses().then(setSavedList).catch(() => setSavedList([])) }}
               >
                 Incidentes guardados
               </button>
@@ -888,6 +889,18 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                 ← Volver al dashboard
               </button>
               <h2 className="dashboard__subheader-title">Incidentes guardados</h2>
+              {savedList !== null && savedList.length > 0 && (
+                <div className="table-toolbar">
+                  <input
+                    type="search"
+                    className="table-toolbar__search"
+                    placeholder="Buscar por nombre o equipo..."
+                    value={savedListSearch}
+                    onChange={(e) => setSavedListSearch(e.target.value)}
+                    aria-label="Buscar análisis guardados"
+                  />
+                </div>
+              )}
               {savedList === null ? (
                 <p className="dashboard__muted">Cargando…</p>
               ) : savedList.length === 0 ? (
@@ -905,7 +918,11 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                       </tr>
                     </thead>
                     <tbody>
-                      {savedList.map((s) => (
+                      {savedList.filter((s) => {
+                        const q = savedListSearch.trim().toLowerCase()
+                        if (!q) return true
+                        return s.name.toLowerCase().includes(q) || (s.equipment_identifier ?? '').toLowerCase().includes(q)
+                      }).map((s) => (
                         <tr key={s.id}>
                           <td>{s.name}</td>
                           <td>{s.equipment_identifier ?? '—'}</td>
