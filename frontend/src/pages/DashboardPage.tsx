@@ -277,6 +277,7 @@ function bucketEventsByHour(events: ApiEvent[], selectedDate: DateFilter): { tim
 interface LogPasteModalProps {
   loading: boolean
   error: string | null
+  serverWasCold: boolean
   onAnalyze: (logText: string, fileName?: string) => void
   onClose: () => void
 }
@@ -291,7 +292,7 @@ function getEventInfoForCode(result: ParseLogsResponse | null, code: string): { 
   }
 }
 
-function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProps) {
+function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: LogPasteModalProps) {
   const [logText, setLogText] = useState('')
   const [fileName, setFileName] = useState<string | undefined>(undefined)
   const [slowWarning, setSlowWarning] = useState(false)
@@ -301,13 +302,13 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
     textareaRef.current?.focus()
   }, [])
   useEffect(() => {
-    if (!loading) {
+    if (!loading || !serverWasCold) {
       setSlowWarning(false)
       return
     }
-    const id = setTimeout(() => setSlowWarning(true), 5000)
+    const id = setTimeout(() => setSlowWarning(true), 3000)
     return () => clearTimeout(id)
-  }, [loading])
+  }, [loading, serverWasCold])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -365,7 +366,7 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
           >
             {loading ? (
               <>
-                <span className="log-modal__spinner" aria-hidden="true" /> Analizando… (primer uso puede tardar ~20s)
+                <span className="log-modal__spinner" aria-hidden="true" /> Analizando log…
               </>
             ) : 'Analizar'}
           </button>
@@ -381,7 +382,7 @@ function LogPasteModal({ loading, error, onAnalyze, onClose }: LogPasteModalProp
   )
 }
 
-export default function DashboardPage() {
+export default function DashboardPage({ serverWasCold }: { serverWasCold: boolean }) {
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1632,6 +1633,7 @@ export default function DashboardPage() {
         <LogPasteModal
           loading={loading}
           error={error}
+          serverWasCold={serverWasCold}
           onAnalyze={handleAnalyze}
           onClose={() => {
             setError(null)

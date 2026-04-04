@@ -164,3 +164,9 @@ export async function deleteSavedAnalysis(
 export async function pingHealth(): Promise<void> {
   await fetch(`${API_BASE}/health`).catch(() => {})
 }
+
+export async function pingHealthTimed(): Promise<number> {
+  const start = Date.now()
+  await fetch(`${API_BASE}/health`).catch(() => {})
+  return Date.now() - start
+}
