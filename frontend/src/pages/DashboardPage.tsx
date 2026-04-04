@@ -1025,6 +1025,13 @@ export default function DashboardPage() {
                   )
                 })}
               </ul>
+              <button
+                type="button"
+                className="dashboard__btn dashboard__btn--secondary"
+                onClick={() => setCodesNew([])}
+              >
+                Ignorar y ver resultados
+              </button>
             </div>
           )}
 
