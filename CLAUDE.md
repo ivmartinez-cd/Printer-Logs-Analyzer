@@ -456,6 +456,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Contexto: cuando el análisis detecta códigos desconocidos, el dashboard (Panel de errores, gráficos, tablas) queda oculto hasta que se gestionan todos los códigos nuevos.
 - Fix: se agregó el botón al final de la sección `.dashboard__codes-new-section`. Al hacer click llama `setCodesNew([])`, que vacía el array y muestra el dashboard inmediatamente sin modificar el análisis ni los códigos detectados.
 
+**Bug: /parser/preview no tenía límite de tamaño de payload**
+- Causa: `/parser/validate` y `/saved-analyses/{id}/compare` verificaban `len(logs) > MAX_LOGS_LENGTH` y retornaban HTTP 400, pero `/parser/preview` no tenía ese check y aceptaba payloads de cualquier tamaño.
+- Fix: agregar `if len(payload.logs) > MAX_LOGS_LENGTH: raise HTTPException(400)` al inicio de `parse_logs`, igual que en los otros dos endpoints.
+
 ---
 
 ## Deploy en producción
