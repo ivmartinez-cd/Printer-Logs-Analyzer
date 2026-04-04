@@ -9,7 +9,7 @@ import type {
 import { useToast } from '../contexts/ToastContext'
 
 interface UseAnalysisOptions {
-  onAnalyzeDone: (result: ParseLogsResponse, codesNew: string[]) => void
+  onAnalyzeDone?: (result: ParseLogsResponse, codesNew: string[]) => void
   setLogFileName: (name: string | null) => void
   resetDateFilter: () => void
   resetFilters: () => void
@@ -60,7 +60,7 @@ export function useAnalysis({
       const newCodes = validateRes.codes_new ?? []
       setPendingResult(data)
       setPendingCodesNew(newCodes)
-      onAnalyzeDone(data, newCodes)
+      onAnalyzeDone?.(data, newCodes)
       setLogModalOpen(false)
       setSdsPreModalOpen(true)
       if (newCodes.length > 0) {

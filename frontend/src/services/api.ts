@@ -49,7 +49,7 @@ async function apiFetch(
     return await fetch(url, { ...options, signal })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'TimeoutError') {
-      throw new Error('La solicitud tardó demasiado (>30 s). Verificá tu conexión e intentá de nuevo.', { cause: err })
+      throw new Error('La solicitud tardó demasiado (>30 s). Verificá tu conexión e intentá de nuevo.')
     }
     throw err
   }

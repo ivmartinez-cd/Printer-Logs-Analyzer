@@ -3,10 +3,10 @@ import { useToast } from '../contexts/ToastContext'
 
 export function useExportPdf(logFileName: string | null) {
   const [exportingPdf, setExportingPdf] = useState(false)
-  const kpisRef = useRef<HTMLElement>(null)
+  const kpisRef = useRef<HTMLDivElement>(null)
   const diagnosticRef = useRef<HTMLDivElement>(null)
-  const barChartRef = useRef<HTMLElement>(null)
-  const incidentsTableRef = useRef<HTMLElement>(null)
+  const barChartRef = useRef<HTMLDivElement>(null)
+  const incidentsTableRef = useRef<HTMLDivElement>(null)
   const toast = useToast()
 
   async function handleExportPDF(hasResult: boolean) {

@@ -27,6 +27,7 @@ import { TopErrorsChart } from '../components/TopErrorsChart'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useModals } from '../hooks/useModals'
 import { useAnalysis } from '../hooks/useAnalysis'
+import { useToast } from '../contexts/ToastContext'
 import {
   useDateFilter,
   filterEventsByDate,
@@ -293,6 +294,7 @@ export default function DashboardPage({ serverWasCold, healthStatus }: { serverW
   const [logFileName, setLogFileName] = useState<string | null>(null)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
 
+  const toast = useToast()
   const modals = useModals()
   const {
     logModalOpen, setLogModalOpen,

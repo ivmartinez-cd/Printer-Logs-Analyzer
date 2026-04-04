@@ -1,4 +1,3 @@
-import React from 'react'
 import type { EnrichedEvent as ApiEvent, Incident as ApiIncident } from '../types/api'
 
 interface KPICardsProps {

@@ -1,4 +1,3 @@
-import React from 'react'
 import type { EnrichedEvent as ApiEvent } from '../types/api'
 import { formatDateTime } from '../hooks/useDateFilter'
 
