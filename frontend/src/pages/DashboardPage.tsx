@@ -1149,9 +1149,7 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-              <time className="dashboard__datetime" dateTime={now.toISOString()}>
-                {now.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
-              </time>
+              <LiveClock className="dashboard__datetime" short />
             </div>
           </div>
 
