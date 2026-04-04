@@ -30,7 +30,20 @@ import { SDSIncidentModal, type SdsIncidentData } from '../components/SDSInciden
 import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
 import { DiagnosticPanel } from '../components/DiagnosticPanel'
+import { DateFilterBar } from '../components/DateFilterBar'
+import { SavedAnalysisList } from '../components/SavedAnalysisList'
+import { SavedAnalysisDetail } from '../components/SavedAnalysisDetail'
 import { useToast } from '../contexts/ToastContext'
+import {
+  useDateFilter,
+  formatDateTime,
+  formatWeekRange,
+  filterEventsByDate,
+  filterIncidentsByDate,
+  getDateRangeFromEvents,
+  getWindowForDate,
+  type DateFilter,
+} from '../hooks/useDateFilter'
 
 function LiveClock({ className, short = false }: { className?: string; short?: boolean }) {
   const [now, setNow] = useState(() => new Date())
@@ -45,125 +58,6 @@ function LiveClock({ className, short = false }: { className?: string; short?: b
         : { dateStyle: 'long', timeStyle: 'medium' }
       )}
     </time>
-  )
-}
-
-function formatDateTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'medium',
-    })
-  } catch {
-    return iso
-  }
-}
-
-/**
- * DateFilter:
- *   null                          → Todo el log
- *   "YYYY-MM-DD"                  → solo ese día
- *   { start: "YYYY-MM-DD", end }  → rango de semana (lunes–domingo)
- */
-type DateFilter = string | { start: string; end: string } | null
-
-function getWindowForDate(events: ApiEvent[], filter: DateFilter): { minTs: number; maxTs: number } | null {
-  if (events.length === 0) return null
-  const times = events.map((e) => new Date(e.timestamp).getTime()).filter((t) => !Number.isNaN(t))
-  if (times.length === 0) return null
-  const minTs = Math.min(...times)
-  const maxTs = Math.max(...times)
-  if (!filter) return { minTs, maxTs }
-  if (typeof filter === 'string') {
-    const [y, m, d] = filter.split('-').map(Number)
-    return { minTs: new Date(y, m - 1, d, 0, 0, 0, 0).getTime(), maxTs: new Date(y, m - 1, d, 23, 59, 59, 999).getTime() }
-  }
-  const [sy, sm, sd] = filter.start.split('-').map(Number)
-  const [ey, em, ed] = filter.end.split('-').map(Number)
-  return { minTs: new Date(sy, sm - 1, sd, 0, 0, 0, 0).getTime(), maxTs: new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime() }
-}
-
-function getWeekRange(date: Date): { start: string; end: string } {
-  const day = date.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  const monday = new Date(date)
-  monday.setDate(date.getDate() + diff)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  return { start: fmt(monday), end: fmt(sunday) }
-}
-
-function formatWeekRange(range: { start: string; end: string }): string {
-  const fmt = (s: string) => {
-    const [y, m, d] = s.split('-').map(Number)
-    return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-  }
-  return `${fmt(range.start)} – ${fmt(range.end)}`
-}
-
-function weekInputToRange(weekStr: string): { start: string; end: string } {
-  // weekStr format: "2024-W12"
-  const match = weekStr.match(/^(\d{4})-W(\d{2})$/)
-  if (!match) return getWeekRange(new Date())
-  const year = Number(match[1])
-  const week = Number(match[2])
-  // ISO 8601: Jan 4th is always in week 1; find that week's Monday
-  const jan4 = new Date(year, 0, 4)
-  const jan4Day = (jan4.getDay() + 6) % 7 // Mon=0
-  const monday = new Date(jan4)
-  monday.setDate(jan4.getDate() - jan4Day + (week - 1) * 7)
-  return getWeekRange(monday)
-}
-
-function formatDayFilter(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-}
-
-/** Rango de fechas del log en formato YYYY-MM-DD para min/max del input date. */
-function getDateRangeFromEvents(events: ApiEvent[]): { minDate: string; maxDate: string } | null {
-  if (events.length === 0) return null
-  const dates = events.map((e) => {
-    const d = new Date(e.timestamp)
-    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
-  }).filter((n) => !Number.isNaN(n))
-  if (dates.length === 0) return null
-  const min = Math.min(...dates)
-  const max = Math.max(...dates)
-  const toStr = (n: number) => {
-    const y = Math.floor(n / 10000)
-    const m = Math.floor((n % 10000) / 100)
-    const d = n % 100
-    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-  }
-  return { minDate: toStr(min), maxDate: toStr(max) }
-}
-
-function filterEventsByDate(events: ApiEvent[], selectedDate: DateFilter): ApiEvent[] {
-  const window = getWindowForDate(events, selectedDate)
-  if (!window) return []
-  const { minTs, maxTs } = window
-  return events.filter((e) => {
-    const t = new Date(e.timestamp).getTime()
-    return !Number.isNaN(t) && t >= minTs && t <= maxTs
-  })
-}
-
-function filterIncidentsByDate(
-  incidents: ApiIncident[],
-  events: ApiEvent[],
-  selectedDate: DateFilter
-): ApiIncident[] {
-  const window = getWindowForDate(events, selectedDate)
-  if (!window) return []
-  const { minTs, maxTs } = window
-  return incidents.filter((inc) =>
-    inc.events.some((e) => {
-      const t = new Date(e.timestamp).getTime()
-      return !Number.isNaN(t) && t >= minTs && t <= maxTs
-    })
   )
 }
 
@@ -386,16 +280,13 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [selectedWeekRange, setSelectedWeekRange] = useState<{ start: string; end: string } | null>(null)
-  const [weekPickerOpen, setWeekPickerOpen] = useState(false)
-  const weekPickerRef = useRef<HTMLDivElement>(null)
-  const [dayPickerOpen, setDayPickerOpen] = useState(false)
-  const dayPickerRef = useRef<HTMLDivElement>(null)
+  const dateFilter = useDateFilter()
+  const { selectedDate, setSelectedDate, selectedWeekRange, setSelectedWeekRange, activeFilter,
+    weekPickerOpen, setWeekPickerOpen, weekPickerRef,
+    dayPickerOpen, setDayPickerOpen, dayPickerRef } = dateFilter
   const [pendingResult, setPendingResult] = useState<ParseLogsResponse | null>(null)
   const [pendingCodesNew, setPendingCodesNew] = useState<string[]>([])
   const [sdsPreModalOpen, setSdsPreModalOpen] = useState(false)
-  const activeFilter: DateFilter = selectedWeekRange ?? selectedDate
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
   const [sdsIncident, setSdsIncident] = useState<SdsIncidentData | null>(null)
@@ -434,28 +325,6 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const barChartRef = useRef<HTMLElement>(null)
   const incidentsTableRef = useRef<HTMLElement>(null)
   const toast = useToast()
-
-  useEffect(() => {
-    if (!weekPickerOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      if (weekPickerRef.current && !weekPickerRef.current.contains(e.target as Node)) {
-        setWeekPickerOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [weekPickerOpen])
-
-  useEffect(() => {
-    if (!dayPickerOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      if (dayPickerRef.current && !dayPickerRef.current.contains(e.target as Node)) {
-        setDayPickerOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [dayPickerOpen])
 
   async function handleExportPDF() {
     if (!result) return
@@ -520,7 +389,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
     setCodesNew([])
     setSdsIncident(null)
     setLogFileName(fileName ?? null)
-    setSelectedDate(null)
+    dateFilter.reset()
     setIncidentsSeverityFilter('')
     setIncidentsSearchFilter('')
     setEventsSeverityFilter('')
@@ -884,169 +753,37 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
           </header>
 
           {viewMode === 'saved-list' && (
-            <div className="dashboard__saved-section">
-              <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => setViewMode('dashboard')}>
-                ← Volver al dashboard
-              </button>
-              <h2 className="dashboard__subheader-title">Incidentes guardados</h2>
-              {savedList !== null && savedList.length > 0 && (
-                <div className="table-toolbar">
-                  <input
-                    type="search"
-                    className="table-toolbar__search"
-                    placeholder="Buscar por nombre o equipo..."
-                    value={savedListSearch}
-                    onChange={(e) => setSavedListSearch(e.target.value)}
-                    aria-label="Buscar análisis guardados"
-                  />
-                </div>
-              )}
-              {savedList === null ? (
-                <p className="dashboard__muted">Cargando…</p>
-              ) : savedList.length === 0 ? (
-                <p className="dashboard__muted">No hay incidentes guardados.</p>
-              ) : (
-                <div className="table-wrap">
-                  <table className="dashboard-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Equipo</th>
-                        <th scope="col">Severidad</th>
-                        <th scope="col">Fecha</th>
-                        <th scope="col" aria-label="Acciones" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {savedList.filter((s) => {
-                        const q = savedListSearch.trim().toLowerCase()
-                        if (!q) return true
-                        return s.name.toLowerCase().includes(q) || (s.equipment_identifier ?? '').toLowerCase().includes(q)
-                      }).map((s) => (
-                        <tr key={s.id}>
-                          <td>{s.name}</td>
-                          <td>{s.equipment_identifier ?? '—'}</td>
-                          <td>{s.global_severity}</td>
-                          <td>{formatDateTime(s.created_at)}</td>
-                          <td>
-                            <span className="dashboard-table__cell-actions dashboard-table__cell-actions--grouped">
-                              <button type="button" className="dashboard__btn dashboard__btn--small" onClick={() => { setSelectedSavedId(s.id); setSavedDetail(null); setCompareResult(null); setViewMode('saved-detail'); getSavedAnalysis(s.id).then(setSavedDetail).catch(() => toast.showError('Error al cargar')) }}>
-                                Abrir
-                              </button>
-                              <button type="button" className="dashboard__btn dashboard__btn--small" disabled={deletingId !== null} onClick={() => setDeleteConfirm({ id: s.id, name: s.name })}>
-                                {deletingId === s.id ? 'Borrando…' : 'Borrar'}
-                              </button>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            <SavedAnalysisList
+              savedList={savedList}
+              savedListSearch={savedListSearch}
+              setSavedListSearch={setSavedListSearch}
+              deletingId={deletingId}
+              onBack={() => setViewMode('dashboard')}
+              onOpen={(id) => {
+                setSelectedSavedId(id)
+                setSavedDetail(null)
+                setCompareResult(null)
+                setViewMode('saved-detail')
+                getSavedAnalysis(id).then(setSavedDetail).catch(() => toast.showError('Error al cargar'))
+              }}
+              onDelete={setDeleteConfirm}
+            />
           )}
 
-          {viewMode === 'saved-detail' && selectedSavedId && !savedDetail && (
-            <div className="dashboard__saved-section">
-              <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => { setViewMode('saved-list'); setSavedDetail(null); setSelectedSavedId(null); setCompareResult(null) }}>
-                ← Volver a la lista
-              </button>
-              <p className="dashboard__muted dashboard__muted--top">Cargando…</p>
-            </div>
-          )}
-
-          {viewMode === 'saved-detail' && savedDetail && (
-            <div className="dashboard__saved-section">
-              <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={() => { setViewMode('saved-list'); setSavedDetail(null); setSelectedSavedId(null); setCompareResult(null) }}>
-                ← Volver a la lista
-              </button>
-              <h2 className="dashboard__subheader-title">{savedDetail.name}</h2>
-              {savedDetail.equipment_identifier && <p className="dashboard__muted">Equipo: {savedDetail.equipment_identifier}</p>}
-              <p className="dashboard__muted">Severidad: {savedDetail.global_severity} · Guardado: {formatDateTime(savedDetail.created_at)}</p>
-              <div className="dashboard__saved-actions">
-                <button type="button" className="dashboard__btn dashboard__btn--primary" onClick={() => { setCompareLogText(''); setCompareModalOpen(true) }}>
-                  Comparar con log
-                </button>
-                <button type="button" className="dashboard__btn dashboard__btn--secondary" disabled={deletingId !== null} onClick={() => savedDetail?.id && setDeleteConfirm({ id: savedDetail.id, name: savedDetail.name })}>
-                  {deletingId === savedDetail.id ? 'Borrando…' : 'Borrar'}
-                </button>
-              </div>
-              <div className="table-wrap table-wrap--top-16">
-                <table className="dashboard-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Código</th>
-                      <th scope="col">Clasificación</th>
-                      <th scope="col">Severidad</th>
-                      <th scope="col">Ocurrencias</th>
-                      <th scope="col">Último evento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {savedDetail.incidents.map((inc, i) => (
-                      <tr key={inc.code + String(i)}>
-                        <td>{inc.code}</td>
-                        <td>{inc.classification}</td>
-                        <td>{inc.severity}</td>
-                        <td>{inc.occurrences}</td>
-                        <td>{inc.last_event_time || inc.end_time ? formatDateTime(inc.last_event_time || inc.end_time) : '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {compareResult && (
-                <div className="dashboard__compare-block">
-                  <h3 className="dashboard__subheader-title">Comparación con el log nuevo</h3>
-                  <div className="dashboard__diff-grid">
-                    <div><strong>Días desde guardado:</strong> {compareResult.diff.diferencia_dias}</div>
-                    <div><strong>Tendencia:</strong> {compareResult.diff.tendencia}</div>
-                    {compareResult.diff.codigos_nuevos.length > 0 && (
-                      <div><strong>Códigos nuevos:</strong> {compareResult.diff.codigos_nuevos.join(', ')}</div>
-                    )}
-                    {compareResult.diff.codigos_desaparecidos.length > 0 && (
-                      <div><strong>Códigos que desaparecieron:</strong> {compareResult.diff.codigos_desaparecidos.join(', ')}</div>
-                    )}
-                    {compareResult.diff.cambios_ocurrencias.length > 0 && (
-                      <div>
-                        <strong>Cambios en ocurrencias:</strong>
-                        <ul>
-                          {compareResult.diff.cambios_ocurrencias.map((c) => (
-                            <li key={c.code}>{c.code}: {c.saved_occurrences} → {c.current_occurrences} ({c.delta >= 0 ? '+' : ''}{c.delta})</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                  <h4>Análisis del log nuevo</h4>
-                  <div className="table-wrap">
-                    <table className="dashboard-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Código</th>
-                          <th scope="col">Clasificación</th>
-                          <th scope="col">Severidad</th>
-                          <th scope="col">Ocurrencias</th>
-                          <th scope="col">Último evento</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {compareResult.current.incidents.map((inc) => (
-                          <tr key={inc.id}>
-                            <td>{inc.code}</td>
-                            <td>{inc.classification}</td>
-                            <td>{inc.severity}</td>
-                            <td>{inc.occurrences}</td>
-                            <td>{inc.end_time ? formatDateTime(inc.end_time) : '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
+          {viewMode === 'saved-detail' && selectedSavedId && (
+            <SavedAnalysisDetail
+              savedDetail={savedDetail}
+              deletingId={deletingId}
+              compareResult={compareResult}
+              onBack={() => {
+                setViewMode('saved-list')
+                setSavedDetail(null)
+                setSelectedSavedId(null)
+                setCompareResult(null)
+              }}
+              onDelete={setDeleteConfirm}
+              onCompare={() => { setCompareLogText(''); setCompareModalOpen(true) }}
+            />
           )}
 
           {viewMode === 'dashboard' && (
@@ -1149,102 +886,22 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
 
           {codesNew.length === 0 && (
           <>
-          {/* Subheader: Errors Dashboard | filtros | date */}
-          <div className="dashboard__subheader">
-            <span className="dashboard__subheader-title">Panel de errores{logFileName ? ` · ${logFileName}` : ''}</span>
-            <div className="dashboard__subheader-actions">
-              <label className="dashboard__day-filter-label">Ver datos:</label>
-              {/* Botones de filtro de semana agrupados */}
-              <div className="date-filter-group">
-                <button
-                  type="button"
-                  className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${activeFilter === null ? ' dashboard__btn--todo-active' : ''}`}
-                  onClick={() => { setSelectedDate(null); setSelectedWeekRange(null) }}
-                >
-                  Todo
-                </button>
-                <button
-                  type="button"
-                  className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${selectedWeekRange?.start === getWeekRange(new Date()).start ? ' dashboard__btn--todo-active' : ''}`}
-                  onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date())) }}
-                >
-                  Esta semana
-                </button>
-                <button
-                  type="button"
-                  className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${(() => { const prev = getWeekRange(new Date(Date.now() - 7 * 86400000)); return selectedWeekRange?.start === prev.start })() ? ' dashboard__btn--todo-active' : ''}`}
-                  onClick={() => { setSelectedDate(null); setSelectedWeekRange(getWeekRange(new Date(Date.now() - 7 * 86400000))) }}
-                >
-                  Semana anterior
-                </button>
-                {/* Picker de semana con popover */}
-                <div className="date-filter-picker-wrap" ref={weekPickerRef}>
-                  {(() => {
-                    const thisWeekStart = getWeekRange(new Date()).start
-                    const prevWeekStart = getWeekRange(new Date(Date.now() - 7 * 86400000)).start
-                    const isCustomWeek = selectedWeekRange !== null && selectedWeekRange.start !== thisWeekStart && selectedWeekRange.start !== prevWeekStart
-                    return (
-                      <>
-                        <button
-                          type="button"
-                          className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${isCustomWeek ? ' dashboard__btn--todo-active' : ''}`}
-                          onClick={() => setWeekPickerOpen((o) => !o)}
-                          title="Elegir una semana específica"
-                        >
-                          {isCustomWeek && selectedWeekRange ? formatWeekRange(selectedWeekRange) : 'Elegir semana ▾'}
-                        </button>
-                        {weekPickerOpen && (
-                          <div className="date-filter-popover">
-                            <span className="date-filter-popover__label">Seleccioná una semana</span>
-                            <input
-                              type="week"
-                              className="dashboard__date-input"
-                              onChange={(e) => {
-                                if (!e.target.value) return
-                                setSelectedDate(null)
-                                setSelectedWeekRange(weekInputToRange(e.target.value))
-                                setWeekPickerOpen(false)
-                              }}
-                              autoFocus
-                            />
-                          </div>
-                        )}
-                      </>
-                    )
-                  })()}
-                </div>
-                {/* Picker de día con popover — dentro del grupo */}
-                <div className="date-filter-picker-wrap" ref={dayPickerRef}>
-                  <button
-                    type="button"
-                    className={`dashboard__btn dashboard__btn--secondary dashboard__btn--todo${selectedDate !== null ? ' dashboard__btn--todo-active' : ''}`}
-                    onClick={() => setDayPickerOpen((o) => !o)}
-                    title="Filtrar por día específico"
-                  >
-                    {selectedDate !== null ? formatDayFilter(selectedDate) : '📅'}
-                  </button>
-                  {dayPickerOpen && (
-                    <div className="date-filter-popover">
-                      <span className="date-filter-popover__label">Seleccioná un día</span>
-                      <input
-                        type="date"
-                        className="dashboard__date-input"
-                        min={dateRange?.minDate}
-                        max={dateRange?.maxDate}
-                        value={selectedDate ?? ''}
-                        onChange={(e) => {
-                          setSelectedWeekRange(null)
-                          setSelectedDate(e.target.value || null)
-                          setDayPickerOpen(false)
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Subheader: Panel de errores | filtros de fecha */}
+          <DateFilterBar
+            logFileName={logFileName}
+            activeFilter={activeFilter}
+            selectedDate={selectedDate}
+            selectedWeekRange={selectedWeekRange}
+            dateRange={dateRange}
+            weekPickerOpen={weekPickerOpen}
+            setWeekPickerOpen={setWeekPickerOpen}
+            weekPickerRef={weekPickerRef}
+            dayPickerOpen={dayPickerOpen}
+            setDayPickerOpen={setDayPickerOpen}
+            dayPickerRef={dayPickerRef}
+            setSelectedDate={setSelectedDate}
+            setSelectedWeekRange={setSelectedWeekRange}
+          />
 
           {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
           <section className="kpis" ref={kpisRef}>
