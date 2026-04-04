@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 # Cargar .env desde la raíz del repo (backend/ está dentro del repo)
 _repo_root = Path(__file__).resolve().parent.parent.parent
@@ -28,10 +31,15 @@ class Settings(BaseModel):
         """Load configuration and raise informative errors when missing."""
         values = {field.alias: os.getenv(field.alias) for field in cls.model_fields.values()}
         try:
-            return cls(**values)
+            instance = cls(**values)
         except ValidationError as exc:
             missing = ", ".join(sorted(err["loc"][0] for err in exc.errors()))
             raise RuntimeError(f"Missing or invalid environment variables: {missing}") from exc
+        if instance.api_key == "dev" and os.getenv("ENV") == "production":
+            _logger.warning(
+                "⚠️ ADVERTENCIA: Usando API key por defecto 'dev' en producción"
+            )
+        return instance
 
 
 def get_settings(cache: dict = {}) -> Settings:
