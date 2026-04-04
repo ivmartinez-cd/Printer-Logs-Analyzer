@@ -45,6 +45,7 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 # Desde la raíz
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
+npm run format         # Prettier --write src (frontend)
 npm run test:frontend  # vitest run (35 tests)
 npm run test:backend   # pytest backend/tests/ -v (49 tests)
 ```
@@ -96,11 +97,13 @@ Printer-Logs-Analyzer/
 │   └── data/                     # Gitignored — JSON local en modo fallback
 └── frontend/
     ├── .npmrc                    # legacy-peer-deps=true (ESLint peer dep compat)
-    ├── eslint.config.js          # ESLint flat config (JS + TypeScript + react-hooks)
+    ├── .prettierrc               # Prettier: singleQuote, semi:false, printWidth 100
+    ├── .prettierignore           # Excluye dist/, node_modules/, *.tsbuildinfo, vite-env.d.ts
+    ├── eslint.config.js          # ESLint flat config (JS + TypeScript + react-hooks + eslint-config-prettier)
     ├── vite.config.ts            # Vite: plugin react, manualChunks
     ├── vitest.config.ts          # Vitest: environment node, tests en src/__tests__/
     ├── src/
-    │   ├── pages/DashboardPage.tsx   # UI principal (~950 líneas)
+    │   ├── pages/DashboardPage.tsx   # UI principal (~1160 líneas)
     │   ├── components/               # Modales, paneles, tablas y gráficos
     │   ├── hooks/
     │   │   ├── useDateFilter.ts      # Estado de filtro de fecha + helpers puros
@@ -111,7 +114,7 @@ Printer-Logs-Analyzer/
     │   ├── types/api.ts              # Interfaces TS que espejean los modelos Pydantic
     │   └── contexts/ToastContext.tsx # Notificaciones globales
     ├── src/__tests__/            # vitest — 35 tests (useDateFilter, SDS matching)
-    └── package.json              # React 18.3, Recharts 2.13, Vite 5.4, jsPDF 4.2, html2canvas 1.4
+    └── package.json              # React 18.3, Recharts 2.13, Vite 5.4, jsPDF 4.2, html2canvas 1.4, Prettier 3.8
 ```
 
 ---
@@ -486,6 +489,15 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 
 `Incident.events` y `ParseLogsResponse.events` son `EnrichedEvent[]`. Los componentes y hooks usan `EnrichedEvent as ApiEvent`.
 
+### Prettier
+
+Configurado con `eslint-config-prettier` para desactivar las reglas de ESLint que conflictúan con el formateo.
+
+- **`.prettierrc`**: `singleQuote: true`, `semi: false`, `tabWidth: 2`, `trailingComma: "es5"`, `printWidth: 100`, `arrowParens: "always"`
+- **`.prettierignore`**: excluye `dist/`, `node_modules/`, `*.tsbuildinfo` y `src/vite-env.d.ts` (la directiva `/// <reference>` en ese archivo es eliminada por Prettier)
+- **Scripts**: `npm run format` (write) y `npm run format:check` (CI) — ambos desde raíz o `frontend/`
+- **Nota**: `src/vite-env.d.ts` debe estar en `.prettierignore` siempre. Si Prettier lo vacía, `tsc -b` falla con errores de `ImportMeta.env` y `./index.css`.
+
 ### Build
 
 `vite.config.ts` usa `manualChunks`:
@@ -649,6 +661,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `soup.get_text()` produce texto plano, pero si en el futuro se renderiza como HTML (ej. en `SolutionContentModal`), cualquier HTML residual podría ejecutarse como XSS.
 - Fix: pasar el texto extraído por `bleach.clean(cleaned, tags=[], attributes={}, strip=True)` antes de devolver el contenido. `bleach` elimina cualquier etiqueta HTML que pudiera colarse. Nueva dependencia: `bleach==6.3.0` en `requirements.txt`.
 
+**Bug: Prettier vaciaba `vite-env.d.ts` rompiendo el build con `tsc -b`**
+- Causa: `prettier --write src` trataba la directiva `/// <reference types="vite/client" />` como comentario TS y la eliminaba al formatear. `tsc --noEmit` pasaba igual (usa modo de verificación sin composite), pero `tsc -b` (usado en `npm run build`) fallaba con `Property 'env' does not exist on type 'ImportMeta'` y `Cannot find module './index.css'`.
+- Fix: agregar `src/vite-env.d.ts` a `frontend/.prettierignore`. El archivo nunca debe ser formateado por Prettier.
+
 ---
 
 ## Deploy en producción
@@ -705,4 +721,3 @@ Sin `--reload` en producción. Render inyecta `$PORT` automáticamente.
 ## Deuda técnica conocida
 
 - Las tablas `config_versions`, `rules`, `rule_tags` existen en DB pero no se usan (legacy de v1) — migraciones 001 y 002 las crean; no se eliminan para no correr DDL destructivo en producción
-- No hay Prettier configurado (solo ESLint + TypeScript strict mode)
