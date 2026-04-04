@@ -335,6 +335,10 @@ Las reglas 4 y 5 usan la descripción del catálogo (`code_description`) en vez 
 
 Máximo 5 alertas visibles, ordenadas por severidad (error → warning → info → success). Si no hay alertas, siempre muestra la regla de "saludable".
 
+### ErrorBoundary (`App.tsx`)
+
+`ErrorBoundary` es un componente de clase que envuelve todo el árbol de la app. Si un error no manejado llega hasta aquí, muestra un mensaje amigable ("Algo salió mal. Por favor recargá la página.") con un botón que llama a `window.location.reload()`. Sin él, un crash deja la pantalla en blanco.
+
 ### Keep-alive (`App.tsx`)
 
 Al montar la app, se llama a `GET /health` inmediatamente y luego cada 8 minutos via `setInterval`. Previene que Render duerma el servidor durante uso activo. La función `pingHealth` en `api.ts` falla silenciosamente (`.catch(() => {})`).
