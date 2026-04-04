@@ -550,6 +550,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: todos los `fetch()` en `api.ts` no tenían timeout; si el servidor no respondía, el request quedaba pendiente para siempre sin mostrar error al usuario.
 - Fix: `apiFetch()` wrapper interno que aplica `AbortSignal.timeout(30_000)` a cada request; si el caller pasa su propio `signal`, se combinan via `AbortSignal.any`. `DOMException { name: 'TimeoutError' }` se captura y se traduce a mensaje en español. Los pings de health usan timeout propio de 10 s.
 
+**Bug: `compare_service` no detectaba transición de 0 a N errores como "empeoró"**
+- Causa: la condición del 20% tenía guard `total_saved_errors > 0`, lo que impedía clasificar como "empeoró" cuando el snapshot base tenía 0 errores y el actual tenía 1+. El loop de `codigos_nuevos` cubría el caso de códigos completamente nuevos con ERROR, pero no el caso de un código preexistente (antes WARNING/INFO) que escala a ERROR.
+- Fix: agregar check explícito `if total_saved_errors == 0 and total_current_errors > 0: return "empeoro"` antes de la condición del 20%.
+
 ---
 
 ## Deploy en producción

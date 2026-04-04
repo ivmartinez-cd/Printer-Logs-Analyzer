@@ -20,6 +20,7 @@ def calculate_trend(
     Empeoró if at least one of:
       - new code with severity ERROR
       - existing ERROR code increases >= 3 occurrences
+      - snapshot had 0 errors and current has 1+
       - total ERROR occurrences increase >= 20%
 
     Mejoró if all of:
@@ -58,6 +59,9 @@ def calculate_trend(
             continue
         if _severity_is_error(saved_inc.get("severity")) and (c.get("delta") or 0) >= 3:
             return "empeoro"
+
+    if total_saved_errors == 0 and total_current_errors > 0:
+        return "empeoro"
 
     if total_saved_errors > 0 and total_current_errors >= total_saved_errors * 1.20:
         return "empeoro"
