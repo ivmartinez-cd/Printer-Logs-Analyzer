@@ -516,6 +516,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `tableRows.map((evt, i) => <tr key={i}>)` — al filtrar eventos, React podía reutilizar nodos DOM incorrectos porque el índice no es estable.
 - Fix: reemplazar por `key={\`${evt.code}-${evt.timestamp}\`}` — combinación estable y única para cada evento.
 
+**Feature: botón × para cerrar toasts manualmente**
+- Contexto: los toasts se cerraban solos a los 5 s pero no había forma de descartarlos antes.
+- Fix: `removeToast` expuesta en `ToastContextValue`; `ToastContainer` renderiza un `<button class="toast__close">` por cada toast que llama a `removeToast(t.id)`. El `.toast` pasó a `display: flex` para alinear mensaje y botón; estilos `.toast__close` y `.toast__close:hover` agregados en `index.css`.
+
 ---
 
 ## Deploy en producción
