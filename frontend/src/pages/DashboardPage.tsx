@@ -1157,7 +1157,6 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                   )}
                 </div>
               </div>
-              <LiveClock className="dashboard__datetime" short />
             </div>
           </div>
 
