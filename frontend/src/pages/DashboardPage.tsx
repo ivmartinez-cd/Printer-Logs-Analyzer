@@ -20,6 +20,7 @@ import { SaveIncidentModal } from '../components/SaveIncidentModal'
 import { SDSIncidentModal } from '../components/SDSIncidentModal'
 import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
+import { HelpModal } from '../components/HelpModal'
 import { DiagnosticPanel } from '../components/DiagnosticPanel'
 import { DateFilterBar } from '../components/DateFilterBar'
 import { SavedAnalysisList } from '../components/SavedAnalysisList'
@@ -372,6 +373,8 @@ export default function DashboardPage({
     setDeleteConfirm,
     solutionModal,
     setSolutionModal,
+    helpModalOpen,
+    setHelpModalOpen,
   } = modals
 
   const { exportingPdf, handleExportPDF, kpisRef, diagnosticRef, barChartRef, incidentsTableRef } =
@@ -578,6 +581,14 @@ export default function DashboardPage({
                 >
                   Ver logs guardados
                 </button>
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--ghost dashboard__btn--help"
+                  onClick={() => setHelpModalOpen(true)}
+                  title="¿Cómo funciona?"
+                >
+                  ¿Cómo funciona?
+                </button>
               </div>
               <div className="dashboard__features">
                 <span className="dashboard__features-title">¿Qué vas a ver?</span>
@@ -677,6 +688,15 @@ export default function DashboardPage({
                   {exportingPdf ? 'Generando PDF…' : 'Exportar PDF'}
                 </button>
               )}
+              <button
+                type="button"
+                className="dashboard__btn--help-icon"
+                onClick={() => setHelpModalOpen(true)}
+                title="¿Cómo funciona?"
+                aria-label="Ayuda — ¿Cómo funciona?"
+              >
+                ?
+              </button>
               <LiveClock className="dashboard__datetime" />
               <DbStatusBadge status={healthStatus} />
             </div>
@@ -1132,6 +1152,8 @@ export default function DashboardPage({
           </div>
         </div>
       )}
+
+      {helpModalOpen && <HelpModal onClose={() => setHelpModalOpen(false)} />}
     </div>
   )
 }

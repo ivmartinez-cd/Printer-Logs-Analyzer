@@ -20,6 +20,7 @@ export function useModals() {
     content: string
     url?: string | null
   } | null>(null)
+  const [helpModalOpen, setHelpModalOpen] = useState(false)
 
   return {
     logModalOpen,
@@ -42,5 +43,7 @@ export function useModals() {
     setDeleteConfirm,
     solutionModal,
     setSolutionModal,
+    helpModalOpen,
+    setHelpModalOpen,
   }
 }
