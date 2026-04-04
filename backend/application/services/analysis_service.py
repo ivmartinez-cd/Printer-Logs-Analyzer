@@ -28,11 +28,10 @@ class AnalysisService:
 
         incidents: List[Incident] = []
         for code, group in by_code.items():
-            group_sorted = sorted(group, key=lambda e: e.timestamp)
-            start_time = group_sorted[0].timestamp
-            end_time = group_sorted[-1].timestamp
+            start_time = group[0].timestamp
+            end_time = group[-1].timestamp
             severity = max(
-                (e.type.upper() for e in group_sorted),
+                (e.type.upper() for e in group),
                 key=lambda s: SEVERITY_SCORE.get(s, 0),
             )
             if severity not in SEVERITY_SCORE:
@@ -42,11 +41,11 @@ class AnalysisService:
             classification = code
             sds_link = None
             sds_solution_content = None
-            for evt in group_sorted:
+            for evt in group:
                 if evt.code_description and evt.code_description.strip():
                     classification = evt.code_description.strip()
                     break
-            for evt in group_sorted:
+            for evt in group:
                 if evt.code_solution_url and evt.code_solution_url.strip():
                     sds_link = evt.code_solution_url.strip()
                     sds_solution_content = getattr(evt, "code_solution_content", None)
@@ -59,11 +58,11 @@ class AnalysisService:
                     classification=classification,
                     severity=severity,
                     severity_weight=severity_weight,
-                    occurrences=len(group_sorted),
+                    occurrences=len(group),
                     start_time=start_time,
                     end_time=end_time,
-                    counter_range=(group_sorted[0].counter, group_sorted[-1].counter),
-                    events=group_sorted,
+                    counter_range=(group[0].counter, group[-1].counter),
+                    events=group,
                     sds_link=sds_link,
                     sds_solution_content=sds_solution_content,
                 )

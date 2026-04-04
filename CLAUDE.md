@@ -537,6 +537,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: `Math.min(...times)` y `Math.max(...times)` usan spread sobre el array completo; con miles de elementos se supera el límite de argumentos del call stack y el proceso crashea.
 - Fix: reemplazar por `times.reduce((a, b) => Math.min(a, b))` / `reduce((a, b) => Math.max(a, b))` en ambas funciones de `useDateFilter.ts`. El reduce itera sin expandir el stack.
 
+**Perf: sort redundante en `analysis_service.py` dentro de cada grupo**
+- Causa: `analyze()` ordena todos los eventos globalmente (`ordered = sorted(...)`) y luego los distribuye por código en `by_code`. Sin embargo, dentro del loop de grupos se volvía a hacer `group_sorted = sorted(group, ...)`, que era un no-op porque los eventos ya estaban en orden de inserción (timestamp ascendente).
+- Fix: eliminar `group_sorted`; usar `group` directamente. Los accesos a `group[0]` / `group[-1]` y los iteradores son equivalentes con el orden garantizado por `ordered`.
+
 ---
 
 ## Deploy en producción
