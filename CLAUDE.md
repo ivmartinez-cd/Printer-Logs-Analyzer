@@ -436,6 +436,10 @@ Espejo de los modelos Pydantic del backend. Interfaces principales:
 - Causa: `useLiveTime` era un custom hook usado directamente en `DashboardPage` que llamaba `setState` cada 1 s, forzando re-render completo del componente raíz — y recalculando `bucketEventsByHour`, `getTopIncidentsForChart`, `getIncidentTableRows` y `filterEventsByDate` en cada tick.
 - Fix: reemplazar `useLiveTime` por componente `LiveClock` aislado (el ticker vive en su propio árbol). Envolver todos los cálculos pesados en `useMemo` con sus dependencias reales: `filteredEvents`, `filteredIncidents`, `dateRange`, `lastErrorEvent`, `volumeData`, `topCodes`, `incidentRowsBase`, `incidentRows`, `tableRows`.
 
+**Perf: previewLogs y validateLogs se ejecutaban secuencialmente en handleAnalyze**
+- Causa: `await previewLogs(logText)` seguido de `await validateLogs(logText)` — el segundo request no empezaba hasta que terminaba el primero, aunque son completamente independientes.
+- Fix: `Promise.all([previewLogs(logText), validateLogs(logText).catch(...)])` — ambos requests se lanzan en paralelo; la latencia total del análisis es la del más lento en vez de la suma de ambos.
+
 ---
 
 ## Deploy en producción
