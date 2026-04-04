@@ -243,6 +243,7 @@ Componente monolítico (~2000 líneas). Contiene toda la lógica de UI.
 **Filtros y sorting:**
 - Incidents: filtro por severidad, búsqueda por texto, sort por columna (asc/desc)
 - Events: ídem
+- Lista de análisis guardados (`saved-list`): búsqueda en tiempo real por `name` o `equipment_identifier` via `savedListSearch` — se limpia al navegar a la vista
 - Filtro por fecha: cinco modos — "Todo", "Esta semana", "Semana anterior", "Elegir semana" (popover con `input[type="week"]`), "📅" día específico (popover con `input[type="date"]`) — todos dentro del mismo grupo de botones
 
 **Filtro de fecha — estado y tipo:**
