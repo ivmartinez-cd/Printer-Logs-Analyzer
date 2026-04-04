@@ -303,6 +303,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/parser/preview", response_model=ParseLogsResponse, dependencies=[Depends(authenticate)])
     def parse_logs(payload: ParseLogsRequest) -> ParseLogsResponse:
+        if len(payload.logs) > MAX_LOGS_LENGTH:
+            raise HTTPException(status_code=400, detail="logs exceeds max length")
         t0 = time.perf_counter()
         t_parse_start = time.perf_counter()
         report = parser.parse_text(_normalize_log_text(payload.logs))
