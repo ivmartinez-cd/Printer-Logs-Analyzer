@@ -290,7 +290,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
   const [sdsIncident, setSdsIncident] = useState<SdsIncidentData | null>(null)
-  const [eventsTableCollapsed, setEventsTableCollapsed] = useState(true)
+  const [eventsTableCollapsed, setEventsTableCollapsed] = useState(false)
   const [codesNew, setCodesNew] = useState<string[]>([])
   const [addCodeModalCode, setAddCodeModalCode] = useState<string | null>(null)
   const [savingCode, setSavingCode] = useState(false)
@@ -1230,7 +1230,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
               className="section__title section__title--toggle"
               onClick={() => setEventsTableCollapsed((c) => !c)}
             >
-              <span>Últimos errores registrados</span>
+              <span>Eventos del período</span>
               <span className="section__toggle-icon" aria-hidden>{eventsTableCollapsed ? '▶' : '▼'}</span>
             </button>
             {!eventsTableCollapsed && (
