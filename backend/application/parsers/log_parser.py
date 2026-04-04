@@ -64,14 +64,16 @@ class LogParser:
     def _parse_lines(self, lines: Iterable[str]) -> ParserReport:
         events: List[Event] = []
         errors: List[ParserError] = []
+        non_empty_count = 0
 
         for idx, raw_line in enumerate(lines, start=1):
             line = raw_line.strip()
             if not line:
                 continue
 
+            non_empty_count += 1
             try:
-                event = self._parse_line(line, is_first_line=idx == 1)
+                event = self._parse_line(line, is_candidate_header=non_empty_count <= 3)
                 if event:
                     events.append(event)
             except ValueError as exc:
@@ -90,7 +92,7 @@ class LogParser:
 
         return ParserReport(events=events, errors=errors)
 
-    def _parse_line(self, line: str, is_first_line: bool) -> Event | None:
+    def _parse_line(self, line: str, is_candidate_header: bool) -> Event | None:
         """Parse an individual log line (TSV or space-separated with date+time)."""
         # Strip trailing empty fields produced by a trailing tab
         raw_parts = [s.strip() for s in line.split("\t")]
@@ -113,7 +115,7 @@ class LogParser:
                 ]
             else:
                 raise ValueError("Expected 6 tab-separated columns (or 6+ space-separated: type code date time counter firmware [help])")
-        if is_first_line and self._looks_like_header(parts):
+        if is_candidate_header and self._looks_like_header(parts):
             raise ValueError("Header row skipped")
 
         event_type = self._normalize_type(parts[0])

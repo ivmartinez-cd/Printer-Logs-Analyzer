@@ -554,6 +554,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 - Causa: la condición del 20% tenía guard `total_saved_errors > 0`, lo que impedía clasificar como "empeoró" cuando el snapshot base tenía 0 errores y el actual tenía 1+. El loop de `codigos_nuevos` cubría el caso de códigos completamente nuevos con ERROR, pero no el caso de un código preexistente (antes WARNING/INFO) que escala a ERROR.
 - Fix: agregar check explícito `if total_saved_errors == 0 and total_current_errors > 0: return "empeoro"` antes de la condición del 20%.
 
+**Bug: header del log no se detectaba si el texto pegado comenzaba con línea en blanco**
+- Causa: `_parse_lines` pasaba `is_first_line=idx == 1` a `_parse_line`, donde `idx` es el número de línea raw. Si el usuario pegaba el log con una línea en blanco al inicio, el header caía en `idx=2` y `is_first_line=False`, generando un error de parse en lugar de ignorarlo.
+- Fix: reemplazar el flag `is_first_line` por `is_candidate_header` basado en un contador `non_empty_count`. Las primeras 3 líneas no vacías se consideran candidatas a header (`non_empty_count <= 3`). Esto tolera hasta 2 líneas en blanco iniciales sin afectar logs válidos que empiezan antes de la línea 3.
+
 ---
 
 ## Deploy en producción
