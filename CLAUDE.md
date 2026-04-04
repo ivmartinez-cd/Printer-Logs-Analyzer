@@ -105,7 +105,7 @@ Printer-Logs-Analyzer/
     │   ├── hooks/
     │   │   ├── useDateFilter.ts      # Estado de filtro de fecha + helpers puros
     │   │   ├── useAnalysis.ts        # Estado y handlers de análisis (handleAnalyze, etc.)
-    │   │   ├── useModals.ts          # Estado centralizado de los 10 modales
+    │   │   ├── useModals.ts          # Estado centralizado de los 11 modales
     │   │   └── useExportPdf.ts       # Lógica de exportar PDF + refs de secciones DOM
     │   ├── services/api.ts           # Cliente HTTP typed, inyecta x-api-key
     │   ├── types/api.ts              # Interfaces TS que espejean los modelos Pydantic
@@ -378,7 +378,7 @@ Centraliza el estado y los handlers del flujo de análisis. Recibe setters de mo
 
 ### Hook `useModals` (`frontend/src/hooks/useModals.ts`)
 
-Centraliza los 10 estados de modales: `logModalOpen`, `sdsPreModalOpen`, `sdsModalOpen`, `sdsIncident`, `addCodeModalCode`, `editCodeInitial`, `saveIncidentModalOpen`, `compareModalOpen`, `deleteConfirm`, `solutionModal`. Devuelve state + setters para cada uno.
+Centraliza los 11 estados de modales: `logModalOpen`, `sdsPreModalOpen`, `sdsModalOpen`, `sdsIncident`, `addCodeModalCode`, `editCodeInitial`, `saveIncidentModalOpen`, `compareModalOpen`, `deleteConfirm`, `solutionModal`, `helpModalOpen`. Devuelve state + setters para cada uno.
 
 ### Hook `useDateFilter` (`frontend/src/hooks/useDateFilter.ts`)
 
@@ -416,6 +416,7 @@ Centraliza todo lo relacionado con el filtro de fecha:
 - Si **cualquiera** de esos códigos existe en los incidentes del log → `✔ Coincide`, mostrando los códigos encontrados + conteo de eventos.
 - `incidentCodeMatchesSds` sigue soportando sufijo `z` para matching por prefijo (ej. `53.B0.0z` matchea `53.B0.01`, `53.B0.02`, etc.).
 | `SolutionContentModal.tsx` | Muestra contenido HTML de solución guardado; link al URL (puede estar vencido) |
+| `HelpModal.tsx` | Modal de ayuda con 6 secciones: flujo de análisis, KPIs, reglas del diagnóstico automático (con color por nivel), filtros de fecha, catálogo de códigos e incidentes guardados. Sin props de datos — todo el contenido es estático. Se abre con botón "¿Cómo funciona?" en bienvenida y botón "?" circular en el header principal. |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
 ### DiagnosticPanel (`components/DiagnosticPanel.tsx`)
