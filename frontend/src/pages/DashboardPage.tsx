@@ -13,6 +13,7 @@ import {
   Cell,
 } from 'recharts'
 import { previewLogs, validateLogs, upsertErrorCode, createSavedAnalysis, listSavedAnalyses, getSavedAnalysis, compareSavedAnalysis, deleteSavedAnalysis } from '../services/api'
+import type { HealthStatus } from '../services/api'
 import type {
   ParseLogsResponse,
   Event as ApiEvent,
@@ -276,7 +277,18 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   )
 }
 
-export default function DashboardPage({ serverWasCold }: { serverWasCold: boolean }) {
+function DbStatusBadge({ status }: { status: HealthStatus | null }) {
+  if (!status) return null
+  const online = status.db_available
+  return (
+    <span className={`db-status-badge ${online ? 'db-status-badge--ok' : 'db-status-badge--offline'}`}>
+      <span className="db-status-badge__dot" aria-hidden="true" />
+      {online ? 'DB conectada' : 'DB offline · modo local'}
+    </span>
+  )
+}
+
+export default function DashboardPage({ serverWasCold, healthStatus }: { serverWasCold: boolean; healthStatus: HealthStatus | null }) {
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -647,6 +659,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
               </svg>
               <h1 className="dashboard__title">HP Logs Analyzer</h1>
             </div>
+            <DbStatusBadge status={healthStatus} />
           </header>
           <div className="dashboard__welcome-wrap">
             <section className="dashboard__welcome">
@@ -752,6 +765,7 @@ export default function DashboardPage({ serverWasCold }: { serverWasCold: boolea
                 </button>
               )}
               <LiveClock className="dashboard__datetime" />
+              <DbStatusBadge status={healthStatus} />
             </div>
           </header>
 

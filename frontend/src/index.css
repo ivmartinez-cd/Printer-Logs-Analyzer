@@ -105,6 +105,38 @@ body {
   color: #9aa3b2;
 }
 
+.db-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.db-status-badge--ok {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.db-status-badge--offline {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.db-status-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
 .dashboard__parse-errors-banner {
   padding: 10px 16px;
   background: rgba(224, 178, 82, 0.15);

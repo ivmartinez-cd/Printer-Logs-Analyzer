@@ -2,7 +2,7 @@ import { useEffect, useState, Component, ReactNode } from 'react'
 import { ToastProvider } from './contexts/ToastContext'
 import { ToastContainer } from './components/Toast'
 import DashboardPage from './pages/DashboardPage'
-import { pingHealth, pingHealthTimed } from './services/api'
+import { getHealth, type HealthStatus } from './services/api'
 
 const KEEP_ALIVE_INTERVAL_MS = 8 * 60 * 1000 // 8 minutos
 const COLD_START_THRESHOLD_MS = 3000
@@ -55,19 +55,24 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
 function App() {
   const [serverWasCold, setServerWasCold] = useState(false)
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
 
   useEffect(() => {
-    pingHealthTimed().then((ms) => {
-      if (ms > COLD_START_THRESHOLD_MS) setServerWasCold(true)
+    const start = Date.now()
+    getHealth().then((h) => {
+      if (Date.now() - start > COLD_START_THRESHOLD_MS) setServerWasCold(true)
+      setHealthStatus(h)
     })
-    const id = setInterval(pingHealth, KEEP_ALIVE_INTERVAL_MS)
+    const id = setInterval(() => {
+      getHealth().then(setHealthStatus)
+    }, KEEP_ALIVE_INTERVAL_MS)
     return () => clearInterval(id)
   }, [])
 
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <DashboardPage serverWasCold={serverWasCold} />
+        <DashboardPage serverWasCold={serverWasCold} healthStatus={healthStatus} />
         <ToastContainer />
       </ToastProvider>
     </ErrorBoundary>
