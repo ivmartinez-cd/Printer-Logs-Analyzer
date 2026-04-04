@@ -33,6 +33,28 @@ function apiHeaders(): Record<string, string> {
   }
 }
 
+function withTimeout(signal: AbortSignal | undefined, ms: number): AbortSignal {
+  const timeout = AbortSignal.timeout(ms)
+  if (!signal) return timeout
+  return AbortSignal.any([signal, timeout])
+}
+
+async function apiFetch(
+  url: string,
+  options: RequestInit & { signal?: AbortSignal },
+  timeoutMs = 30_000
+): Promise<Response> {
+  const signal = withTimeout(options.signal, timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'TimeoutError') {
+      throw new Error('La solicitud tardó demasiado (>30 s). Verificá tu conexión e intentá de nuevo.')
+    }
+    throw err
+  }
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -45,7 +67,7 @@ export async function previewLogs(
   logs: string,
   signal?: AbortSignal
 ): Promise<ParseLogsResponse> {
-  const res = await fetch(`${API_BASE}/parser/preview`, {
+  const res = await apiFetch(`${API_BASE}/parser/preview`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify({ logs }),
@@ -58,7 +80,7 @@ export async function validateLogs(
   logs: string,
   signal?: AbortSignal
 ): Promise<ValidateLogsResponse> {
-  const res = await fetch(`${API_BASE}/parser/validate`, {
+  const res = await apiFetch(`${API_BASE}/parser/validate`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify({ logs }),
@@ -80,7 +102,7 @@ export async function upsertErrorCode(
   body: ErrorCodeUpsertBody,
   signal?: AbortSignal
 ): Promise<UpsertErrorCodeResult> {
-  const res = await fetch(`${API_BASE}/error-codes/upsert`, {
+  const res = await apiFetch(`${API_BASE}/error-codes/upsert`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify({
@@ -100,7 +122,7 @@ export async function createSavedAnalysis(
   body: SavedAnalysisCreateBody,
   signal?: AbortSignal
 ): Promise<SavedAnalysisSummary> {
-  const res = await fetch(`${API_BASE}/saved-analyses`, {
+  const res = await apiFetch(`${API_BASE}/saved-analyses`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify(body),
@@ -112,7 +134,7 @@ export async function createSavedAnalysis(
 export async function listSavedAnalyses(
   signal?: AbortSignal
 ): Promise<SavedAnalysisSummary[]> {
-  const res = await fetch(`${API_BASE}/saved-analyses`, {
+  const res = await apiFetch(`${API_BASE}/saved-analyses`, {
     method: 'GET',
     headers: apiHeaders(),
     signal,
@@ -124,7 +146,7 @@ export async function getSavedAnalysis(
   id: string,
   signal?: AbortSignal
 ): Promise<SavedAnalysisFull> {
-  const res = await fetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
     method: 'GET',
     headers: apiHeaders(),
     signal,
@@ -137,7 +159,7 @@ export async function compareSavedAnalysis(
   logs: string,
   signal?: AbortSignal
 ): Promise<CompareResponse> {
-  const res = await fetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}/compare`, {
+  const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}/compare`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify({ logs }),
@@ -150,7 +172,7 @@ export async function deleteSavedAnalysis(
   id: string,
   signal?: AbortSignal
 ): Promise<void> {
-  const res = await fetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: apiHeaders(),
     signal,
@@ -162,11 +184,11 @@ export async function deleteSavedAnalysis(
 }
 
 export async function pingHealth(): Promise<void> {
-  await fetch(`${API_BASE}/health`).catch(() => {})
+  await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => {})
 }
 
 export async function pingHealthTimed(): Promise<number> {
   const start = Date.now()
-  await fetch(`${API_BASE}/health`).catch(() => {})
+  await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => {})
   return Date.now() - start
 }

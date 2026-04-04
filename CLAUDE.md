@@ -398,6 +398,7 @@ Cuando `loading` es `true`:
 - Header siempre inyectado: `x-api-key`
 - Error handling: extrae `detail` del JSON de error si está disponible
 - `pingHealth()`: GET `/health` sin auth, falla silenciosamente — usada para keep-alive
+- `apiFetch()`: wrapper interno sobre `fetch` que aplica `AbortSignal.timeout(30 s)` automáticamente; si el caller pasa su propio `signal`, se combinan con `AbortSignal.any`. `TimeoutError` se traduce a mensaje de error en español. Los pings de health usan timeout propio de 10 s.
 
 ### Tipos (`types/api.ts`)
 
@@ -544,6 +545,10 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 **Bug: race condition en escritura del JSON de fallback**
 - Causa: dos requests concurrentes de upsert/create/delete podían leer el archivo JSON, modificarlo en memoria y sobreescribirse mutuamente, perdiendo uno de los cambios.
 - Fix: `threading.Lock()` a nivel de módulo (`_local_write_lock`) en `error_code_repository.py` y `saved_analysis_repository.py`. Serializa el ciclo read-modify-write completo en `_upsert_local`, `_create_local` y `_delete_local`.
+
+**Bug: fetches del frontend sin timeout — requests colgados esperaban indefinidamente**
+- Causa: todos los `fetch()` en `api.ts` no tenían timeout; si el servidor no respondía, el request quedaba pendiente para siempre sin mostrar error al usuario.
+- Fix: `apiFetch()` wrapper interno que aplica `AbortSignal.timeout(30_000)` a cada request; si el caller pasa su propio `signal`, se combinan via `AbortSignal.any`. `DOMException { name: 'TimeoutError' }` se captura y se traduce a mensaje en español. Los pings de health usan timeout propio de 10 s.
 
 ---
 
