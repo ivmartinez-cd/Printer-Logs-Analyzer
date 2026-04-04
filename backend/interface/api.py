@@ -11,9 +11,14 @@ logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(messag
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
@@ -262,6 +267,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         version="0.1.0",
         description="MVP API for ingesting and parsing HP printer logs.",
     )
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -301,7 +308,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         return enriched
 
     @app.post("/parser/preview", response_model=ParseLogsResponse, dependencies=[Depends(authenticate)])
-    def parse_logs(payload: ParseLogsRequest) -> ParseLogsResponse:
+    @limiter.limit("60/minute")
+    def parse_logs(request: Request, payload: ParseLogsRequest) -> ParseLogsResponse:
         if len(payload.logs) > MAX_LOGS_LENGTH:
             raise HTTPException(status_code=400, detail="logs exceeds max length")
         t0 = time.perf_counter()
@@ -378,13 +386,14 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         )
 
     @app.post("/error-codes/upsert", dependencies=[Depends(authenticate)])
-    async def upsert_error_code(body: ErrorCodeUpsertRequest) -> dict:
+    @limiter.limit("30/minute")
+    async def upsert_error_code(request: Request, body: ErrorCodeUpsertRequest) -> dict:
         """Insert or update an error code in the catalog."""
         solution_content: str | None = None
         content_fetch_warning: str | None = None
         if body.solution_url and body.solution_url.strip():
             _validate_ssrf_url(body.solution_url.strip())
-            solution_content = _fetch_solution_content(body.solution_url.strip())
+            solution_content = await _fetch_solution_content(body.solution_url.strip())
             if solution_content is None:
                 content_fetch_warning = "No se pudo obtener el contenido de la página (token vencido o URL inaccesible). Se guardó el link de todas formas."
         ec = error_code_repository.upsert(

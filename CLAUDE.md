@@ -167,6 +167,12 @@ Todos excepto `/health` requieren header `x-api-key`. Sin key o key incorrecta �
 
 **Límites:** logs hasta 2 millones de caracteres.
 
+**Rate limiting** — implementado con `slowapi==0.1.9` (in-memory, por IP):
+- `POST /parser/preview`: 60 requests/minuto por IP
+- `POST /error-codes/upsert`: 30 requests/minuto por IP
+- Respuesta al superar el límite: HTTP 429 con mensaje estándar de slowapi
+- `limiter = Limiter(key_func=get_remote_address)` a nivel de módulo; `app.state.limiter` + `RateLimitExceeded` handler registrados en `get_app()`
+
 ### DB fallback (offline / firewall corporativo)
 
 Cuando PostgreSQL no está disponible, la app continúa funcionando:
