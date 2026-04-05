@@ -1,37 +1,71 @@
+import { useState } from 'react'
 import type { EnrichedEvent as ApiEvent } from '../types/api'
 import { formatDateTime } from '../hooks/useDateFilter'
 
 interface EventsTableProps {
-  tableRows: ApiEvent[]
-  isCollapsed: boolean
-  onToggleCollapse: () => void
-  severityFilter: string
-  onSeverityFilterChange: (value: string) => void
-  searchFilter: string
-  onSearchFilterChange: (value: string) => void
-  sort: { column: string; dir: 'asc' | 'desc' }
-  onSortChange: (column: string) => void
+  events: ApiEvent[]
   onViewSolution: (content: string, url?: string | null) => void
 }
 
-export function EventsTable({
-  tableRows,
-  isCollapsed,
-  onToggleCollapse,
-  severityFilter,
-  onSeverityFilterChange,
-  searchFilter,
-  onSearchFilterChange,
-  sort,
-  onSortChange,
-  onViewSolution,
-}: EventsTableProps) {
+export function EventsTable({ events, onViewSolution }: EventsTableProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [severityFilter, setSeverityFilter] = useState('')
+  const [searchFilter, setSearchFilter] = useState('')
+  const [sort, setSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
+    column: 'timestamp',
+    dir: 'desc',
+  })
+
+  function handleSortChange(column: string) {
+    setSort((s) => ({
+      column,
+      dir: s.column === column && s.dir === 'asc' ? 'desc' : 'asc',
+    }))
+  }
+
+  const filtered = events.filter((evt) => {
+    if (severityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== severityFilter) return false
+    const q = searchFilter.trim().toLowerCase()
+    if (q) {
+      const code = (evt.code ?? '').toLowerCase()
+      const msg = (evt.code_description ?? evt.help_reference ?? '').toLowerCase()
+      if (!code.includes(q) && !msg.includes(q)) return false
+    }
+    return true
+  })
+
+  const { column, dir } = sort
+  const mult = dir === 'asc' ? 1 : -1
+  const tableRows = [...filtered].sort((a, b) => {
+    let cmp: number
+    switch (column) {
+      case 'timestamp':
+        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        break
+      case 'code':
+        cmp = (a.code ?? '').localeCompare(b.code ?? '')
+        break
+      case 'severity':
+        cmp = (a.type ?? '').localeCompare(b.type ?? '')
+        break
+      case 'message':
+        cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(
+          b.code_description ?? b.help_reference ?? ''
+        )
+        break
+      default:
+        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        break
+    }
+    return cmp * mult
+  })
+
   return (
     <section className="section dashboard__table-section dashboard__table-section--collapsible">
       <button
         type="button"
         className="section__title section__title--toggle"
-        onClick={onToggleCollapse}
+        onClick={() => setIsCollapsed((c) => !c)}
       >
         <span>Eventos del período</span>
         <span className="section__toggle-icon" aria-hidden>
@@ -48,7 +82,7 @@ export function EventsTable({
               id="events-severity-filter"
               className="table-toolbar__select"
               value={severityFilter}
-              onChange={(e) => onSeverityFilterChange(e.target.value)}
+              onChange={(e) => setSeverityFilter(e.target.value)}
               aria-label="Filtrar por severidad"
             >
               <option value="">Todo</option>
@@ -65,7 +99,7 @@ export function EventsTable({
               className="table-toolbar__search"
               placeholder="Código o mensaje..."
               value={searchFilter}
-              onChange={(e) => onSearchFilterChange(e.target.value)}
+              onChange={(e) => setSearchFilter(e.target.value)}
               aria-label="Buscar en código o mensaje"
             />
           </div>
@@ -90,7 +124,7 @@ export function EventsTable({
                         <button
                           type="button"
                           className="dashboard-table__sort-header"
-                          onClick={() => onSortChange(key)}
+                          onClick={() => handleSortChange(key)}
                         >
                           {label}
                           <span className="dashboard-table__sort-icon" aria-hidden>

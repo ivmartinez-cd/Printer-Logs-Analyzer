@@ -18,29 +18,19 @@ export type IncidentRow = {
 
 interface IncidentsTableProps {
   incidentRows: IncidentRow[]
-  severityFilter: string
-  onSeverityFilterChange: (value: string) => void
-  searchFilter: string
-  onSearchFilterChange: (value: string) => void
-  sort: { column: string; dir: 'asc' | 'desc' }
-  onSortChange: (column: string) => void
   onEditCode: (code: string, classification: string, severity: string, sdsLink: string) => void
   onViewSolution: (content: string, url?: string | null) => void
 }
 
-export function IncidentsTable({
-  incidentRows,
-  severityFilter,
-  onSeverityFilterChange,
-  searchFilter,
-  onSearchFilterChange,
-  sort,
-  onSortChange,
-  onEditCode,
-  onViewSolution,
-}: IncidentsTableProps) {
+export function IncidentsTable({ incidentRows, onEditCode, onViewSolution }: IncidentsTableProps) {
   const [expandedIncidentIds, setExpandedIncidentIds] = useState<Set<string>>(new Set())
   const [expandedMsgs, setExpandedMsgs] = useState<Set<string>>(new Set())
+  const [severityFilter, setSeverityFilter] = useState('')
+  const [searchFilter, setSearchFilter] = useState('')
+  const [sort, setSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
+    column: 'end_time',
+    dir: 'desc',
+  })
 
   function toggleIncident(id: string) {
     setExpandedIncidentIds((prev) => {
@@ -50,6 +40,52 @@ export function IncidentsTable({
       return next
     })
   }
+
+  function handleSortChange(column: string) {
+    setSort((s) => ({
+      column,
+      dir: s.column === column && s.dir === 'asc' ? 'desc' : 'asc',
+    }))
+  }
+
+  const filtered = incidentRows.filter((inc) => {
+    if (severityFilter && inc.severity.toUpperCase() !== severityFilter) return false
+    const q = searchFilter.trim().toLowerCase()
+    if (q) {
+      const code = (inc.code ?? '').toLowerCase()
+      const classification = (inc.classification ?? '').toLowerCase()
+      if (!code.includes(q) && !classification.includes(q)) return false
+    }
+    return true
+  })
+
+  const { column, dir } = sort
+  const mult = dir === 'asc' ? 1 : -1
+  const sortedRows = [...filtered].sort((a, b) => {
+    let cmp: number
+    switch (column) {
+      case 'code':
+        cmp = (a.code ?? '').localeCompare(b.code ?? '')
+        break
+      case 'classification':
+        cmp = (a.classification ?? '').localeCompare(b.classification ?? '')
+        break
+      case 'severity':
+        cmp = (a.severity ?? '').localeCompare(b.severity ?? '')
+        break
+      case 'occurrences':
+        cmp = a.occurrences - b.occurrences
+        break
+      case 'start_time':
+        cmp = new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        break
+      case 'end_time':
+      default:
+        cmp = new Date(a.end_time).getTime() - new Date(b.end_time).getTime()
+        break
+    }
+    return cmp * mult
+  })
 
   return (
     <section className="section dashboard__table-section">
@@ -62,7 +98,7 @@ export function IncidentsTable({
           id="incidents-severity-filter"
           className="table-toolbar__select"
           value={severityFilter}
-          onChange={(e) => onSeverityFilterChange(e.target.value)}
+          onChange={(e) => setSeverityFilter(e.target.value)}
           aria-label="Filtrar por severidad"
         >
           <option value="">Todo</option>
@@ -79,7 +115,7 @@ export function IncidentsTable({
           className="table-toolbar__search"
           placeholder="Código o clasificación..."
           value={searchFilter}
-          onChange={(e) => onSearchFilterChange(e.target.value)}
+          onChange={(e) => setSearchFilter(e.target.value)}
           aria-label="Buscar en código o clasificación"
         />
       </div>
@@ -107,7 +143,7 @@ export function IncidentsTable({
                     <button
                       type="button"
                       className="dashboard-table__sort-header"
-                      onClick={() => onSortChange(key)}
+                      onClick={() => handleSortChange(key)}
                     >
                       {label}
                       <span className="dashboard-table__sort-icon" aria-hidden>
@@ -121,7 +157,7 @@ export function IncidentsTable({
             </tr>
           </thead>
           <tbody>
-            {incidentRows.map((inc) => {
+            {sortedRows.map((inc) => {
               const isExpanded = expandedIncidentIds.has(inc.id)
               return (
                 <React.Fragment key={inc.id}>

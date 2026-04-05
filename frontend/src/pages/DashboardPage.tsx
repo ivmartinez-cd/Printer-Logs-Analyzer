@@ -320,19 +320,6 @@ export default function DashboardPage({
     setDayPickerOpen,
     dayPickerRef,
   } = dateFilter
-  const [eventsTableCollapsed, setEventsTableCollapsed] = useState(false)
-  const [incidentsSeverityFilter, setIncidentsSeverityFilter] = useState<string>('')
-  const [incidentsSearchFilter, setIncidentsSearchFilter] = useState('')
-  const [eventsSeverityFilter, setEventsSeverityFilter] = useState<string>('')
-  const [eventsSearchFilter, setEventsSearchFilter] = useState('')
-  const [incidentsSort, setIncidentsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
-    column: 'end_time',
-    dir: 'desc',
-  })
-  const [eventsSort, setEventsSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
-    column: 'timestamp',
-    dir: 'desc',
-  })
   const [viewMode, setViewMode] = useState<'dashboard' | 'saved-list' | 'saved-detail'>('dashboard')
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
   const [savedListSearch, setSavedListSearch] = useState('')
@@ -397,12 +384,7 @@ export default function DashboardPage({
   } = useAnalysis({
     setLogFileName,
     resetDateFilter: dateFilter.reset,
-    resetFilters: () => {
-      setIncidentsSeverityFilter('')
-      setIncidentsSearchFilter('')
-      setEventsSeverityFilter('')
-      setEventsSearchFilter('')
-    },
+    resetFilters: () => {},
     setLogModalOpen,
     setSdsPreModalOpen,
     setAddCodeModalCode,
@@ -445,88 +427,10 @@ export default function DashboardPage({
     () => getTopIncidentsForChart(incidents, events, activeFilter, 5),
     [incidents, events, activeFilter]
   )
-  const incidentRowsBase = useMemo(
+  const incidentRows = useMemo(
     () => getIncidentTableRows(incidents, events, activeFilter),
     [incidents, events, activeFilter]
   )
-  const incidentRows = useMemo(() => {
-    const filtered = incidentRowsBase.filter((inc) => {
-      if (incidentsSeverityFilter && inc.severity.toUpperCase() !== incidentsSeverityFilter)
-        return false
-      const q = incidentsSearchFilter.trim().toLowerCase()
-      if (q) {
-        const code = (inc.code ?? '').toLowerCase()
-        const classification = (inc.classification ?? '').toLowerCase()
-        if (!code.includes(q) && !classification.includes(q)) return false
-      }
-      return true
-    })
-    const { column, dir } = incidentsSort
-    const mult = dir === 'asc' ? 1 : -1
-    return [...filtered].sort((a, b) => {
-      let cmp: number
-      switch (column) {
-        case 'code':
-          cmp = (a.code ?? '').localeCompare(b.code ?? '')
-          break
-        case 'classification':
-          cmp = (a.classification ?? '').localeCompare(b.classification ?? '')
-          break
-        case 'severity':
-          cmp = (a.severity ?? '').localeCompare(b.severity ?? '')
-          break
-        case 'occurrences':
-          cmp = a.occurrences - b.occurrences
-          break
-        case 'start_time':
-          cmp = new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-          break
-        case 'end_time':
-        default:
-          cmp = new Date(a.end_time).getTime() - new Date(b.end_time).getTime()
-          break
-      }
-      return cmp * mult
-    })
-  }, [incidentRowsBase, incidentsSeverityFilter, incidentsSearchFilter, incidentsSort])
-  const tableRows = useMemo(() => {
-    const { column, dir } = eventsSort
-    const mult = dir === 'asc' ? 1 : -1
-    const filtered = filteredEvents.filter((evt) => {
-      if (eventsSeverityFilter && (evt.type?.toUpperCase() ?? 'INFO') !== eventsSeverityFilter)
-        return false
-      const q = eventsSearchFilter.trim().toLowerCase()
-      if (q) {
-        const code = (evt.code ?? '').toLowerCase()
-        const msg = (evt.code_description ?? evt.help_reference ?? '').toLowerCase()
-        if (!code.includes(q) && !msg.includes(q)) return false
-      }
-      return true
-    })
-    return [...filtered].sort((a, b) => {
-      let cmp: number
-      switch (column) {
-        case 'timestamp':
-          cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          break
-        case 'code':
-          cmp = (a.code ?? '').localeCompare(b.code ?? '')
-          break
-        case 'severity':
-          cmp = (a.type ?? '').localeCompare(b.type ?? '')
-          break
-        case 'message':
-          cmp = (a.code_description ?? a.help_reference ?? '').localeCompare(
-            b.code_description ?? b.help_reference ?? ''
-          )
-          break
-        default:
-          cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          break
-      }
-      return cmp * mult
-    })
-  }, [filteredEvents, eventsSeverityFilter, eventsSearchFilter, eventsSort])
 
   return (
     <div className="dashboard">
@@ -905,17 +809,6 @@ export default function DashboardPage({
                   <section ref={incidentsTableRef}>
                     <IncidentsTable
                       incidentRows={incidentRows}
-                      severityFilter={incidentsSeverityFilter}
-                      onSeverityFilterChange={setIncidentsSeverityFilter}
-                      searchFilter={incidentsSearchFilter}
-                      onSearchFilterChange={setIncidentsSearchFilter}
-                      sort={incidentsSort}
-                      onSortChange={(col) =>
-                        setIncidentsSort((s) => ({
-                          column: col,
-                          dir: s.column === col && s.dir === 'asc' ? 'desc' : 'asc',
-                        }))
-                      }
                       onEditCode={(code, classification, severity, solutionUrl) =>
                         setEditCodeInitial({
                           code,
@@ -930,20 +823,7 @@ export default function DashboardPage({
 
                   {/* Fila 4 — Tabla de eventos recientes (colapsable) */}
                   <EventsTable
-                    tableRows={tableRows}
-                    isCollapsed={eventsTableCollapsed}
-                    onToggleCollapse={() => setEventsTableCollapsed((c) => !c)}
-                    severityFilter={eventsSeverityFilter}
-                    onSeverityFilterChange={setEventsSeverityFilter}
-                    searchFilter={eventsSearchFilter}
-                    onSearchFilterChange={setEventsSearchFilter}
-                    sort={eventsSort}
-                    onSortChange={(col) =>
-                      setEventsSort((s) => ({
-                        column: col,
-                        dir: s.column === col && s.dir === 'asc' ? 'desc' : 'asc',
-                      }))
-                    }
+                    events={filteredEvents}
                     onViewSolution={(content, url) => setSolutionModal({ content, url })}
                   />
 
