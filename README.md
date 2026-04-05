@@ -1,5 +1,7 @@
 # HP Logs Analyzer
 
+![CI](https://github.com/ivmartinez-cd/Printer-Logs-Analyzer/actions/workflows/ci.yml/badge.svg)
+
 Herramienta web para analizar logs de impresoras HP. Parsea el archivo de log exportado desde el portal HP, agrupa eventos por código de error, calcula severidades y presenta KPIs, gráficos y tablas filtrables.
 
 **Producción:** frontend en [Vercel](https://printer-logs-analyzer.vercel.app) · backend en [Render](https://printer-logs-analyzer.onrender.com)

@@ -1,0 +1,71 @@
+# CI — HP Logs Analyzer
+#
+# Paso 0 — hallazgos de exploración:
+#   - Python: sin indicador explícito (.python-version, pyproject.toml) → 3.11
+#   - Node: sin engines.node ni .nvmrc → 20 LTS
+#   - package-lock.json: existe en raíz (solo concurrently) y en frontend/.
+#     El cache apunta solo a frontend/package-lock.json (el único relevante para CI).
+#   - Root npm ci: innecesario. Los scripts lint/typecheck/test:frontend usan
+#     `npm run X --prefix frontend` y no dependen de node_modules en la raíz.
+#   - Backend tests: no requieren DB_URL ni API_KEY — el proyecto usa fallback
+#     JSON automáticamente cuando Neon no está disponible.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  frontend:
+    name: Frontend (lint + typecheck + test + build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:frontend
+
+      - name: Build
+        run: cd frontend && npm run build
+
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Test
+        run: python -m pytest backend/tests/ -v
