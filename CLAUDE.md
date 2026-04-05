@@ -46,7 +46,7 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (35 tests)
+npm run test:frontend  # vitest run (70 tests: 35 hooks/lógica + 35 componentes)
 npm run test:backend   # pytest backend/tests/ -v (49 tests)
 ```
 
@@ -101,7 +101,7 @@ Printer-Logs-Analyzer/
     ├── .prettierignore           # Excluye dist/, node_modules/, *.tsbuildinfo, vite-env.d.ts
     ├── eslint.config.js          # ESLint flat config (JS + TypeScript + react-hooks + eslint-config-prettier)
     ├── vite.config.ts            # Vite: plugin react, manualChunks
-    ├── vitest.config.ts          # Vitest: environment node, tests en src/__tests__/
+    ├── vitest.config.ts          # Vitest: environment node por default; setupFiles con jest-dom; incluye .test.tsx
     ├── src/
     │   ├── pages/DashboardPage.tsx   # UI principal (~970 líneas)
     │   ├── components/               # Modales, paneles, tablas y gráficos
@@ -113,7 +113,17 @@ Printer-Logs-Analyzer/
     │   ├── services/api.ts           # Cliente HTTP typed, inyecta x-api-key
     │   ├── types/api.ts              # Interfaces TS que espejean los modelos Pydantic
     │   └── contexts/ToastContext.tsx # Notificaciones globales
-    ├── src/__tests__/            # vitest — 35 tests (useDateFilter, SDS matching)
+    ├── src/__tests__/            # vitest — 70 tests
+    │   ├── useDateFilter.test.ts         # Tests de hooks puros (environment: node)
+    │   ├── sdsMatching.test.ts           # Tests de lógica SDS matching (environment: node)
+    │   ├── setup.ts                      # Import de @testing-library/jest-dom/vitest (matchers)
+    │   ├── fixtures/events.ts            # mockEvent, mockIncident, mockIncidentRow, mockEvents, mockIncidents
+    │   └── components/                   # Tests de componentes (// @vitest-environment jsdom por archivo)
+    │       ├── KpiCards.test.tsx
+    │       ├── DashboardHeader.test.tsx
+    │       ├── EventsTable.test.tsx
+    │       ├── IncidentsTable.test.tsx
+    │       └── DiagnosticPanel.test.tsx
     └── package.json              # React 18.3, Recharts 2.13, Vite 5.4, jsPDF 4.2, html2canvas 1.4, Prettier 3.8
 ```
 
@@ -494,6 +504,17 @@ Configurado con `eslint-config-prettier` para desactivar las reglas de ESLint qu
 - **`.prettierignore`**: excluye `dist/`, `node_modules/`, `*.tsbuildinfo` y `src/vite-env.d.ts` (la directiva `/// <reference>` en ese archivo es eliminada por Prettier)
 - **Scripts**: `npm run format` (write) y `npm run format:check` (CI) — ambos desde raíz o `frontend/`
 - **Nota**: `src/vite-env.d.ts` debe estar en `.prettierignore` siempre. Si Prettier lo vacía, `tsc -b` falla con errores de `ImportMeta.env` y `./index.css`.
+
+### Tests de componentes (`src/__tests__/components/`)
+
+Setup de testing para componentes React con jsdom:
+
+- **`@testing-library/react`**, **`@testing-library/user-event`**, **`@testing-library/jest-dom`**, **`@testing-library/dom`**, **`jsdom`** — instalados como devDependencies.
+- **`vitest.config.ts`** importa `@vitejs/plugin-react` (necesario para JSX en tests). `environment: 'node'` sigue siendo el default para los tests de hooks puros.
+- **Por-archivo jsdom**: cada test de componente declara `// @vitest-environment jsdom` como primera línea.
+- **`afterEach(cleanup)`**: se llama explícitamente en cada archivo de tests de componentes — el auto-cleanup de @testing-library no se activa en todos los entornos vitest.
+- **`fixtures/events.ts`**: helpers `mockEvent`, `mockIncident`, `mockIncidentRow` + arrays `mockEvents`, `mockIncidents` listos para reusar.
+- Los tests de componentes **no** usan `getByText` con patrones que puedan matchear múltiples elementos del DOM (padre e hijo). Se prefiere `getByRole`, `querySelector` por clase CSS, o `getAllByText` con `.length`.
 
 ### Build
 
