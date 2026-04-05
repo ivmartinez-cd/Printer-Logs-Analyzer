@@ -331,7 +331,7 @@ Los cinco botones van agrupados en un único bloque con borde exterior y divisor
 1. **Estado de errores** — conteo `ERROR · WARNING · INFO` de incidentes filtrados
 2. **Incidencias Activas** — `filteredIncidents.length`
 3. **Último error crítico** — código del `Event` con `type=ERROR` más reciente en `filteredEvents`; muestra código en rojo + fecha/hora en el subtítulo; "Sin errores" en verde si no hay ningún ERROR
-4. **Tasa de errores** — `ERRORs ÷ (max_contador − min_contador)` del período filtrado. Muestra `"1 c/N pág."` con subtítulo de páginas en el período; `"Sin errores"` (verde) si no hay ERRORs; `"—"` si el log no tiene datos de contador suficientes (menos de 2 valores). Usa `reduce` en lugar de spread para evitar stack overflow con logs grandes.
+4. **Tasa de errores** — `ERRORs ÷ (max_contador − min_contador)` del período filtrado. Solo cuenta eventos `type=ERROR` (WARNING e INFO excluidos). Muestra `"1 c/N pág."` con subtítulo `"<código más frecuente> · N pág. en el período"`; `"Sin errores"` (verde) si no hay ERRORs; `"—"` si el log no tiene datos de contador suficientes (menos de 2 valores). El código ERROR más frecuente se determina contando frecuencias con `reduce` sobre los eventos ERROR. Usa `reduce` en lugar de spread para evitar stack overflow con logs grandes.
 
 El KPI "Último error crítico" usa `filteredEvents` (respeta el filtro de fecha activo), no requiere endpoint nuevo.
 

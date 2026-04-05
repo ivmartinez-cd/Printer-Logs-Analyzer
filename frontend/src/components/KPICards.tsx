@@ -23,21 +23,30 @@ function computeErrorRate(filteredEvents: ApiEvent[]): {
   const minC = counters.reduce((a, b) => Math.min(a, b))
   const maxC = counters.reduce((a, b) => Math.max(a, b))
   const counterRange = maxC - minC
-  const sub = `${counterRange.toLocaleString('es-AR')} páginas en el período`
+  const pagesLabel = `${counterRange.toLocaleString('es-AR')} pág. en el período`
 
   if (counterRange === 0) {
     return { label: '—', sub: 'sin rango de contador' }
   }
 
-  const errorCount = filteredEvents.filter((e) => e.type.toUpperCase() === 'ERROR').length
+  const errorEvents = filteredEvents.filter((e) => e.type.toUpperCase() === 'ERROR')
+  const errorCount = errorEvents.length
 
   if (errorCount === 0) {
-    return { label: 'Sin errores', labelColor: 'var(--color-success, #22c55e)', sub }
+    return { label: 'Sin errores', labelColor: 'var(--color-success, #22c55e)', sub: pagesLabel }
   }
+
+  // Código ERROR más frecuente
+  const freq: Record<string, number> = {}
+  for (const e of errorEvents) {
+    freq[e.code] = (freq[e.code] ?? 0) + 1
+  }
+  const topCode = Object.entries(freq).reduce((a, b) => (b[1] > a[1] ? b : a))[0]
 
   const pagesPerError = Math.round(counterRange / errorCount)
   const label =
     pagesPerError >= 1 ? `1 c/${pagesPerError.toLocaleString('es-AR')} pág.` : `${errorCount} err.`
+  const sub = `${topCode} · ${pagesLabel}`
 
   return { label, sub }
 }
