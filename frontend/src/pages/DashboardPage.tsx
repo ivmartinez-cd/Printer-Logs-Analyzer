@@ -30,6 +30,7 @@ import { EventsTable } from '../components/EventsTable'
 import { IncidentsTable, type IncidentRow } from '../components/IncidentsTable'
 import { IncidentsChart } from '../components/IncidentsChart'
 import { TopErrorsChart } from '../components/TopErrorsChart'
+import { DashboardHeader } from '../components/DashboardHeader'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useModals } from '../hooks/useModals'
 import { useAnalysis } from '../hooks/useAnalysis'
@@ -43,23 +44,6 @@ import {
   type DateFilter,
 } from '../hooks/useDateFilter'
 
-function LiveClock({ className, short = false }: { className?: string; short?: boolean }) {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  return (
-    <time className={className} dateTime={now.toISOString()}>
-      {now.toLocaleString(
-        undefined,
-        short
-          ? { dateStyle: 'short', timeStyle: 'short' }
-          : { dateStyle: 'long', timeStyle: 'medium' }
-      )}
-    </time>
-  )
-}
 
 function getIncidentTableRows(
   incidents: ApiIncident[],
@@ -532,79 +516,24 @@ export default function DashboardPage({
         </div>
       ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
-          <header className="dashboard__header">
-            <div className="dashboard__title-group">
-              <svg
-                className="dashboard__title-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-              <h1 className="dashboard__title">HP Logs Analyzer</h1>
-              {logFileName && <span className="dashboard__file-name">{logFileName}</span>}
-            </div>
-            <div className="dashboard__header-actions">
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--secondary"
-                onClick={() => {
-                  setViewMode('saved-list')
-                  setSavedList(null)
-                  setSavedListSearch('')
-                  listSavedAnalyses()
-                    .then(setSavedList)
-                    .catch(() => setSavedList([]))
-                }}
-              >
-                Incidentes guardados
-              </button>
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--primary dashboard__btn--header-cta"
-                onClick={() => setLogModalOpen(true)}
-              >
-                Analizar otro log
-              </button>
-              {result && (
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--secondary"
-                  onClick={() => setSaveIncidentModalOpen(true)}
-                >
-                  Guardar incidente
-                </button>
-              )}
-              {result && (
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--secondary"
-                  onClick={() => handleExportPDF(!!result)}
-                  disabled={exportingPdf}
-                >
-                  {exportingPdf ? 'Generando PDF…' : 'Exportar PDF'}
-                </button>
-              )}
-              <button
-                type="button"
-                className="dashboard__btn--help-icon"
-                onClick={() => setHelpModalOpen(true)}
-                title="¿Cómo funciona?"
-                aria-label="Ayuda — ¿Cómo funciona?"
-              >
-                ?
-              </button>
-              <LiveClock className="dashboard__datetime" />
-              <DbStatusBadge status={healthStatus} />
-            </div>
-          </header>
+          <DashboardHeader
+            logFileName={logFileName}
+            healthStatus={healthStatus}
+            hasResult={!!result}
+            exportingPdf={exportingPdf}
+            onOpenSavedList={() => {
+              setViewMode('saved-list')
+              setSavedList(null)
+              setSavedListSearch('')
+              listSavedAnalyses()
+                .then(setSavedList)
+                .catch(() => setSavedList([]))
+            }}
+            onAnalyzeNew={() => setLogModalOpen(true)}
+            onSaveIncident={() => setSaveIncidentModalOpen(true)}
+            onExportPdf={() => handleExportPDF(!!result)}
+            onHelp={() => setHelpModalOpen(true)}
+          />
 
           {viewMode === 'saved-list' && (
             <SavedAnalysisList
