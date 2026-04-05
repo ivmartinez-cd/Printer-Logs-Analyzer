@@ -685,6 +685,26 @@ jsPDF y html2canvas se importan con `import()` dinámico dentro de `handleExport
 
 ---
 
+## CI — GitHub Actions
+
+Workflow en `.github/workflows/ci.yml`. Se dispara en cada push y PR a `main`/`master`.
+
+**Dos jobs paralelos en `ubuntu-latest`:**
+
+| Job | Pasos |
+|-----|-------|
+| `frontend` | checkout → Node 20 → `cd frontend && npm ci` → lint → typecheck → test → build |
+| `backend` | checkout → Python 3.11 → `pip install -r backend/requirements.txt` → pytest |
+
+**Notas de implementación:**
+- Actions en `@v6`: `actions/checkout@v6`, `actions/setup-node@v6`, `actions/setup-python@v6` (soporte nativo Node 24).
+- Cache activo: `frontend/package-lock.json` para npm, `backend/requirements.txt` para pip.
+- Root `npm ci` omitido — los scripts `lint/typecheck/test:frontend` usan `--prefix frontend` y no requieren `node_modules` en la raíz.
+- Backend sin `DB_URL` — los tests usan fallback JSON automáticamente; no se usan secrets de GitHub.
+- No hay deploy automático en el workflow — Vercel y Render tienen sus propios auto-deploys.
+
+---
+
 ## Deploy en producción
 
 ### URLs
