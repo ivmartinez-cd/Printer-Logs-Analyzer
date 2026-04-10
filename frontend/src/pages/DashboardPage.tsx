@@ -22,6 +22,7 @@ import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
 import { HelpModal } from '../components/HelpModal'
 import { DiagnosticPanel } from '../components/DiagnosticPanel'
+import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
 import { DateFilterBar } from '../components/DateFilterBar'
 import { SavedAnalysisList } from '../components/SavedAnalysisList'
 import { SavedAnalysisDetail } from '../components/SavedAnalysisDetail'
@@ -348,8 +349,15 @@ export default function DashboardPage({
     setHelpModalOpen,
   } = modals
 
-  const { exportingPdf, handleExportPDF, kpisRef, diagnosticRef, barChartRef, incidentsTableRef } =
-    useExportPdf(logFileName)
+  const {
+    exportingPdf,
+    handleExportPDF,
+    aiDiagnosticRef,
+    kpisRef,
+    diagnosticRef,
+    barChartRef,
+    incidentsTableRef,
+  } = useExportPdf(logFileName)
 
   const {
     loading,
@@ -713,6 +721,9 @@ export default function DashboardPage({
                   <div ref={diagnosticRef}>
                     <DiagnosticPanel events={filteredEvents} />
                   </div>
+
+                  {/* Diagnóstico con IA — llama a /analysis/ai-diagnose on demand */}
+                  <AIDiagnosticPanel ref={aiDiagnosticRef} result={result} />
 
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">

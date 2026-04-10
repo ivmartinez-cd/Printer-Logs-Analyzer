@@ -835,6 +835,158 @@ body {
   color: #86efac;
 }
 
+/* ── AI Diagnostic Panel ───────────────────────────────────────── */
+.ai-diagnostic-panel {
+  background: #111827;
+  border: 1px solid #2d3a52;
+  border-left: 3px solid #8b5cf6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ai-diagnostic-panel__header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #1e2a3a;
+}
+
+.ai-diagnostic-panel__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #a5b4c8;
+}
+
+/* Estado inicial: CTA centrado */
+.ai-diagnostic-panel__cta-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.ai-diagnostic-panel__button-description {
+  font-size: 0.8125rem;
+  color: #6b7a8e;
+  margin: 0;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.ai-diagnostic-panel__button {
+  padding: 9px 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: #7c3aed;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ai-diagnostic-panel__button:hover {
+  background: #6d28d9;
+}
+
+.ai-diagnostic-panel__button:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
+/* Estado de carga */
+.ai-diagnostic-panel__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  font-size: 0.8125rem;
+  color: #a5b4c8;
+}
+
+/* Spinner reutilizando la animación @keyframes spin ya definida */
+.ai-diagnostic-panel__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Estado de error */
+.ai-diagnostic-panel__error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 16px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #fca5a5;
+  flex-wrap: wrap;
+}
+
+.ai-diagnostic-panel__retry-button {
+  padding: 5px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #e6e8ee;
+  background: transparent;
+  border: 1px solid #3d4452;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-diagnostic-panel__retry-button:hover {
+  background: #232734;
+  border-color: #4c8bf5;
+}
+
+.ai-diagnostic-panel__retry-button:focus-visible {
+  outline: 2px solid #4c8bf5;
+  outline-offset: 2px;
+}
+
+/* Estado de éxito: contenido del diagnóstico */
+.ai-diagnostic-panel__diagnosis {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-diagnostic-panel__diagnosis-section {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #c9d1de;
+}
+
+.ai-diagnostic-panel__diagnosis-label {
+  font-weight: 700;
+  color: #e6e8ee;
+}
+
+/* Fallback cuando el parseo de etiquetas falla */
+.ai-diagnostic-panel__diagnosis-raw {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #c9d1de;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  font-family: inherit;
+}
+
 /* ── KPIs ──────────────────────────────────────────────────────── */
 .kpis {
   display: grid;

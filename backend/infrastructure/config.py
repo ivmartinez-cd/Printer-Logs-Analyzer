@@ -22,6 +22,7 @@ class Settings(BaseModel):
 
     db_url: str = Field(..., alias="DB_URL")
     api_key: str = Field("dev", alias="API_KEY")
+    anthropic_api_key: Optional[str] = Field(None, alias="ANTHROPIC_API_KEY")
 
     @classmethod
     def from_env(cls) -> "Settings":

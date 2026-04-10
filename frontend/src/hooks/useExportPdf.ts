@@ -3,6 +3,7 @@ import { useToast } from '../contexts/ToastContext'
 
 export function useExportPdf(logFileName: string | null) {
   const [exportingPdf, setExportingPdf] = useState(false)
+  const aiDiagnosticRef = useRef<HTMLDivElement>(null)
   const kpisRef = useRef<HTMLDivElement>(null)
   const diagnosticRef = useRef<HTMLDivElement>(null)
   const barChartRef = useRef<HTMLDivElement>(null)
@@ -37,9 +38,20 @@ export function useExportPdf(logFileName: string | null) {
 
       let yPos = margin + 28
 
-      const sections = [kpisRef, diagnosticRef, barChartRef, incidentsTableRef]
-      for (const ref of sections) {
-        const el = ref.current as HTMLElement | null
+      // El panel de IA va primero en el PDF solo si el diagnóstico ya fue generado.
+      // Se detecta buscando el contenedor .ai-diagnostic-panel__diagnosis como descendiente.
+      const aiEl = aiDiagnosticRef.current as HTMLElement | null
+      const aiHasDiagnosis = !!aiEl?.querySelector('.ai-diagnostic-panel__diagnosis')
+
+      const sections: Array<HTMLElement | null> = [
+        aiHasDiagnosis ? aiEl : null,
+        kpisRef.current,
+        diagnosticRef.current,
+        barChartRef.current,
+        incidentsTableRef.current,
+      ]
+
+      for (const el of sections) {
         if (!el) continue
         const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false })
         const imgData = canvas.toDataURL('image/png')
@@ -64,5 +76,13 @@ export function useExportPdf(logFileName: string | null) {
     }
   }
 
-  return { exportingPdf, handleExportPDF, kpisRef, diagnosticRef, barChartRef, incidentsTableRef }
+  return {
+    exportingPdf,
+    handleExportPDF,
+    aiDiagnosticRef,
+    kpisRef,
+    diagnosticRef,
+    barChartRef,
+    incidentsTableRef,
+  }
 }
