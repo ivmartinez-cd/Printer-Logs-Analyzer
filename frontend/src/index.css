@@ -2023,7 +2023,7 @@ button.dashboard-table__solution-link {
 .date-range-picker__popover {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
   z-index: 200;
   background: #1a1d27;
   border: 1px solid #3d4452;
