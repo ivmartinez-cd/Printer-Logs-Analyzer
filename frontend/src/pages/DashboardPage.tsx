@@ -109,37 +109,6 @@ function getTopIncidentsForChart(
     .map((x) => ({ name: x.inc.code, count: x.countInWindow, severity: x.inc.severity }))
 }
 
-function bucketEventsByHour(
-  events: ApiEvent[],
-  selectedDate: DateFilter
-): { time: string; ERROR: number; WARNING: number; INFO: number }[] {
-  const window = getWindowForDate(events, selectedDate)
-  if (!window) return []
-  const { minTs, maxTs } = window
-  const hourMs = 60 * 60 * 1000
-  const numHours = Math.ceil((maxTs - minTs) / hourMs) || 1
-  const buckets = new Map<number, { ERROR: number; WARNING: number; INFO: number }>()
-  for (let h = 0; h < numHours; h++) {
-    buckets.set(minTs + h * hourMs, { ERROR: 0, WARNING: 0, INFO: 0 })
-  }
-  for (const e of events) {
-    const t = new Date(e.timestamp).getTime()
-    if (Number.isNaN(t) || t < minTs || t > maxTs) continue
-    const hourIndex = Math.min(numHours - 1, Math.floor((t - minTs) / hourMs))
-    const bucketStart = minTs + hourIndex * hourMs
-    const bucket = buckets.get(bucketStart)!
-    const sev = (e.type ?? '').toUpperCase()
-    if (sev === 'ERROR') bucket.ERROR++
-    else if (sev === 'WARNING') bucket.WARNING++
-    else bucket.INFO++
-  }
-  return Array.from(buckets.entries())
-    .sort(([a], [b]) => a - b)
-    .map(([bucketStart, counts]) => ({
-      time: new Date(bucketStart).toISOString().slice(0, 13) + ':00:00.000Z',
-      ...counts,
-    }))
-}
 
 interface LogPasteModalProps {
   loading: boolean
@@ -404,7 +373,6 @@ export default function DashboardPage({
         minute: '2-digit',
       })
     : null
-  const volumeData = useMemo(() => bucketEventsByHour(events, activeFilter), [events, activeFilter])
   const topCodes = useMemo(
     () => getTopIncidentsForChart(incidents, events, activeFilter, 5),
     [incidents, events, activeFilter]
@@ -739,7 +707,7 @@ export default function DashboardPage({
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">
                     <IncidentsChart
-                      volumeData={volumeData}
+                      events={events}
                       activeFilter={activeFilter}
                       visibleSeverities={visibleSeverities}
                       onSeverityToggle={(sev) =>
