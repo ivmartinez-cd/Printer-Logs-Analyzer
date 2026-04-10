@@ -718,6 +718,24 @@ export default function DashboardPage({
                   {/* Diagnóstico con IA — llama a /analysis/ai-diagnose on demand */}
                   <AIDiagnosticPanel ref={aiDiagnosticRef} result={result} />
 
+                  {/* SDS Engineering Incident — colapsado por defecto */}
+                  {sdsIncident && (
+                    <SDSIncidentPanel
+                      sdsIncident={sdsIncident}
+                      incidentRows={incidentRows.map((r) => ({
+                        code: r.code,
+                        classification: r.classification || r.code,
+                      }))}
+                      incidentsFull={
+                        result?.incidents?.map((inc) => ({
+                          code: inc.code,
+                          end_time: inc.end_time,
+                          occurrences: inc.occurrences,
+                        })) ?? []
+                      }
+                    />
+                  )}
+
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">
                     <IncidentsChart
@@ -759,23 +777,6 @@ export default function DashboardPage({
                     events={filteredEvents}
                     onViewSolution={(content, url) => setSolutionModal({ content, url })}
                   />
-
-                  {sdsIncident && (
-                    <SDSIncidentPanel
-                      sdsIncident={sdsIncident}
-                      incidentRows={incidentRows.map((r) => ({
-                        code: r.code,
-                        classification: r.classification || r.code,
-                      }))}
-                      incidentsFull={
-                        result?.incidents?.map((inc) => ({
-                          code: inc.code,
-                          end_time: inc.end_time,
-                          occurrences: inc.occurrences,
-                        })) ?? []
-                      }
-                    />
-                  )}
                 </>
               )}
             </>
