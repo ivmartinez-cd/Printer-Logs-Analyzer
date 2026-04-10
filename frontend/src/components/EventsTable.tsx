@@ -8,7 +8,7 @@ interface EventsTableProps {
 }
 
 export function EventsTable({ events, onViewSolution }: EventsTableProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const [severityFilter, setSeverityFilter] = useState('')
   const [searchFilter, setSearchFilter] = useState('')
   const [sort, setSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
