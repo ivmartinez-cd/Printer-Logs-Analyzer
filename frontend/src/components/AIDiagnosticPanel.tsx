@@ -9,10 +9,16 @@ interface AIDiagnosticPanelProps {
 // Parsea el texto "DIAGNÓSTICO: ...\nACCIÓN: ...\nPRIORIDAD: ..." en secciones.
 // Retorna null si el formato no matchea (fallback a texto crudo).
 function parseDiagnosis(text: string): { label: string; content: string }[] | null {
+  // Strippear asteriscos dobles de cada línea por si el modelo usa markdown
+  // a pesar de la instrucción explícita de no hacerlo
+  const sanitized = text
+    .split('\n')
+    .map((line) => line.replace(/\*\*/g, '').trim())
+    .join('\n')
   const regex = /(DIAGNÓSTICO|ACCIÓN|PRIORIDAD):\s*([\s\S]*?)(?=\n(?:DIAGNÓSTICO|ACCIÓN|PRIORIDAD):|$)/g
   const sections: { label: string; content: string }[] = []
   let match: RegExpExecArray | null
-  while ((match = regex.exec(text)) !== null) {
+  while ((match = regex.exec(sanitized)) !== null) {
     sections.push({ label: match[1], content: match[2].trim() })
   }
   // Necesitamos al menos DIAGNÓSTICO y ACCIÓN para considerar el parseo exitoso
