@@ -250,7 +250,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y gráficos |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |
-| `DateFilterBar.tsx` | 5 botones de filtro de fecha (Todo / semanas / día específico) |
+| `DateRangePicker.tsx` | Picker de rango de fechas con presets (hoy, semana, mes, N días) y DayPicker interactivo; popover alineado a `right: 0` para no salirse del viewport |
 | `SavedAnalysisList.tsx` | Lista análisis guardados con búsqueda y evolución por equipo |
 | `EquipmentTimeline.tsx` | LineChart evolución de errores por equipo entre snapshots |
 | `SavedAnalysisDetail.tsx` | Detalle snapshot con tabla de incidentes y comparación |

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   BarChart,
   Bar,
@@ -20,14 +21,65 @@ interface TopErrorsChartProps {
 }
 
 export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
+  const [activeSeverities, setActiveSeverities] = useState<Set<string>>(new Set(['ERROR']))
+
+  function handleToggle(severity: string) {
+    setActiveSeverities((prev) => {
+      const next = new Set(prev)
+      if (next.has(severity)) {
+        next.delete(severity)
+      } else {
+        next.add(severity)
+      }
+      return next
+    })
+  }
+
+  const filteredCodes = topCodes.filter((c) =>
+    activeSeverities.has((c.severity ?? '').toUpperCase())
+  )
+
   return (
     <section className="section dashboard__chart-right">
       <h2 className="section__title">Errores más frecuentes</h2>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {(
+          [
+            ['ERROR', '#ef4444'],
+            ['WARNING', '#f59e0b'],
+            ['INFO', '#3b82f6'],
+          ] as const
+        ).map(([sev, color]) => {
+          const active = activeSeverities.has(sev)
+          return (
+            <button
+              key={sev}
+              onClick={() => handleToggle(sev)}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: 4,
+                cursor: 'pointer',
+                border: `1px solid ${color}`,
+                background: active ? color : 'transparent',
+                color: active ? '#fff' : color,
+                opacity: active ? 1 : 0.6,
+                transition: 'all 0.15s',
+              }}
+            >
+              {sev}
+            </button>
+          )
+        })}
+      </div>
       <div className="chart-wrap">
-        {topCodes.length > 0 ? (
+        {activeSeverities.size === 0 ? (
+          <div className="chart-placeholder">Ningún filtro activo</div>
+        ) : filteredCodes.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={topCodes}
+              data={filteredCodes}
               layout="vertical"
               margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
             >
@@ -50,7 +102,7 @@ export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
                 itemStyle={{ color: '#e5e7eb' }}
               />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                {topCodes.map((entry, index) => {
+                {filteredCodes.map((entry, index) => {
                   const color =
                     entry.severity?.toUpperCase() === 'ERROR'
                       ? '#ef4444'
