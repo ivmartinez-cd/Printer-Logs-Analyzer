@@ -22,7 +22,7 @@ import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
 import { HelpModal } from '../components/HelpModal'
 import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
-import { DateFilterBar } from '../components/DateFilterBar'
+import { DateRangePicker } from '../components/DateRangePicker'
 import { SavedAnalysisList } from '../components/SavedAnalysisList'
 import { SavedAnalysisDetail } from '../components/SavedAnalysisDetail'
 import { KPICards } from '../components/KPICards'
@@ -292,17 +292,9 @@ export default function DashboardPage({
 }) {
   const dateFilter = useDateFilter()
   const {
-    selectedDate,
     setSelectedDate,
-    selectedWeekRange,
     setSelectedWeekRange,
     activeFilter,
-    weekPickerOpen,
-    setWeekPickerOpen,
-    weekPickerRef,
-    dayPickerOpen,
-    setDayPickerOpen,
-    dayPickerRef,
   } = dateFilter
   const [viewMode, setViewMode] = useState<'dashboard' | 'saved-list' | 'saved-detail'>('dashboard')
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
@@ -688,22 +680,30 @@ export default function DashboardPage({
 
               {codesNew.length === 0 && (
                 <>
-                  {/* Subheader: Panel de errores | filtros de fecha */}
-                  <DateFilterBar
-                    logFileName={logFileName}
-                    activeFilter={activeFilter}
-                    selectedDate={selectedDate}
-                    selectedWeekRange={selectedWeekRange}
-                    dateRange={dateRange}
-                    weekPickerOpen={weekPickerOpen}
-                    setWeekPickerOpen={setWeekPickerOpen}
-                    weekPickerRef={weekPickerRef}
-                    dayPickerOpen={dayPickerOpen}
-                    setDayPickerOpen={setDayPickerOpen}
-                    dayPickerRef={dayPickerRef}
-                    setSelectedDate={setSelectedDate}
-                    setSelectedWeekRange={setSelectedWeekRange}
-                  />
+                  {/* Subheader: Panel de errores | filtro de fecha */}
+                  <div className="dashboard__subheader">
+                    <span className="dashboard__subheader-title">
+                      Panel de errores{logFileName ? ` · ${logFileName}` : ''}
+                    </span>
+                    <div className="dashboard__subheader-actions">
+                      <DateRangePicker
+                        activeFilter={activeFilter}
+                        minDate={dateRange ? new Date(dateRange.minDate + 'T00:00:00') : undefined}
+                        maxDate={dateRange ? new Date(dateRange.maxDate + 'T00:00:00') : undefined}
+                        onChange={(filter) => {
+                          if (filter === null) {
+                            dateFilter.reset()
+                          } else if (typeof filter === 'string') {
+                            setSelectedDate(filter)
+                            setSelectedWeekRange(null)
+                          } else {
+                            setSelectedWeekRange(filter)
+                            setSelectedDate(null)
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
                   <section ref={kpisRef}>

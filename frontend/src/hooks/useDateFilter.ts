@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import type { EnrichedEvent as ApiEvent, Incident as ApiIncident } from '../types/api'
 
 /**
@@ -139,34 +139,8 @@ export function useDateFilter() {
     start: string
     end: string
   } | null>(null)
-  const [weekPickerOpen, setWeekPickerOpen] = useState(false)
-  const weekPickerRef = useRef<HTMLDivElement>(null)
-  const [dayPickerOpen, setDayPickerOpen] = useState(false)
-  const dayPickerRef = useRef<HTMLDivElement>(null)
 
   const activeFilter: DateFilter = selectedWeekRange ?? selectedDate
-
-  useEffect(() => {
-    if (!weekPickerOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      if (weekPickerRef.current && !weekPickerRef.current.contains(e.target as Node)) {
-        setWeekPickerOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [weekPickerOpen])
-
-  useEffect(() => {
-    if (!dayPickerOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      if (dayPickerRef.current && !dayPickerRef.current.contains(e.target as Node)) {
-        setDayPickerOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [dayPickerOpen])
 
   function reset() {
     setSelectedDate(null)
@@ -178,12 +152,6 @@ export function useDateFilter() {
     setSelectedDate,
     selectedWeekRange,
     setSelectedWeekRange,
-    weekPickerOpen,
-    setWeekPickerOpen,
-    weekPickerRef,
-    dayPickerOpen,
-    setDayPickerOpen,
-    dayPickerRef,
     activeFilter,
     reset,
   }

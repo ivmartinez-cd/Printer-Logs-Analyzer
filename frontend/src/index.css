@@ -1062,70 +1062,6 @@ body {
   color: #8fb4f5;
 }
 
-/* Grupo de botones de filtro de fecha */
-.date-filter-group {
-  display: flex;
-  align-items: center;
-  border: 1px solid #232734;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.date-filter-group .dashboard__btn--todo {
-  border: none;
-  border-right: 1px solid #232734;
-  border-radius: 0;
-}
-
-.date-filter-group .dashboard__btn--todo:last-child,
-.date-filter-group .date-filter-picker-wrap:last-child .dashboard__btn--todo {
-  border-right: none;
-}
-
-.date-filter-group .dashboard__btn--todo:hover {
-  background: #232734;
-  color: #e6e8ee;
-}
-
-.date-filter-group .dashboard__btn--todo-active {
-  background: rgba(76, 139, 245, 0.2);
-  border-right-color: rgba(76, 139, 245, 0.3);
-  color: #8fb4f5;
-}
-
-.date-filter-group .dashboard__btn--todo-active:hover {
-  background: rgba(76, 139, 245, 0.28);
-  color: #8fb4f5;
-}
-
-/* Picker de semana (popover) */
-.date-filter-picker-wrap {
-  position: relative;
-}
-
-.date-filter-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: #1a1d27;
-  border: 1px solid #3d4452;
-  border-radius: 8px;
-  padding: 12px;
-  z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  white-space: nowrap;
-}
-
-.date-filter-popover__label {
-  font-size: 11px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 /* Banner de prompt SDS (post-análisis) */
 .sds-prompt-banner {
   display: flex;
@@ -2041,4 +1977,169 @@ button.dashboard-table__solution-link {
   overflow-x: auto;
   white-space: pre;
   line-height: 1.6;
+}
+
+/* ── DateRangePicker ───────────────────────────────────────────── */
+.date-range-picker__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #9aa3b2;
+  background: transparent;
+  border: 1px solid #232734;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+  white-space: nowrap;
+}
+
+.date-range-picker__button:hover {
+  background: #232734;
+  border-color: #3d4452;
+  color: #e6e8ee;
+}
+
+.date-range-picker__button:focus-visible {
+  outline: 2px solid #4c8bf5;
+  outline-offset: 2px;
+}
+
+.date-range-picker__button-icon {
+  flex-shrink: 0;
+  color: #6b7a8e;
+}
+
+.date-range-picker__button-label {
+  color: inherit;
+}
+
+.date-range-picker__popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  background: #1a1d27;
+  border: 1px solid #3d4452;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 12px;
+  min-width: max-content;
+}
+
+.date-range-picker__layout {
+  display: flex;
+  gap: 0;
+}
+
+.date-range-picker__presets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 180px;
+  padding-right: 12px;
+  border-right: 1px solid #2d3544;
+  flex-shrink: 0;
+}
+
+.date-range-picker__preset-button {
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #9aa3b2;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.date-range-picker__preset-button:hover {
+  background: #232734;
+  color: #e6e8ee;
+}
+
+.date-range-picker__calendar-wrapper {
+  display: flex;
+  flex-direction: column;
+  padding-left: 12px;
+}
+
+/* Override react-day-picker token para el color de selección */
+.date-range-picker__calendar-wrapper {
+  --rdp-accent-color: #3b82f6;
+  --rdp-background-color: rgba(59, 130, 246, 0.15);
+  --rdp-accent-color-dark: #2563eb;
+}
+
+.date-range-picker__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #2d3544;
+  margin-top: 4px;
+}
+
+.date-range-picker__cancel-button {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #9aa3b2;
+  background: transparent;
+  border: 1px solid #3d4452;
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.date-range-picker__cancel-button:hover {
+  background: #232734;
+  color: #e6e8ee;
+}
+
+.date-range-picker__cancel-button:focus-visible {
+  outline: 2px solid #4c8bf5;
+  outline-offset: 2px;
+}
+
+.date-range-picker__apply-button {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #fff;
+  background: #3b82f6;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.date-range-picker__apply-button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.date-range-picker__apply-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.date-range-picker__apply-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
