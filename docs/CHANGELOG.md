@@ -8,6 +8,10 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 - `DiagnosticPanel.tsx` y su test eliminados. `diagnosticRef` eliminado de `useExportPdf`.
 - `AIDiagnosticPanel` ocupa el lugar entre KPIs y gráficos. CSS `.diagnostic-panel*` eliminado de `index.css`.
 
+**Feature: EventsTable arranca colapsada por defecto**
+- `isCollapsed` inicializado en `true`. El toggle del header sigue funcionando igual.
+- Tests de `EventsTable.test.tsx` actualizados: estado inicial colapsado, tests que necesitan contenido visible hacen click al toggle antes de interactuar.
+
 **Feature: AIDiagnosticPanel arranca colapsado por defecto**
 - Estado `collapsed: true` con header-button toggle. Chevron `▶` rota 90° al expandir.
 - Todo el contenido (CTA / loading / diagnosis / error) se oculta mientras `collapsed === true`.

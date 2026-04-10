@@ -241,7 +241,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `DashboardHeader.tsx` | Header: logo, logFileName, botones de acción, LiveClock, DbStatusBadge |
 | `KPICards.tsx` | 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores |
 | `IncidentsTable.tsx` | Tabla incidentes; sort/filtro interno; recibe `IncidentRow[]` ya filtrados por fecha |
-| `EventsTable.tsx` | Tabla eventos colapsable; sort/filtro interno; recibe `ApiEvent[]` ya filtrados |
+| `EventsTable.tsx` | Tabla eventos colapsable; **arranca colapsada**; sort/filtro interno; recibe `ApiEvent[]` ya filtrados |
 | `IncidentsChart.tsx` | AreaChart eventos/hora con toggles de severidad |
 | `TopErrorsChart.tsx` | BarChart top 10 códigos de error coloreado por severidad |
 | `AddCodeToCatalogModal.tsx` | Form agregar/editar código del catálogo |

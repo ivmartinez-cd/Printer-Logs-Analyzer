@@ -102,7 +102,7 @@ No hay selector de modelo de impresora; el análisis es genérico para logs HP e
 - **Diagnóstico con IA:** Panel colapsado por defecto (`AIDiagnosticPanel`). Al expandirlo el usuario puede generar un diagnóstico llamando a `/analysis/ai-diagnose`; muestra secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD. El diagnóstico generado se preserva al colapsar/expandir.
 - **Gráficos:** Issue volume por hora (área) y top 5 códigos (barras), ambos respetando la fecha seleccionada.
 - **Tabla Incidencias:** Filas con código, clasificación, severidad, ocurrencias, primera/última vez, solución (enlace si existe) y botón «Editar». Filas expandibles: al expandir se muestra una fila de encabezados (Fecha y hora, Contador, Δ, Firmware, Mensaje/Ayuda) y las filas de cada evento del grupo con esos datos.
-- **Tabla Recent Printer Errors:** Sección colapsable con eventos recientes (timestamp, código, severidad, mensaje, etc.) con filtros por severidad y búsqueda, y ordenación por columnas.
+- **Tabla Recent Printer Errors:** Sección colapsable, **colapsada por defecto**, con eventos recientes (timestamp, código, severidad, mensaje, etc.) con filtros por severidad y búsqueda, y ordenación por columnas.
 - **Filtros y ordenación:** Ambas tablas tienen filtro por severidad y caja de búsqueda (código/clasificación o código/mensaje), y cabeceras ordenables.
 
 ### 4.4 Catálogo (agregar / editar código)
