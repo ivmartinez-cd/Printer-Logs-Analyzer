@@ -13,10 +13,10 @@ describe('EventsTable', () => {
     expect(screen.getByText('Eventos del período')).toBeInTheDocument()
   })
 
-  it('tabla arranca expandida por defecto y muestra filas de datos', () => {
+  it('tabla arranca colapsada por defecto', () => {
     render(<EventsTable events={mockEvents} onViewSolution={vi.fn()} />)
-    // Con la tabla expandida, debe haber al menos una fila de datos
-    expect(screen.getAllByText('53.B0.02').length).toBeGreaterThan(0)
+    // Colapsada: el código no es visible
+    expect(screen.queryByText('53.B0.02')).not.toBeInTheDocument()
   })
 
   it('toggle colapsar/expandir funciona', async () => {
@@ -24,17 +24,17 @@ describe('EventsTable', () => {
     const singleEvent = mockEvent({ code: 'COD-UNICO', timestamp: '2024-03-14T10:00:00' })
     render(<EventsTable events={[singleEvent]} onViewSolution={vi.fn()} />)
 
-    // Inicialmente expandida — se ve el código
-    expect(screen.getByText('COD-UNICO')).toBeInTheDocument()
-
-    // Click en el botón de colapsar (el toggle del título)
-    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
-    await user.click(toggleBtn)
+    // Inicialmente colapsada — el código no es visible
     expect(screen.queryByText('COD-UNICO')).not.toBeInTheDocument()
 
-    // Click de vuelta para expandir
+    // Click para expandir
+    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
     await user.click(toggleBtn)
     expect(screen.getByText('COD-UNICO')).toBeInTheDocument()
+
+    // Click de vuelta para colapsar
+    await user.click(toggleBtn)
+    expect(screen.queryByText('COD-UNICO')).not.toBeInTheDocument()
   })
 
   it('filtro por tipo de evento ERROR muestra solo los ERRORs', async () => {
@@ -45,6 +45,10 @@ describe('EventsTable', () => {
       mockEvent({ type: 'INFO', code: 'INF-003', timestamp: '2024-03-14T12:00:00' }),
     ]
     render(<EventsTable events={events} onViewSolution={vi.fn()} />)
+
+    // Expandir primero
+    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
+    await user.click(toggleBtn)
 
     const select = screen.getByLabelText('Filtrar por severidad')
     await user.selectOptions(select, 'ERROR')
@@ -61,6 +65,10 @@ describe('EventsTable', () => {
       mockEvent({ code: 'COD-B', timestamp: '2024-03-14T09:00:00' }),
     ]
     render(<EventsTable events={events} onViewSolution={vi.fn()} />)
+
+    // Expandir primero
+    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
+    await user.click(toggleBtn)
 
     // Default es desc — COD-A aparece primero (más reciente)
     const rowsBefore = screen.getAllByRole('row')
