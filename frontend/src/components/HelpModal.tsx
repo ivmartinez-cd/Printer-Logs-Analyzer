@@ -2,81 +2,7 @@ interface HelpModalProps {
   onClose: () => void
 }
 
-interface RuleRow {
-  level: 'error' | 'warning' | 'success'
-  icon: string
-  name: string
-  description: string
-}
 
-const DIAGNOSTIC_RULES: RuleRow[] = [
-  {
-    level: 'error',
-    icon: '🔴',
-    name: 'Problema dominante',
-    description:
-      'Un único código ERROR concentra más del 50 % de todos los eventos de error. Indica una falla recurrente y específica.',
-  },
-  {
-    level: 'error',
-    icon: '📈',
-    name: 'Escalamiento',
-    description:
-      'La segunda mitad del período tiene más del doble de eventos ERROR que la primera mitad. El problema está creciendo en el tiempo.',
-  },
-  {
-    level: 'warning',
-    icon: '⚡',
-    name: 'Ráfaga',
-    description:
-      '5 o más eventos del mismo código ocurren dentro de una ventana de 30 minutos. Sugiere un evento puntual o un loop de error.',
-  },
-  {
-    level: 'warning',
-    icon: '💾',
-    name: 'Firmware',
-    description:
-      'Algún evento tiene una descripción de catálogo que menciona "firmware". Puede requerir actualización del firmware de la impresora.',
-  },
-  {
-    level: 'warning',
-    icon: '🗂️',
-    name: 'Múltiples bandejas',
-    description:
-      '2 o más códigos ERROR distintos tienen "tray" o "bandeja" en su descripción. Indica fallas en el sistema de alimentación de papel.',
-  },
-  {
-    level: 'success',
-    icon: '🟢',
-    name: 'Saludable',
-    description:
-      'Ninguna de las reglas anteriores se disparó. El log no presenta patrones de alerta.',
-  },
-]
-
-const RECOMMENDATION_ROWS = [
-  {
-    icon: '🔴',
-    condition: 'Dominante + Ráfaga + Escalamiento activos',
-    result: 'Visita técnica recomendada',
-  },
-  {
-    icon: '🟡',
-    condition: 'Hay alertas pero no se cumple la condición anterior',
-    result: 'Monitorear — revisar en 48 hs',
-  },
-  {
-    icon: '🟢',
-    condition: 'Solo alerta Saludable',
-    result: 'Sin acción necesaria',
-  },
-]
-
-const levelColor: Record<RuleRow['level'], string> = {
-  error: '#ef4444',
-  warning: '#f59e0b',
-  success: '#4ade80',
-}
 
 export function HelpModal({ onClose }: HelpModalProps) {
   return (
@@ -159,44 +85,6 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </div>
           </section>
 
-          {/* DIAGNÓSTICO AUTOMÁTICO */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Diagnóstico automático</h3>
-            <p className="help-modal__intro-text">
-              El panel de diagnóstico aplica 6 reglas sobre los eventos del período filtrado. No usa
-              la red — todo el cálculo ocurre en el frontend.
-            </p>
-            <div className="help-modal__rules">
-              {DIAGNOSTIC_RULES.map((rule) => (
-                <div key={rule.name} className="help-modal__rule-row">
-                  <span className="help-modal__rule-icon">{rule.icon}</span>
-                  <div className="help-modal__rule-body">
-                    <span
-                      className="help-modal__rule-name"
-                      style={{ color: levelColor[rule.level] }}
-                    >
-                      {rule.name}
-                    </span>
-                    <span className="help-modal__rule-desc">{rule.description}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="help-modal__intro-text" style={{ marginTop: 12 }}>
-              La sección <strong>"¿Qué hacer?"</strong> combina las alertas activas para dar una
-              recomendación:
-            </p>
-            <div className="help-modal__rec-table">
-              {RECOMMENDATION_ROWS.map((r) => (
-                <div key={r.icon} className="help-modal__rec-row">
-                  <span className="help-modal__rec-icon">{r.icon}</span>
-                  <span className="help-modal__rec-condition">{r.condition}</span>
-                  <span className="help-modal__rec-result">→ {r.result}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {/* FILTROS DE FECHA */}
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">Filtros de fecha</h3>
@@ -221,7 +109,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
               ))}
             </div>
             <p className="help-modal__note">
-              Todos los KPIs, gráficos, diagnóstico y tablas respetan el filtro de fecha activo.
+              Todos los KPIs, gráficos y tablas respetan el filtro de fecha activo.
             </p>
           </section>
 
