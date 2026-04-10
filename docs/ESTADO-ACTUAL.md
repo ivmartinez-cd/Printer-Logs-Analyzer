@@ -99,6 +99,7 @@ No hay selector de modelo de impresora; el análisis es genérico para logs HP e
 - **Sección de códigos nuevos:** Si `codesNew.length > 0`, lista de códigos con botón «Agregar al catálogo» por código; al pulsar se abre el modal de catálogo con código y descripción rellenados desde el primer evento que tenga ese código.
 - **Filtro de fecha:** Selector de fecha (calendario) con rango min/max derivado de los eventos, más botón «Todo» para ver todo el log.
 - **KPIs:** Tarjetas con total de incidentes, severidad máxima, códigos únicos y eventos en la ventana filtrada; colores según severidad.
+- **Diagnóstico con IA:** Panel colapsado por defecto (`AIDiagnosticPanel`). Al expandirlo el usuario puede generar un diagnóstico llamando a `/analysis/ai-diagnose`; muestra secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD. El diagnóstico generado se preserva al colapsar/expandir.
 - **Gráficos:** Issue volume por hora (área) y top 5 códigos (barras), ambos respetando la fecha seleccionada.
 - **Tabla Incidencias:** Filas con código, clasificación, severidad, ocurrencias, primera/última vez, solución (enlace si existe) y botón «Editar». Filas expandibles: al expandir se muestra una fila de encabezados (Fecha y hora, Contador, Δ, Firmware, Mensaje/Ayuda) y las filas de cada evento del grupo con esos datos.
 - **Tabla Recent Printer Errors:** Sección colapsable con eventos recientes (timestamp, código, severidad, mensaje, etc.) con filtros por severidad y búsqueda, y ordenación por columnas.

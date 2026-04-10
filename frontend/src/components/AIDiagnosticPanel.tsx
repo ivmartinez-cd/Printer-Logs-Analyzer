@@ -30,6 +30,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [collapsed, setCollapsed] = useState(true)
 
     // Resetear el diagnóstico cuando el usuario analiza un nuevo log
     useEffect(() => {
@@ -58,64 +59,79 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
     return (
       <div className="ai-diagnostic-panel" ref={ref}>
-        <div className="ai-diagnostic-panel__header">
+        <button
+          type="button"
+          className="ai-diagnostic-panel__header-button"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-expanded={!collapsed}
+        >
           <span className="ai-diagnostic-panel__title">🤖 Diagnóstico con IA</span>
-        </div>
+          <span
+            className={`ai-diagnostic-panel__chevron${!collapsed ? ' ai-diagnostic-panel__chevron--expanded' : ''}`}
+            aria-hidden="true"
+          >
+            ▶
+          </span>
+        </button>
 
-        {/* Estado inicial: CTA para generar el diagnóstico */}
-        {!diagnosis && !loading && !error && (
-          <div className="ai-diagnostic-panel__cta-wrapper">
-            <p className="ai-diagnostic-panel__button-description">
-              Obtené un diagnóstico detallado con correlaciones temporales y recomendación
-              accionable.
-            </p>
-            <button
-              type="button"
-              className="ai-diagnostic-panel__button"
-              onClick={() => void handleGenerate()}
-            >
-              Generar análisis con IA
-            </button>
-          </div>
-        )}
-
-        {/* Estado de carga */}
-        {loading && (
-          <div className="ai-diagnostic-panel__loading">
-            <span className="ai-diagnostic-panel__spinner" aria-hidden="true" />
-            <span>Generando diagnóstico…</span>
-          </div>
-        )}
-
-        {/* Estado de error con botón de reintento */}
-        {error && !loading && (
-          <div className="ai-diagnostic-panel__error">
-            <span>{error}</span>
-            <button
-              type="button"
-              className="ai-diagnostic-panel__retry-button"
-              onClick={() => void handleGenerate()}
-            >
-              Reintentar
-            </button>
-          </div>
-        )}
-
-        {/* Estado de éxito: diagnóstico parseado o texto crudo */}
-        {diagnosis && !loading && (
-          <div className="ai-diagnostic-panel__diagnosis">
-            {sections ? (
-              sections.map((s) => (
-                <div key={s.label} className="ai-diagnostic-panel__diagnosis-section">
-                  <span className="ai-diagnostic-panel__diagnosis-label">{s.label}: </span>
-                  <span>{s.content}</span>
-                </div>
-              ))
-            ) : (
-              // Fallback si el parseo de etiquetas falla
-              <pre className="ai-diagnostic-panel__diagnosis-raw">{diagnosis}</pre>
+        {!collapsed && (
+          <>
+            {/* Estado inicial: CTA para generar el diagnóstico */}
+            {!diagnosis && !loading && !error && (
+              <div className="ai-diagnostic-panel__cta-wrapper">
+                <p className="ai-diagnostic-panel__button-description">
+                  Obtené un diagnóstico detallado con correlaciones temporales y recomendación
+                  accionable.
+                </p>
+                <button
+                  type="button"
+                  className="ai-diagnostic-panel__button"
+                  onClick={() => void handleGenerate()}
+                >
+                  Generar análisis con IA
+                </button>
+              </div>
             )}
-          </div>
+
+            {/* Estado de carga */}
+            {loading && (
+              <div className="ai-diagnostic-panel__loading">
+                <span className="ai-diagnostic-panel__spinner" aria-hidden="true" />
+                <span>Generando diagnóstico…</span>
+              </div>
+            )}
+
+            {/* Estado de error con botón de reintento */}
+            {error && !loading && (
+              <div className="ai-diagnostic-panel__error">
+                <span>{error}</span>
+                <button
+                  type="button"
+                  className="ai-diagnostic-panel__retry-button"
+                  onClick={() => void handleGenerate()}
+                >
+                  Reintentar
+                </button>
+              </div>
+            )}
+
+            {/* Estado de éxito: diagnóstico parseado o texto crudo */}
+            {diagnosis && !loading && (
+              <div className="ai-diagnostic-panel__diagnosis">
+                {sections ? (
+                  sections.map((s) => (
+                    <div key={s.label} className="ai-diagnostic-panel__diagnosis-section">
+                      <span className="ai-diagnostic-panel__diagnosis-label">{s.label}: </span>
+                      <span>{s.content}</span>
+                    </div>
+                  ))
+                ) : (
+                  // Fallback si el parseo de etiquetas falla
+                  <pre className="ai-diagnostic-panel__diagnosis-raw">{diagnosis}</pre>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     )

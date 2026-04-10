@@ -729,11 +729,29 @@ body {
   overflow: hidden;
 }
 
-.ai-diagnostic-panel__header {
+.ai-diagnostic-panel__header-button {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   padding: 12px 16px;
+  background: transparent;
+  border: none;
   border-bottom: 1px solid #1e2a3a;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.ai-diagnostic-panel__chevron {
+  font-size: 10px;
+  color: #6b7a8e;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.ai-diagnostic-panel__chevron--expanded {
+  transform: rotate(90deg);
 }
 
 .ai-diagnostic-panel__title {
