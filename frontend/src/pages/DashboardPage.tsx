@@ -21,7 +21,6 @@ import { SDSIncidentModal } from '../components/SDSIncidentModal'
 import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
 import { HelpModal } from '../components/HelpModal'
-import { DiagnosticPanel } from '../components/DiagnosticPanel'
 import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
 import { DateFilterBar } from '../components/DateFilterBar'
 import { SavedAnalysisList } from '../components/SavedAnalysisList'
@@ -354,7 +353,6 @@ export default function DashboardPage({
     handleExportPDF,
     aiDiagnosticRef,
     kpisRef,
-    diagnosticRef,
     barChartRef,
     incidentsTableRef,
   } = useExportPdf(logFileName)
@@ -716,11 +714,6 @@ export default function DashboardPage({
                       lastErrorLabel={lastErrorLabel}
                     />
                   </section>
-
-                  {/* Diagnóstico automático basado en reglas */}
-                  <div ref={diagnosticRef}>
-                    <DiagnosticPanel events={filteredEvents} />
-                  </div>
 
                   {/* Diagnóstico con IA — llama a /analysis/ai-diagnose on demand */}
                   <AIDiagnosticPanel ref={aiDiagnosticRef} result={result} />
