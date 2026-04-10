@@ -4,6 +4,17 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Refactor: eliminar DiagnosticPanel (reglas fijas) y dejar solo AIDiagnosticPanel**
+- `DiagnosticPanel.tsx` y su test eliminados. `diagnosticRef` eliminado de `useExportPdf`.
+- `AIDiagnosticPanel` ocupa el lugar entre KPIs y gráficos. CSS `.diagnostic-panel*` eliminado de `index.css`.
+
+**Feature: AIDiagnosticPanel arranca colapsado por defecto**
+- Estado `collapsed: true` con header-button toggle. Chevron `▶` rota 90° al expandir.
+- Todo el contenido (CTA / loading / diagnosis / error) se oculta mientras `collapsed === true`.
+- El diagnóstico ya generado se preserva al colapsar/expandir (estado independiente).
+
+---
+
 **Bug: parser no procesaba ninguna línea**
 - Causa: logs copiados del portal HP tienen espacios múltiples en lugar de tabs.
 - Fix: normalizar `\s{2,}` → `\t` al inicio del pipeline.

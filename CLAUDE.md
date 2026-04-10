@@ -223,7 +223,7 @@ Orquesta vistas (`dashboard` | `saved-list` | `saved-detail`) y hooks. Flujo pri
 3. Respuesta en `pendingResult` / `pendingCodesNew`
 4. Modal `ConfirmModal` "¿Agregar incidente SDS?" → `SDSIncidentModal` o directo
 5. `commitPendingResult()` mueve `pendingResult` → `result`, muestra dashboard
-6. Render: `<KPICards>` → `<DiagnosticPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
+6. Render: `<KPICards>` → `<AIDiagnosticPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
 
 Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actualizar `events[]`, `incidents[].events[]`, `incidents[].sds_link` e `incidents[].sds_solution_content` — el botón "Ver solución" lee nivel incidente, no nivel evento.
 
@@ -232,7 +232,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 - **`useAnalysis`** — estado y handlers del flujo: `loading`, `result`, `pendingResult`, `codesNew`, `handleAnalyze`, `commitPendingResult`, `handleSaveCodeToCatalog`, `handleSaveIncident`
 - **`useModals`** — 11 estados de modales: `logModalOpen`, `sdsPreModalOpen`, `sdsModalOpen`, `sdsIncident`, `addCodeModalCode`, `editCodeInitial`, `saveIncidentModalOpen`, `compareModalOpen`, `deleteConfirm`, `solutionModal`, `helpModalOpen`
 - **`useDateFilter`** — `DateFilter = null | "YYYY-MM-DD" | { start, end }`. Funciones puras exportadas: `filterEventsByDate`, `filterIncidentsByDate`, `getWeekRange`, `weekInputToRange`, `formatWeekRange`, `formatDayFilter`, `getDateRangeFromEvents`, `formatDateTime`
-- **`useExportPdf`** — PDF A4 con html2canvas (scale 2) + jsPDF (lazy import); refs para KPIs, DiagnosticPanel, BarChart, tabla de incidentes
+- **`useExportPdf`** — PDF A4 con html2canvas (scale 2) + jsPDF (lazy import); refs para AIDiagnosticPanel (si ya fue generado), KPIs, BarChart, tabla de incidentes
 
 ### Componentes (`frontend/src/components/`)
 
@@ -249,7 +249,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `SDSIncidentModal.tsx` | Pegar SDS; parsea texto → SdsIncidentData |
 | `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
-| `DiagnosticPanel.tsx` | Diagnóstico automático basado en reglas sobre filteredEvents |
+| `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |
 | `DateFilterBar.tsx` | 5 botones de filtro de fecha (Todo / semanas / día específico) |
 | `SavedAnalysisList.tsx` | Lista análisis guardados con búsqueda y evolución por equipo |
 | `EquipmentTimeline.tsx` | LineChart evolución de errores por equipo entre snapshots |
@@ -260,20 +260,15 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 
 **Match SDS vs Log (`SDSIncidentPanel`):** usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. El campo `code` interno SDS no interviene. Soporta sufijo `z` para matching por prefijo (`53.B0.0z` → `53.B0.01`, etc.).
 
-### DiagnosticPanel — Reglas
+### AIDiagnosticPanel
 
-Cálculo puro sobre `filteredEvents`. No recibe `incidents`.
-
-| # | Nombre | Condición | Nivel |
-|---|--------|-----------|-------|
-| 1 | Problema dominante | Un código ERROR > 50% del total de errores | Rojo |
-| 2 | Ráfaga | 5+ eventos mismo código en ventana de 30 min | Amarillo |
-| 3 | Escalamiento | 2ª mitad tiene >2× ERRORs que 1ª mitad (solo ERRORs) | Rojo |
-| 4 | Firmware | `code_description` contiene `"firmware"` | Amarillo |
-| 5 | Múltiples bandejas | 2+ códigos ERROR con `"tray"` o `"bandeja"` en descripción (solo ERRORs) | Amarillo |
-| 6 | Saludable | Ninguna regla disparada | Verde |
-
-Máx 5 alertas visibles, ordenadas por severidad. `getRecommendation`: visita técnica si `dominant + burst + escalation`; monitorear si hay alertas; sin acción si solo saludable.
+- Arranca **colapsado** (`collapsed: true`). Header-button con chevron (`▶` / `▼ rotado`) hace toggle.
+- Al expandir muestra CTA → loading → diagnosis o error, según estado actual.
+- Llama a `POST /analysis/ai-diagnose` on demand (botón "Generar análisis con IA").
+- El diagnóstico se parsea en secciones `DIAGNÓSTICO / ACCIÓN / PRIORIDAD`; fallback a `<pre>` crudo.
+- `collapsed` es independiente del resto del estado: colapsar/expandir no resetea el diagnóstico ya generado.
+- Resetea `diagnosis` y `error` cuando cambia `result` (nuevo log analizado).
+- El PDF exporta el panel solo si el diagnóstico ya fue generado (detecta `.ai-diagnostic-panel__diagnosis` como descendiente).
 
 ### Cliente HTTP (`services/api.ts`)
 
