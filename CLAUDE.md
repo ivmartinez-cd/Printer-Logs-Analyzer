@@ -223,7 +223,7 @@ Orquesta vistas (`dashboard` | `saved-list` | `saved-detail`) y hooks. Flujo pri
 3. Respuesta en `pendingResult` / `pendingCodesNew`
 4. Modal `ConfirmModal` "¿Agregar incidente SDS?" → `SDSIncidentModal` o directo
 5. `commitPendingResult()` mueve `pendingResult` → `result`, muestra dashboard
-6. Render: `<KPICards>` → `<AIDiagnosticPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
+6. Render: `<KPICards>` → `<AIDiagnosticPanel>` → `<SDSIncidentPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
 
 Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actualizar `events[]`, `incidents[].events[]`, `incidents[].sds_link` e `incidents[].sds_solution_content` — el botón "Ver solución" lee nivel incidente, no nivel evento.
 
@@ -247,7 +247,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `AddCodeToCatalogModal.tsx` | Form agregar/editar código del catálogo |
 | `SaveIncidentModal.tsx` | Form guardar análisis con nombre y equipment_identifier |
 | `SDSIncidentModal.tsx` | Pegar SDS; parsea texto → SdsIncidentData |
-| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log |
+| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y gráficos |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |
 | `DateFilterBar.tsx` | 5 botones de filtro de fecha (Todo / semanas / día específico) |
