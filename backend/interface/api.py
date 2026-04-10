@@ -122,6 +122,48 @@ class CompareLogsRequest(BaseModel):
     logs: str
 
 
+# --- AI Diagnose ---
+
+class AiDiagnoseIncidentItem(BaseModel):
+    """Incidente compacto para diagnóstico AI (sin eventos individuales)."""
+
+    code: str
+    description: Optional[str] = None
+    severity: str
+    occurrences: int
+    start_time: str
+    end_time: str
+    # NOTE: patrón temporal pre-calculado por el frontend (opcional).
+    # Si no se envía, el modelo trabaja sin él.
+    pattern: Optional[str] = None
+
+
+class AiDiagnoseMetadata(BaseModel):
+    """Metadatos del análisis para darle contexto al modelo."""
+
+    total_events: Optional[int] = None
+    date_range: Optional[str] = None
+    firmware: Optional[str] = None
+    counter_range: Optional[List[int]] = None
+
+
+class AiDiagnoseRequest(BaseModel):
+    """Body para POST /analysis/ai-diagnose."""
+
+    incidents: List[AiDiagnoseIncidentItem]
+    global_severity: str
+    metadata: Optional[AiDiagnoseMetadata] = None
+
+
+class AiDiagnoseResponse(BaseModel):
+    """Respuesta del diagnóstico AI."""
+
+    diagnosis: str
+    model: str
+    tokens_used: Dict[str, int]
+    cost_usd: float
+
+
 def _incident_to_summary(inc: Incident) -> dict:
     """Build summary dict for JSONB (code, classification, severity, occurrences, start_time, end_time, counter_range, sds_link, last_event_time)."""
     end_iso = inc.end_time.isoformat() if inc.end_time else None
@@ -481,6 +523,90 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             },
             "diff": diff,
         }
+
+    @app.post(
+        "/analysis/ai-diagnose",
+        response_model=AiDiagnoseResponse,
+        dependencies=[Depends(authenticate)],
+    )
+    @limiter.limit("20/minute")
+    async def ai_diagnose(request: Request, body: AiDiagnoseRequest) -> AiDiagnoseResponse:
+        """Genera un diagnóstico automático del log usando Claude Haiku.
+
+        El frontend manda el result ya calculado — el backend NO re-parsea el log.
+        Retorna 503 si ANTHROPIC_API_KEY no está configurada.
+        """
+        import anthropic as _anthropic
+
+        from backend.application.services.ai_diagnosis_service import (
+            MODEL,
+            call_claude,
+            compute_cost,
+        )
+
+        api_key = settings.anthropic_api_key
+        if not api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Servicio de diagnóstico AI no disponible: ANTHROPIC_API_KEY no configurada.",
+            )
+
+        # Armar payload compacto para el modelo (ordenado por severidad desc)
+        severity_order = {"ERROR": 3, "WARNING": 2, "INFO": 1}
+        sorted_incidents = sorted(
+            body.incidents,
+            key=lambda i: (severity_order.get(i.severity, 0), i.occurrences),
+            reverse=True,
+        )
+        payload: Dict[str, Any] = {
+            "global_severity": body.global_severity,
+            "incidents": [
+                {
+                    "code": inc.code,
+                    **({"description": inc.description} if inc.description else {}),
+                    "severity": inc.severity,
+                    "occurrences": inc.occurrences,
+                    "start": inc.start_time,
+                    "end": inc.end_time,
+                    **({"pattern": inc.pattern} if inc.pattern else {}),
+                }
+                for inc in sorted_incidents
+            ],
+        }
+        if body.metadata:
+            meta = {k: v for k, v in body.metadata.model_dump().items() if v is not None}
+            if meta:
+                payload["metadata"] = meta
+
+        try:
+            diagnosis, tokens = await call_claude(payload, api_key)
+        except _anthropic.AuthenticationError as exc:
+            logging.error("[ai-diagnose] AuthenticationError: %s", exc)
+            raise HTTPException(status_code=503, detail="API key de Anthropic inválida.") from exc
+        except _anthropic.RateLimitError as exc:
+            logging.error("[ai-diagnose] RateLimitError: %s", exc)
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit de Anthropic alcanzado. Reintentar en unos minutos.",
+            ) from exc
+        except _anthropic.APIConnectionError as exc:
+            logging.error("[ai-diagnose] APIConnectionError: %s", exc)
+            raise HTTPException(
+                status_code=503, detail="Error de conexión con la API de Anthropic."
+            ) from exc
+        except _anthropic.APIError as exc:
+            logging.error("[ai-diagnose] APIError %s: %s", type(exc).__name__, exc)
+            raise HTTPException(status_code=503, detail="Error de la API de Anthropic.") from exc
+
+        cost = compute_cost(tokens)
+        logging.info("[ai-diagnose] tokens=%s cost_usd=%.6f", tokens, cost)
+
+        return AiDiagnoseResponse(
+            diagnosis=diagnosis,
+            model=MODEL,
+            tokens_used=tokens,
+            cost_usd=cost,
+        )
 
     return app
 

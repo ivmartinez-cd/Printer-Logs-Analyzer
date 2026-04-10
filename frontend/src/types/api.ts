@@ -112,3 +112,17 @@ export interface CompareResponse {
   current: ParseLogsResponse
   diff: CompareDiff
 }
+
+// --- Diagnóstico con IA ---
+
+export interface AIDiagnosisResponse {
+  diagnosis: string
+  model: string
+  tokens_used: {
+    input: number
+    output: number
+    cache_write: number
+    cache_read: number
+  }
+  cost_usd: number
+}
