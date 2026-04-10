@@ -5,7 +5,6 @@ export function useExportPdf(logFileName: string | null) {
   const [exportingPdf, setExportingPdf] = useState(false)
   const aiDiagnosticRef = useRef<HTMLDivElement>(null)
   const kpisRef = useRef<HTMLDivElement>(null)
-  const diagnosticRef = useRef<HTMLDivElement>(null)
   const barChartRef = useRef<HTMLDivElement>(null)
   const incidentsTableRef = useRef<HTMLDivElement>(null)
   const toast = useToast()
@@ -46,7 +45,6 @@ export function useExportPdf(logFileName: string | null) {
       const sections: Array<HTMLElement | null> = [
         aiHasDiagnosis ? aiEl : null,
         kpisRef.current,
-        diagnosticRef.current,
         barChartRef.current,
         incidentsTableRef.current,
       ]
@@ -81,7 +79,6 @@ export function useExportPdf(logFileName: string | null) {
     handleExportPDF,
     aiDiagnosticRef,
     kpisRef,
-    diagnosticRef,
     barChartRef,
     incidentsTableRef,
   }
