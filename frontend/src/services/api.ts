@@ -7,6 +7,8 @@ import type {
   SavedAnalysisFull,
   CompareResponse,
   AIDiagnosisResponse,
+  PrinterModel,
+  UploadPdfResponse,
 } from '../types/api'
 
 const API_BASE =
@@ -65,11 +67,16 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json()
 }
 
-export async function previewLogs(logs: string, signal?: AbortSignal): Promise<ParseLogsResponse> {
+export async function previewLogs(
+  logs: string,
+  modelId?: string | null,
+  signal?: AbortSignal
+): Promise<ParseLogsResponse> {
+  const body = modelId ? { logs, model_id: modelId } : { logs }
   const res = await apiFetch(`${API_BASE}/parser/preview`, {
     method: 'POST',
     headers: apiHeaders(),
-    body: JSON.stringify({ logs }),
+    body: JSON.stringify(body),
     signal,
   })
   return handleResponse<ParseLogsResponse>(res)
@@ -177,6 +184,37 @@ export async function deleteSavedAnalysis(id: string, signal?: AbortSignal): Pro
       typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed'
     )
   }
+}
+
+// --- Modelos de impresora ---
+
+export async function listPrinterModels(signal?: AbortSignal): Promise<PrinterModel[]> {
+  const res = await apiFetch(`${API_BASE}/printer-models`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<PrinterModel[]>(res)
+}
+
+export async function uploadPrinterModelPdf(
+  file: File,
+  signal?: AbortSignal
+): Promise<UploadPdfResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  // NOTE: No setear Content-Type — el browser lo setea con el boundary correcto
+  const res = await apiFetch(
+    `${API_BASE}/printer-models/upload-pdf`,
+    {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY },
+      body: formData,
+      signal,
+    },
+    90_000 // Claude puede tardar en procesar PDFs grandes
+  )
+  return handleResponse<UploadPdfResponse>(res)
 }
 
 // --- Diagnóstico con IA ---
