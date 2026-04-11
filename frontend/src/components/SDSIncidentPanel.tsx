@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import type { SdsIncidentData } from './SDSIncidentModal'
-import type { ConsumableWarning } from '../types/api'
 
 type SdsVsLogStatus = 'match' | 'partial' | 'no_match' | 'general'
 
@@ -176,14 +175,12 @@ interface SDSIncidentPanelProps {
   incidentRows: IncidentRowForSds[]
   /** Lista completa de incidencias del log (para Parcial y Último evento). Opcional para no romper uso existente. */
   incidentsFull?: IncidentFullForSds[]
-  consumableWarnings?: ConsumableWarning[]
 }
 
 export function SDSIncidentPanel({
   sdsIncident,
   incidentRows,
   incidentsFull = [],
-  consumableWarnings = [],
 }: SDSIncidentPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
   const estadoSds = getEstadoSds(sdsIncident.created_at)
@@ -207,12 +204,6 @@ export function SDSIncidentPanel({
         : sdsVsLog.status === 'general'
           ? 'ℹ️ SDS de tipo general'
           : '❌ No coincide'
-
-  // Find consumables whose matched_codes overlap with this SDS's codes
-  const sdsCodes = getSdsCodesForMatch(sdsIncident)
-  const relatedConsumables = consumableWarnings.filter((w) =>
-    w.matched_codes.some((mc) => sdsCodes.some((sc) => incidentCodeMatchesSds(mc, sc)))
-  )
 
   const rows: { label: string; value: React.ReactNode; muted?: boolean }[] = [
     { label: 'Código', value: sdsIncident.code },
@@ -273,24 +264,6 @@ export function SDSIncidentPanel({
             </tbody>
           </table>
 
-          {relatedConsumables.length > 0 && (
-            <div className="sds-incident-panel__consumables">
-              <p className="sds-incident-panel__consumables-title">Verificar cambio de consumible</p>
-              {relatedConsumables.map((w) => (
-                <div
-                  key={w.part_number}
-                  className={`sds-incident-panel__consumable-item sds-incident-panel__consumable-item--${w.status}`}
-                >
-                  Verificar cambio: <strong>{w.description}</strong> ({w.part_number})
-                  <br />
-                  <span className="sds-incident-panel__consumable-detail">
-                    Vida útil: {w.life_pages.toLocaleString('es-AR')} págs · Contador actual:{' '}
-                    {w.current_counter.toLocaleString('es-AR')} págs ({w.usage_pct.toFixed(1)}%)
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </section>
