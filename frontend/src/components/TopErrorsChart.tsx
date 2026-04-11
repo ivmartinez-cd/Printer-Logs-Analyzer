@@ -21,7 +21,7 @@ interface TopErrorsChartProps {
 }
 
 export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
-  const [activeSeverities, setActiveSeverities] = useState<Set<string>>(new Set(['ERROR']))
+  const [activeSeverities, setActiveSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
 
   function handleToggle(severity: string) {
     setActiveSeverities((prev) => {
