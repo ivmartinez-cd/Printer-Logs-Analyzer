@@ -2,8 +2,6 @@ interface HelpModalProps {
   onClose: () => void
 }
 
-
-
 export function HelpModal({ onClose }: HelpModalProps) {
   return (
     <div
@@ -24,29 +22,27 @@ export function HelpModal({ onClose }: HelpModalProps) {
         </div>
 
         <div className="help-modal__body">
-          {/* FLUJO GENERAL */}
+          {/* FLUJO DE ANÁLISIS */}
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">Flujo de análisis</h3>
             <ol className="help-modal__steps">
               <li>
-                <strong>Pegás o cargás</strong> el log de la impresora HP (formato TSV exportado
-                desde el portal HP o copiado al portapapeles).
+                En el modal "Pegar logs HP", <strong>seleccioná el modelo de impresora</strong> del
+                listado. Si el modelo no aparece, hacé click en{' '}
+                <strong>"+ Cargar nuevo modelo (PDF)"</strong> y subí el PDF del Service Cost Data
+                oficial de HP — los modelos y consumibles se extraen automáticamente con IA.
               </li>
               <li>
-                El backend <strong>parsea</strong> cada línea: extrae tipo, código, timestamp,
-                contador y firmware. Acepta fechas en español (ene, feb, mar…).
+                <strong>Pegá el log</strong> en el área de texto y hacé click en{' '}
+                <strong>"Analizar"</strong>.
               </li>
               <li>
-                Los eventos se <strong>agrupan por código</strong> formando incidentes. Cada
-                incidente hereda la severidad máxima de sus eventos.
+                El backend parsea cada línea, agrupa los eventos por código formando incidentes, y
+                los enriquece con el catálogo de códigos.
               </li>
               <li>
-                La app consulta el <strong>catálogo de códigos</strong> para enriquecer cada evento
-                con descripción y link de solución SDS.
-              </li>
-              <li>
-                Se muestran <strong>KPIs, gráficos y tablas</strong> con filtros de fecha, búsqueda
-                y sort por columna.
+                Opcional: agregar un <strong>SDS Engineering Incident</strong> para hacer match
+                contra los códigos del log.
               </li>
             </ol>
           </section>
@@ -76,31 +72,95 @@ export function HelpModal({ onClose }: HelpModalProps) {
               <div className="help-modal__kpi-item">
                 <span className="help-modal__kpi-label">Tasa de errores</span>
                 <span className="help-modal__kpi-desc">
-                  Frecuencia de errores en función de las páginas impresas: <em>"1 error c/N pág."</em>{' '}
-                  Calculado como <em>ERRORs ÷ (contador máx − contador mín)</em> del período. Permite
-                  comparar la salud de equipos independientemente del volumen de uso. Muestra "—" si
-                  el log no incluye datos de contador.
+                  Frecuencia de errores en función de las páginas impresas:{' '}
+                  <em>"1 error c/N pág."</em> Calculado como{' '}
+                  <em>ERRORs ÷ (contador máx − contador mín)</em> del período. Muestra "—" si el
+                  log no incluye datos de contador.
                 </span>
               </div>
             </div>
           </section>
 
+          {/* DIAGNÓSTICO CON IA */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">Diagnóstico con IA</h3>
+            <p className="help-modal__intro-text">
+              Panel violeta colapsado por defecto, debajo de los KPIs. Al expandirlo, hacé click en{' '}
+              <strong>"Generar análisis con IA"</strong> para que Claude Haiku procese los incidentes
+              y devuelva un diagnóstico estructurado en tres secciones:{' '}
+              <strong>DIAGNÓSTICO / ACCIÓN / PRIORIDAD</strong>.
+            </p>
+            <p className="help-modal__note">
+              El diagnóstico considera correlaciones temporales entre eventos, causalidad probable y
+              da una recomendación accionable. Colapsar el panel no resetea el diagnóstico ya
+              generado.
+            </p>
+          </section>
+
+          {/* SDS ENGINEERING INCIDENT */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">SDS Engineering Incident</h3>
+            <p className="help-modal__intro-text">
+              Panel colapsado debajo del Diagnóstico con IA. Permite cargar manualmente un incidente
+              SDS y hacer match contra los códigos del log.
+            </p>
+            <ul className="help-modal__list">
+              <li>
+                El match usa <code>event_context</code> como código primario y{' '}
+                <code>more_info</code> como secundarios. Soporta sufijo <code>z</code> como comodín
+                hex (ej. <code>53.B0.0z</code> coincide con <code>53.B0.01</code>,{' '}
+                <code>53.B0.0A</code>, etc.).
+              </li>
+              <li>
+                Si el SDS coincide con un código que indica reemplazo de consumible, se muestra una
+                sección extra <strong>"Verificar cambio de consumible"</strong> con el part number,
+                vida útil y contador actual.
+              </li>
+            </ul>
+          </section>
+
+          {/* ADVERTENCIAS DE CONSUMIBLES */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">Advertencias de consumibles</h3>
+            <p className="help-modal__intro-text">
+              Panel colapsado debajo del SDS. Aparece solo si el modelo cargado tiene consumibles
+              asociados a códigos presentes en el log.
+            </p>
+            <ul className="help-modal__list">
+              <li>
+                Tabla con: categoría (roller, fuser, toner, etc.), descripción, part number, vida
+                útil, contador actual, % de uso y estado.
+              </li>
+              <li>
+                <strong>Verde OK</strong>: uso por debajo del 80% de la vida útil.
+              </li>
+              <li>
+                <strong>Amarillo "próximo"</strong>: uso entre 80% y 99%.
+              </li>
+              <li>
+                <strong>Rojo "reemplazar"</strong>: el contador supera el 100% de la vida útil
+                documentada.
+              </li>
+            </ul>
+          </section>
+
           {/* FILTROS DE FECHA */}
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">Filtros de fecha</h3>
+            <p className="help-modal__intro-text">
+              Botón único con calendario y presets en un popover. Todos los KPIs, gráficos y tablas
+              respetan el filtro activo.
+            </p>
             <div className="help-modal__filter-list">
               {[
-                { label: 'Todo', desc: 'Sin filtro — todos los eventos del log.' },
+                { label: 'Todo el período', desc: 'Sin filtro — todos los eventos del log.' },
+                { label: 'Hoy', desc: 'Solo eventos del día actual.' },
                 { label: 'Esta semana', desc: 'Lunes–domingo de la semana actual.' },
                 { label: 'Semana anterior', desc: 'Lunes–domingo de la semana pasada.' },
-                {
-                  label: 'Elegir semana',
-                  desc: 'Abre un picker de semana. Muestra el rango seleccionado (ej. "3–9 mar").',
-                },
-                {
-                  label: '📅 Día específico',
-                  desc: 'Abre un picker de fecha. Filtra exactamente ese día.',
-                },
+                { label: 'Este mes', desc: 'Del primer al último día del mes actual.' },
+                { label: 'Mes anterior', desc: 'Del primer al último día del mes pasado.' },
+                { label: 'Últimos 7 días', desc: 'Ventana móvil de los últimos 7 días.' },
+                { label: 'Últimos 30 días', desc: 'Ventana móvil de los últimos 30 días.' },
               ].map((f) => (
                 <div key={f.label} className="help-modal__filter-row">
                   <code className="help-modal__filter-label">{f.label}</code>
@@ -109,66 +169,89 @@ export function HelpModal({ onClose }: HelpModalProps) {
               ))}
             </div>
             <p className="help-modal__note">
-              Todos los KPIs, gráficos y tablas respetan el filtro de fecha activo.
+              Selección custom: hacé click en dos días del calendario para definir un rango libre,
+              después "Aplicar". Cancelar o click afuera descarta la selección sin cambiar el filtro
+              activo.
             </p>
+          </section>
+
+          {/* GRÁFICOS */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">Gráficos</h3>
+            <ul className="help-modal__list">
+              <li>
+                <strong>Volumen de incidencias:</strong> AreaChart por hora con toggles de
+                severidad. El tooltip muestra los códigos de error específicos del bucket.
+              </li>
+              <li>
+                <strong>Errores más frecuentes:</strong> BarChart con top 10 códigos. Toggles ERROR
+                / WARNING / INFO (los 3 activos por default). Las barras se colorean según
+                severidad.
+              </li>
+            </ul>
+          </section>
+
+          {/* TABLAS */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">Tablas</h3>
+            <ul className="help-modal__list">
+              <li>
+                <strong>Incidencias:</strong> agrupadas por código, con sort, búsqueda, filtro por
+                severidad y expand de cada incidencia para ver sus eventos.
+              </li>
+              <li>
+                <strong>Eventos del período:</strong> tabla colapsada por defecto con todos los
+                eventos crudos del filtro activo, ordenable y con búsqueda.
+              </li>
+            </ul>
           </section>
 
           {/* CATÁLOGO DE CÓDIGOS */}
           <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Catálogo de códigos</h3>
-            <p className="help-modal__intro-text">
-              Cada código puede tener <strong>descripción</strong>, <strong>severidad</strong> y un{' '}
-              <strong>link de solución SDS</strong>. Cuando agregás un link, el backend descarga y
-              guarda el contenido de la página — así podés verlo aunque el link HP expire.
-            </p>
+            <h3 className="help-modal__section-title">Catálogo de códigos de error</h3>
             <ul className="help-modal__list">
               <li>
                 Hacé click en cualquier <strong>código subrayado</strong> en la tabla de incidentes
-                para editar su entrada en el catálogo.
+                o en "Editar" para agregar o modificar la descripción, severidad y URL de solución.
+              </li>
+              <li>
+                Cuando agregás un link, el backend descarga y guarda el contenido HTML — así podés
+                verlo aunque el link de HP expire.
               </li>
               <li>
                 Si el análisis detecta <strong>códigos nuevos</strong> (no están en el catálogo),
                 aparece una sección para agregarlos uno a uno o ignorarlos.
-              </li>
-              <li>
-                El botón <strong>"Ver solución"</strong> en la tabla de incidentes abre el contenido
-                guardado sin necesidad de acceder a internet.
               </li>
             </ul>
           </section>
 
           {/* INCIDENTES GUARDADOS */}
           <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Incidentes guardados y comparación</h3>
+            <h3 className="help-modal__section-title">Incidentes guardados</h3>
             <ul className="help-modal__list">
               <li>
-                <strong>Guardar incidente</strong> — guarda un snapshot del análisis actual (nombre
-                + equipo opcional). Útil como línea base.
+                El botón <strong>"Guardar incidente"</strong> en el header guarda un snapshot del
+                análisis actual con nombre y equipment identifier opcional. Útil como línea base.
               </li>
               <li>
-                <strong>Comparar</strong> — desde el detalle de un snapshot guardado, pegás un log
-                nuevo y la app determina si el estado <em>mejoró</em>, está <em>estable</em> o{' '}
-                <em>empeoró</em> respecto al baseline.
+                <strong>"Incidentes guardados"</strong> muestra la lista, permite re-abrirlos y
+                compararlos contra logs nuevos para ver tendencia:{' '}
+                <em>mejoró / estable / empeoró</em>.
               </li>
               <li>
-                <strong>Evolución por equipo</strong> — en la lista de guardados, si un equipo tiene
-                3 o más snapshots se genera un gráfico de línea con la evolución de errores y
-                advertencias a lo largo del tiempo.
+                Si un equipo tiene 3 o más snapshots se genera un gráfico de línea con la evolución
+                de errores y advertencias a lo largo del tiempo.
               </li>
             </ul>
           </section>
 
-          {/* FORMATO DE LOG */}
+          {/* EXPORTAR PDF */}
           <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Formato de log esperado</h3>
-            <pre className="help-modal__code-block">
-              {`Tipo      Código     Fecha       Hora      Contador  Firmware
-Error     53.B0.02   14-mar-2024 10:30:45  12345     v5.3.0
-Warning   10.00.02   14-mar-2024 10:31:12  12346     v5.3.0`}
-            </pre>
-            <p className="help-modal__note">
-              El parser acepta tabs o espacios múltiples como separador, fechas con meses en español
-              y una línea de encabezado opcional.
+            <h3 className="help-modal__section-title">Exportar PDF</h3>
+            <p className="help-modal__intro-text">
+              El botón <strong>"Exportar PDF"</strong> en el header genera un PDF A4 con el
+              Diagnóstico IA (si fue generado), KPIs, gráfico de errores frecuentes y tabla de
+              incidencias.
             </p>
           </section>
         </div>
