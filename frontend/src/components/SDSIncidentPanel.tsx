@@ -120,26 +120,18 @@ function getEventosRelacionadosCount(
   return matching.reduce((sum, i) => sum + (i.occurrences ?? 1), 0)
 }
 
-function hasEventContext(sds: SdsIncidentData): boolean {
-  const ctx = sds.event_context?.trim()
-  return !!ctx && ctx !== '—'
-}
-
 function computeSdsVsLog(
   sds: SdsIncidentData,
   incidentRows: IncidentRowForSds[],
   incidentsFull: IncidentFullForSds[],
   eventosRelacionadosCount: number
 ): { status: SdsVsLogStatus; explanation: string } {
-  if (!hasEventContext(sds)) {
+  const sdsCodes = getSdsCodesForMatch(sds)
+  if (sdsCodes.length === 0) {
     return {
       status: 'general',
       explanation: 'SDS de tipo general — sin código de evento específico',
     }
-  }
-  const sdsCodes = getSdsCodesForMatch(sds)
-  if (sdsCodes.length === 0) {
-    return { status: 'no_match', explanation: 'no hay código de evento definido' }
   }
 
   const matchedInFiltered = sdsCodes.filter((c) =>
@@ -192,7 +184,7 @@ export function SDSIncidentPanel({
 }: SDSIncidentPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
   const estadoSds = getEstadoSds(sdsIncident.created_at)
-  const isGeneral = !hasEventContext(sdsIncident)
+  const isGeneral = getSdsCodesForMatch(sdsIncident).length === 0
   const eventosRelacionadosCount = isGeneral
     ? null
     : getEventosRelacionadosCount(sdsIncident, incidentsFull)
