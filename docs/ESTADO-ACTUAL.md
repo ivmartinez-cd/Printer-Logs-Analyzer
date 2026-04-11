@@ -1,151 +1,242 @@
 # Estado actual de la aplicación — HP Logs Analyzer
 
-Documento que describe qué hace la app hoy y cómo está implementado (sin modelos de impresora; flujo pegar → validar → analizar → dashboard).
+Documento que describe qué hace la app hoy y cómo está implementado.
+
+Última actualización: 2026-04-11 (rama `feature/printer-models`, Fase 4 completa)
 
 ---
 
 ## 1. Qué hace la app
 
-- **Objetivo:** Herramienta web interna para analizar logs de impresoras HP: pegar el log, ver incidentes agrupados por código, severidad, enlaces de solución y eventos detallados.
-- **Flujo del usuario:**
-  1. Pegar el texto del log en un modal.
-  2. Pulsar «Analizar». La app valida y parsea el log y detecta códigos que no están en el catálogo. Si hay códigos nuevos, solo se muestra la sección para agregarlos al catálogo; el resto del dashboard (KPIs, gráficos, tablas) se muestra cuando ya no queden códigos nuevos pendientes.
-  3. Ver KPIs, gráficos y tablas (incidencias y eventos), con filtros por fecha, severidad y búsqueda.
-  4. Opcional: agregar o editar códigos en el catálogo (descripción, severidad, URL de solución).
+Herramienta web interna para analizar logs de impresoras HP: seleccionar modelo, pegar el log, ver incidentes agrupados por código, advertencias de consumibles, diagnóstico con IA, SDS match y eventos detallados.
 
-El modal de análisis incluye un selector de modelo de impresora (obligatorio antes de analizar). Los modelos se cargan desde `GET /printer-models`. Desde el mismo modal se puede subir un PDF de Service Cost Data (`POST /printer-models/upload-pdf`) para crear modelos automáticamente con IA. El `model_id` seleccionado se pasa a `POST /parser/preview` en el body (Fase 3 — el backend lo ignora por ahora; integración completa en Fase 4).
+**Flujo del usuario:**
+1. Abrir modal "Pegar logs HP" y **seleccionar el modelo de impresora** (obligatorio). Si el modelo no está, hacer click en "+ Cargar nuevo modelo (PDF)" y subir el PDF del Service Cost Data oficial — los modelos y consumibles se extraen con IA (Claude Haiku).
+2. Pegar el log y pulsar "Analizar". Se ejecutan en paralelo `POST /parser/preview` y `POST /parser/validate`.
+3. Si hay **códigos nuevos** (no en catálogo), aparece la sección para agregarlos uno a uno o ignorarlos.
+4. Opcional: agregar un **SDS Engineering Incident** para hacer match contra los códigos del log.
+5. Ver KPIs, Diagnóstico con IA, SDS panel, Advertencias de consumibles, gráficos y tablas — todo filtrable por fecha.
 
 ---
 
 ## 2. Arquitectura general
 
-- **Backend:** Python, FastAPI, en `backend/`. Expone API REST protegida por cabecera `x-api-key`. Carga `.env` desde la raíz del repo.
-- **Frontend:** React + Vite + TypeScript en `frontend/`. Consume la API y muestra el dashboard.
-- **Base de datos:** PostgreSQL (p. ej. Neon). Se usa para el **catálogo de códigos de error** (`error_codes`). Los resultados de cada análisis no se persisten (MVP en memoria/cache).
+Monorepo: frontend React/TypeScript (`frontend/`) + backend Python/FastAPI (`backend/`) conectados por REST.
+
+```
+Printer-Logs-Analyzer/
+├── package.json                  # Scripts raíz (dev, lint, typecheck, test:*)
+├── backend/
+│   ├── interface/api.py          # FastAPI — todos los endpoints
+│   ├── interface/auth.py         # Autenticación x-api-key
+│   ├── domain/entities.py        # Pydantic models (Event, Incident, ConsumableWarning…)
+│   ├── application/
+│   │   ├── parsers/log_parser.py
+│   │   └── services/
+│   │       ├── analysis_service.py
+│   │       ├── compare_service.py
+│   │       └── consumable_warning_service.py
+│   ├── infrastructure/
+│   │   ├── config.py
+│   │   ├── content_fetcher.py
+│   │   ├── database.py
+│   │   ├── fallback/error_codes_seed.json
+│   │   └── repositories/
+│   │       ├── error_code_repository.py
+│   │       ├── saved_analysis_repository.py
+│   │       └── printer_model_repository.py
+│   ├── migrations/               # 006 migraciones SQL (001–005 ejecutadas; 006 pendiente en Neon)
+│   └── tests/                    # pytest — 70 tests
+└── frontend/
+    ├── src/pages/DashboardPage.tsx
+    ├── src/components/           # Ver tabla de componentes más abajo
+    ├── src/hooks/                # useAnalysis, useModals, useDateFilter, useExportPdf
+    ├── src/services/api.ts
+    ├── src/types/api.ts
+    └── src/__tests__/            # vitest — 70 tests
+```
 
 ---
 
-## 3. Backend — qué hace y cómo
+## 3. Backend
 
-### 3.1 Entrada y configuración
+### 3.1 Parsing
 
-- **Punto de entrada:** `backend/main.py` arranca Uvicorn con `interface.api:app`.
-- **Configuración:** `backend/infrastructure/config.py` lee variables de entorno (`DB_URL`, `API_KEY`, `RECENCY_WINDOW`, etc.) y carga el `.env` desde la **raíz del proyecto** (no desde `backend/`).
+`LogParser` en `application/parsers/log_parser.py`. Normaliza `\s{2,}` → `\t` antes de parsear. Soporta meses en español. Tolera hasta 2 líneas en blanco antes del header. Líneas malformadas → `ParserError` sin detener el proceso.
 
-### 3.2 Parsing de logs
+### 3.2 Análisis
 
-- **Responsable:** `backend/application/parsers/log_parser.py` (`LogParser`).
-- **Formato esperado:** Líneas con columnas (TAB o espacios): tipo de evento, código, fecha y hora, contador, firmware, ayuda/mensaje. Formato de fecha: `DD-MMM-YYYY HH:mm:ss`.
-- **Comportamiento:**
-  - Si una línea tiene menos de 6 columnas con TAB, se intenta parsear como columnas separadas por espacios (fecha y hora como dos tokens que se unen).
-  - La primera línea se considera cabecera si contiene palabras clave (tipo, código, fecha, etc.) y se omite.
-  - Las líneas que no se pueden parsear se registran como errores no fatales (no detienen el proceso) y se devuelven en la respuesta.
-- **Salida:** `ParserReport` con lista de `Event` (dominio) y lista de `ParserError` (número de línea, línea cruda, motivo).
+`AnalysisService` agrupa por código → un `Incident` por código. Severity: máximo de eventos. `global_severity`: máximo de todos.
 
-### 3.3 Análisis (incidencias)
+### 3.3 Consumable warnings
 
-- **Responsable:** `backend/application/services/analysis_service.py` (`AnalysisService`).
-- **Lógica:**
-  - Recibe la lista de `Event` ya enriquecida con datos del catálogo.
-  - Agrupa por `code`. Por cada código genera un **Incident** con: primera y última vez, severidad máxima del grupo, número de ocurrencias, clasificación (usa la descripción del catálogo si existe) y `sds_link` (URL de solución del catálogo si existe).
-  - Calcula una severidad global del log (máxima entre todos los eventos).
-- No se usan reglas configurables (X, Y, ventanas) en el estado actual; solo agrupación por código y enriquecimiento desde el catálogo.
+`compute_consumable_warnings(events, consumables, max_counter)` en `consumable_warning_service.py`. Retorna `List[ConsumableWarning]` ordenada por `usage_pct` desc. Solo consumibles con al menos un código de log matcheado. Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones de código soportan wildcard `z` (cualquier dígito hex).
 
-### 3.4 Catálogo de códigos (BD)
+### 3.4 Modelos de impresora
 
-- **Tabla:** `error_codes` (ver `backend/migrations/003_create_error_codes.sql`): `id`, `code` (único), `severity`, `description`, `solution_url`, `created_at`, `updated_at`.
-- **Repositorio:** `backend/infrastructure/repositories/error_code_repository.py`. Métodos:
-  - `get_by_codes(codes)`: devuelve un mapa `code → ErrorCode` para los códigos que existen en la BD.
-  - `upsert(code, severity, description, solution_url)`: inserta o actualiza por `code` (ON CONFLICT), devuelve la fila guardada.
-- El backend **enriquece** cada evento con `code_severity`, `code_description` y `code_solution_url` a partir de este catálogo antes de pasar los eventos al análisis.
+- `GET /printer-models` — lista modelos disponibles.
+- `POST /printer-models/upload-pdf` — recibe PDF multipart, extrae modelos y consumibles con Claude Haiku (`max_tokens=16000`), persiste en DB. Timeout de respuesta en frontend: 90 s.
 
-### 3.5 API (endpoints)
+### 3.5 Diagnóstico con IA
 
-- **GET /health:** Comprueba que la API está viva; devuelve `status`, `db_mode` y `db_available`.
-- **POST /parser/preview** (body: `{ "logs": "..." }`):
-  - Autenticación: cabecera `x-api-key`.
-  - Parsea el texto con `LogParser`, obtiene códigos únicos, consulta el catálogo, enriquece eventos, ejecuta `AnalysisService.analyze()` y devuelve eventos, incidencias, severidad global y errores de parseo.
-  - Cache en memoria: si el cuerpo del log (hash SHA256) es el mismo que la petición anterior, devuelve la respuesta cacheada sin volver a parsear ni a BD.
-- **POST /parser/validate** (body: `{ "logs": "..." }`):
-  - Parsea el log y consulta el catálogo para determinar qué códigos detectados **no** están en la BD. Devuelve `total_lines`, `codes_detected`, `codes_new` y errores de parseo. No devuelve eventos ni incidencias.
-- **POST /error-codes/upsert** (body: `code`, opcionales `severity`, `description`, `solution_url`):
-  - Inserta o actualiza un código en `error_codes` e invalida la cache de preview para que el siguiente análisis use el catálogo actualizado.
-  - Devuelve la fila guardada (id, code, severity, description, solution_url, created_at, updated_at).
+`POST /analysis/ai-diagnose` — recibe incidentes, llama a Claude Haiku, retorna diagnóstico estructurado en secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
 
----
+### 3.6 Comparación de snapshots
 
-## 4. Frontend — qué hace y cómo
+`compare_service.py` retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes).
 
-### 4.1 Punto de entrada y estado
+### 3.7 API endpoints
 
-- **Página principal:** `frontend/src/pages/DashboardPage.tsx`. Contiene el flujo completo: bienvenida, modal de pegado, dashboard con KPIs, gráficos y tablas.
-- **Estado relevante:** resultado del análisis (`result`: eventos e incidencias), códigos nuevos detectados (`codesNew`), fecha seleccionada para filtro (`selectedDate`), filtros de severidad y búsqueda para cada tabla, ordenación, IDs de incidencias expandidas, modales (pegar log, agregar/editar código).
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/health` | Estado del servidor y modo de BD |
+| POST | `/parser/preview` | Parse + análisis + enriquecimiento + consumable warnings |
+| POST | `/parser/validate` | Detecta códigos nuevos sin analizar |
+| POST | `/error-codes/upsert` | Crear/actualizar código en catálogo |
+| GET | `/printer-models` | Lista modelos de impresora |
+| POST | `/printer-models/upload-pdf` | Extraer modelos de un PDF con IA |
+| POST | `/analysis/ai-diagnose` | Diagnóstico con Claude Haiku |
+| POST | `/saved-analyses` | Guardar snapshot |
+| GET | `/saved-analyses` | Listar snapshots |
+| GET | `/saved-analyses/{id}` | Detalle de snapshot |
+| DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
+| POST | `/saved-analyses/{id}/compare` | Comparar log nuevo vs snapshot |
 
-### 4.2 Flujo de análisis
+Rate limiting (slowapi, por IP): preview y validate → 60/min; upsert → 30/min.
 
-1. El usuario abre el modal «Pegar logs HP» y escribe o pega el log.
-2. Al pulsar «Analizar» se llama a `handleAnalyze(logText)`:
-   - Se llama en paralelo (o secuencial) a `previewLogs(logText)` y `validateLogs(logText)`.
-   - Con la respuesta de `preview` se actualiza `result` (eventos e incidencias).
-   - Con la respuesta de `validate` se actualiza `codesNew` (códigos que no están en el catálogo).
-   - Si hay `codesNew.length > 0`, solo se muestra la sección de «códigos nuevos»; el bloque de KPIs, gráficos y tablas se renderiza solo cuando `codesNew.length === 0` (tras agregar los códigos al catálogo o si no había ninguno nuevo).
-   - Toasts de éxito o error según el resultado.
-3. El modal de pegado se cierra tras un análisis exitoso.
+### 3.8 DB fallback
 
-### 4.3 Dashboard (con resultado)
+Switch automático a JSON local cuando PostgreSQL no está disponible. `threading.Lock()` evita race conditions. `/health` reporta `db_mode: "local_fallback"`.
 
-- **Header:** Título, botón «Analizar otro log», fecha/hora actual.
-- **Banner de errores de parseo:** Si `result.errors.length > 0`, se muestra cuántas líneas se omitieron.
-- **Sección de códigos nuevos:** Si `codesNew.length > 0`, lista de códigos con botón «Agregar al catálogo» por código; al pulsar se abre el modal de catálogo con código y descripción rellenados desde el primer evento que tenga ese código.
-- **Filtro de fecha:** Selector de fecha (calendario) con rango min/max derivado de los eventos, más botón «Todo» para ver todo el log.
-- **KPIs:** Tarjetas con total de incidentes, severidad máxima, códigos únicos y eventos en la ventana filtrada; colores según severidad.
-- **Diagnóstico con IA:** Panel colapsado por defecto (`AIDiagnosticPanel`). Al expandirlo el usuario puede generar un diagnóstico llamando a `/analysis/ai-diagnose`; muestra secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD. El diagnóstico generado se preserva al colapsar/expandir.
-- **Gráficos:** Issue volume por hora (área) y top 5 códigos (barras), ambos respetando la fecha seleccionada.
-- **Tabla Incidencias:** Filas con código, clasificación, severidad, ocurrencias, primera/última vez, solución (enlace si existe) y botón «Editar». Filas expandibles: al expandir se muestra una fila de encabezados (Fecha y hora, Contador, Δ, Firmware, Mensaje/Ayuda) y las filas de cada evento del grupo con esos datos.
-- **Tabla Recent Printer Errors:** Sección colapsable, **colapsada por defecto**, con eventos recientes (timestamp, código, severidad, mensaje, etc.) con filtros por severidad y búsqueda, y ordenación por columnas.
-- **Filtros y ordenación:** Ambas tablas tienen filtro por severidad y caja de búsqueda (código/clasificación o código/mensaje), y cabeceras ordenables.
+### 3.9 Resiliencia de conexiones (Neon idle timeout)
 
-### 4.4 Catálogo (agregar / editar código)
-
-- **Modal:** `frontend/src/components/AddCodeToCatalogModal.tsx`. Campos: código (solo lectura al editar), severidad (select), descripción, URL de solución. Se usa tanto para «Agregar al catálogo» (código nuevo) como para «Editar» desde una fila de incidencia.
-- Al guardar se llama a `upsertErrorCode(body)`. Si es alta de código nuevo, se quita el código de `codesNew` para que desaparezca de la lista de pendientes. Toasts de éxito o error.
-
-### 4.5 Servicios y tipos
-
-- **API:** `frontend/src/services/api.ts` — `previewLogs`, `validateLogs`, `upsertErrorCode`. Base URL y API key desde `VITE_API_URL` y `VITE_API_KEY` (por defecto `http://localhost:8000` y valor por defecto si no hay env).
-- **Tipos:** `frontend/src/types/api.ts` — interfaces para respuestas de parse/preview, validate, eventos, incidencias y body de upsert de código.
-
-### 4.6 Estilos y UX
-
-- Estilos globales y por componente en `frontend/src/index.css` (incluye tablas, modales, toasts, filtros, filas expandibles).
-- Toasts globales vía `ToastContext` y componente `Toast`; se usan para éxito, advertencia y error.
+`database.py` → `connect()` hace un **pre-ping** (`SELECT 1`) sobre cada conexión obtenida del pool antes de cederla al caller. Si la conexión fue cerrada por Neon durante idle, se descarta (`putconn(close=True)`) y se reintenta hasta 3 veces. `psycopg2.pool.PoolError` (pool exhausto) lanza `DatabaseUnavailableError` de inmediato sin reintentar. `rollback()` y `putconn()` en el finally están guardados con `try/except` para no propagar `InterfaceError` cuando la conexión ya estaba muerta.
 
 ---
 
-## 5. Persistencia y datos
+## 4. Frontend
 
-- **Persistido:** Catálogo `error_codes` y snapshots `saved_analyses` en PostgreSQL (Neon). Las migraciones están en `backend/migrations/` (001–006). La 006 agrega `printer_models`, `printer_consumables` y `consumable_related_codes`, y la columna `model_id` en `saved_analyses` — pendiente de correr en Neon.
-- **No persistido:** Resultado de cada análisis (eventos e incidencias). Cada petición de preview se calcula desde el log enviado.
+### 4.1 Orden de paneles en el dashboard
+
+1. `DashboardHeader` — logo, logFileName, botones de acción, LiveClock, DbStatusBadge
+2. `KPICards` — 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores
+3. `AIDiagnosticPanel` — panel violeta, colapsado por default, diagnóstico on demand
+4. `SDSIncidentPanel` — colapsado por default; sección "Verificar cambio" si hay overlap con consumibles
+5. `ConsumableWarningsPanel` — colapsado, solo si `warnings.length > 0`
+6. `DateRangePicker` — botón + popover con 8 presets y calendario de rango libre
+7. `IncidentsChart` — AreaChart eventos/hora con toggles de severidad
+8. `TopErrorsChart` — BarChart top 10 códigos; toggles ERROR/WARNING/INFO (los 3 activos por default)
+9. `IncidentsTable` — agrupada por código, expandible, sort, filtro, búsqueda
+10. `EventsTable` — colapsada por default, todos los eventos crudos
+
+### 4.2 Componentes
+
+| Componente | Propósito |
+|------------|-----------|
+| `DashboardHeader.tsx` | Header principal con acciones |
+| `KPICards.tsx` | 4 KPIs de salud del log |
+| `AIDiagnosticPanel.tsx` | Diagnóstico IA colapsado; llama a `/analysis/ai-diagnose` on demand |
+| `SDSIncidentPanel.tsx` | Match SDS vs log; sección "Verificar cambio" si hay consumibles afectados |
+| `ConsumableWarningsPanel.tsx` | Tabla de consumibles; solo si hay warnings; colapsado |
+| `DateRangePicker.tsx` | Picker unificado con presets y rango libre; popover alineado a la derecha |
+| `IncidentsChart.tsx` | AreaChart por hora con toggles de severidad y tooltip con códigos |
+| `TopErrorsChart.tsx` | BarChart top 10 códigos; tres toggles activos por default |
+| `IncidentsTable.tsx` | Tabla principal de incidencias expandibles |
+| `EventsTable.tsx` | Eventos crudos, colapsada por default |
+| `AddCodeToCatalogModal.tsx` | Agregar/editar código del catálogo |
+| `AddPrinterModelModal.tsx` | Subir PDF de Service Cost Data para extraer modelos con IA |
+| `SaveIncidentModal.tsx` | Guardar snapshot con nombre y equipment identifier |
+| `SDSIncidentModal.tsx` | Pegar SDS y parsear → SdsIncidentData |
+| `SavedAnalysisList.tsx` | Lista de snapshots con búsqueda y evolución por equipo |
+| `EquipmentTimeline.tsx` | LineChart evolución de errores por equipo |
+| `SavedAnalysisDetail.tsx` | Detalle de snapshot y comparación |
+| `SolutionContentModal.tsx` | Muestra contenido de solución guardado |
+| `HelpModal.tsx` | Ayuda con 11 secciones que refleja el estado actual de la app |
+| `ConfirmModal.tsx` | Modal de confirmación genérico |
+| `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
+
+### 4.3 Hooks
+
+| Hook | Responsabilidad |
+|------|----------------|
+| `useAnalysis` | Estado y handlers: `loading`, `result`, `pendingResult`, `codesNew`, `handleAnalyze`, `commitPendingResult`, `handleSaveCodeToCatalog`, `handleSaveIncident` |
+| `useModals` | 11 estados de modales |
+| `useDateFilter` | `DateFilter = null \| "YYYY-MM-DD" \| { start, end }`. Funciones puras: `filterEventsByDate`, `filterIncidentsByDate`, `getWeekRange`, etc. |
+| `useExportPdf` | PDF A4 con html2canvas + jsPDF; exporta AI panel (si generado), KPIs, BarChart, tabla |
+
+### 4.4 Flujo de análisis
+
+1. `LogPasteModal` en `DashboardPage`: selección de modelo (obligatorio) + textarea + botón "Analizar".
+2. `handleAnalyze()` → `Promise.all([POST /parser/preview, POST /parser/validate])`.
+3. Respuesta en `pendingResult` / `pendingCodesNew`.
+4. `ConfirmModal` "¿Agregar incidente SDS?" → `SDSIncidentModal` o directo.
+5. `commitPendingResult()` mueve `pendingResult` → `result`, muestra dashboard.
+
+### 4.5 DateRangePicker
+
+Reemplazó a `DateFilterBar`. Un solo botón que abre un popover con:
+- 8 presets: Todo el período, Hoy, Esta semana, Semana anterior, Este mes, Mes anterior, Últimos 7 días, Últimos 30 días.
+- Calendario interactivo para rango libre (click en dos días → "Aplicar").
+- Cancelar o click fuera descarta sin cambiar el filtro activo.
+- Popover alineado a `right: 0` para no salirse del viewport.
+
+### 4.6 SDS match
+
+`SDSIncidentPanel` usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. Soporta sufijo `z` (cualquier dígito hex). Status `'general'` solo cuando ambos `event_context` y `more_info` están vacíos. Si `event_context` está vacío pero `more_info` tiene códigos, se intenta el match normal.
 
 ---
 
-## 6. Cómo ejecutarla
+## 5. Persistencia
 
-- **Raíz del proyecto:** `.env` en la raíz con `DB_URL` y `API_KEY` (y opcionales). Backend lee ese `.env`.
-- **Un solo comando:** Desde la raíz, `npm run dev` arranca frontend (Vite) y backend (Uvicorn con `cd backend && uvicorn interface.api:app --reload`).
-- **Por separado:** `npm run dev:frontend` y `npm run dev:backend`; dependencias: `pip install -r backend/requirements.txt`, `npm install` en frontend (o desde raíz con `npm run dev` que usa el monorepo).
+| Qué | Dónde | Estado |
+|-----|-------|--------|
+| Catálogo de códigos | PostgreSQL `error_codes` | Activo |
+| Snapshots guardados | PostgreSQL `saved_analyses` | Activo |
+| Modelos de impresora | PostgreSQL `printer_models`, `printer_consumables`, `consumable_related_codes` | Migración 006 pendiente en Neon |
+| Contenido HTML de soluciones | Columna `solution_content` en `error_codes` | Activo |
+
+Fallback automático a JSON local en `backend/data/` cuando PostgreSQL no está disponible.
 
 ---
 
-## 7. Resumen rápido
+## 6. Tests
 
-| Área            | Qué hace                                                                 | Dónde / cómo                                           |
-|-----------------|---------------------------------------------------------------------------|--------------------------------------------------------|
-| Parsing         | Convierte texto de log HP en eventos (y errores de línea)                | `LogParser` en backend; TAB o espacios; fecha DD-MMM-YYYY |
-| Catálogo        | Guarda y consulta códigos con severidad, descripción y URL de solución    | PostgreSQL `error_codes`; `ErrorCodeRepository`        |
-| Análisis        | Agrupa eventos por código y genera incidencias con severidad y enlaces    | `AnalysisService` en backend                           |
-| API             | Preview (parse + enriquecer + analizar), validate (códigos nuevos), upsert código | FastAPI en `backend/interface/api.py`; auth `x-api-key` |
-| UI              | Pegar log, analizar, ver dashboard, filtrar, expandir, agregar/editar código | React en `DashboardPage.tsx` y modales                 |
-| Modelos         | Tablas DB creadas (migración 006); endpoints `GET /printer-models` y `POST /printer-models/upload-pdf` listos en backend; selector en `LogPasteModal` + `AddPrinterModelModal` en frontend (Fase 3) | `printer_models`, `printer_consumables`, `consumable_related_codes` |
+| Suite | Herramienta | Tests |
+|-------|-------------|-------|
+| Frontend (hooks + componentes) | vitest | 70 |
+| Backend | pytest | 70 |
 
-Este documento refleja el estado actual del código y puede actualizarse cuando cambien flujos o componentes.
+Frontend: `vitest.config.ts` con `environment: node`; tests de componentes declaran `// @vitest-environment jsdom`. Backend: tests en `backend/tests/`; sin `DB_URL` → fallback JSON automático.
+
+---
+
+## 7. Migraciones SQL
+
+| Archivo | Contenido | Estado en Neon |
+|---------|-----------|---------------|
+| `001_init.sql` | Tablas legacy (`config_versions`, `audit_log`, `rules`, `rule_tags`) | Ejecutada |
+| `002_add_rules_and_rule_tags.sql` | Continuación de 001 | Ejecutada |
+| `003_create_error_codes.sql` | Tabla `error_codes` con UNIQUE(code) | Ejecutada |
+| `004_create_saved_analyses.sql` | Tabla `saved_analyses` con JSONB | Ejecutada |
+| `005_add_solution_content.sql` | `ALTER TABLE error_codes ADD COLUMN solution_content TEXT` | Ejecutada |
+| `006_create_printer_models.sql` | `printer_models`, `printer_consumables`, `consumable_related_codes`; `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` | **Pendiente** |
+
+---
+
+## 8. Resumen rápido
+
+| Área | Estado actual |
+|------|--------------|
+| Parsing logs | Estable — normalización espacios, meses español, tolerancia a blank lines |
+| Modelos de impresora | Fase 4 completa — selector obligatorio en modal, upload PDF con Haiku, consumables warnings |
+| Consumable warnings | Activo — `ConsumableWarningsPanel` + servicio backend + "Verificar cambio" en SDS |
+| Diagnóstico con IA | Activo — `AIDiagnosticPanel` colapsado, Claude Haiku, secciones DIAGNÓSTICO/ACCIÓN/PRIORIDAD |
+| SDS Engineering Incident | Activo — match por `event_context`/`more_info`, wildcard `z`, status `general` |
+| Filtros de fecha | DateRangePicker — 8 presets + rango libre con calendario |
+| Gráficos | IncidentsChart (AreaChart) + TopErrorsChart (BarChart top 10, toggles activos por default) |
+| Catálogo de códigos | Activo — upsert con fetch de HTML, fallback si link expira |
+| Incidentes guardados | Activo — snapshots, comparación (mejoró/estable/empeoró), evolución por equipo |
+| Exportar PDF | Activo — AI panel (si generado), KPIs, BarChart, tabla de incidencias |
+| HelpModal | Actualizado — 11 secciones en orden de aparición en pantalla |
+| DB fallback | Activo — JSON local automático cuando PostgreSQL no disponible |
+| Deploy | Vercel (frontend) + Render (backend) + Neon (PostgreSQL) |

@@ -59,21 +59,64 @@ class Database:
         Raises DatabaseUnavailableError if the server is unreachable or the
         pool is exhausted, so callers can switch to the local fallback without
         crashing.
+
+        Neon (and other managed Postgres services) close idle connections
+        without notice.  To avoid surfacing OperationalError / InterfaceError
+        to callers when a pooled connection has silently died, we pre-ping
+        each connection with ``SELECT 1`` before yielding it.  If the ping
+        fails we discard the connection and retry up to *max_attempts* times.
         """
         pool = self._get_pool()
-        try:
-            conn = pool.getconn()
-        except (psycopg2.OperationalError, psycopg2.pool.PoolError) as exc:
-            raise DatabaseUnavailableError(str(exc)) from exc
+        conn = None
+        max_attempts = 3
+        last_exc: Exception | None = None
+
+        for _ in range(max_attempts):
+            try:
+                conn = pool.getconn()
+            except psycopg2.pool.PoolError as exc:
+                # Pool exhausted — no point retrying.
+                raise DatabaseUnavailableError(str(exc)) from exc
+            except psycopg2.OperationalError as exc:
+                last_exc = exc
+                conn = None
+                continue
+
+            # Pre-ping: verify the connection is still alive before yielding.
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+                break  # connection is live; exit retry loop
+            except (psycopg2.OperationalError, psycopg2.InterfaceError) as exc:
+                # Connection was closed by the server (Neon idle timeout, etc.)
+                last_exc = exc
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+                conn = None
+        else:
+            # All attempts exhausted.
+            raise DatabaseUnavailableError(
+                f"Could not obtain a live DB connection after {max_attempts} attempts: {last_exc}"
+            ) from last_exc
+
         try:
             yield conn
         except Exception:
             # Roll back any open transaction before returning to the pool so
             # the connection is clean for the next caller.
-            conn.rollback()
+            try:
+                conn.rollback()
+            except (psycopg2.InterfaceError, psycopg2.OperationalError):
+                pass
             raise
         finally:
-            pool.putconn(conn)
+            if conn is not None:
+                try:
+                    pool.putconn(conn)
+                except Exception:
+                    pass
 
     def is_available(self) -> bool:
         """Return True if a lightweight SELECT 1 succeeds within the timeout."""
