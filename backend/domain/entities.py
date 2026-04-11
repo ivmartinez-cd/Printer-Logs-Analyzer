@@ -83,6 +83,21 @@ class PrinterConsumable(BaseModel):
     model_config = {"frozen": True}
 
 
+class ConsumableWarning(BaseModel):
+    """Warning about a consumable part based on log counter vs its rated life pages."""
+
+    part_number: str
+    description: str
+    category: str
+    life_pages: int
+    current_counter: int
+    usage_pct: float
+    status: str  # "ok" | "warning" | "replace"
+    matched_codes: List[str]
+
+    model_config = {"frozen": True}
+
+
 class AnalysisResult(BaseModel):
     """Result of running analysis rules over a collection of events."""
 

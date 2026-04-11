@@ -47,7 +47,7 @@ npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
 npm run test:frontend  # vitest run (70 tests: 35 hooks/lógica + 35 componentes)
-npm run test:backend   # pytest backend/tests/ -v (49 tests)
+npm run test:backend   # pytest backend/tests/ -v (70 tests)
 ```
 
 ---
@@ -72,7 +72,8 @@ Printer-Logs-Analyzer/
 │   │   ├── parsers/log_parser.py
 │   │   └── services/
 │   │       ├── analysis_service.py
-│   │       └── compare_service.py
+│   │       ├── compare_service.py
+│   │       └── consumable_warning_service.py
 │   ├── infrastructure/
 │   │   ├── config.py             # Settings desde .env
 │   │   ├── content_fetcher.py    # validate_ssrf_url + fetch_solution_content
@@ -119,6 +120,8 @@ Todos los modelos son Pydantic con `model_config = {"frozen": True}`.
 
 **AnalysisResult:** `incidents`, `global_severity`, `created_at`, `metadata`
 
+**ConsumableWarning:** `part_number`, `description`, `category`, `life_pages`, `current_counter`, `usage_pct`, `status` (`"ok"|"warning"|"replace"`), `matched_codes`. Status thresholds: ≥100% → replace, ≥80% → warning, <80% → ok.
+
 ### Parser (`application/parsers/log_parser.py`)
 
 Formato de entrada: TSV o espacios múltiples.
@@ -138,6 +141,10 @@ Decisiones clave:
 - Severity: máximo de sus eventos (ERROR=3 > WARNING=2 > INFO=1)
 - `sds_link`/`sds_solution_content`: del primer evento con `code_solution_url`
 - `global_severity`: máximo de todos los eventos
+
+### Consumable warning service (`application/services/consumable_warning_service.py`)
+
+`compute_consumable_warnings(events, consumables, max_counter)` — returns `List[ConsumableWarning]` sorted by `usage_pct` desc. Only consumables with at least one log code match are included. Code patterns support `z` wildcard (any hex digit). Called from `/parser/preview` when `model_id` is present; failures are logged and skipped without breaking analysis.
 
 ### Compare service (`application/services/compare_service.py`)
 
@@ -224,7 +231,7 @@ Orquesta vistas (`dashboard` | `saved-list` | `saved-detail`) y hooks. Flujo pri
 3. Respuesta en `pendingResult` / `pendingCodesNew`
 4. Modal `ConfirmModal` "¿Agregar incidente SDS?" → `SDSIncidentModal` o directo
 5. `commitPendingResult()` mueve `pendingResult` → `result`, muestra dashboard
-6. Render: `<KPICards>` → `<AIDiagnosticPanel>` → `<SDSIncidentPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
+6. Render: `<KPICards>` → `<AIDiagnosticPanel>` → `<SDSIncidentPanel>` → `<ConsumableWarningsPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
 
 Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actualizar `events[]`, `incidents[].events[]`, `incidents[].sds_link` e `incidents[].sds_solution_content` — el botón "Ver solución" lee nivel incidente, no nivel evento.
 
@@ -248,7 +255,8 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `AddCodeToCatalogModal.tsx` | Form agregar/editar código del catálogo |
 | `SaveIncidentModal.tsx` | Form guardar análisis con nombre y equipment_identifier |
 | `SDSIncidentModal.tsx` | Pegar SDS; parsea texto → SdsIncidentData |
-| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y gráficos |
+| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y ConsumableWarningsPanel; acepta `consumableWarnings?` para mostrar sección "Verificar cambio" cuando hay solapamiento de códigos |
+| `ConsumableWarningsPanel.tsx` | Tabla de advertencias de consumibles; **arranca colapsada**; solo se renderiza si `warnings.length > 0`; posición: entre SDSIncidentPanel y gráficos |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |
 | `DateRangePicker.tsx` | Picker de rango de fechas con presets (hoy, semana, mes, N días) y DayPicker interactivo; popover alineado a `right: 0` para no salirse del viewport |
@@ -279,7 +287,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 
 ### Tipos (`types/api.ts`)
 
-`Event`, `EnrichedEvent`, `Incident`, `ParseLogsResponse`, `ValidateLogsResponse`, `ErrorCodeUpsertBody`, `SavedAnalysisIncidentItem`, `SavedAnalysisSummary`, `SavedAnalysisFull`, `CompareDiff`, `CompareResponse`
+`Event`, `EnrichedEvent`, `Incident`, `ParseLogsResponse` (includes `consumable_warnings: ConsumableWarning[]`), `ValidateLogsResponse`, `ErrorCodeUpsertBody`, `SavedAnalysisIncidentItem`, `SavedAnalysisSummary`, `SavedAnalysisFull`, `CompareDiff`, `CompareResponse`, `ConsumableWarning`
 
 `CompareDiff.tendencia`: `'mejoro' | 'estable' | 'empeoro'` (sin tildes — espeja exactamente el backend).
 

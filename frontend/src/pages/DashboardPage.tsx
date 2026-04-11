@@ -23,6 +23,7 @@ import { ConfirmModal } from '../components/ConfirmModal'
 import { SaveIncidentModal } from '../components/SaveIncidentModal'
 import { SDSIncidentModal } from '../components/SDSIncidentModal'
 import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
+import { ConsumableWarningsPanel } from '../components/ConsumableWarningsPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
 import { HelpModal } from '../components/HelpModal'
 import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
@@ -784,8 +785,12 @@ export default function DashboardPage({
                           occurrences: inc.occurrences,
                         })) ?? []
                       }
+                      consumableWarnings={result?.consumable_warnings ?? []}
                     />
                   )}
+
+                  {/* Consumable warnings — colapsado por defecto */}
+                  <ConsumableWarningsPanel warnings={result?.consumable_warnings ?? []} />
 
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">

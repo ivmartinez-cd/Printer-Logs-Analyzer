@@ -35,11 +35,23 @@ export interface ParserError {
   reason: string
 }
 
+export interface ConsumableWarning {
+  part_number: string
+  description: string
+  category: string
+  life_pages: number
+  current_counter: number
+  usage_pct: number
+  status: 'ok' | 'warning' | 'replace'
+  matched_codes: string[]
+}
+
 export interface ParseLogsResponse {
   events: EnrichedEvent[]
   incidents: Incident[]
   global_severity: string
   errors: ParserError[]
+  consumable_warnings: ConsumableWarning[]
 }
 
 export interface ValidateLogsResponse {

@@ -2364,3 +2364,162 @@ button.dashboard-table__solution-link {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* ── Consumable Warnings Panel ─────────────────────────────────── */
+.consumable-warnings-panel {
+  border-left-color: #d97706; /* amber accent */
+}
+
+.consumable-warnings-panel__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.consumable-warnings-panel__table {
+  min-width: 700px;
+}
+
+.consumable-warnings-panel__table tr[data-status='replace'] {
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.consumable-warnings-panel__table tr[data-status='warning'] {
+  background: rgba(217, 119, 6, 0.06);
+}
+
+.consumable-warnings-panel__cat-icon {
+  font-size: 14px;
+}
+
+.consumable-warnings-panel__part {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+  color: #a5b4c8;
+}
+
+.consumable-warnings-panel__num {
+  white-space: nowrap;
+  color: #c9d1de;
+}
+
+/* Progress bar */
+.consumable-warnings-panel__bar-cell {
+  min-width: 140px;
+}
+
+.consumable-warnings-panel__bar-wrap {
+  position: relative;
+  background: #1e2a3a;
+  border-radius: 4px;
+  height: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.consumable-warnings-panel__bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.consumable-warnings-panel__bar--ok {
+  background: #16a34a;
+}
+
+.consumable-warnings-panel__bar--warning {
+  background: #d97706;
+}
+
+.consumable-warnings-panel__bar--replace {
+  background: #dc2626;
+}
+
+.consumable-warnings-panel__bar-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e6e8ee;
+  padding: 0 6px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Status badge */
+.consumable-warnings-panel__badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.consumable-warnings-panel__badge--ok {
+  background: rgba(22, 163, 74, 0.2);
+  color: #4ade80;
+}
+
+.consumable-warnings-panel__badge--warning {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+}
+
+.consumable-warnings-panel__badge--replace {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+.consumable-warnings-panel__codes {
+  font-size: 0.75rem;
+  color: #9aa3b2;
+  font-family: 'Courier New', monospace;
+}
+
+/* SDS panel consumable sub-section */
+.sds-incident-panel__consumables {
+  margin-top: 12px;
+  padding: 0 4px 4px;
+}
+
+.sds-incident-panel__consumables-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #a5b4c8;
+  margin: 0 0 8px;
+}
+
+.sds-incident-panel__consumable-item {
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.sds-incident-panel__consumable-item--warning {
+  border: 1px solid #d97706;
+  background: rgba(217, 119, 6, 0.08);
+  color: #fbbf24;
+}
+
+.sds-incident-panel__consumable-item--replace {
+  border: 1px solid #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  color: #f87171;
+}
+
+.sds-incident-panel__consumable-item--ok {
+  border: 1px solid #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+  color: #4ade80;
+}
+
+.sds-incident-panel__consumable-detail {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
