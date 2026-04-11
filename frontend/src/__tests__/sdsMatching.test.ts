@@ -57,6 +57,54 @@ function hasEventContext(sds: SdsIncidentData): boolean {
   return !!ctx && ctx !== '—'
 }
 
+interface IncidentRowForSds {
+  code: string
+}
+
+interface IncidentFullForSds {
+  code: string
+  end_time: string
+  occurrences?: number
+}
+
+type SdsVsLogStatus = 'match' | 'partial' | 'no_match' | 'general'
+
+function computeSdsVsLog(
+  sds: SdsIncidentData,
+  incidentRows: IncidentRowForSds[],
+  incidentsFull: IncidentFullForSds[],
+  eventosRelacionadosCount: number
+): { status: SdsVsLogStatus; explanation: string } {
+  const sdsCodes = getSdsCodesForMatch(sds)
+  if (sdsCodes.length === 0) {
+    return {
+      status: 'general',
+      explanation: 'SDS de tipo general — sin código de evento específico',
+    }
+  }
+
+  const matchedInFiltered = sdsCodes.filter((c) =>
+    incidentRows.some((r) => incidentCodeMatchesSds(r.code, c))
+  )
+  const matchedInFull = sdsCodes.filter((c) =>
+    incidentsFull.some((i) => incidentCodeMatchesSds(i.code, c))
+  )
+
+  if (matchedInFiltered.length > 0) {
+    return {
+      status: 'match',
+      explanation: `${matchedInFiltered.join(', ')} — ${eventosRelacionadosCount} eventos detectados`,
+    }
+  }
+  if (matchedInFull.length > 0) {
+    return {
+      status: 'partial',
+      explanation: `${matchedInFull.join(', ')} — ${eventosRelacionadosCount} eventos detectados`,
+    }
+  }
+  return { status: 'no_match', explanation: 'no hay eventos del código' }
+}
+
 // ---------------------------------------------------------------------------
 // incidentCodeMatchesSds
 // ---------------------------------------------------------------------------
@@ -126,6 +174,11 @@ describe('getSdsCodesForMatch', () => {
     const sds: SdsIncidentData = { code: 'TriageInput2', event_context: null }
     expect(getSdsCodesForMatch(sds)).toEqual([])
   })
+
+  it('returns codes from more_info when event_context is empty', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: '53.B0.0z' }
+    expect(getSdsCodesForMatch(sds)).toEqual(['53.B0.0z'])
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -151,5 +204,37 @@ describe('hasEventContext', () => {
 
   it('returns false when event_context is only whitespace', () => {
     expect(hasEventContext({ event_context: '   ' })).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// computeSdsVsLog
+// ---------------------------------------------------------------------------
+
+describe('computeSdsVsLog', () => {
+  const full: IncidentFullForSds[] = [{ code: '53.B0.02', end_time: '2026-03-01T10:00:00', occurrences: 3 }]
+  const rows: IncidentRowForSds[] = [{ code: '53.B0.02' }]
+
+  it('returns general when no event_context and no more_info', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: null }
+    expect(computeSdsVsLog(sds, rows, full, 3).status).toBe('general')
+  })
+
+  it('returns match when event_context empty but more_info wildcard z matches log', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: '53.B0.0z' }
+    const result = computeSdsVsLog(sds, rows, full, 3)
+    expect(result.status).toBe('match')
+  })
+
+  it('returns no_match when event_context empty, more_info wildcard z, log has no matching code', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: '53.B0.0z' }
+    const result = computeSdsVsLog(sds, [], [], 0)
+    expect(result.status).toBe('no_match')
+  })
+
+  it('returns match when event_context set and log has the code', () => {
+    const sds: SdsIncidentData = { event_context: '53.B0.02' }
+    const result = computeSdsVsLog(sds, rows, full, 3)
+    expect(result.status).toBe('match')
   })
 })

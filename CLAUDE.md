@@ -258,7 +258,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `HelpModal.tsx` | Ayuda estática con 6 secciones |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
-**Match SDS vs Log (`SDSIncidentPanel`):** usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. El campo `code` interno SDS no interviene. Soporta sufijo `z` para matching por prefijo (`53.B0.0z` → `53.B0.01`, etc.).
+**Match SDS vs Log (`SDSIncidentPanel`):** usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. El campo `code` interno SDS no interviene. Soporta sufijo `z` para matching por prefijo (`53.B0.0z` → `53.B0.01`, etc.). Status `'general'` solo se emite cuando **ambos** `event_context` y `more_info` están vacíos/sin códigos parseables — si `event_context` está vacío pero `more_info` tiene códigos, se intenta el match normal.
 
 ### AIDiagnosticPanel
 
