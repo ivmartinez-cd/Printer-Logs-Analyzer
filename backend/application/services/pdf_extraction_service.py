@@ -73,7 +73,7 @@ async def extract_model_from_pdf(pdf_bytes: bytes, api_key: str) -> dict:
 
     response = await client.messages.create(
         model=MODEL,
-        max_tokens=4000,
+        max_tokens=16000,
         system=SYSTEM_PROMPT,
         messages=[
             {
@@ -97,6 +97,14 @@ async def extract_model_from_pdf(pdf_bytes: bytes, api_key: str) -> dict:
     )
 
     raw = response.content[0].text.strip()
+    stop_reason = response.stop_reason
+    _logger.debug("Claude response length: %d chars, stop_reason: %s", len(raw), stop_reason)
+    if stop_reason == "max_tokens":
+        raise ValueError(
+            "Respuesta truncada por max_tokens, aumentá el límite o dividí el PDF"
+        )
+    if stop_reason != "end_turn":
+        _logger.warning("Claude stop_reason inesperado: %s", stop_reason)
 
     # Strip markdown fences that Claude might accidentally include.
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
