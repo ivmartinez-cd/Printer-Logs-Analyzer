@@ -22,7 +22,8 @@ limiter = Limiter(key_func=get_remote_address)
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
 from backend.application.services.compare_service import calculate_trend
-from backend.domain.entities import EnrichedEvent, Event, Incident
+from backend.application.services.consumable_warning_service import compute_consumable_warnings
+from backend.domain.entities import ConsumableWarning, EnrichedEvent, Event, Incident
 from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.content_fetcher import fetch_solution_content, validate_ssrf_url
 from backend.infrastructure.database import Database
@@ -86,6 +87,7 @@ class ParseLogsResponse(BaseModel):
     incidents: list[Incident]
     global_severity: str
     errors: list[ParserErrorModel]
+    consumable_warnings: list[ConsumableWarning] = []
 
 
 class ErrorCodeUpsertRequest(BaseModel):
@@ -314,6 +316,17 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)
             for e in report.errors
         ]
+
+        consumable_warnings: list[ConsumableWarning] = []
+        if payload.model_id is not None:
+            try:
+                from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
+                _model, consumables = printer_model_repository.get_with_consumables(payload.model_id)
+                max_counter = max((e.counter for e in events if e.counter > 0), default=0)
+                consumable_warnings = compute_consumable_warnings(events, consumables, max_counter)
+            except Exception as exc:
+                logging.warning("[preview] consumable_warnings skipped: %s", exc)
+
         total_ms = int((time.perf_counter() - t0) * 1000)
         logging.info("[preview] parse_ms=%d db_ms=%d analysis_ms=%d total_ms=%d", parse_ms, db_ms, analysis_ms, total_ms)
         return ParseLogsResponse(
@@ -321,6 +334,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             incidents=analysis.incidents,
             global_severity=analysis.global_severity,
             errors=errors,
+            consumable_warnings=consumable_warnings,
         )
 
     @app.post("/parser/validate", response_model=ValidateLogsResponse, dependencies=[Depends(authenticate)])
