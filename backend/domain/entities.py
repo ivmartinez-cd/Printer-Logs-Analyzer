@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -45,6 +46,39 @@ class Incident(BaseModel):
     events: List[EnrichedEvent]
     sds_link: Optional[str] = None
     sds_solution_content: Optional[str] = None
+
+    model_config = {"frozen": True}
+
+
+class PrinterModel(BaseModel):
+    """A specific printer submodel (e.g. HP LaserJet Managed E60055)."""
+
+    id: UUID
+    model_name: str
+    model_code: str
+    family: Optional[str] = None
+    ampv: Optional[int] = None
+    engine_life_pages: Optional[int] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"frozen": True}
+
+
+class PrinterConsumable(BaseModel):
+    """A consumable or maintenance part associated with a printer model."""
+
+    id: UUID
+    model_id: UUID
+    part_number: str
+    sku: Optional[str] = None
+    description: str
+    category: Literal["roller", "fuser", "toner", "transfer", "maintenance_kit", "other"]
+    life_pages: Optional[int] = None
+    mttr_minutes: Optional[int] = None
+    voltage: Optional[str] = None
+    related_codes: List[str] = Field(default_factory=list)
 
     model_config = {"frozen": True}
 

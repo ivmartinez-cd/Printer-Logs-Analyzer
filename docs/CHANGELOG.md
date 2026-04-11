@@ -4,6 +4,13 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Migración 006: soporte de modelos de impresora y consumibles**
+- Nuevas tablas: `printer_models` (un submodelo por fila, con `ampv` y `engine_life_pages`), `printer_consumables` (por modelo, con `life_pages`, `mttr_minutes`, `voltage`, `category`), `consumable_related_codes` (patrones de código con soporte wildcard `z`).
+- `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` (nullable, FK a `printer_models`). Compatible con análisis existentes.
+- Todas las tablas con `IF NOT EXISTS` — migración idempotente. Pendiente de correr en Neon.
+
+---
+
 **Refactor: eliminar DiagnosticPanel (reglas fijas) y dejar solo AIDiagnosticPanel**
 - `DiagnosticPanel.tsx` y su test eliminados. `diagnosticRef` eliminado de `useExportPdf`.
 - `AIDiagnosticPanel` ocupa el lugar entre KPIs y gráficos. CSS `.diagnostic-panel*` eliminado de `index.css`.
