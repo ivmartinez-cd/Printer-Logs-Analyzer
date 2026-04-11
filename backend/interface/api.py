@@ -270,7 +270,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         db_ok = database_instance.is_available()
         return {
             "status": "ok",
-            "recency_window": settings.recency_window,
             "db_mode": "postgres" if db_ok else "local_fallback",
             "db_available": db_ok,
         }

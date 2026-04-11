@@ -61,7 +61,7 @@ El modal de análisis incluye un selector de modelo de impresora (obligatorio an
 
 ### 3.5 API (endpoints)
 
-- **GET /health:** Comprueba que la API está viva; devuelve `status` y `recency_window` (config).
+- **GET /health:** Comprueba que la API está viva; devuelve `status`, `db_mode` y `db_available`.
 - **POST /parser/preview** (body: `{ "logs": "..." }`):
   - Autenticación: cabecera `x-api-key`.
   - Parsea el texto con `LogParser`, obtiene códigos únicos, consulta el catálogo, enriquece eventos, ejecuta `AnalysisService.analyze()` y devuelve eventos, incidencias, severidad global y errores de parseo.
