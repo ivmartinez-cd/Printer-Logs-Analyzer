@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(messag
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -26,10 +26,14 @@ from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.content_fetcher import fetch_solution_content, validate_ssrf_url
 from backend.infrastructure.database import Database
 from backend.infrastructure.repositories.error_code_repository import ErrorCode, ErrorCodeRepository
+from backend.infrastructure.repositories.printer_model_repository import (
+    PrinterModelRepository,
+)
 from backend.infrastructure.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
     SavedAnalysisSnapshot,
 )
+from backend.application.services.pdf_extraction_service import extract_model_from_pdf
 from backend.interface.auth import authenticate as _authenticate_from_module
 
 
@@ -234,6 +238,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     database_instance = Database()
     error_code_repository = ErrorCodeRepository(database_instance)
     saved_analysis_repository = SavedAnalysisRepository(database_instance)
+    printer_model_repository = PrinterModelRepository(database_instance)
     app = FastAPI(
         title="HP Printer Logs Analyzer",
         version="0.1.0",
@@ -607,6 +612,91 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             tokens_used=tokens,
             cost_usd=cost,
         )
+
+    # --- Printer models ---
+
+    _PDF_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+
+    @app.get("/printer-models", dependencies=[Depends(authenticate)])
+    def list_printer_models() -> list:
+        """List all printer models (without consumables)."""
+        from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
+
+        try:
+            models = printer_model_repository.list_models()
+        except _DBErr:
+            return []
+        return [
+            {
+                "id": str(m.id),
+                "model_name": m.model_name,
+                "model_code": m.model_code,
+                "family": m.family,
+                "ampv": m.ampv,
+                "engine_life_pages": m.engine_life_pages,
+                "notes": m.notes,
+                "created_at": m.created_at.isoformat(),
+                "updated_at": m.updated_at.isoformat(),
+            }
+            for m in models
+        ]
+
+    @app.post("/printer-models/upload-pdf", dependencies=[Depends(authenticate)])
+    @limiter.limit("10/minute")
+    async def upload_printer_model_pdf(
+        request: Request,
+        file: UploadFile = File(...),
+    ) -> dict:
+        """Upload a Service Cost Data PDF and extract printer models via Claude API."""
+        import anthropic as _anthropic
+        import psycopg2.errors
+        from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
+
+        if file.content_type != "application/pdf":
+            raise HTTPException(status_code=400, detail="El archivo debe ser un PDF (application/pdf)")
+
+        pdf_bytes = await file.read()
+        if len(pdf_bytes) > _PDF_MAX_BYTES:
+            raise HTTPException(status_code=400, detail="El PDF supera el límite de 10 MB")
+
+        api_key = settings.anthropic_api_key
+        if not api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Servicio no disponible: ANTHROPIC_API_KEY no configurada.",
+            )
+
+        try:
+            extracted = await extract_model_from_pdf(pdf_bytes, api_key)
+        except _anthropic.AuthenticationError as exc:
+            logging.error("[upload-pdf] AuthenticationError: %s", exc)
+            raise HTTPException(status_code=503, detail="API key de Anthropic inválida") from exc
+        except ValueError as exc:
+            logging.warning("[upload-pdf] ValueError parsing Claude response: %s", exc)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        created: list[str] = []
+        skipped: list[str] = []
+        total_consumables = 0
+
+        for model_dict in extracted.get("models", []):
+            model_code = model_dict.get("model_code", "")
+            consumables = model_dict.pop("consumables", []) or []
+            try:
+                printer_model_repository.create_with_consumables(model_dict, consumables)
+                created.append(model_code)
+                total_consumables += len(consumables)
+            except psycopg2.errors.UniqueViolation:
+                logging.warning("[upload-pdf] model_code=%s ya existe, saltando", model_code)
+                skipped.append(model_code)
+            except _DBErr as exc:
+                logging.error("[upload-pdf] DatabaseUnavailableError: %s", exc)
+                raise HTTPException(status_code=503, detail="DB no disponible") from exc
+            except Exception as exc:
+                logging.error("[upload-pdf] Error inesperado creando modelo %s: %s", model_code, exc)
+                raise HTTPException(status_code=500, detail="Error interno del servidor") from exc
+
+        return {"created": created, "skipped": skipped, "total_consumables": total_consumables}
 
     return app
 

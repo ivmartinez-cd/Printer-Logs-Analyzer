@@ -124,8 +124,8 @@ No hay selector de modelo de impresora; el análisis es genérico para logs HP e
 
 ## 5. Persistencia y datos
 
-- **Persistido:** Solo el catálogo `error_codes` en PostgreSQL (Neon). Las migraciones están en `backend/migrations/` (001 init, 002 rules/rule_tags si aplica, 003 error_codes).
-- **No persistido:** Resultado de cada análisis (eventos e incidencias). Cada petición de preview se calcula desde el log enviado; la cache en memoria solo reutiliza la última respuesta si el texto del log no cambia.
+- **Persistido:** Catálogo `error_codes` y snapshots `saved_analyses` en PostgreSQL (Neon). Las migraciones están en `backend/migrations/` (001–006). La 006 agrega `printer_models`, `printer_consumables` y `consumable_related_codes`, y la columna `model_id` en `saved_analyses` — pendiente de correr en Neon.
+- **No persistido:** Resultado de cada análisis (eventos e incidencias). Cada petición de preview se calcula desde el log enviado.
 
 ---
 
@@ -146,6 +146,6 @@ No hay selector de modelo de impresora; el análisis es genérico para logs HP e
 | Análisis        | Agrupa eventos por código y genera incidencias con severidad y enlaces    | `AnalysisService` en backend                           |
 | API             | Preview (parse + enriquecer + analizar), validate (códigos nuevos), upsert código | FastAPI en `backend/interface/api.py`; auth `x-api-key` |
 | UI              | Pegar log, analizar, ver dashboard, filtrar, expandir, agregar/editar código | React en `DashboardPage.tsx` y modales                 |
-| Modelos         | No hay selector de modelo; no se usa en backend ni frontend               | Eliminado de visión y config                           |
+| Modelos         | Tablas DB creadas (migración 006); integración en backend/frontend pendiente | `printer_models`, `printer_consumables`, `consumable_related_codes` |
 
 Este documento refleja el estado actual del código y puede actualizarse cuando cambien flujos o componentes.

@@ -194,7 +194,7 @@ Todos excepto `/health` requieren `x-api-key`. Sin key → HTTP 401. Logs hasta 
 
 ### Migraciones SQL (`backend/migrations/`)
 
-Correr manualmente. Las 5 están ejecutadas en producción (Neon).
+Correr manualmente. Las 5 primeras están ejecutadas en producción (Neon). La 006 está pendiente de correr.
 
 | Archivo | Contenido |
 |---------|-----------|
@@ -203,6 +203,7 @@ Correr manualmente. Las 5 están ejecutadas en producción (Neon).
 | `003_create_error_codes.sql` | Tabla `error_codes` con UNIQUE(code) |
 | `004_create_saved_analyses.sql` | Tabla `saved_analyses` con JSONB para incidents |
 | `005_add_solution_content.sql` | `ALTER TABLE error_codes ADD COLUMN solution_content TEXT` |
+| `006_create_printer_models.sql` | Tablas `printer_models`, `printer_consumables`, `consumable_related_codes`; `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` |
 
 ### Variables de entorno (dev local)
 
