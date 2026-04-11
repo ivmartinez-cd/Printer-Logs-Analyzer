@@ -4,22 +4,76 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Fix: conexiones idle cerradas por Neon causan OperationalError/InterfaceError en producción**
+- Neon cierra conexiones del pool cuando están idle, y al reusarlas se obtenía `psycopg2.OperationalError: SSL connection has been closed unexpectedly` o `InterfaceError: connection already closed`.
+- Fix en `database.py`: `connect()` ahora hace un **pre-ping** (`SELECT 1`) sobre cada conexión obtenida del pool antes de cederla al caller. Si el ping falla, descarta la conexión (`putconn(conn, close=True)`) y reintenta hasta 3 veces.
+- `rollback()` y `putconn()` del bloque finally están envueltos en `try/except` para no propagar `InterfaceError` cuando la conexión ya estaba cerrada al momento de la excepción.
+- Diferencia respecto al comportamiento anterior: `psycopg2.pool.PoolError` (pool exhausto) sigue levantando `DatabaseUnavailableError` inmediatamente sin reintentar; solo las conexiones muertas se reintentan.
+- Los repositorios siguen haciendo `commit()` explícito — `connect()` no auto-commitea.
+
+---
+
+**HelpModal: reescritura completa con estado actual de la app**
+- 11 secciones en orden de aparición en pantalla: Flujo de análisis, KPIs, Diagnóstico con IA, SDS Engineering Incident, Advertencias de consumibles, Filtros de fecha, Gráficos, Tablas, Catálogo de códigos, Incidentes guardados, Exportar PDF.
+- Eliminadas referencias a flujo viejo (sin modelo) y a filtros de fecha por botones discretos.
+- Documentado el sufijo `z` como comodín hex en el match SDS, los presets del DateRangePicker y los thresholds de estado de consumibles.
+
+---
+
+**Feat: toggles ERROR / WARNING / INFO activos por default en TopErrorsChart**
+- `activeTypes` inicializado con `new Set(['ERROR', 'WARNING', 'INFO'])` — los tres tipos visibles al cargar.
+- Antes arrancaba con los tres desactivados, mostrando la barra vacía hasta que el usuario los activaba manualmente.
+
+---
+
+**Perf: extractor de PDF de modelos cambia de Sonnet a Haiku**
+- `POST /printer-models/upload-pdf`: el prompt de extracción de modelos y consumibles ahora usa `claude-haiku-4-5-20251001` en lugar de `claude-sonnet-4-6`.
+- Reduce costo por extracción sin impacto observable en calidad del parseo estructurado.
+- `max_tokens` subido a 16 000 para acomodar PDFs con muchos modelos.
+
+---
+
+**Fix: `/health` referenciaba `settings.recency_window` inexistente**
+- `Settings` no tiene campo `recency_window`; la referencia lanzaba `AttributeError` en producción.
+- Fix: eliminar la línea; `/health` ya no incluye ese campo en la respuesta.
+
+---
+
+**Fase 4: consumable warnings — backend y panel frontend**
+- Nuevo servicio `consumable_warning_service.py`: `compute_consumable_warnings(events, consumables, max_counter)` — devuelve `List[ConsumableWarning]` ordenada por `usage_pct` desc. Solo incluye consumibles con al menos un código de log matcheado. Soporta wildcard `z` en patrones de código.
+- Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`.
+- `POST /parser/preview` llama al servicio cuando `model_id` está presente; fallos se loguean sin romper el análisis.
+- Nuevo campo `consumable_warnings: ConsumableWarning[]` en `ParseLogsResponse`.
+- Nuevo componente `ConsumableWarningsPanel.tsx`: tabla con categoría, descripción, part number, vida útil, contador actual, % de uso y badge de estado. Arranca colapsado. Solo se renderiza si `warnings.length > 0`. Posición: entre `SDSIncidentPanel` y los gráficos.
+- `SDSIncidentPanel` recibe `consumableWarnings?` y muestra sección "Verificar cambio de consumible" cuando hay solapamiento de códigos SDS con consumibles en estado `replace`.
+- Nuevos tipos `ConsumableWarning` en `types/api.ts`.
+- 148 tests en `test_consumable_warning_service.py`.
+
+---
+
 **Fase 3: selector de modelo de impresora en el modal de análisis**
-- `LogPasteModal` (en `DashboardPage.tsx`) ahora muestra un `<select>` de modelos cargado desde `GET /printer-models`. El textarea y el botón "Analizar" están deshabilitados hasta seleccionar un modelo.
+- `LogPasteModal` (en `DashboardPage.tsx`) muestra un `<select>` de modelos cargado desde `GET /printer-models`. El textarea y el botón "Analizar" están deshabilitados hasta seleccionar un modelo.
 - Botón "+ Cargar nuevo modelo (PDF)" abre el nuevo `AddPrinterModelModal`.
 - `AddPrinterModelModal`: sube un PDF a `POST /printer-models/upload-pdf` (timeout 90 s), valida tipo y tamaño (≤10 MB) en cliente, muestra spinner durante el procesamiento con IA.
 - Al completarse el upload, se re-fetcha la lista de modelos y se auto-selecciona el primer modelo creado.
-- `previewLogs(logs, modelId?)` ahora incluye `model_id` en el body si está presente. El backend actual lo ignora (Pydantic extra="ignore"); integración real en Fase 4.
+- `previewLogs(logs, modelId?)` incluye `model_id` en el body.
 - Nuevos tipos: `PrinterModel`, `UploadPdfResponse` en `types/api.ts`.
 - Nuevas funciones API: `listPrinterModels`, `uploadPrinterModelPdf` en `services/api.ts`.
 - Nuevos estilos: `.log-modal__model-*`, `.add-printer-model-modal__*` en `index.css`.
 
 ---
 
+**Backend: endpoints de modelos de impresora y upload de PDF**
+- `GET /printer-models`: lista todos los modelos disponibles.
+- `POST /printer-models/upload-pdf`: recibe un PDF multipart, lo extrae con Claude (Haiku), persiste `printer_models` + `printer_consumables` + `consumable_related_codes` y devuelve los modelos creados.
+- `PrinterModelRepository` con soporte fallback JSON.
+
+---
+
 **Migración 006: soporte de modelos de impresora y consumibles**
 - Nuevas tablas: `printer_models` (un submodelo por fila, con `ampv` y `engine_life_pages`), `printer_consumables` (por modelo, con `life_pages`, `mttr_minutes`, `voltage`, `category`), `consumable_related_codes` (patrones de código con soporte wildcard `z`).
 - `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` (nullable, FK a `printer_models`). Compatible con análisis existentes.
-- Todas las tablas con `IF NOT EXISTS` — migración idempotente. Pendiente de correr en Neon.
+- Todas las tablas con `IF NOT EXISTS` — migración idempotente.
 
 ---
 
