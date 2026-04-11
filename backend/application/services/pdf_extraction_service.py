@@ -11,8 +11,8 @@ from anthropic import AsyncAnthropic
 
 _logger = logging.getLogger(__name__)
 
-# NOTE: Using claude-sonnet-4-6 (no date suffix) as per system model list.
-MODEL = "claude-sonnet-4-6"
+# NOTE: Using claude-haiku-4-5-20251001 for cost reduction on PDF extraction.
+MODEL = "claude-haiku-4-5-20251001"
 
 SYSTEM_PROMPT = (
     "Sos un extractor de datos de Service Cost Data de impresoras HP.\n"
