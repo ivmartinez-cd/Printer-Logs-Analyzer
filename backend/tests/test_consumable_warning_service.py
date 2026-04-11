@@ -59,11 +59,13 @@ def test_no_consumables_returns_empty():
     assert result == []
 
 
-def test_no_matching_codes_returns_empty():
+def test_no_matching_codes_still_returns_consumable():
+    """Consumables with no log code match are still included, with empty matched_codes."""
     events = [make_event("13.20.00", counter=50_000)]
     consumables = [make_consumable(related_codes=["49.38.07"])]
     result = compute_consumable_warnings(events, consumables, max_counter=50_000)
-    assert result == []
+    assert len(result) == 1
+    assert result[0].matched_codes == []
 
 
 def test_wildcard_z_matches_hex_digit():
