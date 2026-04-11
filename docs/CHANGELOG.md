@@ -4,6 +4,18 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Fase 3: selector de modelo de impresora en el modal de análisis**
+- `LogPasteModal` (en `DashboardPage.tsx`) ahora muestra un `<select>` de modelos cargado desde `GET /printer-models`. El textarea y el botón "Analizar" están deshabilitados hasta seleccionar un modelo.
+- Botón "+ Cargar nuevo modelo (PDF)" abre el nuevo `AddPrinterModelModal`.
+- `AddPrinterModelModal`: sube un PDF a `POST /printer-models/upload-pdf` (timeout 90 s), valida tipo y tamaño (≤10 MB) en cliente, muestra spinner durante el procesamiento con IA.
+- Al completarse el upload, se re-fetcha la lista de modelos y se auto-selecciona el primer modelo creado.
+- `previewLogs(logs, modelId?)` ahora incluye `model_id` en el body si está presente. El backend actual lo ignora (Pydantic extra="ignore"); integración real en Fase 4.
+- Nuevos tipos: `PrinterModel`, `UploadPdfResponse` en `types/api.ts`.
+- Nuevas funciones API: `listPrinterModels`, `uploadPrinterModelPdf` en `services/api.ts`.
+- Nuevos estilos: `.log-modal__model-*`, `.add-printer-model-modal__*` en `index.css`.
+
+---
+
 **Migración 006: soporte de modelos de impresora y consumibles**
 - Nuevas tablas: `printer_models` (un submodelo por fila, con `ampv` y `engine_life_pages`), `printer_consumables` (por modelo, con `life_pages`, `mttr_minutes`, `voltage`, `category`), `consumable_related_codes` (patrones de código con soporte wildcard `z`).
 - `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` (nullable, FK a `printer_models`). Compatible con análisis existentes.

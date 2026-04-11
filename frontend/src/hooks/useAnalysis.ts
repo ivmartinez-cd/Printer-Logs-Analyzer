@@ -43,7 +43,7 @@ export function useAnalysis({
   const [savingIncident, setSavingIncident] = useState(false)
   const toast = useToast()
 
-  async function handleAnalyze(logText: string, fileName?: string) {
+  async function handleAnalyze(logText: string, fileName?: string, modelId?: string | null) {
     if (!logText.trim()) return
     setError(null)
     setResult(null)
@@ -56,7 +56,7 @@ export function useAnalysis({
     setLoading(true)
     try {
       const [data, validateRes] = await Promise.all([
-        previewLogs(logText),
+        previewLogs(logText, modelId),
         validateLogs(logText).catch(() => ({ codes_new: [] as string[] })),
       ])
       const newCodes = validateRes.codes_new ?? []

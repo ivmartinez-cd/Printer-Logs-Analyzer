@@ -13,7 +13,7 @@ Documento que describe qué hace la app hoy y cómo está implementado (sin mode
   3. Ver KPIs, gráficos y tablas (incidencias y eventos), con filtros por fecha, severidad y búsqueda.
   4. Opcional: agregar o editar códigos en el catálogo (descripción, severidad, URL de solución).
 
-No hay selector de modelo de impresora; el análisis es genérico para logs HP en el formato soportado.
+El modal de análisis incluye un selector de modelo de impresora (obligatorio antes de analizar). Los modelos se cargan desde `GET /printer-models`. Desde el mismo modal se puede subir un PDF de Service Cost Data (`POST /printer-models/upload-pdf`) para crear modelos automáticamente con IA. El `model_id` seleccionado se pasa a `POST /parser/preview` en el body (Fase 3 — el backend lo ignora por ahora; integración completa en Fase 4).
 
 ---
 
@@ -146,6 +146,6 @@ No hay selector de modelo de impresora; el análisis es genérico para logs HP e
 | Análisis        | Agrupa eventos por código y genera incidencias con severidad y enlaces    | `AnalysisService` en backend                           |
 | API             | Preview (parse + enriquecer + analizar), validate (códigos nuevos), upsert código | FastAPI en `backend/interface/api.py`; auth `x-api-key` |
 | UI              | Pegar log, analizar, ver dashboard, filtrar, expandir, agregar/editar código | React en `DashboardPage.tsx` y modales                 |
-| Modelos         | Tablas DB creadas (migración 006); integración en backend/frontend pendiente | `printer_models`, `printer_consumables`, `consumable_related_codes` |
+| Modelos         | Tablas DB creadas (migración 006); endpoints `GET /printer-models` y `POST /printer-models/upload-pdf` listos en backend; selector en `LogPasteModal` + `AddPrinterModelModal` en frontend (Fase 3) | `printer_models`, `printer_consumables`, `consumable_related_codes` |
 
 Este documento refleja el estado actual del código y puede actualizarse cuando cambien flujos o componentes.

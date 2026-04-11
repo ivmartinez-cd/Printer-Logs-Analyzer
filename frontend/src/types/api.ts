@@ -113,6 +113,24 @@ export interface CompareResponse {
   diff: CompareDiff
 }
 
+// --- Modelos de impresora ---
+
+export interface PrinterModel {
+  id: string
+  model_name: string
+  model_code: string
+  family: string | null
+  ampv: number | null
+  engine_life_pages: number | null
+  notes: string | null
+}
+
+export interface UploadPdfResponse {
+  created: string[]
+  skipped: string[]
+  total_consumables: number
+}
+
 // --- Diagnóstico con IA ---
 
 export interface AIDiagnosisResponse {

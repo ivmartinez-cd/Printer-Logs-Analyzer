@@ -8,6 +8,7 @@ import time
 logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s")
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,6 +53,7 @@ class ParseLogsRequest(BaseModel):
     """Request body containing the raw log payload."""
 
     logs: str
+    model_id: Optional[UUID] = None
 
 
 class ValidateLogsRequest(BaseModel):

@@ -4,6 +4,7 @@ import {
   getSavedAnalysis,
   compareSavedAnalysis,
   deleteSavedAnalysis,
+  listPrinterModels,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -13,7 +14,10 @@ import type {
   SavedAnalysisSummary,
   SavedAnalysisFull,
   CompareResponse,
+  PrinterModel,
+  UploadPdfResponse,
 } from '../types/api'
+import { AddPrinterModelModal } from '../components/AddPrinterModelModal'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { SaveIncidentModal } from '../components/SaveIncidentModal'
@@ -114,7 +118,7 @@ interface LogPasteModalProps {
   loading: boolean
   error: string | null
   serverWasCold: boolean
-  onAnalyze: (logText: string, fileName?: string) => void
+  onAnalyze: (logText: string, fileName?: string, modelId?: string | null) => void
   onClose: () => void
 }
 
@@ -135,11 +139,26 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   const [logText, setLogText] = useState('')
   const [fileName, setFileName] = useState<string | undefined>(undefined)
   const [slowWarning, setSlowWarning] = useState(false)
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
+  const [models, setModels] = useState<PrinterModel[]>([])
+  const [addModelOpen, setAddModelOpen] = useState(false)
+  const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
+
+  // Fetch models on mount
+  useEffect(() => {
+    listPrinterModels()
+      .then(setModels)
+      .catch(() => {
+        // No bloquear el modal si falla la carga de modelos
+      })
+  }, [])
+
   useEffect(() => {
     if (!loading || !serverWasCold) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -163,79 +182,143 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
     reader.readAsText(file)
   }
 
+  async function handleUploadSuccess(response: UploadPdfResponse) {
+    setAddModelOpen(false)
+    const updatedModels = await listPrinterModels().catch(() => models)
+    setModels(updatedModels)
+    if (response.created.length > 0) {
+      const firstCreated = updatedModels.find((m) => response.created.includes(m.model_code))
+      if (firstCreated) setSelectedModelId(firstCreated.id)
+      setModelSuccessMsg(`Modelo cargado: ${response.created.join(', ')}`)
+    }
+  }
+
+  const canAnalyze = !loading && !!logText.trim() && selectedModelId !== null
+
   return (
-    <div
-      className="log-modal-overlay"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="log-modal-title"
-    >
-      <div className="log-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="log-modal__header">
-          <h2 id="log-modal-title" className="log-modal__title">
-            Pegar logs HP
-          </h2>
-          <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
-            ×
-          </button>
-        </div>
-        <div className="log-modal__file-row">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".log,.txt,.tsv,text/plain"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-          <button
-            type="button"
-            className="log-modal__btn-secondary"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-          >
-            Cargar archivo…
-          </button>
-          {fileName && <span className="log-modal__file-name">{fileName}</span>}
-        </div>
-        <textarea
-          ref={textareaRef}
-          className="log-modal__textarea"
-          placeholder="Pegar logs HP aquí..."
-          value={logText}
-          onChange={(e) => setLogText(e.target.value)}
-          disabled={loading}
-        />
-        {error && <p className="dashboard__error">{error}</p>}
-        <div className="log-modal__actions">
-          <button
-            type="button"
-            className="dashboard__btn"
-            onClick={() => onAnalyze(logText, fileName)}
-            disabled={loading || !logText.trim()}
-          >
-            {loading ? (
-              <>
-                <span className="log-modal__spinner" aria-hidden="true" /> Analizando log…
-              </>
-            ) : (
-              'Analizar'
+    <>
+      <div
+        className="log-modal-overlay"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="log-modal-title"
+      >
+        <div className="log-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="log-modal__header">
+            <h2 id="log-modal-title" className="log-modal__title">
+              Pegar logs HP
+            </h2>
+            <button
+              type="button"
+              className="log-modal__close"
+              onClick={onClose}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Selector de modelo */}
+          <div className="log-modal__model-section">
+            <label className="log-modal__model-label" htmlFor="log-modal-model-select">
+              Modelo de impresora *
+            </label>
+            <div className="log-modal__model-selector">
+              <select
+                id="log-modal-model-select"
+                className="log-modal__model-select"
+                value={selectedModelId ?? ''}
+                onChange={(e) => setSelectedModelId(e.target.value || null)}
+                disabled={loading}
+              >
+                <option value="">— Elegí un modelo —</option>
+                {models.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.model_name} {m.model_code ? `(${m.model_code})` : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="log-modal__model-add-button"
+                onClick={() => setAddModelOpen(true)}
+                disabled={loading}
+                title="Cargar nuevo modelo desde PDF"
+              >
+                + Cargar nuevo modelo (PDF)
+              </button>
+            </div>
+            {modelSuccessMsg && (
+              <p className="log-modal__model-success">{modelSuccessMsg}</p>
             )}
-          </button>
-          <button
-            type="button"
-            className="log-modal__btn-secondary"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cerrar
-          </button>
+          </div>
+
+          <div className="log-modal__file-row">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".log,.txt,.tsv,text/plain"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              className="log-modal__btn-secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+            >
+              Cargar archivo…
+            </button>
+            {fileName && <span className="log-modal__file-name">{fileName}</span>}
+          </div>
+          <textarea
+            ref={textareaRef}
+            className="log-modal__textarea"
+            placeholder="Pegar logs HP aquí..."
+            value={logText}
+            onChange={(e) => setLogText(e.target.value)}
+            disabled={loading || selectedModelId === null}
+          />
+          {error && <p className="dashboard__error">{error}</p>}
+          <div className="log-modal__actions">
+            <button
+              type="button"
+              className="dashboard__btn"
+              onClick={() => onAnalyze(logText, fileName, selectedModelId)}
+              disabled={!canAnalyze}
+            >
+              {loading ? (
+                <>
+                  <span className="log-modal__spinner" aria-hidden="true" /> Analizando log…
+                </>
+              ) : (
+                'Analizar'
+              )}
+            </button>
+            <button
+              type="button"
+              className="log-modal__btn-secondary"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cerrar
+            </button>
+          </div>
+          {slowWarning && (
+            <p className="log-modal__slow-warning">
+              El servidor está iniciando, por favor esperá…
+            </p>
+          )}
         </div>
-        {slowWarning && (
-          <p className="log-modal__slow-warning">El servidor está iniciando, por favor esperá…</p>
-        )}
       </div>
-    </div>
+
+      <AddPrinterModelModal
+        open={addModelOpen}
+        onClose={() => setAddModelOpen(false)}
+        onSuccess={handleUploadSuccess}
+      />
+    </>
   )
 }
 
