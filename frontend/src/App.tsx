@@ -1,4 +1,5 @@
 import { useEffect, useState, Component, ReactNode } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { ToastProvider } from './contexts/ToastContext'
 import { ToastContainer } from './components/Toast'
 import DashboardPage from './pages/DashboardPage'
@@ -79,6 +80,7 @@ function App() {
         <DashboardPage serverWasCold={serverWasCold} healthStatus={healthStatus} />
         <ToastContainer />
       </ToastProvider>
+      <Analytics />
     </ErrorBoundary>
   )
 }
