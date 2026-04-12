@@ -19,7 +19,6 @@ import type {
 } from '../types/api'
 import { AddPrinterModelModal } from '../components/AddPrinterModelModal'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
-import { UploadCpmdModal } from '../components/UploadCpmdModal'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { SaveIncidentModal } from '../components/SaveIncidentModal'
 import { SDSIncidentModal } from '../components/SDSIncidentModal'
@@ -144,7 +143,6 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
   const [models, setModels] = useState<PrinterModel[]>([])
   const [addModelOpen, setAddModelOpen] = useState(false)
-  const [cpmdUploadOpen, setCpmdUploadOpen] = useState(false)
   const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -254,17 +252,6 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
               >
                 + Cargar nuevo modelo (PDF)
               </button>
-              {selectedModelId && (
-                <button
-                  type="button"
-                  className="log-modal__model-add-button log-modal__model-cpmd-button"
-                  onClick={() => setCpmdUploadOpen(true)}
-                  disabled={loading}
-                  title="Cargar CPMD del modelo seleccionado"
-                >
-                  📘 Cargar CPMD del modelo
-                </button>
-              )}
             </div>
             {modelSuccessMsg && (
               <p className="log-modal__model-success">{modelSuccessMsg}</p>
@@ -335,21 +322,6 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
         onClose={() => setAddModelOpen(false)}
         onSuccess={handleUploadSuccess}
       />
-
-      {cpmdUploadOpen && selectedModelId && (
-        <UploadCpmdModal
-          modelId={selectedModelId}
-          modelName={models.find((m) => m.id === selectedModelId)?.model_name ?? selectedModelId}
-          onClose={() => setCpmdUploadOpen(false)}
-          onSuccess={() => {
-            // Refresh models so the 📘 icon appears
-            listPrinterModels()
-              .then(setModels)
-              .catch(() => {})
-            setCpmdUploadOpen(false)
-          }}
-        />
-      )}
     </>
   )
 }

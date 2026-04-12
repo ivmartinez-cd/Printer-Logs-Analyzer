@@ -26,6 +26,8 @@ Si `ANTHROPIC_API_KEY` no está seteada, los endpoints `/models/{id}/cpmd` y `/a
 
 El endpoint `POST /models/{id}/cpmd` es bloqueante y puede tardar **5–10 minutos** por CPMD (~250 llamadas secuenciales a Haiku). El plan gratuito de Render tiene un timeout de request de 30 segundos. Para usar este endpoint en producción se requiere al menos el plan **Starter** de Render (sin timeout de request) o configurar un worker separado.
 
+> **Workaround actual:** usar el script CLI `ingest_cpmd` desde la máquina local (ver sección "Carga de CPMDs" más abajo).
+
 **Vercel (frontend):**
 
 | Variable | Valor |
@@ -52,6 +54,41 @@ Sin `--reload` en producción.
 | Vars de entorno | `.env` en raíz / `frontend/.env` | Dashboard de Render / Vercel |
 | Hot-reload | Sí (uvicorn `--reload`) | No |
 | DB fallback | Activo si sin red a Neon | Siempre conectado |
+
+## Carga de CPMDs
+
+El endpoint `POST /models/{id}/cpmd` no funciona en Render free por timeout (5–10 min por CPMD). Para cargar CPMDs en producción, usar el script CLI desde la máquina local:
+
+```bash
+export DB_URL="<connection string de Neon producción>"
+export ANTHROPIC_API_KEY="<tu key>"
+
+# Verificar primero (no llama a Haiku ni escribe en DB)
+python -m backend.scripts.ingest_cpmd --model-id <uuid> --pdf ./modelo.pdf --dry-run
+
+# Procesar
+python -m backend.scripts.ingest_cpmd --model-id <uuid> --pdf ./modelo.pdf
+```
+
+El script loguea progreso cada 25 bloques y al terminar imprime:
+
+```
+✓ CPMD procesado para modelo <uuid>
+
+  Hash:        <sha256>
+  Bloques:     250
+  Extraídos:   247
+  Fallidos:    3
+  Tiempo:      342.5s
+  Costo aprox: $0.4446 USD
+```
+
+Tarda 5–10 minutos por CPMD. Costo aprox: **$0.45 USD por modelo**.
+
+El UUID del modelo se obtiene del listado en la UI o con:
+```sql
+SELECT id, model_name FROM printer_models ORDER BY model_name;
+```
 
 ## CI — GitHub Actions
 
