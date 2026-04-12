@@ -7,6 +7,26 @@ from typing import List
 
 from backend.domain.entities import ConsumableWarning, EnrichedEvent, PrinterConsumable
 
+# Categorías excluidas del panel: el contador de impresión no mide el
+# consumo real de estos componentes, por lo que el % de uso no es accionable.
+_EXCLUDED_CATEGORIES = {"toner"}
+
+# Substrings en la descripción que identifican rodillos del ADF (Automatic
+# Document Feeder). El contador de la impresora registra páginas impresas,
+# no ciclos del alimentador, así que el umbral de vida no aplica a estos.
+# Patrones basados en terminología estándar de los Service Cost Data de HP.
+ADF_DESCRIPTION_PATTERNS: list[str] = [
+    "adf",
+    "document feeder",
+    "automatic document feeder",
+]
+
+
+def _is_adf_consumable(description: str) -> bool:
+    """Return True if description matches any ADF roller pattern (case-insensitive)."""
+    lower = description.lower()
+    return any(p in lower for p in ADF_DESCRIPTION_PATTERNS)
+
 
 def _wildcard_to_regex(pattern: str) -> re.Pattern[str]:
     """Convert a code pattern with optional trailing 'z' wildcard to a compiled regex.
@@ -31,7 +51,11 @@ def compute_consumable_warnings(
 ) -> List[ConsumableWarning]:
     """Return one ConsumableWarning per consumable with life_pages > 0.
 
-    All consumables for the model are included. matched_codes is populated
+    Excludes consumables where the page counter is not a meaningful proxy for
+    wear: toner cartridges (category 'toner') and ADF rollers (description
+    matches ADF_DESCRIPTION_PATTERNS).
+
+    All other consumables for the model are included. matched_codes is populated
     only when the consumable's related_codes overlap with log event codes.
 
     Args:
@@ -51,6 +75,12 @@ def compute_consumable_warnings(
     warnings: List[ConsumableWarning] = []
 
     for consumable in consumables:
+        # Skip categories where the page counter doesn't reflect actual wear
+        if consumable.category in _EXCLUDED_CATEGORIES:
+            continue
+        # Skip ADF rollers — their cycle count differs from the print counter
+        if _is_adf_consumable(consumable.description):
+            continue
         life = consumable.life_pages
         if not life or life <= 0:
             continue

@@ -785,6 +785,7 @@ export default function DashboardPage({
                           occurrences: inc.occurrences,
                         })) ?? []
                       }
+                      consumableWarnings={result?.consumable_warnings ?? []}
                     />
                   )}
 
