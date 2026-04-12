@@ -34,24 +34,27 @@ Cuatro métricas en la parte superior:
 - **Último error crítico** — código y timestamp del ERROR más reciente.
 - **Tasa de errores** — frecuencia: "1 error c/N pág.", calculado como ERRORs ÷ (contador máx − contador mín).
 
-### Diagnóstico con IA
+### 🤖 Diagnóstico con IA
 
-Panel violeta colapsado debajo de los KPIs. Al expandirlo, hacé click en **"Generar análisis con IA"** para que Claude Haiku procese los incidentes y devuelva un diagnóstico estructurado en tres secciones: **DIAGNÓSTICO / ACCIÓN / PRIORIDAD**.
+Panel con acento violeta, colapsado debajo de los KPIs. Al expandirlo, hacé click en **"Generar análisis con IA"** para que Claude Haiku procese los incidentes y devuelva un diagnóstico estructurado en tres secciones: **DIAGNÓSTICO / ACCIÓN / PRIORIDAD**.
 
-### SDS Engineering Incident
+### 🔧 SDS Engineering Incident
 
-Panel colapsado que muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). El match soporta tres fuentes:
-- **Contexto evento** — código numérico primario, ej. `60.00.02`.
-- **Más información** — tokens adicionales separados por "or", numéricos o de mensaje.
-- **Campo Código** — si es CamelCase sin dígitos (ej. `ReplaceTrayPickRollers`), se tokeniza por CamelCase, se extraen keywords significativas (`["tray","pick","roller"]`) y se busca al menos 1 en la clasificación del incidente. IDs internos con dígitos (ej. `TriageInput2`) y stopwords sueltas (ej. `Replace`) quedan excluidos.
+Panel con acento azul, colapsado. Muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). El match soporta tres fuentes de tokens:
 
-Para match numérico: wildcard `z` cubre cualquier dígito hex (`53.B0.0z` → `53.B0.01`…`53.B0.0F`).
+- **Contexto del evento** (`event_context`) — código primario, ej. `"60.00.02"`.
+- **Más información** (`more_info`) — tokens separados por `" or "`, ej. `"60.00.02 or 60.01.02"`.
+- **Código SDS** (`Código`) — si es un identificador CamelCase significativo, ej. `"ReplaceTrayPickRollers"`.
+
+Y dos modalidades de comparación:
+- **Código numérico** (contiene `.`) — match exacto o por prefijo con wildcard `z`. Ej. `53.B0.0z` coincide con `53.B0.01` … `53.B0.0F`.
+- **Identificador de mensaje** (sin `.`) — se extraen keywords CamelCase filtrando stopwords (`replace`, `check`, `clean`, etc.). Alcanza con 1 keyword en la clasificación del incidente. Ej. `"ReplaceTrayPickRollers"` → keywords `tray`, `pick`, `roller` → coincide con `"Tray Z feed roller at end of life."`.
 
 Si hay consumibles con códigos relacionados al SDS, aparece la sección **"Verificar historial de consumibles"** con part number, vida útil y estado.
 
-### Estado de consumibles
+### ⚙️ Estado de consumibles
 
-Panel colapsado. Aparece solo si el modelo tiene consumibles con códigos presentes en el log. Muestra una tabla con categoría, descripción, part number, vida útil estimada, contador actual, % de uso y estado:
+Panel colapsado con acento ámbar (o rojo si hay componentes en estado crítico). Aparece solo si el modelo tiene consumibles con códigos presentes en el log. Muestra una tabla con categoría, descripción, part number, vida útil estimada, contador actual, % de uso y estado:
 
 - **Sin alertas** — uso < 80% de la vida útil.
 - **Próximo a revisar** — uso entre 80% y 99%.

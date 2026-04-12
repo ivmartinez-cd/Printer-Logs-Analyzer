@@ -12,9 +12,9 @@ Herramienta web para analizar logs de impresoras HP. Seleccionás el modelo, peg
 
 - **Parser de logs HP** — acepta formato TSV o texto copiado del portal (espacios múltiples). Soporta fechas en español (`ene`, `feb`, `mar`…).
 - **Modelos de impresora y consumibles** — selección de modelo obligatoria antes de analizar. Carga de nuevos modelos subiendo el PDF de Service Cost Data oficial (extracción automática con Claude Haiku).
-- **Estado de consumibles** — tabla con categoría, part number, vida útil, contador actual y estado ("Sin alertas" / "Próximo a revisar" / "Revisar historial") basado en los códigos del log y el modelo cargado. Excluye toners, rodillos ADF y consumibles 110V (solo se usa 220V en Argentina). Es aviso para verificar el historial del equipo, no orden de reemplazo.
+- **Estado de consumibles** — tabla con categoría, part number, vida útil, contador actual y estado ("Sin alertas" / "Próximo a revisar" / "Revisar historial") basado en los códigos del log y el modelo cargado. Excluye toners, rodillos ADF y consumibles 110V (solo se usa 220V en Argentina). El panel muestra acento rojo cuando hay componentes en estado crítico.
 - **Diagnóstico con IA** — panel colapsado que llama a Claude Haiku on demand; devuelve secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
-- **SDS Engineering Incident** — carga manual de un incidente SDS con match automático contra los incidentes del log. Soporta match por código numérico (wildcard `z`) y por keywords CamelCase: el campo "Código" del SDS (ej. `"ReplaceTrayPickRollers"`) se tokeniza y busca keywords como `"roller"` en la clasificación del incidente. Muestra sección "Verificar historial de consumibles" si hay solapamiento con consumibles del análisis.
+- **SDS Engineering Incident** — carga manual de un incidente SDS con match automático contra los incidentes del log. Tres fuentes de tokens: `event_context`, `more_info` (separado por "or") y `sds.code` (CamelCase con keywords). Soporta match numérico (wildcard `z`) y por keywords extraídas (ej. `"ReplaceTrayPickRollers"` → keywords `tray`, `pick`, `roller` → coincide con `"Tray Z feed roller at end of life."`). Muestra sección "Verificar historial de consumibles" si hay solapamiento con consumibles del análisis.
 - **KPIs de severidad** — conteo de incidentes ERROR / WARNING / INFO, incidencias activas, último error crítico y tasa de errores (1 cada N páginas).
 - **Gráfico temporal** — volumen de eventos por hora con toggles de severidad y tooltip con códigos del bucket.
 - **Top 10 errores** — BarChart de los códigos con mayor ocurrencia, coloreado por severidad. Tres toggles (ERROR / WARNING / INFO) activos por default.
@@ -42,7 +42,7 @@ Printer-Logs-Analyzer/
 │   │   ├── parsers/          # Parser TSV/espacios con soporte español
 │   │   └── services/         # AnalysisService, CompareService, ConsumableWarningService
 │   ├── infrastructure/
-│   │   ├── database.py       # psycopg2 con pool y fallback automático
+│   │   ├── database.py       # psycopg2 con pool, pre-ping y fallback automático
 │   │   ├── content_fetcher.py# Fetch y sanitización de contenido SDS
 │   │   ├── fallback/         # Catálogo bundled (JSON read-only)
 │   │   └── repositories/     # ErrorCodeRepository, SavedAnalysisRepository, PrinterModelRepository
@@ -160,7 +160,7 @@ Todos los endpoints (excepto `/health`) requieren el header `x-api-key`.
 | POST | `/saved-analyses` | Guarda un snapshot de análisis |
 | GET | `/saved-analyses` | Lista los snapshots guardados |
 | GET | `/saved-analyses/{id}` | Detalle de un snapshot |
-| DELETE | `/saved-analyses/{id}` | Elimina un snapshot |
+| DELETE | `/saved-analyses/{id}` | Eliminar un snapshot |
 | POST | `/saved-analyses/{id}/compare` | Compara logs nuevos contra un snapshot guardado |
 
 ---

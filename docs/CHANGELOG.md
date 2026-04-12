@@ -4,12 +4,29 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
-**Feat: SDS match por keywords CamelCase — campo Código ahora participa en el match (PR #33)**
-- `getSdsCodesForMatch` incluye `sds.code` cuando es CamelCase sin dígitos y produce ≥1 keyword significativa. Excluye IDs internos con dígitos (`"TriageInput2"`) y stopwords sueltas (`"Replace"`).
-- `sdsTokenMatchesIncident` para tokens de mensaje: reemplaza `includes()` exacto por `extractSdsKeywords` — split por CamelCase, lowercase, singular básico (quita `s` final si length > 3), descarta stopwords (`replace`, `check`, `clean`, `verify`, `reset`, `the`, `a`). Verifica que al menos `MIN_KEYWORD_MATCHES = 1` keyword aparezca en la `classification` normalizada.
-- Constantes exportadas: `SDS_STOPWORDS`, `MIN_KEYWORD_MATCHES`.
-- Caso resuelto: `sds.code = "ReplaceTrayPickRollers"` → keywords `["tray","pick","roller"]` → coincide con `"Tray Z feed roller at end of life."` por keyword `"roller"`.
-- +13 tests en `sdsMatching.test.ts`: `extractSdsKeywords` (6), `getSdsCodesForMatch` nuevos casos (3), `sdsTokenMatchesIncident` keyword cases (2), `computeSdsVsLog` casos reales (3). Total: **93 tests frontend / 78 tests backend**.
+**Refactor: unificar shell visual de los 3 paneles colapsables**
+- Nueva clase CSS `.collapsible-panel` en `index.css` con modificadores de color: `--ai` (violeta `#8b5cf6`), `--sds` (azul `#3b82f6`), `--consumable` (ámbar `#d97706`), `--alert` (rojo `#ef4444`).
+- Clases compartidas: `__header` (botón toggle), `__title`, `__chevron`, `__chevron--expanded` (rotación CSS), `__body` (padding del contenido).
+- `AIDiagnosticPanel`: `ai-diagnostic-panel` (shell) → `collapsible-panel collapsible-panel--ai`. El resto de clases de contenido (`__cta-wrapper`, `__diagnosis`, etc.) no cambia.
+- `SDSIncidentPanel`: `section dashboard__table-section--collapsible` → `collapsible-panel collapsible-panel--sds`. Se agrega ícono `🔧` al título del panel.
+- `ConsumableWarningsPanel`: calcula `hasAlert = warnings.some(w => w.status === 'replace')`. Alterna entre `collapsible-panel--alert` (si hay `replace`) y `collapsible-panel--consumable`. Se elimina el override `.consumable-warnings-panel { border-left-color }`.
+- Contenido de SDS y Consumable ahora envuelto en `<div className="collapsible-panel__body">`.
+- Sin cambios en lógica de colapso ni en contenido interno.
+
+---
+
+**Fix: modales se cerraban al hacer click en el overlay**
+- Causa: `onClick={onClose}` en el div de overlay de todos los modales. El handler se disparaba tanto con click en el fondo como con clicks que burbujean desde el contenido interior.
+- Fix: eliminado `onClick={onClose}` del overlay en todos los modales (`AddCodeToCatalogModal`, `AddPrinterModelModal`, `ConfirmModal`, `HelpModal`, `SDSIncidentModal`, `SaveIncidentModal`, `SolutionContentModal`) y en `DashboardPage.tsx` (modal de pegar logs). También eliminado `onClick={(e) => e.stopPropagation()}` del div interior (dead code una vez removido el handler del overlay).
+- Los modales ahora solo se cierran con el botón `×` o los botones "Cancelar" / "Cerrar" / "Entendido".
+
+---
+
+**Feat: SDS match por keywords CamelCase (PR #35)**
+- `SDSIncidentPanel`: la función `sdsTokenMatchesIncident` reemplaza el match de mensaje (full-string `includes()`) por extracción de keywords. Nueva función `extractSdsKeywords(token)`: tokeniza por CamelCase, lowercase, singular básico (quita `s` si length > 3), descarta `SDS_STOPWORDS` y palabras de ≤1 carácter. Constante `MIN_KEYWORD_MATCHES = 1`: el incidente coincide si la clasificación contiene al menos 1 keyword. Ej: `"ReplaceTrayPickRollers"` → keywords `["tray","pick","roller"]` → coincide con `"Tray Z feed roller at end of life."`.
+- `getSdsCodesForMatch` ahora incluye `sds.code` como 3ra fuente de match cuando es un identificador CamelCase con keywords significativas (sin puntos, sin dígitos). Excluye IDs internos con números (ej. `"TriageInput2"`) y tokens compuestos solo por stopwords (ej. `"Replace"`).
+- `SDS_STOPWORDS`: `replace`, `check`, `clean`, `verify`, `reset`, `the`, `a`.
+- +13 nuevos tests en `sdsMatching.test.ts` (`isNumericSdsCode`, `normalizeForMessageMatch`, `extractSdsKeywords`, casos reales en `computeSdsVsLog`). Total: **93 tests frontend / 78 tests backend**.
 
 ---
 
