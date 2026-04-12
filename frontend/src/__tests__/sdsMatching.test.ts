@@ -28,6 +28,29 @@ function incidentCodeMatchesSds(incidentCode: string, sdsCode: string): boolean 
   return inc.startsWith(prefix)
 }
 
+function isNumericSdsCode(value: string): boolean {
+  return value.includes('.')
+}
+
+function normalizeForMessageMatch(s: string): string {
+  return s.toLowerCase().replace(/[\s_-]/g, '')
+}
+
+function sdsTokenMatchesIncident(
+  incidentCode: string,
+  incidentClassification: string,
+  sdsToken: string
+): boolean {
+  const token = sdsToken.trim()
+  if (!token) return false
+  if (isNumericSdsCode(token)) {
+    return incidentCodeMatchesSds(incidentCode, token)
+  }
+  return normalizeForMessageMatch(incidentClassification ?? '').includes(
+    normalizeForMessageMatch(token)
+  )
+}
+
 interface SdsIncidentData {
   code?: string | null
   event_context?: string | null
@@ -59,12 +82,14 @@ function hasEventContext(sds: SdsIncidentData): boolean {
 
 interface IncidentRowForSds {
   code: string
+  classification: string
 }
 
 interface IncidentFullForSds {
   code: string
   end_time: string
   occurrences?: number
+  classification?: string
 }
 
 type SdsVsLogStatus = 'match' | 'partial' | 'no_match' | 'general'
@@ -84,10 +109,10 @@ function computeSdsVsLog(
   }
 
   const matchedInFiltered = sdsCodes.filter((c) =>
-    incidentRows.some((r) => incidentCodeMatchesSds(r.code, c))
+    incidentRows.some((r) => sdsTokenMatchesIncident(r.code, r.classification, c))
   )
   const matchedInFull = sdsCodes.filter((c) =>
-    incidentsFull.some((i) => incidentCodeMatchesSds(i.code, c))
+    incidentsFull.some((i) => sdsTokenMatchesIncident(i.code, i.classification ?? '', c))
   )
 
   if (matchedInFiltered.length > 0) {
@@ -211,9 +236,94 @@ describe('hasEventContext', () => {
 // computeSdsVsLog
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// isNumericSdsCode
+// ---------------------------------------------------------------------------
+
+describe('isNumericSdsCode', () => {
+  it('returns true for HP numeric codes with dots', () => {
+    expect(isNumericSdsCode('60.00.02')).toBe(true)
+    expect(isNumericSdsCode('53.B0.0z')).toBe(true)
+  })
+
+  it('returns false for CamelCase message identifiers', () => {
+    expect(isNumericSdsCode('ReplaceTrayPickRollers')).toBe(false)
+    expect(isNumericSdsCode('PickRollerKit')).toBe(false)
+  })
+
+  it('returns false for empty string', () => {
+    expect(isNumericSdsCode('')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// normalizeForMessageMatch
+// ---------------------------------------------------------------------------
+
+describe('normalizeForMessageMatch', () => {
+  it('lowercases the string', () => {
+    expect(normalizeForMessageMatch('ReplaceTrayPickRollers')).toBe('replacetraypickrollers')
+  })
+
+  it('strips spaces', () => {
+    expect(normalizeForMessageMatch('Replace Tray Pick Rollers')).toBe('replacetraypickrollers')
+  })
+
+  it('CamelCase and spaced version normalize to same value', () => {
+    expect(normalizeForMessageMatch('ReplaceTrayPickRollers')).toBe(
+      normalizeForMessageMatch('Replace Tray Pick Rollers')
+    )
+  })
+
+  it('strips underscores and hyphens', () => {
+    expect(normalizeForMessageMatch('replace_tray_pick_rollers')).toBe('replacetraypickrollers')
+    expect(normalizeForMessageMatch('replace-tray-pick-rollers')).toBe('replacetraypickrollers')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// sdsTokenMatchesIncident
+// ---------------------------------------------------------------------------
+
+describe('sdsTokenMatchesIncident', () => {
+  it('numeric token matches by code (exact)', () => {
+    expect(sdsTokenMatchesIncident('60.00.02', 'Some classification', '60.00.02')).toBe(true)
+  })
+
+  it('numeric token with z wildcard matches prefix', () => {
+    expect(sdsTokenMatchesIncident('53.B0.02', 'Some classification', '53.B0.0z')).toBe(true)
+    expect(sdsTokenMatchesIncident('53.B0.09', 'Some classification', '53.B0.0z')).toBe(true)
+  })
+
+  it('numeric token does not match different code', () => {
+    expect(sdsTokenMatchesIncident('53.B1.01', 'Replace Tray Pick Rollers', '53.B0.0z')).toBe(false)
+  })
+
+  it('message token matches classification case-insensitively', () => {
+    expect(sdsTokenMatchesIncident('53.B0.02', 'Replace Tray Pick Rollers', 'ReplaceTrayPickRollers')).toBe(true)
+  })
+
+  it('message token matches partial classification', () => {
+    expect(sdsTokenMatchesIncident('53.B0.02', 'Replace Tray Pick Rollers Kit', 'PickRollers')).toBe(true)
+  })
+
+  it('message token does not match unrelated classification', () => {
+    expect(sdsTokenMatchesIncident('60.00.02', 'Fuser Error', 'ReplaceTrayPickRollers')).toBe(false)
+  })
+
+  it('empty token returns false', () => {
+    expect(sdsTokenMatchesIncident('60.00.02', 'Some classification', '')).toBe(false)
+    expect(sdsTokenMatchesIncident('60.00.02', 'Some classification', '   ')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// computeSdsVsLog
+// ---------------------------------------------------------------------------
+
 describe('computeSdsVsLog', () => {
-  const full: IncidentFullForSds[] = [{ code: '53.B0.02', end_time: '2026-03-01T10:00:00', occurrences: 3 }]
-  const rows: IncidentRowForSds[] = [{ code: '53.B0.02' }]
+  const full: IncidentFullForSds[] = [{ code: '53.B0.02', end_time: '2026-03-01T10:00:00', occurrences: 3, classification: 'Replace Tray Pick Rollers' }]
+  const rows: IncidentRowForSds[] = [{ code: '53.B0.02', classification: 'Replace Tray Pick Rollers' }]
 
   it('returns general when no event_context and no more_info', () => {
     const sds: SdsIncidentData = { event_context: null, more_info: null }
@@ -236,5 +346,24 @@ describe('computeSdsVsLog', () => {
     const sds: SdsIncidentData = { event_context: '53.B0.02' }
     const result = computeSdsVsLog(sds, rows, full, 3)
     expect(result.status).toBe('match')
+  })
+
+  it('returns match when more_info is a message identifier that matches classification', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: 'ReplaceTrayPickRollers' }
+    const result = computeSdsVsLog(sds, rows, full, 3)
+    expect(result.status).toBe('match')
+  })
+
+  it('returns no_match when message identifier does not match any classification', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: 'FuserHeatingError' }
+    const result = computeSdsVsLog(sds, rows, full, 3)
+    expect(result.status).toBe('no_match')
+  })
+
+  it('returns partial when message identifier matches full list but not filtered rows', () => {
+    const sds: SdsIncidentData = { event_context: null, more_info: 'ReplaceTrayPickRollers' }
+    const emptyRows: IncidentRowForSds[] = []
+    const result = computeSdsVsLog(sds, emptyRows, full, 3)
+    expect(result.status).toBe('partial')
   })
 })

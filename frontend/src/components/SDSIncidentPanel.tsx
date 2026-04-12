@@ -14,6 +14,8 @@ interface IncidentFullForSds {
   end_time: string
   /** Número de eventos del incidente (para "Eventos relacionados"). Opcional. */
   occurrences?: number
+  /** Clasificación/descripción del incidente — usada para match por mensaje. */
+  classification?: string
 }
 
 /**
@@ -39,6 +41,40 @@ function incidentCodeMatchesSds(incidentCode: string, sdsCode: string): boolean 
     return inc === sds
   }
   return inc.startsWith(prefix)
+}
+
+/**
+ * True si el valor SDS parece un código numérico HP (ej. "60.00.02", "53.B0.0z").
+ * Heurística: contiene un punto — los identificadores de mensaje no lo tienen.
+ */
+function isNumericSdsCode(value: string): boolean {
+  return value.includes('.')
+}
+
+/** Normaliza un string para match por mensaje: minúsculas, sin espacios ni guiones. */
+function normalizeForMessageMatch(s: string): string {
+  return s.toLowerCase().replace(/[\s_-]/g, '')
+}
+
+/**
+ * Compara un token SDS contra un incidente del log.
+ * - Código numérico (contiene ".") → match contra incident.code con wildcard z
+ * - Identificador de mensaje (ej. "ReplaceTrayPickRollers") → match case-insensitive
+ *   contra classification, normalizando espacios para cubrir "Replace Tray Pick Rollers"
+ */
+function sdsTokenMatchesIncident(
+  incidentCode: string,
+  incidentClassification: string,
+  sdsToken: string
+): boolean {
+  const token = sdsToken.trim()
+  if (!token) return false
+  if (isNumericSdsCode(token)) {
+    return incidentCodeMatchesSds(incidentCode, token)
+  }
+  return normalizeForMessageMatch(incidentClassification ?? '').includes(
+    normalizeForMessageMatch(token)
+  )
 }
 
 /** Parsea fecha SDS (ej. "14-mar-2026 10:30:00" o ISO). Devuelve null si no se puede parsear. */
@@ -108,7 +144,7 @@ function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
   return codes
 }
 
-/** Total de eventos del log que coinciden con cualquiera de los códigos SDS. */
+/** Total de eventos del log que coinciden con cualquiera de los tokens SDS. */
 function getEventosRelacionadosCount(
   sds: SdsIncidentData,
   incidentsFull: IncidentFullForSds[]
@@ -116,7 +152,7 @@ function getEventosRelacionadosCount(
   const sdsCodes = getSdsCodesForMatch(sds)
   if (sdsCodes.length === 0) return 0
   const matching = incidentsFull.filter((i) =>
-    sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c))
+    sdsCodes.some((c) => sdsTokenMatchesIncident(i.code, i.classification ?? '', c))
   )
   return matching.reduce((sum, i) => sum + (i.occurrences ?? 1), 0)
 }
@@ -136,10 +172,10 @@ function computeSdsVsLog(
   }
 
   const matchedInFiltered = sdsCodes.filter((c) =>
-    incidentRows.some((r) => incidentCodeMatchesSds(r.code, c))
+    incidentRows.some((r) => sdsTokenMatchesIncident(r.code, r.classification, c))
   )
   const matchedInFull = sdsCodes.filter((c) =>
-    incidentsFull.some((i) => incidentCodeMatchesSds(i.code, c))
+    incidentsFull.some((i) => sdsTokenMatchesIncident(i.code, i.classification ?? '', c))
   )
 
   if (matchedInFiltered.length > 0) {
@@ -161,7 +197,7 @@ function getLastEventRelated(sds: SdsIncidentData, incidentsFull: IncidentFullFo
   const sdsCodes = getSdsCodesForMatch(sds)
   if (sdsCodes.length === 0) return '—'
   const matching = incidentsFull.filter((i) =>
-    sdsCodes.some((c) => incidentCodeMatchesSds(i.code, c))
+    sdsCodes.some((c) => sdsTokenMatchesIncident(i.code, i.classification ?? '', c))
   )
   if (matching.length === 0) return '—'
   const latest = matching.sort(
