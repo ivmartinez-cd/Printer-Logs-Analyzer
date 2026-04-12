@@ -144,7 +144,7 @@ Decisiones clave:
 
 ### Consumable warning service (`application/services/consumable_warning_service.py`)
 
-`compute_consumable_warnings(events, consumables, max_counter)` — returns `List[ConsumableWarning]` sorted by `usage_pct` desc. Only consumables with at least one log code match are included. Code patterns support `z` wildcard (any hex digit). Called from `/parser/preview` when `model_id` is present; failures are logged and skipped without breaking analysis.
+`compute_consumable_warnings(events, consumables, max_counter)` — returns `List[ConsumableWarning]` sorted by status (`replace` → `warning` → `ok`), then `usage_pct` desc. Excludes `category == "toner"` and ADF rollers (description matches `ADF_DESCRIPTION_PATTERNS`: `"adf"`, `"document feeder"`, `"automatic document feeder"`, case-insensitive) — page counter doesn't reflect their real wear. Code patterns support `z` wildcard (any hex digit). Called from `/parser/preview` when `model_id` is present; failures are logged and skipped without breaking analysis.
 
 ### Compare service (`application/services/compare_service.py`)
 
@@ -255,8 +255,8 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `AddCodeToCatalogModal.tsx` | Form agregar/editar código del catálogo |
 | `SaveIncidentModal.tsx` | Form guardar análisis con nombre y equipment_identifier |
 | `SDSIncidentModal.tsx` | Pegar SDS; parsea texto → SdsIncidentData |
-| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y ConsumableWarningsPanel; acepta `consumableWarnings?` para mostrar sección "Verificar cambio" cuando hay solapamiento de códigos |
-| `ConsumableWarningsPanel.tsx` | Tabla de advertencias de consumibles; **arranca colapsada**; solo se renderiza si `warnings.length > 0`; posición: entre SDSIncidentPanel y gráficos |
+| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y ConsumableWarningsPanel; acepta `consumableWarnings?` para mostrar sección "Verificar historial de consumibles" cuando hay solapamiento de códigos |
+| `ConsumableWarningsPanel.tsx` | "Estado de consumibles" — tabla con texto introductorio de aviso; **arranca colapsada**; solo se renderiza si `warnings.length > 0`; posición: entre SDSIncidentPanel y gráficos; excluye toners y ADF |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |
 | `DateRangePicker.tsx` | Picker de rango de fechas con presets (hoy, semana, mes, N días) y DayPicker interactivo; popover alineado a `right: 0` para no salirse del viewport |

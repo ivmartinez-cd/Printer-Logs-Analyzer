@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-11 (rama `feature/printer-models`, Fase 4 completa)
+Última actualización: 2026-04-12 (PR #30 — Estado de consumibles, reorientación a revisión de historial)
 
 ---
 
@@ -15,7 +15,7 @@ Herramienta web interna para analizar logs de impresoras HP: seleccionar modelo,
 2. Pegar el log y pulsar "Analizar". Se ejecutan en paralelo `POST /parser/preview` y `POST /parser/validate`.
 3. Si hay **códigos nuevos** (no en catálogo), aparece la sección para agregarlos uno a uno o ignorarlos.
 4. Opcional: agregar un **SDS Engineering Incident** para hacer match contra los códigos del log.
-5. Ver KPIs, Diagnóstico con IA, SDS panel, Advertencias de consumibles, gráficos y tablas — todo filtrable por fecha.
+5. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos y tablas — todo filtrable por fecha.
 
 ---
 
@@ -70,7 +70,11 @@ Printer-Logs-Analyzer/
 
 ### 3.3 Consumable warnings
 
-`compute_consumable_warnings(events, consumables, max_counter)` en `consumable_warning_service.py`. Retorna `List[ConsumableWarning]` ordenada por `usage_pct` desc. Solo consumibles con al menos un código de log matcheado. Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones de código soportan wildcard `z` (cualquier dígito hex).
+`compute_consumable_warnings(events, consumables, max_counter)` en `consumable_warning_service.py`. Retorna `List[ConsumableWarning]` ordenada por status (`replace` → `warning` → `ok`) y luego `usage_pct` desc.
+
+**Exclusiones:** se omiten toners (`category == "toner"`) y rodillos ADF (descripción contiene "adf", "document feeder" o "automatic document feeder", case-insensitive). El contador de páginas impresas no mide el desgaste real de estos componentes. Constante `ADF_DESCRIPTION_PATTERNS` al inicio del módulo.
+
+Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones de código soportan wildcard `z` (cualquier dígito hex). El panel es aviso para verificar historial — no orden de reemplazo.
 
 ### 3.4 Modelos de impresora
 
@@ -121,8 +125,8 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 1. `DashboardHeader` — logo, logFileName, botones de acción, LiveClock, DbStatusBadge
 2. `KPICards` — 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores
 3. `AIDiagnosticPanel` — panel violeta, colapsado por default, diagnóstico on demand
-4. `SDSIncidentPanel` — colapsado por default; sección "Verificar cambio" si hay overlap con consumibles
-5. `ConsumableWarningsPanel` — colapsado, solo si `warnings.length > 0`
+4. `SDSIncidentPanel` — colapsado por default; sección "Verificar historial de consumibles" si hay overlap con consumibles
+5. `ConsumableWarningsPanel` ("Estado de consumibles") — colapsado, solo si `warnings.length > 0`
 6. `DateRangePicker` — botón + popover con 8 presets y calendario de rango libre
 7. `IncidentsChart` — AreaChart eventos/hora con toggles de severidad
 8. `TopErrorsChart` — BarChart top 10 códigos; toggles ERROR/WARNING/INFO (los 3 activos por default)
@@ -136,8 +140,8 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 | `DashboardHeader.tsx` | Header principal con acciones |
 | `KPICards.tsx` | 4 KPIs de salud del log |
 | `AIDiagnosticPanel.tsx` | Diagnóstico IA colapsado; llama a `/analysis/ai-diagnose` on demand |
-| `SDSIncidentPanel.tsx` | Match SDS vs log; sección "Verificar cambio" si hay consumibles afectados |
-| `ConsumableWarningsPanel.tsx` | Tabla de consumibles; solo si hay warnings; colapsado |
+| `SDSIncidentPanel.tsx` | Match SDS vs log; sección "Verificar historial de consumibles" si hay overlap con consumibles (prop `consumableWarnings?`) |
+| `ConsumableWarningsPanel.tsx` | "Estado de consumibles" — tabla con texto introductorio; solo si hay warnings; colapsado |
 | `DateRangePicker.tsx` | Picker unificado con presets y rango libre; popover alineado a la derecha |
 | `IncidentsChart.tsx` | AreaChart por hora con toggles de severidad y tooltip con códigos |
 | `TopErrorsChart.tsx` | BarChart top 10 códigos; tres toggles activos por default |
@@ -203,8 +207,8 @@ Fallback automático a JSON local en `backend/data/` cuando PostgreSQL no está 
 
 | Suite | Herramienta | Tests |
 |-------|-------------|-------|
-| Frontend (hooks + componentes) | vitest | 70 |
-| Backend | pytest | 70 |
+| Frontend (hooks + componentes) | vitest | 63 |
+| Backend | pytest | 75 |
 
 Frontend: `vitest.config.ts` con `environment: node`; tests de componentes declaran `// @vitest-environment jsdom`. Backend: tests en `backend/tests/`; sin `DB_URL` → fallback JSON automático.
 
@@ -229,7 +233,7 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 |------|--------------|
 | Parsing logs | Estable — normalización espacios, meses español, tolerancia a blank lines |
 | Modelos de impresora | Fase 4 completa — selector obligatorio en modal, upload PDF con Haiku, consumables warnings |
-| Consumable warnings | Activo — `ConsumableWarningsPanel` + servicio backend + "Verificar cambio" en SDS |
+| Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners y ADF); badges orientados a historial; sección "Verificar historial" en SDSIncidentPanel |
 | Diagnóstico con IA | Activo — `AIDiagnosticPanel` colapsado, Claude Haiku, secciones DIAGNÓSTICO/ACCIÓN/PRIORIDAD |
 | SDS Engineering Incident | Activo — match por `event_context`/`more_info`, wildcard `z`, status `general` |
 | Filtros de fecha | DateRangePicker — 8 presets + rango libre con calendario |

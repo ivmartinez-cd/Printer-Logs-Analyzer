@@ -4,6 +4,17 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Feat: Estado de consumibles — reorientación del panel a revisión de historial (PR #30)**
+- Panel renombrado de "Advertencias de consumibles" a "Estado de consumibles" (header y HelpModal).
+- `consumable_warning_service.py`: excluir toners (`category == "toner"`) y rodillos ADF (descripción contiene "adf" / "document feeder" / "automatic document feeder", case-insensitive). Constante `ADF_DESCRIPTION_PATTERNS` al inicio del módulo. Motivo: el contador de páginas impresas no mide el desgaste real de estos componentes.
+- Badges reorientados: "Reemplazar" → "Revisar historial", "Próximo a reemplazo" → "Próximo a revisar", "OK" → "Sin alertas". Los valores del enum backend (`replace`/`warning`/`ok`) no cambian.
+- Texto introductorio debajo del header del panel (clase `.consumable-warnings-panel__intro`): "Estos consumibles superaron su vida útil estimada según el contador de impresión. Verificá en el historial del equipo cuándo fue el último reemplazo antes de actuar."
+- `SDSIncidentPanel`: nueva prop `consumableWarnings?` + función `getOverlappingConsumables`. Cuando hay solapamiento entre códigos del SDS y `matched_codes` de consumibles, se muestra sección "Verificar historial de consumibles" con descripción, part number, vida útil, uso y badge de estado (mismo wording que el panel principal). `DashboardPage` pasa `consumableWarnings={result?.consumable_warnings ?? []}`.
+- HelpModal sección consumibles reescrita: nuevo nombre, exclusiones explicadas con motivo, semántica de aviso (no orden de cambio), thresholds 80%/100%, wildcard `z` documentado.
+- +5 tests backend en `test_consumable_warning_service.py` (toner excluido, ADF excluido, mixtos). Total: 75 tests backend / 63 tests frontend.
+
+---
+
 **Fix: conexiones idle cerradas por Neon causan OperationalError/InterfaceError en producción**
 - Neon cierra conexiones del pool cuando están idle, y al reusarlas se obtenía `psycopg2.OperationalError: SSL connection has been closed unexpectedly` o `InterfaceError: connection already closed`.
 - Fix en `database.py`: `connect()` ahora hace un **pre-ping** (`SELECT 1`) sobre cada conexión obtenida del pool antes de cederla al caller. Si el ping falla, descarta la conexión (`putconn(conn, close=True)`) y reintenta hasta 3 veces.
