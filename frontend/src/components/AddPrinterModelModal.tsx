@@ -58,12 +58,11 @@ export function AddPrinterModelModal({ open, onClose, onSuccess }: AddPrinterMod
   return (
     <div
       className="add-printer-model-modal__overlay"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-printer-model-title"
     >
-      <div className="add-printer-model-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="add-printer-model-modal">
         <div className="add-printer-model-modal__header">
           <h2 id="add-printer-model-title" className="add-printer-model-modal__title">
             Cargar Service Cost Data

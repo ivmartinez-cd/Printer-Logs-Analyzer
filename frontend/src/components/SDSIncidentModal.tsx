@@ -75,12 +75,11 @@ export function SDSIncidentModal({ onContinue, onClose }: SDSIncidentModalProps)
   return (
     <div
       className="log-modal-overlay"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="sds-modal-title"
     >
-      <div className="log-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="log-modal">
         <div className="log-modal__header">
           <h2 id="sds-modal-title" className="log-modal__title">
             Pegar incidente SDS
