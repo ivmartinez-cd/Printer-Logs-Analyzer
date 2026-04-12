@@ -238,10 +238,13 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
                 <option value="">— Elegí un modelo —</option>
                 {models.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.has_cpmd ? '📘 ' : ''}{m.model_name} {m.model_code ? `(${m.model_code})` : ''}
+                    {m.has_cpmd ? '📘 ' : ''}
+                    {m.model_name} {m.model_code ? `(${m.model_code})` : ''}
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="log-modal__model-buttons">
               <button
                 type="button"
                 className="log-modal__model-add-button"

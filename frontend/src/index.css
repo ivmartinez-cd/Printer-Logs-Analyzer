@@ -824,6 +824,12 @@ body {
   gap: 8px;
 }
 
+.log-modal__model-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .log-modal__model-select {
   flex: 1;
   padding: 8px 10px;
