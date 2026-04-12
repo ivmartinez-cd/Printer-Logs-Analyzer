@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-12 (PR #32 — SDS match por mensaje + excluir consumibles 110V)
+Última actualización: 2026-04-12 (PR #33 — SDS match por keywords CamelCase)
 
 ---
 
@@ -53,7 +53,7 @@ Printer-Logs-Analyzer/
     ├── src/hooks/                # useAnalysis, useModals, useDateFilter, useExportPdf
     ├── src/services/api.ts
     ├── src/types/api.ts
-    └── src/__tests__/            # vitest — 80 tests
+    └── src/__tests__/            # vitest — 93 tests
 ```
 
 ---
@@ -186,12 +186,16 @@ Reemplazó a `DateFilterBar`. Un solo botón que abre un popover con:
 
 ### 4.6 SDS match
 
-`SDSIncidentPanel` usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. Cada token se despacha por `sdsTokenMatchesIncident`:
+`SDSIncidentPanel` construye la lista de tokens a matchear con `getSdsCodesForMatch`:
+1. `event_context` (código primario, ej. `"60.00.02"`)
+2. Tokens de `more_info` separados por `or`
+3. `sds.code` cuando es CamelCase sin dígitos y produce ≥1 keyword significativa — ej. `"ReplaceTrayPickRollers"` sí; `"TriageInput2"` (tiene dígito) no; `"Replace"` (solo stopword) no.
 
-- **Código numérico** (token contiene `.`): match contra `incident.code` con wildcard `z` (cualquier dígito hex). Ej. `53.B0.0z` coincide con `53.B0.01`…`53.B0.0F`.
-- **Identificador de mensaje** (token sin `.`): match case-insensitive contra `incident.classification` normalizando espacios, guiones y underscores. Ej. `"ReplaceTrayPickRollers"` coincide con `"Replace Tray Pick Rollers"`.
+Cada token se despacha por `sdsTokenMatchesIncident`:
+- **Código numérico** (contiene `.`): match exacto o por prefijo con wildcard `z` (cualquier dígito hex). Ej. `53.B0.0z` → `53.B0.01`…`53.B0.0F`.
+- **Identificador de mensaje** (sin `.`): `extractSdsKeywords` divide por CamelCase, lowercase, singular básico, descarta stopwords (`replace`, `check`, `clean`, `verify`, `reset`, `the`, `a`). Match si ≥ `MIN_KEYWORD_MATCHES = 1` keyword aparece en la `classification` normalizada. Ej. `"ReplaceTrayPickRollers"` → keywords `["tray","pick","roller"]` → coincide con `"Tray Z feed roller at end of life."`.
 
-Status `'general'` solo cuando ambos `event_context` y `more_info` están vacíos. Si `event_context` está vacío pero `more_info` tiene tokens, se intenta el match normal.
+Status `'general'` solo cuando `getSdsCodesForMatch` devuelve lista vacía.
 
 ---
 
@@ -212,7 +216,7 @@ Fallback automático a JSON local en `backend/data/` cuando PostgreSQL no está 
 
 | Suite | Herramienta | Tests |
 |-------|-------------|-------|
-| Frontend (hooks + componentes) | vitest | 80 |
+| Frontend (hooks + componentes) | vitest | 93 |
 | Backend | pytest | 78 |
 
 Frontend: `vitest.config.ts` con `environment: node`; tests de componentes declaran `// @vitest-environment jsdom`. Backend: tests en `backend/tests/`; sin `DB_URL` → fallback JSON automático.
@@ -240,7 +244,7 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 | Modelos de impresora | Fase 4 completa — selector obligatorio en modal, upload PDF con Haiku, consumables warnings |
 | Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners, ADF y 110V); badges orientados a historial; sección "Verificar historial" en SDSIncidentPanel |
 | Diagnóstico con IA | Activo — `AIDiagnosticPanel` colapsado, Claude Haiku, secciones DIAGNÓSTICO/ACCIÓN/PRIORIDAD |
-| SDS Engineering Incident | Activo — match por código numérico (wildcard `z`) y por identificador de mensaje (normalizado) |
+| SDS Engineering Incident | Activo — match numérico (wildcard `z`), por keywords CamelCase, y desde `sds.code` cuando tiene keywords significativas |
 | Filtros de fecha | DateRangePicker — 8 presets + rango libre con calendario |
 | Gráficos | IncidentsChart (AreaChart) + TopErrorsChart (BarChart top 10, toggles activos por default) |
 | Catálogo de códigos | Activo — upsert con fetch de HTML, fallback si link expira |
