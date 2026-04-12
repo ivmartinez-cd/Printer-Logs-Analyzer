@@ -636,13 +636,17 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/printer-models", dependencies=[Depends(authenticate)])
     def list_printer_models() -> list:
-        """List all printer models (without consumables)."""
+        """List all printer models (without consumables). Includes has_cpmd flag."""
         from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
 
         try:
             models = printer_model_repository.list_models()
         except _DBErr:
             return []
+        try:
+            model_ids_with_cpmd = error_solution_repository.get_model_ids_with_solutions()
+        except Exception:
+            model_ids_with_cpmd = set()
         return [
             {
                 "id": str(m.id),
@@ -652,11 +656,49 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 "ampv": m.ampv,
                 "engine_life_pages": m.engine_life_pages,
                 "notes": m.notes,
+                "has_cpmd": str(m.id) in model_ids_with_cpmd,
                 "created_at": m.created_at.isoformat(),
                 "updated_at": m.updated_at.isoformat(),
             }
             for m in models
         ]
+
+    @app.get("/models/{model_id}/error-solutions/{code}", dependencies=[Depends(authenticate)])
+    def get_error_solution(model_id: str, code: str) -> dict:
+        """Return the CPMD error solution for a given model and error code. 404 if not found."""
+        from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
+
+        try:
+            uid = UUID(model_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="model_id inválido")
+
+        try:
+            model = printer_model_repository.get_by_id(uid)
+        except _DBErr:
+            model = None
+        if model is None:
+            raise HTTPException(status_code=404, detail="Modelo no encontrado")
+
+        try:
+            solution = error_solution_repository.get_by_model_and_code(uid, code)
+        except _DBErr:
+            solution = None
+        if solution is None:
+            raise HTTPException(status_code=404, detail="Solución no encontrada para este código")
+
+        return {
+            "id": solution.id,
+            "model_id": str(solution.model_id),
+            "code": solution.code,
+            "title": solution.title,
+            "cause": solution.cause,
+            "technician_steps": solution.technician_steps,
+            "frus": [{"part_number": f.part_number, "description": f.description} for f in solution.frus],
+            "source_audience": solution.source_audience,
+            "source_page": solution.source_page,
+            "cpmd_hash": solution.cpmd_hash,
+        }
 
     @app.post("/printer-models/upload-pdf", dependencies=[Depends(authenticate)])
     @limiter.limit("10/minute")
