@@ -65,6 +65,13 @@ class ErrorSolutionRepository:
         except DatabaseUnavailableError:
             return self._list_by_model_local(model_id)
 
+    def get_model_ids_with_solutions(self) -> set:
+        """Return the set of model_id strings that have at least one solution."""
+        try:
+            return self._get_model_ids_with_solutions_db()
+        except DatabaseUnavailableError:
+            return self._get_model_ids_with_solutions_local()
+
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
@@ -132,6 +139,17 @@ class ErrorSolutionRepository:
                 count = cur.rowcount
             conn.commit()
         return count
+
+    def _get_model_ids_with_solutions_db(self) -> set:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT DISTINCT model_id FROM error_solutions")
+                rows = cur.fetchall()
+        return {str(r[0]) for r in rows}
+
+    def _get_model_ids_with_solutions_local(self) -> set:
+        items = self._load_local()
+        return {i["model_id"] for i in items if "model_id" in i}
 
     def _list_by_model_db(self, model_id: UUID) -> List[ErrorSolution]:
         with self._db.connect() as conn:

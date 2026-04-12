@@ -19,6 +19,7 @@ import type {
 } from '../types/api'
 import { AddPrinterModelModal } from '../components/AddPrinterModelModal'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
+import { UploadCpmdModal } from '../components/UploadCpmdModal'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { SaveIncidentModal } from '../components/SaveIncidentModal'
 import { SDSIncidentModal } from '../components/SDSIncidentModal'
@@ -143,6 +144,7 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
   const [models, setModels] = useState<PrinterModel[]>([])
   const [addModelOpen, setAddModelOpen] = useState(false)
+  const [cpmdUploadOpen, setCpmdUploadOpen] = useState(false)
   const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -236,7 +238,7 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
                 <option value="">— Elegí un modelo —</option>
                 {models.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.model_name} {m.model_code ? `(${m.model_code})` : ''}
+                    {m.has_cpmd ? '📘 ' : ''}{m.model_name} {m.model_code ? `(${m.model_code})` : ''}
                   </option>
                 ))}
               </select>
@@ -249,6 +251,17 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
               >
                 + Cargar nuevo modelo (PDF)
               </button>
+              {selectedModelId && (
+                <button
+                  type="button"
+                  className="log-modal__model-add-button log-modal__model-cpmd-button"
+                  onClick={() => setCpmdUploadOpen(true)}
+                  disabled={loading}
+                  title="Cargar CPMD del modelo seleccionado"
+                >
+                  📘 Cargar CPMD del modelo
+                </button>
+              )}
             </div>
             {modelSuccessMsg && (
               <p className="log-modal__model-success">{modelSuccessMsg}</p>
@@ -319,6 +332,21 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
         onClose={() => setAddModelOpen(false)}
         onSuccess={handleUploadSuccess}
       />
+
+      {cpmdUploadOpen && selectedModelId && (
+        <UploadCpmdModal
+          modelId={selectedModelId}
+          modelName={models.find((m) => m.id === selectedModelId)?.model_name ?? selectedModelId}
+          onClose={() => setCpmdUploadOpen(false)}
+          onSuccess={() => {
+            // Refresh models so the 📘 icon appears
+            listPrinterModels()
+              .then(setModels)
+              .catch(() => {})
+            setCpmdUploadOpen(false)
+          }}
+        />
+      )}
     </>
   )
 }
@@ -362,6 +390,7 @@ export default function DashboardPage({
   const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [logFileName, setLogFileName] = useState<string | null>(null)
+  const [currentModelId, setCurrentModelId] = useState<string | null>(null)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
     new Set(['ERROR', 'WARNING', 'INFO'])
   )
@@ -710,6 +739,7 @@ export default function DashboardPage({
                   code={addCodeModalCode}
                   initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
                   initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
+                  modelId={currentModelId}
                   onSave={(body) => handleSaveCodeToCatalog(body, false)}
                   onClose={() => !savingCode && setAddCodeModalCode(null)}
                   saving={savingCode}
@@ -722,6 +752,7 @@ export default function DashboardPage({
                   initialDescription={editCodeInitial.description}
                   initialSeverity={editCodeInitial.severity}
                   initialSolutionUrl={editCodeInitial.solutionUrl}
+                  modelId={currentModelId}
                   title="Editar código en el catálogo"
                   submitLabel="Guardar"
                   onSave={(body) => handleSaveCodeToCatalog(body, true)}
@@ -878,7 +909,10 @@ export default function DashboardPage({
           loading={loading}
           error={error}
           serverWasCold={serverWasCold}
-          onAnalyze={handleAnalyze}
+          onAnalyze={(logText, fileName, modelId) => {
+            setCurrentModelId(modelId ?? null)
+            handleAnalyze(logText, fileName, modelId)
+          }}
           onClose={() => {
             setError(null)
             setLogModalOpen(false)
