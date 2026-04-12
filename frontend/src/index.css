@@ -990,16 +990,32 @@ body {
   font-size: 13px;
 }
 
-/* ── AI Diagnostic Panel ───────────────────────────────────────── */
-.ai-diagnostic-panel {
+/* ── Collapsible Panel — shell compartido (AI · SDS · Consumibles) */
+.collapsible-panel {
   background: #111827;
   border: 1px solid #2d3a52;
-  border-left: 3px solid #8b5cf6;
+  border-left: 3px solid transparent;
   border-radius: 8px;
   overflow: hidden;
 }
 
-.ai-diagnostic-panel__header-button {
+.collapsible-panel--ai {
+  border-left-color: #8b5cf6; /* purple */
+}
+
+.collapsible-panel--sds {
+  border-left-color: #3b82f6; /* blue */
+}
+
+.collapsible-panel--consumable {
+  border-left-color: #d97706; /* amber */
+}
+
+.collapsible-panel--alert {
+  border-left-color: #ef4444; /* red — consumible con status replace */
+}
+
+.collapsible-panel__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1013,23 +1029,29 @@ body {
   color: inherit;
 }
 
-.ai-diagnostic-panel__chevron {
+.collapsible-panel__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #a5b4c8;
+}
+
+.collapsible-panel__chevron {
   font-size: 10px;
   color: #6b7a8e;
   transition: transform 0.2s ease;
   display: inline-block;
 }
 
-.ai-diagnostic-panel__chevron--expanded {
+.collapsible-panel__chevron--expanded {
   transform: rotate(90deg);
 }
 
-.ai-diagnostic-panel__title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #a5b4c8;
+.collapsible-panel__body {
+  padding: 16px;
 }
+
+/* ── AI Diagnostic Panel — contenido específico ─────────────────── */
 
 /* Estado inicial: CTA centrado */
 .ai-diagnostic-panel__cta-wrapper {
@@ -2414,11 +2436,7 @@ button.dashboard-table__solution-link {
   outline-offset: 2px;
 }
 
-/* ── Consumable Warnings Panel ─────────────────────────────────── */
-.consumable-warnings-panel {
-  border-left-color: #d97706; /* amber accent */
-}
-
+/* ── Consumable Warnings Panel — contenido específico ───────────── */
 .consumable-warnings-panel__scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

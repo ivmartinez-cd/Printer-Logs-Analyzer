@@ -324,20 +324,23 @@ export function SDSIncidentPanel({
   ]
 
   return (
-    <section className="section dashboard__table-section dashboard__table-section--collapsible">
+    <section className="collapsible-panel collapsible-panel--sds">
       <button
         type="button"
-        className="section__title section__title--toggle"
+        className="collapsible-panel__header"
         onClick={() => setCollapsed((c) => !c)}
-        {...(collapsed ? { 'aria-expanded': 'false' } : { 'aria-expanded': 'true' })}
+        aria-expanded={!collapsed}
       >
-        <span>SDS Engineering Incident</span>
-        <span className="section__toggle-icon" aria-hidden>
-          {collapsed ? '▶' : '▼'}
+        <span className="collapsible-panel__title">🔧 SDS Engineering Incident</span>
+        <span
+          className={`collapsible-panel__chevron${!collapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
+          aria-hidden="true"
+        >
+          ▶
         </span>
       </button>
       {!collapsed && (
-        <>
+        <div className="collapsible-panel__body">
           <div className="table-wrap">
             <table className="dashboard-table sds-incident-panel__table">
               <thead>
@@ -402,7 +405,7 @@ export function SDSIncidentPanel({
               </table>
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   )
