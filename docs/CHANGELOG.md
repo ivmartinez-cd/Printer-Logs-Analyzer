@@ -4,6 +4,15 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Feat: SDS match por keywords CamelCase — campo Código ahora participa en el match (PR #33)**
+- `getSdsCodesForMatch` incluye `sds.code` cuando es CamelCase sin dígitos y produce ≥1 keyword significativa. Excluye IDs internos con dígitos (`"TriageInput2"`) y stopwords sueltas (`"Replace"`).
+- `sdsTokenMatchesIncident` para tokens de mensaje: reemplaza `includes()` exacto por `extractSdsKeywords` — split por CamelCase, lowercase, singular básico (quita `s` final si length > 3), descarta stopwords (`replace`, `check`, `clean`, `verify`, `reset`, `the`, `a`). Verifica que al menos `MIN_KEYWORD_MATCHES = 1` keyword aparezca en la `classification` normalizada.
+- Constantes exportadas: `SDS_STOPWORDS`, `MIN_KEYWORD_MATCHES`.
+- Caso resuelto: `sds.code = "ReplaceTrayPickRollers"` → keywords `["tray","pick","roller"]` → coincide con `"Tray Z feed roller at end of life."` por keyword `"roller"`.
+- +13 tests en `sdsMatching.test.ts`: `extractSdsKeywords` (6), `getSdsCodesForMatch` nuevos casos (3), `sdsTokenMatchesIncident` keyword cases (2), `computeSdsVsLog` casos reales (3). Total: **93 tests frontend / 78 tests backend**.
+
+---
+
 **Feat: SDS match por mensaje + excluir consumibles 110V (PR #32)**
 - `SDSIncidentPanel`: nueva función `sdsTokenMatchesIncident` que despacha entre match numérico (token contiene `.`) y match por mensaje (normaliza a minúsculas + strip de espacios/guiones/underscores, luego `includes()`). Permite que tokens como `"ReplaceTrayPickRollers"` en `more_info` coincidan con la `classification` del incidente aunque esté con espacios. La lógica de match numérico (`incidentCodeMatchesSds`, wildcard `z`) se mantiene sin cambios.
 - `DashboardPage`: `incidentsFull` ahora pasa `classification` del incidente al panel SDS.

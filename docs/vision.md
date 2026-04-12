@@ -40,9 +40,12 @@ Panel violeta colapsado debajo de los KPIs. Al expandirlo, hacé click en **"Gen
 
 ### SDS Engineering Incident
 
-Panel colapsado que muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). El match soporta:
-- **Códigos numéricos** (ej. `60.00.02`, `53.B0.0z`) — match exacto o por prefijo con wildcard `z`.
-- **Identificadores de mensaje** (ej. `ReplaceTrayPickRollers`) — match normalizado case-insensitive contra la clasificación del incidente; `"Replace Tray Pick Rollers"` y `"ReplaceTrayPickRollers"` se consideran equivalentes.
+Panel colapsado que muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). El match soporta tres fuentes:
+- **Contexto evento** — código numérico primario, ej. `60.00.02`.
+- **Más información** — tokens adicionales separados por "or", numéricos o de mensaje.
+- **Campo Código** — si es CamelCase sin dígitos (ej. `ReplaceTrayPickRollers`), se tokeniza por CamelCase, se extraen keywords significativas (`["tray","pick","roller"]`) y se busca al menos 1 en la clasificación del incidente. IDs internos con dígitos (ej. `TriageInput2`) y stopwords sueltas (ej. `Replace`) quedan excluidos.
+
+Para match numérico: wildcard `z` cubre cualquier dígito hex (`53.B0.0z` → `53.B0.01`…`53.B0.0F`).
 
 Si hay consumibles con códigos relacionados al SDS, aparece la sección **"Verificar historial de consumibles"** con part number, vida útil y estado.
 
