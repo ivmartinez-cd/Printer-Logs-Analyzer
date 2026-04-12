@@ -46,7 +46,7 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (80 tests)
+npm run test:frontend  # vitest run (93 tests)
 npm run test:backend   # pytest backend/tests/ -v (78 tests)
 ```
 
@@ -272,11 +272,11 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `HelpModal.tsx` | Ayuda estática con 6 secciones |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
-**Match SDS vs Log (`SDSIncidentPanel`):** usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. El campo `code` interno SDS no interviene. Cada token se despacha por `sdsTokenMatchesIncident`:
+**Match SDS vs Log (`SDSIncidentPanel`):** `getSdsCodesForMatch` construye los tokens desde `event_context`, `more_info` (split por `or`) y `sds.code` (cuando es CamelCase sin dígitos y con ≥1 keyword significativa — excluye IDs como `"TriageInput2"` y stopwords sueltas como `"Replace"`). Cada token se despacha por `sdsTokenMatchesIncident`:
 - **Numérico** (contiene `.`): `incidentCodeMatchesSds` con wildcard `z` (`53.B0.0z` → `53.B0.01`…`53.B0.0F`).
-- **Mensaje** (sin `.`): `normalizeForMessageMatch` (minúsculas + strip espacios/guiones/underscores) sobre el token y sobre `incident.classification`, luego `includes()`. Ej. `"ReplaceTrayPickRollers"` coincide con `"Replace Tray Pick Rollers"`.
+- **Mensaje** (sin `.`): `extractSdsKeywords` — split CamelCase, lowercase, singular básico (quita `s` final si length > 3), descarta `SDS_STOPWORDS` (`replace`, `check`, `clean`, `verify`, `reset`, `the`, `a`). Match si ≥ `MIN_KEYWORD_MATCHES = 1` keyword aparece en `normalizeForMessageMatch(classification)`. Ej. `"ReplaceTrayPickRollers"` → `["tray","pick","roller"]` → coincide con `"Tray Z feed roller at end of life."`.
 
-Status `'general'` solo se emite cuando **ambos** `event_context` y `more_info` están vacíos/sin tokens parseables — si `event_context` está vacío pero `more_info` tiene tokens, se intenta el match normal.
+Status `'general'` solo cuando `getSdsCodesForMatch` devuelve lista vacía.
 
 ### AIDiagnosticPanel
 
