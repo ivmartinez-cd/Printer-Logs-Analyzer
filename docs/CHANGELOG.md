@@ -4,6 +4,14 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Feat: SDS match por mensaje + excluir consumibles 110V (PR #32)**
+- `SDSIncidentPanel`: nueva función `sdsTokenMatchesIncident` que despacha entre match numérico (token contiene `.`) y match por mensaje (normaliza a minúsculas + strip de espacios/guiones/underscores, luego `includes()`). Permite que tokens como `"ReplaceTrayPickRollers"` en `more_info` coincidan con la `classification` del incidente aunque esté con espacios. La lógica de match numérico (`incidentCodeMatchesSds`, wildcard `z`) se mantiene sin cambios.
+- `DashboardPage`: `incidentsFull` ahora pasa `classification` del incidente al panel SDS.
+- `consumable_warning_service.py`: se agrega `VOLTAGE_EXCLUSION_PATTERNS = ["110v"]`. La función `_is_adf_consumable` pasa a llamarse `_is_excluded_by_description` y chequea tanto patrones ADF como de voltaje. Motivo: en Argentina solo se usa 220V; los consumibles 110V no aplican al entorno local.
+- +17 tests frontend en `sdsMatching.test.ts` (isNumericSdsCode, normalizeForMessageMatch, sdsTokenMatchesIncident, nuevos casos de computeSdsVsLog con mensaje). +3 tests backend (110V excluido, 110V vs 220V, export de constante). Total: **80 tests frontend / 78 tests backend**.
+
+---
+
 **Feat: Estado de consumibles — reorientación del panel a revisión de historial (PR #30)**
 - Panel renombrado de "Advertencias de consumibles" a "Estado de consumibles" (header y HelpModal).
 - `consumable_warning_service.py`: excluir toners (`category == "toner"`) y rodillos ADF (descripción contiene "adf" / "document feeder" / "automatic document feeder", case-insensitive). Constante `ADF_DESCRIPTION_PATTERNS` al inicio del módulo. Motivo: el contador de páginas impresas no mide el desgaste real de estos componentes.
