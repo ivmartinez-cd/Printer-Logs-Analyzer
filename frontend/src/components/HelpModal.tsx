@@ -119,27 +119,39 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </ul>
           </section>
 
-          {/* ADVERTENCIAS DE CONSUMIBLES */}
+          {/* ESTADO DE CONSUMIBLES */}
           <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Advertencias de consumibles</h3>
+            <h3 className="help-modal__section-title">Estado de consumibles</h3>
             <p className="help-modal__intro-text">
               Panel colapsado debajo del SDS. Aparece solo si el modelo cargado tiene consumibles
-              asociados a códigos presentes en el log.
+              (rollers, fusers, maintenance kits, etc.) con códigos del log asociados.
+            </p>
+            <p className="help-modal__note">
+              <strong>Qué se muestra y qué no:</strong> se excluyen los tóners y los rodillos del
+              ADF (Automatic Document Feeder) porque el contador de páginas impresas no refleja su
+              desgaste real. Solo se incluyen componentes cuyo ciclo de vida está directamente
+              vinculado al contador de la impresora.
             </p>
             <ul className="help-modal__list">
               <li>
-                Tabla con: categoría (roller, fuser, toner, etc.), descripción, part number, vida
-                útil, contador actual, % de uso y estado.
+                Tabla con: categoría, descripción, part number, vida útil estimada, contador actual,
+                % de uso y estado.
               </li>
               <li>
-                <strong>Verde OK</strong>: uso por debajo del 80% de la vida útil.
+                <strong>Verde "Sin alertas"</strong>: uso por debajo del 80% de la vida útil.
               </li>
               <li>
-                <strong>Amarillo "próximo"</strong>: uso entre 80% y 99%.
+                <strong>Amarillo "Próximo a revisar"</strong>: uso entre 80% y 99%.
               </li>
               <li>
-                <strong>Rojo "reemplazar"</strong>: el contador supera el 100% de la vida útil
-                documentada.
+                <strong>Rojo "Revisar historial"</strong>: el contador supera el 100% de la vida
+                útil documentada. Esto es un aviso para verificar en el historial del equipo cuándo
+                fue el último reemplazo — no una orden de cambio inmediato.
+              </li>
+              <li>
+                Los patrones de código soportan el comodín <code>z</code> (cualquier dígito hex):
+                por ejemplo, <code>53.B0.0z</code> coincide con <code>53.B0.01</code>,{' '}
+                <code>53.B0.0A</code>, etc.
               </li>
             </ul>
           </section>

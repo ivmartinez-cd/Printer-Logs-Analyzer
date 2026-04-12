@@ -20,12 +20,12 @@ function formatPages(n: number): string {
 
 function StatusBadge({ status }: { status: ConsumableWarning['status'] }) {
   if (status === 'replace') {
-    return <span className="consumable-warnings-panel__badge consumable-warnings-panel__badge--replace">Reemplazar</span>
+    return <span className="consumable-warnings-panel__badge consumable-warnings-panel__badge--replace">Revisar historial</span>
   }
   if (status === 'warning') {
-    return <span className="consumable-warnings-panel__badge consumable-warnings-panel__badge--warning">Próximo a reemplazo</span>
+    return <span className="consumable-warnings-panel__badge consumable-warnings-panel__badge--warning">Próximo a revisar</span>
   }
-  return <span className="consumable-warnings-panel__badge consumable-warnings-panel__badge--ok">OK</span>
+  return <span className="consumable-warnings-panel__badge consumable-warnings-panel__badge--ok">Sin alertas</span>
 }
 
 function UsageBar({ pct, status }: { pct: number; status: ConsumableWarning['status'] }) {
@@ -54,14 +54,19 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
         onClick={() => setCollapsed((c) => !c)}
         aria-expanded={!collapsed}
       >
-        <span>⚙️ Advertencias de consumibles ({warnings.length})</span>
+        <span>⚙️ Estado de consumibles ({warnings.length})</span>
         <span className="section__toggle-icon" aria-hidden>
           {collapsed ? '▶' : '▼'}
         </span>
       </button>
 
       {!collapsed && (
-        <div className="table-wrap consumable-warnings-panel__scroll">
+        <>
+          <p className="consumable-warnings-panel__intro">
+            Estos consumibles superaron su vida útil estimada según el contador de impresión.
+            Verificá en el historial del equipo cuándo fue el último reemplazo antes de actuar.
+          </p>
+          <div className="table-wrap consumable-warnings-panel__scroll">
           <table className="dashboard-table consumable-warnings-panel__table">
             <thead>
               <tr>
@@ -106,6 +111,7 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
             </tbody>
           </table>
         </div>
+        </>
       )}
     </section>
   )

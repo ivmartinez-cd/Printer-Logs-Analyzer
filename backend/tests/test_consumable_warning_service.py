@@ -148,3 +148,90 @@ def test_consumable_without_life_pages_is_skipped():
     )
     result = compute_consumable_warnings(events, [consumable], max_counter=50_000)
     assert result == []
+
+
+def test_toner_category_always_excluded():
+    """Toner cartridges are excluded even with matched codes and usage_pct > 100%."""
+    events = [make_event("10.00.15", counter=200_000)]
+    toner = make_consumable(
+        part_number="CF237A",
+        life_pages=150_000,
+        related_codes=["10.00.15"],
+        category="toner",
+    )
+    result = compute_consumable_warnings(events, [toner], max_counter=200_000)
+    assert result == []
+
+
+def test_toner_excluded_even_when_mixed_with_other_categories():
+    """Toner is excluded but other categories in the same call are still included."""
+    events = [make_event("49.38.07", counter=200_000)]
+    toner = make_consumable(part_number="TONER-1", life_pages=150_000, category="toner")
+    roller = make_consumable(part_number="ROLLER-1", life_pages=150_000, category="roller")
+    result = compute_consumable_warnings(events, [toner, roller], max_counter=200_000)
+    part_numbers = [w.part_number for w in result]
+    assert "TONER-1" not in part_numbers
+    assert "ROLLER-1" in part_numbers
+
+
+def test_adf_description_excluded():
+    """Consumables with 'ADF' in description are excluded regardless of category."""
+    events = [make_event("13.20.00", counter=180_000)]
+    adf_roller = make_consumable(
+        part_number="RM2-ADF-01",
+        life_pages=150_000,
+        related_codes=["13.20.00"],
+        category="roller",
+    )
+    # Override description to contain ADF
+    adf_roller = PrinterConsumable(
+        id=adf_roller.id,
+        model_id=adf_roller.model_id,
+        part_number=adf_roller.part_number,
+        description="ADF Pick Up Roller",
+        category=adf_roller.category,
+        life_pages=adf_roller.life_pages,
+        related_codes=adf_roller.related_codes,
+    )
+    result = compute_consumable_warnings(events, [adf_roller], max_counter=180_000)
+    assert result == []
+
+
+def test_document_feeder_description_excluded():
+    """Consumables with 'Document Feeder' in description are excluded."""
+    events = [make_event("13.20.00", counter=180_000)]
+    adf_roller = PrinterConsumable(
+        id=uuid4(),
+        model_id=_MODEL_ID,
+        part_number="RM2-DOC-01",
+        description="Document Feeder Separation Roller",
+        category="roller",
+        life_pages=150_000,
+        related_codes=["13.20.00"],
+    )
+    result = compute_consumable_warnings(events, [adf_roller], max_counter=180_000)
+    assert result == []
+
+
+def test_adf_excluded_but_regular_roller_included():
+    """ADF roller is excluded while a regular roller in the same call is included."""
+    events = [make_event("13.20.00", counter=180_000)]
+    adf_roller = PrinterConsumable(
+        id=uuid4(),
+        model_id=_MODEL_ID,
+        part_number="ADF-ROLLER",
+        description="ADF Roller Kit",
+        category="roller",
+        life_pages=150_000,
+        related_codes=["13.20.00"],
+    )
+    regular_roller = make_consumable(
+        part_number="REGULAR-ROLLER",
+        life_pages=150_000,
+        related_codes=["13.20.00"],
+        category="roller",
+    )
+    result = compute_consumable_warnings(events, [adf_roller, regular_roller], max_counter=180_000)
+    part_numbers = [w.part_number for w in result]
+    assert "ADF-ROLLER" not in part_numbers
+    assert "REGULAR-ROLLER" in part_numbers
