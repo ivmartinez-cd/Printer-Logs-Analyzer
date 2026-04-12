@@ -46,22 +46,27 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
 
   if (warnings.length === 0) return null
 
+  const hasAlert = warnings.some((w) => w.status === 'replace')
+
   return (
-    <section className="section dashboard__table-section dashboard__table-section--collapsible consumable-warnings-panel">
+    <section className={`collapsible-panel collapsible-panel--${hasAlert ? 'alert' : 'consumable'}`}>
       <button
         type="button"
-        className="section__title section__title--toggle"
+        className="collapsible-panel__header"
         onClick={() => setCollapsed((c) => !c)}
         aria-expanded={!collapsed}
       >
-        <span>⚙️ Estado de consumibles ({warnings.length})</span>
-        <span className="section__toggle-icon" aria-hidden>
-          {collapsed ? '▶' : '▼'}
+        <span className="collapsible-panel__title">⚙️ Estado de consumibles ({warnings.length})</span>
+        <span
+          className={`collapsible-panel__chevron${!collapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
+          aria-hidden="true"
+        >
+          ▶
         </span>
       </button>
 
       {!collapsed && (
-        <>
+        <div className="collapsible-panel__body">
           <p className="consumable-warnings-panel__intro">
             Estos consumibles superaron su vida útil estimada según el contador de impresión.
             Verificá en el historial del equipo cuándo fue el último reemplazo antes de actuar.
@@ -111,7 +116,7 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
             </tbody>
           </table>
         </div>
-        </>
+        </div>
       )}
     </section>
   )

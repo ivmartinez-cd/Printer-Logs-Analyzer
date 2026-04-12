@@ -58,16 +58,16 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     const sections = diagnosis ? parseDiagnosis(diagnosis) : null
 
     return (
-      <div className="ai-diagnostic-panel" ref={ref}>
+      <div className="collapsible-panel collapsible-panel--ai" ref={ref}>
         <button
           type="button"
-          className="ai-diagnostic-panel__header-button"
+          className="collapsible-panel__header"
           onClick={() => setCollapsed((v) => !v)}
           aria-expanded={!collapsed}
         >
-          <span className="ai-diagnostic-panel__title">🤖 Diagnóstico con IA</span>
+          <span className="collapsible-panel__title">🤖 Diagnóstico con IA</span>
           <span
-            className={`ai-diagnostic-panel__chevron${!collapsed ? ' ai-diagnostic-panel__chevron--expanded' : ''}`}
+            className={`collapsible-panel__chevron${!collapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
             aria-hidden="true"
           >
             ▶
