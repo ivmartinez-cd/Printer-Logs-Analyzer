@@ -11,13 +11,20 @@
 
 **Render (backend):**
 
-| Variable | Descripción |
-|----------|-------------|
-| `DB_URL` | Connection string de Neon PostgreSQL |
-| `API_KEY` | Clave compartida con el frontend |
-| `ENV` | Setear a `production` |
+| Variable | Descripción | Requerida para |
+|----------|-------------|----------------|
+| `DB_URL` | Connection string de Neon PostgreSQL | Todo |
+| `API_KEY` | Clave compartida con el frontend | Todo |
+| `ENV` | Setear a `production` | Logs de advertencia |
+| `ANTHROPIC_API_KEY` | API key de Anthropic (Claude) | CPMD ingest (`POST /models/{id}/cpmd`) y diagnóstico AI |
 
 Si `API_KEY` no está seteada, el backend usa `"dev"` como fallback. Con `ENV=production` loguea un WARNING al arrancar.
+
+Si `ANTHROPIC_API_KEY` no está seteada, los endpoints `/models/{id}/cpmd` y `/analysis/ai-diagnose` devuelven HTTP 503. El resto del backend funciona normalmente.
+
+### Límite de tiempo en Render (CPMD ingest)
+
+El endpoint `POST /models/{id}/cpmd` es bloqueante y puede tardar **5–10 minutos** por CPMD (~250 llamadas secuenciales a Haiku). El plan gratuito de Render tiene un timeout de request de 30 segundos. Para usar este endpoint en producción se requiere al menos el plan **Starter** de Render (sin timeout de request) o configurar un worker separado.
 
 **Vercel (frontend):**
 

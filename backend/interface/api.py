@@ -37,6 +37,7 @@ from backend.infrastructure.repositories.saved_analysis_repository import (
 )
 from backend.application.services.pdf_extraction_service import extract_model_from_pdf
 from backend.interface.auth import authenticate as _authenticate_from_module
+from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 
 
 MAX_LOGS_LENGTH = 2_000_000
@@ -243,6 +244,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     error_code_repository = ErrorCodeRepository(database_instance)
     saved_analysis_repository = SavedAnalysisRepository(database_instance)
     printer_model_repository = PrinterModelRepository(database_instance)
+    error_solution_repository = ErrorSolutionRepository(database_instance)
     app = FastAPI(
         title="HP Printer Logs Analyzer",
         version="0.1.0",
@@ -712,6 +714,75 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(status_code=500, detail="Error interno del servidor") from exc
 
         return {"created": created, "skipped": skipped, "total_consumables": total_consumables}
+
+    # --- CPMD ingest ---
+
+    _CPMD_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
+
+    @app.post("/models/{model_id}/cpmd", dependencies=[Depends(authenticate)])
+    async def ingest_cpmd_endpoint(
+        model_id: str,
+        request: Request,
+        file: UploadFile = File(...),
+    ) -> dict:
+        """Upload a CPMD PDF and extract error solutions for the given printer model.
+
+        The operation is blocking and may take several minutes for large documents.
+        Returns 503 if ANTHROPIC_API_KEY is not configured.
+        """
+        import asyncio
+
+        from backend.application.services.cpmd_ingest import ingest_cpmd
+        from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
+
+        # Validate model_id format
+        try:
+            uid = UUID(model_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="model_id inválido")
+
+        # Check model exists in DB
+        try:
+            model = printer_model_repository.get_by_id(uid)
+        except _DBErr:
+            model = None
+        if model is None:
+            raise HTTPException(status_code=404, detail="Modelo no encontrado")
+
+        # Validate file presence and content type
+        if file is None:
+            raise HTTPException(status_code=400, detail="Se requiere un archivo PDF")
+        content_type = file.content_type or ""
+        filename = file.filename or ""
+        if content_type != "application/pdf" and not filename.lower().endswith(".pdf"):
+            raise HTTPException(status_code=400, detail="El archivo debe ser un PDF")
+
+        # Check Anthropic API key before reading the (potentially large) file
+        api_key = settings.anthropic_api_key
+        if not api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Servicio no disponible: ANTHROPIC_API_KEY no configurada.",
+            )
+
+        pdf_bytes = await file.read()
+        if len(pdf_bytes) > _CPMD_MAX_BYTES:
+            raise HTTPException(status_code=413, detail="El PDF supera el límite de 20 MB")
+
+        # Run blocking ingestion in a thread so the event loop stays free
+        report = await asyncio.to_thread(
+            ingest_cpmd, uid, pdf_bytes, api_key, error_solution_repository
+        )
+
+        return {
+            "model_id": str(report.model_id),
+            "cpmd_hash": report.cpmd_hash,
+            "total_blocks": report.total_blocks,
+            "extracted": report.extracted,
+            "failed": report.failed,
+            "skipped": report.skipped,
+            "reason": report.reason,
+        }
 
     return app
 
