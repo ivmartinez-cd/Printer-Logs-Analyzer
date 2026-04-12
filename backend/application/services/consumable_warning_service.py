@@ -21,11 +21,19 @@ ADF_DESCRIPTION_PATTERNS: list[str] = [
     "automatic document feeder",
 ]
 
+# Consumibles de 110V: en Argentina solo se usa 220V; incluirlos generaría
+# avisos sobre repuestos que no aplican al entorno local.
+VOLTAGE_EXCLUSION_PATTERNS: list[str] = [
+    "110v",
+]
 
-def _is_adf_consumable(description: str) -> bool:
-    """Return True if description matches any ADF roller pattern (case-insensitive)."""
+
+def _is_excluded_by_description(description: str) -> bool:
+    """Return True if description matches any ADF or voltage exclusion pattern (case-insensitive)."""
     lower = description.lower()
-    return any(p in lower for p in ADF_DESCRIPTION_PATTERNS)
+    return any(p in lower for p in ADF_DESCRIPTION_PATTERNS) or any(
+        p in lower for p in VOLTAGE_EXCLUSION_PATTERNS
+    )
 
 
 def _wildcard_to_regex(pattern: str) -> re.Pattern[str]:
@@ -78,8 +86,8 @@ def compute_consumable_warnings(
         # Skip categories where the page counter doesn't reflect actual wear
         if consumable.category in _EXCLUDED_CATEGORIES:
             continue
-        # Skip ADF rollers — their cycle count differs from the print counter
-        if _is_adf_consumable(consumable.description):
+        # Skip ADF rollers and 110V components — not applicable in 220V environments
+        if _is_excluded_by_description(consumable.description):
             continue
         life = consumable.life_pages
         if not life or life <= 0:
