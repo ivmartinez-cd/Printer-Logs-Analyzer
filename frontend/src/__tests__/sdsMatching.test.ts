@@ -36,6 +36,20 @@ function normalizeForMessageMatch(s: string): string {
   return s.toLowerCase().replace(/[\s_-]/g, '')
 }
 
+const SDS_STOPWORDS = new Set(['replace', 'check', 'clean', 'verify', 'reset', 'the', 'a'])
+const MIN_KEYWORD_MATCHES = 1
+
+function extractSdsKeywords(token: string): string[] {
+  const words = token
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.toLowerCase())
+    .map((w) => (w.endsWith('s') && w.length > 3 ? w.slice(0, -1) : w))
+    .filter((w) => w.length > 1 && !SDS_STOPWORDS.has(w))
+  return [...new Set(words)]
+}
+
 function sdsTokenMatchesIncident(
   incidentCode: string,
   incidentClassification: string,
@@ -46,9 +60,14 @@ function sdsTokenMatchesIncident(
   if (isNumericSdsCode(token)) {
     return incidentCodeMatchesSds(incidentCode, token)
   }
-  return normalizeForMessageMatch(incidentClassification ?? '').includes(
-    normalizeForMessageMatch(token)
-  )
+  const keywords = extractSdsKeywords(token)
+  if (keywords.length === 0) return false
+  const normalizedClassification = normalizeForMessageMatch(incidentClassification ?? '')
+  let matchCount = 0
+  for (const kw of keywords) {
+    if (normalizedClassification.includes(kw)) matchCount++
+  }
+  return matchCount >= MIN_KEYWORD_MATCHES
 }
 
 interface SdsIncidentData {
@@ -71,6 +90,11 @@ function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
     for (const part of parts) {
       if (!codes.includes(part)) codes.push(part)
     }
+  }
+  const code = sds.code?.trim()
+  if (code && !isNumericSdsCode(code) && !/\d/.test(code)) {
+    const kws = extractSdsKeywords(code)
+    if (kws.length > 0 && !codes.includes(code)) codes.push(code)
   }
   return codes
 }
@@ -195,8 +219,18 @@ describe('getSdsCodesForMatch', () => {
     expect(getSdsCodesForMatch({})).toEqual([])
   })
 
-  it('internal code field (e.g. TriageInput2) is NOT used for matching', () => {
+  it('internal code field with digits (e.g. TriageInput2) is NOT used for matching', () => {
     const sds: SdsIncidentData = { code: 'TriageInput2', event_context: null }
+    expect(getSdsCodesForMatch(sds)).toEqual([])
+  })
+
+  it('CamelCase code without digits IS used when it has meaningful keywords', () => {
+    const sds: SdsIncidentData = { code: 'ReplaceTrayPickRollers', event_context: null, more_info: null }
+    expect(getSdsCodesForMatch(sds)).toEqual(['ReplaceTrayPickRollers'])
+  })
+
+  it('code with only stopwords is NOT used', () => {
+    const sds: SdsIncidentData = { code: 'Replace', event_context: null, more_info: null }
     expect(getSdsCodesForMatch(sds)).toEqual([])
   })
 
@@ -231,10 +265,6 @@ describe('hasEventContext', () => {
     expect(hasEventContext({ event_context: '   ' })).toBe(false)
   })
 })
-
-// ---------------------------------------------------------------------------
-// computeSdsVsLog
-// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // isNumericSdsCode
@@ -282,6 +312,41 @@ describe('normalizeForMessageMatch', () => {
 })
 
 // ---------------------------------------------------------------------------
+// extractSdsKeywords
+// ---------------------------------------------------------------------------
+
+describe('extractSdsKeywords', () => {
+  it('splits CamelCase and returns singularized lowercase keywords', () => {
+    expect(extractSdsKeywords('ReplaceTrayPickRollers')).toEqual(['tray', 'pick', 'roller'])
+  })
+
+  it('removes stopwords', () => {
+    const kws = extractSdsKeywords('ReplaceTrayPickRollers')
+    expect(kws).not.toContain('replace')
+  })
+
+  it('returns empty array when all words are stopwords', () => {
+    expect(extractSdsKeywords('Replace')).toEqual([])
+    expect(extractSdsKeywords('CheckClean')).toEqual([])
+  })
+
+  it('singularizes "rollers" to "roller"', () => {
+    expect(extractSdsKeywords('PickRollers')).toContain('roller')
+    expect(extractSdsKeywords('PickRollers')).not.toContain('rollers')
+  })
+
+  it('does not over-singularize short words', () => {
+    // "tray" length=4, ends with no "s" — unchanged; "as" length=2 — kept as-is
+    expect(extractSdsKeywords('TrayUnit')).toContain('tray')
+  })
+
+  it('deduplicates repeated keywords', () => {
+    const kws = extractSdsKeywords('RollerPickRoller')
+    expect(kws.filter((k) => k === 'roller')).toHaveLength(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // sdsTokenMatchesIncident
 // ---------------------------------------------------------------------------
 
@@ -309,6 +374,17 @@ describe('sdsTokenMatchesIncident', () => {
 
   it('message token does not match unrelated classification', () => {
     expect(sdsTokenMatchesIncident('60.00.02', 'Fuser Error', 'ReplaceTrayPickRollers')).toBe(false)
+  })
+
+  it('message token matches via single keyword in description', () => {
+    // Real-world case: "roller" from "ReplaceTrayPickRollers" appears in description
+    expect(
+      sdsTokenMatchesIncident('53.B1.02', 'Tray Z feed roller at end of life.', 'ReplaceTrayPickRollers')
+    ).toBe(true)
+  })
+
+  it('stopword-only token does not match', () => {
+    expect(sdsTokenMatchesIncident('53.B0.02', 'Replace Tray Pick Rollers', 'Replace')).toBe(false)
   })
 
   it('empty token returns false', () => {
@@ -365,5 +441,23 @@ describe('computeSdsVsLog', () => {
     const emptyRows: IncidentRowForSds[] = []
     const result = computeSdsVsLog(sds, emptyRows, full, 3)
     expect(result.status).toBe('partial')
+  })
+
+  it('real-world: sds.code CamelCase matches incident via keyword — código en campo Código', () => {
+    const sds: SdsIncidentData = { code: 'ReplaceTrayPickRollers', event_context: null, more_info: null }
+    const rollerRows: IncidentRowForSds[] = [{ code: '53.B1.02', classification: 'Tray Z feed roller at end of life.' }]
+    const rollerFull: IncidentFullForSds[] = [{ code: '53.B1.02', end_time: '2026-03-01T10:00:00', occurrences: 2, classification: 'Tray Z feed roller at end of life.' }]
+    const result = computeSdsVsLog(sds, rollerRows, rollerFull, 2)
+    expect(result.status).toBe('match')
+  })
+
+  it('real-world: sds.code with internal ID (TriageInput2) still returns general', () => {
+    const sds: SdsIncidentData = { code: 'TriageInput2', event_context: null, more_info: null }
+    expect(computeSdsVsLog(sds, rows, full, 3).status).toBe('general')
+  })
+
+  it('sds.code with only stopword returns general', () => {
+    const sds: SdsIncidentData = { code: 'Replace', event_context: null, more_info: null }
+    expect(computeSdsVsLog(sds, rows, full, 3).status).toBe('general')
   })
 })
