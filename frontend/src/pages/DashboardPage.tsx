@@ -781,6 +781,7 @@ export default function DashboardPage({
                       incidentsFull={
                         result?.incidents?.map((inc) => ({
                           code: inc.code,
+                          classification: inc.classification,
                           end_time: inc.end_time,
                           occurrences: inc.occurrences,
                         })) ?? []

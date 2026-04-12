@@ -5,7 +5,10 @@ from uuid import uuid4
 
 import pytest
 
-from backend.application.services.consumable_warning_service import compute_consumable_warnings
+from backend.application.services.consumable_warning_service import (
+    compute_consumable_warnings,
+    VOLTAGE_EXCLUSION_PATTERNS,
+)
 from backend.domain.entities import EnrichedEvent, PrinterConsumable
 
 
@@ -235,3 +238,51 @@ def test_adf_excluded_but_regular_roller_included():
     part_numbers = [w.part_number for w in result]
     assert "ADF-ROLLER" not in part_numbers
     assert "REGULAR-ROLLER" in part_numbers
+
+
+def test_110v_description_excluded():
+    """Consumables with '110V' in description are excluded (only 220V used in Argentina)."""
+    events = [make_event("50.WX.YZ", counter=200_000)]
+    fuser_110v = PrinterConsumable(
+        id=uuid4(),
+        model_id=_MODEL_ID,
+        part_number="RM2-FUSER-110V",
+        description="Fuser Kit 110V",
+        category="fuser",
+        life_pages=150_000,
+        related_codes=["50.WX.YZ"],
+    )
+    result = compute_consumable_warnings(events, [fuser_110v], max_counter=200_000)
+    assert result == []
+
+
+def test_110v_excluded_but_220v_included():
+    """110V consumable is excluded while the equivalent 220V is included."""
+    events = [make_event("50.WX.YZ", counter=200_000)]
+    fuser_110v = PrinterConsumable(
+        id=uuid4(),
+        model_id=_MODEL_ID,
+        part_number="RM2-FUSER-110V",
+        description="Fuser Kit 110V",
+        category="fuser",
+        life_pages=150_000,
+        related_codes=["50.WX.YZ"],
+    )
+    fuser_220v = PrinterConsumable(
+        id=uuid4(),
+        model_id=_MODEL_ID,
+        part_number="RM2-FUSER-220V",
+        description="Fuser Kit 220V",
+        category="fuser",
+        life_pages=150_000,
+        related_codes=["50.WX.YZ"],
+    )
+    result = compute_consumable_warnings(events, [fuser_110v, fuser_220v], max_counter=200_000)
+    part_numbers = [w.part_number for w in result]
+    assert "RM2-FUSER-110V" not in part_numbers
+    assert "RM2-FUSER-220V" in part_numbers
+
+
+def test_voltage_exclusion_patterns_contains_110v():
+    """VOLTAGE_EXCLUSION_PATTERNS constant is exported and contains '110v'."""
+    assert "110v" in VOLTAGE_EXCLUSION_PATTERNS
