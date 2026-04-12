@@ -135,6 +135,35 @@ export interface PrinterModel {
   ampv: number | null
   engine_life_pages: number | null
   notes: string | null
+  has_cpmd: boolean
+}
+
+export interface ErrorSolutionFru {
+  part_number: string
+  description: string
+}
+
+export interface ErrorSolution {
+  id: number | null
+  model_id: string
+  code: string
+  title: string | null
+  cause: string | null
+  technician_steps: string[]
+  frus: ErrorSolutionFru[]
+  source_audience: string | null
+  source_page: number | null
+  cpmd_hash: string | null
+}
+
+export interface IngestReport {
+  model_id: string
+  cpmd_hash: string
+  total_blocks: number | null
+  extracted: number | null
+  failed: number | null
+  skipped: boolean
+  reason: string | null
 }
 
 export interface UploadPdfResponse {

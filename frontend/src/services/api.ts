@@ -9,6 +9,8 @@ import type {
   AIDiagnosisResponse,
   PrinterModel,
   UploadPdfResponse,
+  ErrorSolution,
+  IngestReport,
 } from '../types/api'
 
 const API_BASE =
@@ -215,6 +217,39 @@ export async function uploadPrinterModelPdf(
     90_000 // Claude puede tardar en procesar PDFs grandes
   )
   return handleResponse<UploadPdfResponse>(res)
+}
+
+export async function uploadCpmd(
+  modelId: string,
+  file: File,
+  signal?: AbortSignal
+): Promise<IngestReport> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await apiFetch(
+    `${API_BASE}/models/${encodeURIComponent(modelId)}/cpmd`,
+    {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY },
+      body: formData,
+      signal,
+    },
+    10 * 60 * 1000 // 10 minutos — es una operación lenta
+  )
+  return handleResponse<IngestReport>(res)
+}
+
+export async function getErrorSolution(
+  modelId: string,
+  code: string,
+  signal?: AbortSignal
+): Promise<ErrorSolution | null> {
+  const res = await apiFetch(
+    `${API_BASE}/models/${encodeURIComponent(modelId)}/error-solutions/${encodeURIComponent(code)}`,
+    { method: 'GET', headers: apiHeaders(), signal }
+  )
+  if (res.status === 404) return null
+  return handleResponse<ErrorSolution>(res)
 }
 
 // --- Diagnóstico con IA ---
