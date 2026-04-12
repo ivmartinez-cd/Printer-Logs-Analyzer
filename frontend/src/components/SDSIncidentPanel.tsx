@@ -56,11 +56,37 @@ function normalizeForMessageMatch(s: string): string {
   return s.toLowerCase().replace(/[\s_-]/g, '')
 }
 
+/** Stopwords descartadas al extraer keywords de un identificador SDS de mensaje. */
+const SDS_STOPWORDS = new Set(['replace', 'check', 'clean', 'verify', 'reset', 'the', 'a'])
+
+/** Mínimo de keywords del token SDS que deben aparecer en la clasificación del incidente. */
+const MIN_KEYWORD_MATCHES = 1
+
+/**
+ * Extrae keywords significativas de un identificador CamelCase SDS.
+ * Ej: "ReplaceTrayPickRollers" → ["tray", "pick", "roller"]
+ * - Parte por CamelCase
+ * - Lowercase + singular básico (quita "s" final si length > 3)
+ * - Descarta stopwords y palabras de ≤ 1 carácter
+ */
+function extractSdsKeywords(token: string): string[] {
+  const words = token
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.toLowerCase())
+    .map((w) => (w.endsWith('s') && w.length > 3 ? w.slice(0, -1) : w))
+    .filter((w) => w.length > 1 && !SDS_STOPWORDS.has(w))
+  return [...new Set(words)]
+}
+
 /**
  * Compara un token SDS contra un incidente del log.
- * - Código numérico (contiene ".") → match contra incident.code con wildcard z
- * - Identificador de mensaje (ej. "ReplaceTrayPickRollers") → match case-insensitive
- *   contra classification, normalizando espacios para cubrir "Replace Tray Pick Rollers"
+ * - Código numérico (contiene ".") → match exacto o por prefijo wildcard z
+ * - Identificador de mensaje (ej. "ReplaceTrayPickRollers") → extrae keywords
+ *   significativas por CamelCase y busca al menos MIN_KEYWORD_MATCHES en la
+ *   clasificación del incidente (case-insensitive). Ej. "roller" aparece en
+ *   "Tray Z feed roller at end of life." → match.
  */
 function sdsTokenMatchesIncident(
   incidentCode: string,
@@ -72,9 +98,14 @@ function sdsTokenMatchesIncident(
   if (isNumericSdsCode(token)) {
     return incidentCodeMatchesSds(incidentCode, token)
   }
-  return normalizeForMessageMatch(incidentClassification ?? '').includes(
-    normalizeForMessageMatch(token)
-  )
+  const keywords = extractSdsKeywords(token)
+  if (keywords.length === 0) return false
+  const normalizedClassification = normalizeForMessageMatch(incidentClassification ?? '')
+  let matchCount = 0
+  for (const kw of keywords) {
+    if (normalizedClassification.includes(kw)) matchCount++
+  }
+  return matchCount >= MIN_KEYWORD_MATCHES
 }
 
 /** Parsea fecha SDS (ej. "14-mar-2026 10:30:00" o ISO). Devuelve null si no se puede parsear. */
@@ -119,10 +150,12 @@ function formatLastEvent(dateStr: string): string {
 }
 
 /**
- * Extrae todos los códigos a usar para el match contra el log:
+ * Extrae todos los tokens a usar para el match contra el log:
  * 1. "Contexto evento" (event_context) como código primario — ej. "60.00.02"
- * 2. Códigos en "Más información" separados por "or" — ej. "60.00.02 or 60.01.02"
- * El campo "Código" (identificador interno SDS como TriageInput2) NO se usa para el match.
+ * 2. Tokens en "Más información" separados por "or" — ej. "60.00.02 or 60.01.02"
+ * 3. "Código" (sds.code) cuando es un identificador CamelCase con keywords significativas,
+ *    ej. "ReplaceTrayPickRollers" → keywords ["tray","pick","roller"].
+ *    Se excluyen IDs internos con dígitos (ej. "TriageInput2") y stopwords sueltas (ej. "Replace").
  */
 function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
   const codes: string[] = []
@@ -139,6 +172,16 @@ function getSdsCodesForMatch(sds: SdsIncidentData): string[] {
     for (const part of parts) {
       if (!codes.includes(part)) codes.push(part)
     }
+  }
+
+  // Include sds.code when it's a CamelCase message identifier:
+  // - not a numeric HP code (no dots)
+  // - no digits (excludes internal IDs like "TriageInput2")
+  // - produces ≥1 meaningful keyword (excludes pure stopwords like "Replace")
+  const code = sds.code?.trim()
+  if (code && !isNumericSdsCode(code) && !/\d/.test(code)) {
+    const kws = extractSdsKeywords(code)
+    if (kws.length > 0 && !codes.includes(code)) codes.push(code)
   }
 
   return codes
