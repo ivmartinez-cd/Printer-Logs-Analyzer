@@ -46,8 +46,8 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (70 tests: 35 hooks/lógica + 35 componentes)
-npm run test:backend   # pytest backend/tests/ -v (70 tests)
+npm run test:frontend  # vitest run (80 tests)
+npm run test:backend   # pytest backend/tests/ -v (78 tests)
 ```
 
 ---
@@ -144,7 +144,12 @@ Decisiones clave:
 
 ### Consumable warning service (`application/services/consumable_warning_service.py`)
 
-`compute_consumable_warnings(events, consumables, max_counter)` — returns `List[ConsumableWarning]` sorted by status (`replace` → `warning` → `ok`), then `usage_pct` desc. Excludes `category == "toner"` and ADF rollers (description matches `ADF_DESCRIPTION_PATTERNS`: `"adf"`, `"document feeder"`, `"automatic document feeder"`, case-insensitive) — page counter doesn't reflect their real wear. Code patterns support `z` wildcard (any hex digit). Called from `/parser/preview` when `model_id` is present; failures are logged and skipped without breaking analysis.
+`compute_consumable_warnings(events, consumables, max_counter)` — returns `List[ConsumableWarning]` sorted by status (`replace` → `warning` → `ok`), then `usage_pct` desc. Excludes:
+- `category == "toner"` — page counter doesn't reflect toner wear.
+- ADF rollers (`ADF_DESCRIPTION_PATTERNS`: `"adf"`, `"document feeder"`, `"automatic document feeder"`, case-insensitive) — page counter counts prints, not ADF cycles.
+- 110V components (`VOLTAGE_EXCLUSION_PATTERNS`: `"110v"`) — only 220V is used in Argentina.
+
+Both groups are checked by `_is_excluded_by_description(description)`. Code patterns support `z` wildcard (any hex digit). Called from `/parser/preview` when `model_id` is present; failures are logged and skipped without breaking analysis.
 
 ### Compare service (`application/services/compare_service.py`)
 
@@ -267,7 +272,11 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `HelpModal.tsx` | Ayuda estática con 6 secciones |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
-**Match SDS vs Log (`SDSIncidentPanel`):** usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. El campo `code` interno SDS no interviene. Soporta sufijo `z` para matching por prefijo (`53.B0.0z` → `53.B0.01`, etc.). Status `'general'` solo se emite cuando **ambos** `event_context` y `more_info` están vacíos/sin códigos parseables — si `event_context` está vacío pero `more_info` tiene códigos, se intenta el match normal.
+**Match SDS vs Log (`SDSIncidentPanel`):** usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. El campo `code` interno SDS no interviene. Cada token se despacha por `sdsTokenMatchesIncident`:
+- **Numérico** (contiene `.`): `incidentCodeMatchesSds` con wildcard `z` (`53.B0.0z` → `53.B0.01`…`53.B0.0F`).
+- **Mensaje** (sin `.`): `normalizeForMessageMatch` (minúsculas + strip espacios/guiones/underscores) sobre el token y sobre `incident.classification`, luego `includes()`. Ej. `"ReplaceTrayPickRollers"` coincide con `"Replace Tray Pick Rollers"`.
+
+Status `'general'` solo se emite cuando **ambos** `event_context` y `more_info` están vacíos/sin tokens parseables — si `event_context` está vacío pero `more_info` tiene tokens, se intenta el match normal.
 
 ### AIDiagnosticPanel
 

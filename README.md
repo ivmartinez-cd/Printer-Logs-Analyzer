@@ -12,9 +12,9 @@ Herramienta web para analizar logs de impresoras HP. Seleccionás el modelo, peg
 
 - **Parser de logs HP** — acepta formato TSV o texto copiado del portal (espacios múltiples). Soporta fechas en español (`ene`, `feb`, `mar`…).
 - **Modelos de impresora y consumibles** — selección de modelo obligatoria antes de analizar. Carga de nuevos modelos subiendo el PDF de Service Cost Data oficial (extracción automática con Claude Haiku).
-- **Estado de consumibles** — tabla con categoría, part number, vida útil, contador actual y estado ("Sin alertas" / "Próximo a revisar" / "Revisar historial") basado en los códigos del log y el modelo cargado. Excluye toners y rodillos ADF (el contador de páginas no mide su desgaste real). Es aviso para verificar el historial del equipo, no orden de reemplazo.
+- **Estado de consumibles** — tabla con categoría, part number, vida útil, contador actual y estado ("Sin alertas" / "Próximo a revisar" / "Revisar historial") basado en los códigos del log y el modelo cargado. Excluye toners, rodillos ADF y consumibles 110V (solo se usa 220V en Argentina). Es aviso para verificar el historial del equipo, no orden de reemplazo.
 - **Diagnóstico con IA** — panel colapsado que llama a Claude Haiku on demand; devuelve secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
-- **SDS Engineering Incident** — carga manual de un incidente SDS con match automático contra los códigos del log. Soporta wildcard `z` en códigos. Muestra sección "Verificar historial de consumibles" si hay solapamiento con consumibles del análisis.
+- **SDS Engineering Incident** — carga manual de un incidente SDS con match automático contra los incidentes del log. Soporta match por código numérico (wildcard `z`) y por identificador de mensaje (ej. `"ReplaceTrayPickRollers"` coincide con `"Replace Tray Pick Rollers"`). Muestra sección "Verificar historial de consumibles" si hay solapamiento con consumibles del análisis.
 - **KPIs de severidad** — conteo de incidentes ERROR / WARNING / INFO, incidencias activas, último error crítico y tasa de errores (1 cada N páginas).
 - **Gráfico temporal** — volumen de eventos por hora con toggles de severidad y tooltip con códigos del bucket.
 - **Top 10 errores** — BarChart de los códigos con mayor ocurrencia, coloreado por severidad. Tres toggles (ERROR / WARNING / INFO) activos por default.
@@ -47,13 +47,13 @@ Printer-Logs-Analyzer/
 │   │   ├── fallback/         # Catálogo bundled (JSON read-only)
 │   │   └── repositories/     # ErrorCodeRepository, SavedAnalysisRepository, PrinterModelRepository
 │   ├── migrations/           # 6 migraciones SQL (001–005 ejecutadas en Neon; 006 pendiente)
-│   └── tests/                # pytest — 75 tests
+│   └── tests/                # pytest — 78 tests
 └── frontend/
     ├── src/pages/            # DashboardPage.tsx (página principal)
     ├── src/components/       # Modales, tablas, gráficos, paneles
     ├── src/hooks/            # useAnalysis, useModals, useDateFilter, useExportPdf
     ├── src/services/api.ts   # Cliente HTTP tipado
-    └── src/__tests__/        # vitest — 63 tests
+    └── src/__tests__/        # vitest — 80 tests
 ```
 
 ---
@@ -138,8 +138,8 @@ npm run dev:backend    # Uvicorn en 0.0.0.0:8000
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (63 tests)
-npm run test:backend   # pytest backend/tests/ -v (75 tests)
+npm run test:frontend  # vitest run (80 tests)
+npm run test:backend   # pytest backend/tests/ -v (78 tests)
 ```
 
 ---

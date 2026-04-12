@@ -40,7 +40,11 @@ Panel violeta colapsado debajo de los KPIs. Al expandirlo, hacé click en **"Gen
 
 ### SDS Engineering Incident
 
-Panel colapsado que muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). Si hay consumibles con códigos relacionados al SDS, aparece la sección **"Verificar historial de consumibles"** con part number, vida útil y estado.
+Panel colapsado que muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). El match soporta:
+- **Códigos numéricos** (ej. `60.00.02`, `53.B0.0z`) — match exacto o por prefijo con wildcard `z`.
+- **Identificadores de mensaje** (ej. `ReplaceTrayPickRollers`) — match normalizado case-insensitive contra la clasificación del incidente; `"Replace Tray Pick Rollers"` y `"ReplaceTrayPickRollers"` se consideran equivalentes.
+
+Si hay consumibles con códigos relacionados al SDS, aparece la sección **"Verificar historial de consumibles"** con part number, vida útil y estado.
 
 ### Estado de consumibles
 
@@ -50,7 +54,7 @@ Panel colapsado. Aparece solo si el modelo tiene consumibles con códigos presen
 - **Próximo a revisar** — uso entre 80% y 99%.
 - **Revisar historial** — uso ≥ 100%. Es un aviso para verificar cuándo fue el último reemplazo, no una orden de cambio inmediato.
 
-Se excluyen los tóners y rodillos ADF porque el contador de páginas impresas no mide su desgaste real.
+Se excluyen los tóners, rodillos ADF y consumibles 110V. Motivo: el contador de páginas no mide el desgaste de toners y ADF; los consumibles 110V no aplican en Argentina (solo se usa 220V).
 
 ### Filtros de fecha
 

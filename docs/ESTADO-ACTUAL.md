@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-12 (PR #30 — Estado de consumibles, reorientación a revisión de historial)
+Última actualización: 2026-04-12 (PR #32 — SDS match por mensaje + excluir consumibles 110V)
 
 ---
 
@@ -46,14 +46,14 @@ Printer-Logs-Analyzer/
 │   │       ├── saved_analysis_repository.py
 │   │       └── printer_model_repository.py
 │   ├── migrations/               # 006 migraciones SQL (001–005 ejecutadas; 006 pendiente en Neon)
-│   └── tests/                    # pytest — 70 tests
+│   └── tests/                    # pytest — 78 tests
 └── frontend/
     ├── src/pages/DashboardPage.tsx
     ├── src/components/           # Ver tabla de componentes más abajo
     ├── src/hooks/                # useAnalysis, useModals, useDateFilter, useExportPdf
     ├── src/services/api.ts
     ├── src/types/api.ts
-    └── src/__tests__/            # vitest — 70 tests
+    └── src/__tests__/            # vitest — 80 tests
 ```
 
 ---
@@ -72,7 +72,7 @@ Printer-Logs-Analyzer/
 
 `compute_consumable_warnings(events, consumables, max_counter)` en `consumable_warning_service.py`. Retorna `List[ConsumableWarning]` ordenada por status (`replace` → `warning` → `ok`) y luego `usage_pct` desc.
 
-**Exclusiones:** se omiten toners (`category == "toner"`) y rodillos ADF (descripción contiene "adf", "document feeder" o "automatic document feeder", case-insensitive). El contador de páginas impresas no mide el desgaste real de estos componentes. Constante `ADF_DESCRIPTION_PATTERNS` al inicio del módulo.
+**Exclusiones:** se omiten toners (`category == "toner"`), rodillos ADF (descripción contiene "adf", "document feeder" o "automatic document feeder", case-insensitive) y consumibles 110V (descripción contiene "110v"). El contador de páginas no mide el desgaste de toners y ADF; los consumibles 110V no aplican en Argentina (solo 220V). Constantes `ADF_DESCRIPTION_PATTERNS` y `VOLTAGE_EXCLUSION_PATTERNS` al inicio del módulo. La función `_is_excluded_by_description` chequea ambos grupos.
 
 Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones de código soportan wildcard `z` (cualquier dígito hex). El panel es aviso para verificar historial — no orden de reemplazo.
 
@@ -186,7 +186,12 @@ Reemplazó a `DateFilterBar`. Un solo botón que abre un popover con:
 
 ### 4.6 SDS match
 
-`SDSIncidentPanel` usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. Soporta sufijo `z` (cualquier dígito hex). Status `'general'` solo cuando ambos `event_context` y `more_info` están vacíos. Si `event_context` está vacío pero `more_info` tiene códigos, se intenta el match normal.
+`SDSIncidentPanel` usa `event_context` como código primario y `more_info` (separado por `or`) como secundarios. Cada token se despacha por `sdsTokenMatchesIncident`:
+
+- **Código numérico** (token contiene `.`): match contra `incident.code` con wildcard `z` (cualquier dígito hex). Ej. `53.B0.0z` coincide con `53.B0.01`…`53.B0.0F`.
+- **Identificador de mensaje** (token sin `.`): match case-insensitive contra `incident.classification` normalizando espacios, guiones y underscores. Ej. `"ReplaceTrayPickRollers"` coincide con `"Replace Tray Pick Rollers"`.
+
+Status `'general'` solo cuando ambos `event_context` y `more_info` están vacíos. Si `event_context` está vacío pero `more_info` tiene tokens, se intenta el match normal.
 
 ---
 
@@ -207,8 +212,8 @@ Fallback automático a JSON local en `backend/data/` cuando PostgreSQL no está 
 
 | Suite | Herramienta | Tests |
 |-------|-------------|-------|
-| Frontend (hooks + componentes) | vitest | 63 |
-| Backend | pytest | 75 |
+| Frontend (hooks + componentes) | vitest | 80 |
+| Backend | pytest | 78 |
 
 Frontend: `vitest.config.ts` con `environment: node`; tests de componentes declaran `// @vitest-environment jsdom`. Backend: tests en `backend/tests/`; sin `DB_URL` → fallback JSON automático.
 
@@ -233,9 +238,9 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 |------|--------------|
 | Parsing logs | Estable — normalización espacios, meses español, tolerancia a blank lines |
 | Modelos de impresora | Fase 4 completa — selector obligatorio en modal, upload PDF con Haiku, consumables warnings |
-| Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners y ADF); badges orientados a historial; sección "Verificar historial" en SDSIncidentPanel |
+| Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners, ADF y 110V); badges orientados a historial; sección "Verificar historial" en SDSIncidentPanel |
 | Diagnóstico con IA | Activo — `AIDiagnosticPanel` colapsado, Claude Haiku, secciones DIAGNÓSTICO/ACCIÓN/PRIORIDAD |
-| SDS Engineering Incident | Activo — match por `event_context`/`more_info`, wildcard `z`, status `general` |
+| SDS Engineering Incident | Activo — match por código numérico (wildcard `z`) y por identificador de mensaje (normalizado) |
 | Filtros de fecha | DateRangePicker — 8 presets + rango libre con calendario |
 | Gráficos | IncidentsChart (AreaChart) + TopErrorsChart (BarChart top 10, toggles activos por default) |
 | Catálogo de códigos | Activo — upsert con fetch de HTML, fallback si link expira |
