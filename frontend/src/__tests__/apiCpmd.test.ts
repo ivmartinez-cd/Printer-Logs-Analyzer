@@ -52,6 +52,15 @@ describe('uploadCpmd', () => {
     const file = new File([new Uint8Array(10)], 'cpmd.pdf', { type: 'application/pdf' })
     await expect(uploadCpmd('uuid-123', file)).rejects.toThrow('API key no configurada')
   })
+
+  it('throws a user-friendly message on 502 (Render free-plan timeout)', async () => {
+    mockFetch.mockResolvedValue(makeResponse(502, {}))
+
+    const file = new File([new Uint8Array(10)], 'cpmd.pdf', { type: 'application/pdf' })
+    await expect(uploadCpmd('uuid-123', file)).rejects.toThrow(
+      'El servidor cortó la conexión antes de terminar de procesar el CPMD.'
+    )
+  })
 })
 
 describe('getErrorSolution', () => {

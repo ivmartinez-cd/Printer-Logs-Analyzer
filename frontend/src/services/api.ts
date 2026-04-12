@@ -236,6 +236,12 @@ export async function uploadCpmd(
     },
     10 * 60 * 1000 // 10 minutos — es una operación lenta
   )
+  if (res.status === 502) {
+    throw new Error(
+      'El servidor cortó la conexión antes de terminar de procesar el CPMD. ' +
+        'Esto suele pasar en planes con timeout corto. Reintentá más tarde o contactá al admin.'
+    )
+  }
   return handleResponse<IngestReport>(res)
 }
 
