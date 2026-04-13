@@ -24,6 +24,11 @@ class Settings(BaseModel):
     api_key: str = Field("dev", alias="API_KEY")
     anthropic_api_key: Optional[str] = Field(None, alias="ANTHROPIC_API_KEY")
 
+    # EKM Insight / SDS portal integration (optional)
+    insight_portal_url: Optional[str] = Field(None, alias="INSIGHT_PORTAL_URL")
+    insight_api_key: Optional[str] = Field(None, alias="INSIGHT_API_KEY")
+    insight_api_secret: Optional[str] = Field(None, alias="INSIGHT_API_SECRET")
+
     @classmethod
     def from_env(cls) -> "Settings":
         """Load configuration and raise informative errors when missing."""

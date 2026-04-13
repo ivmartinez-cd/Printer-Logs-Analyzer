@@ -11,6 +11,7 @@ import type {
   UploadPdfResponse,
   ErrorSolution,
   IngestReport,
+  DeviceAlertsResponse,
 } from '../types/api'
 
 const API_BASE =
@@ -345,3 +346,18 @@ export async function getHealth(): Promise<HealthStatus | null> {
     return null
   }
 }
+
+// --- Insight / SDS Portal ---
+
+export async function getInsightAlerts(
+  serial: string,
+  signal?: AbortSignal
+): Promise<DeviceAlertsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/insight/devices/${encodeURIComponent(serial)}/alerts`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    15_000
+  )
+  return handleResponse<DeviceAlertsResponse>(res)
+}
+

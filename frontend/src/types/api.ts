@@ -185,3 +185,29 @@ export interface AIDiagnosisResponse {
   }
   cost_usd: number
 }
+
+// --- Insight / SDS Portal ---
+
+export interface InsightAlert {
+  deviceId: number
+  date: string
+  engineCycles: number
+  trainingLevel: number
+  severityLevel: number
+  alertClass: string
+  mibCode: number
+  description: string
+  cleared?: string | null
+}
+
+export interface DeviceAlertsResponse {
+  /** False when INSIGHT_* env vars are not configured on the server. */
+  insight_configured: boolean
+  serial?: string
+  device_id?: number | null
+  model?: string | null
+  zone?: string | null
+  current?: InsightAlert[]
+  history?: InsightAlert[]
+}
+
