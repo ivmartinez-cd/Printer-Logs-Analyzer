@@ -95,6 +95,9 @@ class ParseLogsResponse(BaseModel):
     global_severity: str
     errors: list[ParserErrorModel]
     consumable_warnings: list[ConsumableWarning] = []
+    log_start_date: str
+    log_end_date: str
+    total_lines: int
 
 
 class ErrorCodeUpsertRequest(BaseModel):
@@ -336,12 +339,21 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
         total_ms = int((time.perf_counter() - t0) * 1000)
         logging.info("[preview] parse_ms=%d db_ms=%d analysis_ms=%d total_ms=%d", parse_ms, db_ms, analysis_ms, total_ms)
+
+        # Determinar rango de fechas
+        start_date = events[0].timestamp.isoformat() if events else datetime.now(timezone.utc).isoformat()
+        end_date = events[-1].timestamp.isoformat() if events else datetime.now(timezone.utc).isoformat()
+        total_lines = len(payload.logs.splitlines())
+
         return ParseLogsResponse(
             events=events,
             incidents=analysis.incidents,
             global_severity=analysis.global_severity,
             errors=errors,
             consumable_warnings=consumable_warnings,
+            log_start_date=start_date,
+            log_end_date=end_date,
+            total_lines=total_lines,
         )
 
     @app.post("/parser/validate", response_model=ValidateLogsResponse, dependencies=[Depends(authenticate)])
