@@ -11,6 +11,7 @@ Herramienta web para analizar logs de impresoras HP. Seleccionás el modelo, peg
 ## Características principales
 
 - **Parser de logs HP** — acepta formato TSV o texto copiado del portal (espacios múltiples). Soporta fechas en español (`ene`, `feb`, `mar`…).
+- **Integración con Portal HP SDS Insight** — visualización de alertas del dispositivo en tiempo real directamente en el dashboard ingresando el número de serie. Incluye pestañas de historial, estados de carga y manejo de credenciales seguro mediante proxy en el backend.
 - **Modelos de impresora y consumibles** — selección de modelo obligatoria antes de analizar. Carga de nuevos modelos subiendo el PDF de Service Cost Data oficial (extracción automática con Claude Haiku).
 - **Estado de consumibles** — tabla con categoría, part number, vida útil, contador actual y estado ("Sin alertas" / "Próximo a revisar" / "Revisar historial") basado en los códigos del log y el modelo cargado. Excluye toners, rodillos ADF y consumibles 110V (solo se usa 220V en Argentina). El panel muestra acento rojo cuando hay componentes en estado crítico.
 - **Diagnóstico con IA** — panel colapsado que llama a Claude Haiku on demand; devuelve secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
@@ -40,7 +41,7 @@ Printer-Logs-Analyzer/
 │   ├── domain/entities.py    # Modelos Pydantic (Event, Incident, ConsumableWarning…)
 │   ├── application/
 │   │   ├── parsers/          # Parser TSV/espacios con soporte español
-│   │   └── services/         # AnalysisService, CompareService, ConsumableWarningService
+│   │   └── services/         # AnalysisService, CompareService, InsightService (SDS Portal)
 │   ├── infrastructure/
 │   │   ├── database.py       # psycopg2 con pool, pre-ping y fallback automático
 │   │   ├── content_fetcher.py# Fetch y sanitización de contenido SDS
@@ -50,7 +51,7 @@ Printer-Logs-Analyzer/
 │   └── tests/                # pytest — 138 pruebas (incluyendo validación de metadatos)
 └── frontend/
     ├── src/pages/            # DashboardPage.tsx (página principal)
-    ├── src/components/       # Modales, tablas, gráficos, paneles
+    ├── src/components/       # InsightAlertsPanel, modales, tablas, gráficos
     ├── src/hooks/            # useAnalysis, useModals, useDateFilter, useExportPdf
     ├── src/services/api.ts   # Cliente HTTP tipado
     └── src/__tests__/        # vitest — 137 pruebas (happy-dom)
@@ -93,6 +94,9 @@ Crear `.env` en la raíz del proyecto:
 DB_URL=postgresql://user:password@host:port/dbname
 API_KEY=tu-clave-secreta
 ANTHROPIC_API_KEY=sk-ant-...
+INSIGHT_PORTAL_URL=https://...
+INSIGHT_API_KEY=tu-key-insight
+INSIGHT_API_SECRET=tu-secret-insight
 ```
 
 Crear `frontend/.env`:
@@ -162,6 +166,7 @@ Todos los endpoints (excepto `/health`) requieren el header `x-api-key`.
 | GET | `/saved-analyses/{id}` | Detalle de un snapshot |
 | DELETE | `/saved-analyses/{id}` | Eliminar un snapshot |
 | POST | `/saved-analyses/{id}/compare` | Compara logs nuevos contra un snapshot guardado |
+| GET | `/insight/devices/{serial}/alerts` | Proxy seguro para recuperar alertas vivas e historia del portal SDS |
 
 ---
 
@@ -178,5 +183,5 @@ Todos los endpoints (excepto `/health`) requieren el header `x-api-key`.
 uvicorn backend.interface.api:app --host 0.0.0.0 --port $PORT
 ```
 
-**Variables de entorno en Render:** `DB_URL`, `API_KEY`, `ANTHROPIC_API_KEY`, `ENV=production`  
+**Variables de entorno en Render:** `DB_URL`, `API_KEY`, `ANTHROPIC_API_KEY`, `INSIGHT_PORTAL_URL`, `INSIGHT_API_KEY`, `INSIGHT_API_SECRET`, `ENV=production`  
 **Variables en Vercel:** `VITE_API_BASE`, `VITE_API_KEY`

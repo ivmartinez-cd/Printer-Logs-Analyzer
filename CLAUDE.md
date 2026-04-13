@@ -78,6 +78,7 @@ Printer-Logs-Analyzer/
 │   │       ├── cpmd_extractor.py
 │   │       ├── cpmd_ingest.py
 │   │       ├── cpmd_parser.py
+│   │       ├── insight_service.py    # Portal SDS API (JWT + Proxy)
 │   │       └── pdf_extraction_service.py
 │   ├── infrastructure/
 │   │   ├── config.py             # Settings desde .env
@@ -100,6 +101,8 @@ Printer-Logs-Analyzer/
     ├── src/
     │   ├── pages/DashboardPage.tsx
     │   ├── components/
+    │   │   ├── InsightAlertsPanel.tsx
+    │   │   └── ...
     │   ├── hooks/
     │   │   ├── useDateFilter.ts
     │   │   ├── useAnalysis.ts
@@ -165,6 +168,14 @@ Retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes — fuente de verdad 
 - **empeoro**: ERROR nuevo, ERROR existente +≥3 ocurrencias, total ERRORs +≥20%, o transición 0→N errores
 - **mejoro**: desapareció al menos un ERROR, total ERRORs bajó, sin ERRORs nuevos
 - **estable**: cualquier otro caso
+
+### Insight SDS Service (`application/services/insight_service.py`)
+
+Integración con EKM Insight Portal (v7) para alertas en tiempo real.
+- **Autenticación**: Login Basic (Base64) → JWT. El token se cachea en RAM por 23 horas.
+- **Búsqueda**: Search por Serial Number para obtener `deviceId`.
+- **Alertas**: Fetch de `/alerts/current` y `/alerts/history`.
+- **Errores**: `InsightAPIError` para fallos del portal.
 
 ### Infraestructura
 
