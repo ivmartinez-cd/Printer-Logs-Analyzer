@@ -886,6 +886,41 @@ body {
   color: #22c55e;
 }
 
+.log-modal__optional-hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #6b7a8e;
+  margin-left: 4px;
+}
+
+.log-modal__serial-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  background: #1a1f2e;
+  border: 1px solid #2d3a52;
+  border-radius: 6px;
+  color: #e6e8ee;
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.log-modal__serial-input::placeholder {
+  color: #4a5568;
+  letter-spacing: 0;
+}
+
+.log-modal__serial-input:focus {
+  border-color: #06b6d4;
+}
+
+.log-modal__serial-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* AddPrinterModelModal */
 .add-printer-model-modal__overlay {
   position: fixed;
@@ -1233,6 +1268,166 @@ body {
 
 .collapsible-panel--alert {
   border-left-color: #ef4444; /* red — consumible con status replace */
+}
+
+.collapsible-panel--insight {
+  border-left-color: #06b6d4; /* cyan — Insight SDS integration */
+}
+
+.collapsible-panel--insight-active {
+  border-left-color: #f59e0b; /* amber — has active alerts */
+}
+
+/* ── Insight Alerts Panel — contenido específico ───────────────────── */
+
+.insight-alerts-panel__serial {
+  font-weight: 400;
+  color: #6b7a8e;
+  font-size: 0.8125rem;
+}
+
+.insight-alerts-panel__count {
+  font-weight: 400;
+  color: #6b7a8e;
+}
+
+.insight-alerts-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid #1e2a3a;
+  margin-bottom: 12px;
+}
+
+.insight-alerts-panel__meta-item {
+  font-size: 0.8125rem;
+  color: #9aa3b2;
+}
+
+.insight-alerts-panel__tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #1e2a3a;
+}
+
+.insight-alerts-panel__tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #6b7a8e;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.insight-alerts-panel__tab:hover {
+  color: #a5b4c8;
+}
+
+.insight-alerts-panel__tab--active {
+  color: #06b6d4;
+  border-bottom-color: #06b6d4;
+}
+
+.insight-alerts-panel__tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+  border-radius: 10px;
+}
+
+.insight-alerts-panel__table {
+  font-size: 0.8125rem;
+}
+
+.insight-alerts-panel__class {
+  font-size: 0.75rem;
+  color: #9aa3b2;
+}
+
+.insight-alerts-panel__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #9aa3b2;
+}
+
+.insight-alerts-panel__cleared {
+  font-size: 0.75rem;
+  color: #4ade80;
+}
+
+.insight-alerts-panel__active {
+  font-size: 0.75rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.insight-alerts-panel__severity {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.insight-alerts-panel__severity--critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.insight-alerts-panel__severity--moderate {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.insight-alerts-panel__severity--low {
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+}
+
+.insight-alerts-panel__empty {
+  font-size: 0.8125rem;
+  color: #4ade80;
+  margin: 4px 0 0;
+}
+
+.insight-alerts-panel__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  font-size: 0.8125rem;
+  color: #a5b4c8;
+}
+
+.insight-alerts-panel__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(6, 182, 212, 0.3);
+  border-top-color: #06b6d4;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.insight-alerts-panel__error {
+  font-size: 0.8125rem;
+  color: #fca5a5;
+  margin: 8px 0 0;
 }
 
 .collapsible-panel__header {

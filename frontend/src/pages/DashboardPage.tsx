@@ -27,6 +27,7 @@ import { ConsumableWarningsPanel } from '../components/ConsumableWarningsPanel'
 import { SolutionContentModal } from '../components/SolutionContentModal'
 import { HelpModal } from '../components/HelpModal'
 import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
+import { InsightAlertsPanel } from '../components/InsightAlertsPanel'
 import { DateRangePicker } from '../components/DateRangePicker'
 import { SavedAnalysisList } from '../components/SavedAnalysisList'
 import { SavedAnalysisDetail } from '../components/SavedAnalysisDetail'
@@ -119,7 +120,7 @@ interface LogPasteModalProps {
   loading: boolean
   error: string | null
   serverWasCold: boolean
-  onAnalyze: (logText: string, fileName?: string, modelId?: string | null, hasCpmd?: boolean) => void
+  onAnalyze: (logText: string, fileName?: string, modelId?: string | null, hasCpmd?: boolean, serial?: string | null) => void
   onClose: () => void
 }
 
@@ -141,6 +142,7 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   const [fileName, setFileName] = useState<string | undefined>(undefined)
   const [slowWarning, setSlowWarning] = useState(false)
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
+  const [serialNumber, setSerialNumber] = useState('')
   const [models, setModels] = useState<PrinterModel[]>([])
   const [addModelOpen, setAddModelOpen] = useState(false)
   const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
@@ -257,6 +259,26 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
             )}
           </div>
 
+          {/* Número de serie (opcional) — para consultar alertas del portal SDS */}
+          <div className="log-modal__model-section">
+            <label className="log-modal__model-label" htmlFor="log-modal-serial-input">
+              N° de serie del equipo
+              <span className="log-modal__optional-hint"> (opcional · para alertas SDS)</span>
+            </label>
+            <input
+              id="log-modal-serial-input"
+              type="text"
+              className="log-modal__serial-input"
+              placeholder="Ej: CNNCQ520HG"
+              value={serialNumber}
+              onChange={(e) => setSerialNumber(e.target.value.toUpperCase())}
+              disabled={loading}
+              maxLength={50}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+
           <div className="log-modal__file-row">
             <input
               ref={fileInputRef}
@@ -290,7 +312,7 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
               className="dashboard__btn"
               onClick={() => {
                 const selectedModel = models.find((m) => m.id === selectedModelId)
-                onAnalyze(logText, fileName, selectedModelId, selectedModel?.has_cpmd ?? false)
+                onAnalyze(logText, fileName, selectedModelId, selectedModel?.has_cpmd ?? false, serialNumber.trim() || null)
               }}
               disabled={!canAnalyze}
             >
@@ -369,6 +391,7 @@ export default function DashboardPage({
   const [logFileName, setLogFileName] = useState<string | null>(null)
   const [currentModelId, setCurrentModelId] = useState<string | null>(null)
   const [currentModelHasCpmd, setCurrentModelHasCpmd] = useState(false)
+  const [currentSerialNumber, setCurrentSerialNumber] = useState<string | null>(null)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
     new Set(['ERROR', 'WARNING', 'INFO'])
   )
@@ -800,6 +823,9 @@ export default function DashboardPage({
                   {/* Consumable warnings — colapsado por defecto */}
                   <ConsumableWarningsPanel warnings={result?.consumable_warnings ?? []} />
 
+                  {/* Insight SDS alerts — se oculta si no hay serial o si la integración no está configurada */}
+                  <InsightAlertsPanel serial={currentSerialNumber} />
+
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">
                     <IncidentsChart
@@ -890,9 +916,10 @@ export default function DashboardPage({
           loading={loading}
           error={error}
           serverWasCold={serverWasCold}
-          onAnalyze={(logText, fileName, modelId, hasCpmd) => {
+          onAnalyze={(logText, fileName, modelId, hasCpmd, serial) => {
             setCurrentModelId(modelId ?? null)
             setCurrentModelHasCpmd(hasCpmd ?? false)
+            setCurrentSerialNumber(serial ?? null)
             handleAnalyze(logText, fileName, modelId)
           }}
           onClose={() => {

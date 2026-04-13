@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 
@@ -38,6 +39,11 @@ from backend.infrastructure.repositories.saved_analysis_repository import (
 from backend.application.services.pdf_extraction_service import extract_model_from_pdf
 from backend.interface.auth import authenticate as _authenticate_from_module
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
+from backend.application.services.insight_service import (
+    get_device_alerts as _insight_get_device_alerts,
+    InsightConfigError,
+    InsightAPIError,
+)
 
 
 MAX_LOGS_LENGTH = 2_000_000
@@ -825,6 +831,50 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             "skipped": report.skipped,
             "reason": report.reason,
         }
+
+    # ------------------------------------------------------------------
+    # Insight / SDS portal integration endpoints
+    # ------------------------------------------------------------------
+
+    @app.get("/insight/devices/{serial}/alerts")
+    @limiter.limit("30/minute")
+    async def insight_device_alerts(
+        request: Request,
+        serial: str,
+        _: None = Depends(authenticate),
+    ) -> Dict[str, Any]:
+        """Return current and history alerts for a printer identified by its serial number.
+
+        Proxies the request to the EKM Insight / HP SDS portal so that portal
+        credentials never leave the server.
+        Returns {insight_configured: false} when the integration is not set up,
+        allowing the UI to gracefully hide the panel instead of showing an error.
+        """
+        if not (
+            settings.insight_portal_url
+            and settings.insight_api_key
+            and settings.insight_api_secret
+        ):
+            return {"insight_configured": False}
+
+        serial = serial.strip().upper()
+        if not serial or len(serial) > 50:
+            raise HTTPException(status_code=400, detail="Número de serie inválido")
+
+        try:
+            result = await asyncio.to_thread(
+                _insight_get_device_alerts,
+                settings.insight_portal_url,
+                settings.insight_api_key,
+                settings.insight_api_secret,
+                serial,
+            )
+        except InsightConfigError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except InsightAPIError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+        return result
 
     return app
 
