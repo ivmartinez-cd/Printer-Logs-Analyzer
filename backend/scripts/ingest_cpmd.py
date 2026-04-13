@@ -169,7 +169,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"  Hash: {report.cpmd_hash}")
         return
 
-    estimated_cost = report.extracted * _COST_PER_BLOCK_USD
+    estimated_cost = report.total_blocks * _COST_PER_BLOCK_USD
 
     print(f"\n✓ CPMD procesado para modelo {model_uuid}\n")
     print(f"  Hash:        {report.cpmd_hash}")
@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None) -> None:
     print(f"  Extraídos:   {report.extracted}")
     print(f"  Fallidos:    {report.failed}")
     print(f"  Tiempo:      {duration:.1f}s")
-    print(f"  Costo aprox: ${estimated_cost:.4f} USD")
+    print(f"  Costo aprox (tokens consumidos): ${estimated_cost:.4f} USD")
 
 
 if __name__ == "__main__":

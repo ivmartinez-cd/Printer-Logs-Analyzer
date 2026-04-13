@@ -171,3 +171,86 @@ def test_retry_succeeds_on_second_attempt(mock_anthropic_cls: MagicMock) -> None
 
     assert result is not None
     assert result.code == "13.B2.00"
+
+
+# ---------------------------------------------------------------------------
+# Tests — markdown fences and array responses
+# ---------------------------------------------------------------------------
+
+
+@patch("backend.application.services.cpmd_extractor.Anthropic")
+def test_markdown_fence_wrapped_response_is_parsed(mock_anthropic_cls: MagicMock) -> None:
+    """Response wrapped in ```json ... ``` fences must parse correctly."""
+    fenced = f"```json\n{_VALID_JSON_RESPONSE}\n```"
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = _make_api_response(fenced)
+    mock_anthropic_cls.return_value = mock_client
+
+    result = extract_solution(_VALID_BLOCK, _DUMMY_API_KEY)
+
+    assert result is not None
+    assert result.code == "13.B2.00"
+    assert result.title == "Atasco de papel en Bandeja 1"
+    assert len(result.technician_steps) == 3
+
+
+@patch("backend.application.services.cpmd_extractor.Anthropic")
+def test_array_with_single_element_uses_that_element(mock_anthropic_cls: MagicMock) -> None:
+    """Response as a single-element JSON array must use that element."""
+    array_response = f"[{_VALID_JSON_RESPONSE}]"
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = _make_api_response(array_response)
+    mock_anthropic_cls.return_value = mock_client
+
+    result = extract_solution(_VALID_BLOCK, _DUMMY_API_KEY)
+
+    assert result is not None
+    assert result.code == "13.B2.00"
+
+
+@patch("backend.application.services.cpmd_extractor.Anthropic")
+def test_array_with_multiple_elements_uses_first_and_logs_info(
+    mock_anthropic_cls: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Response as a multi-element JSON array must use the first element and log INFO."""
+    variant = json.dumps(
+        {
+            "code": "13.B9.D1",
+            "title": "Variante 1",
+            "cause": "Rodillo desgastado.",
+            "technician_steps": ["Reemplazar rodillo."],
+            "frus": [],
+        }
+    )
+    variant2 = json.dumps(
+        {
+            "code": "13.B9.D2",
+            "title": "Variante 2",
+            "cause": "Rodillo atascado.",
+            "technician_steps": ["Limpiar rodillo."],
+            "frus": [],
+        }
+    )
+    variant3 = json.dumps(
+        {
+            "code": "13.B9.D3",
+            "title": "Variante 3",
+            "cause": "Sensor defectuoso.",
+            "technician_steps": ["Reemplazar sensor."],
+            "frus": [],
+        }
+    )
+    array_response = f"[{variant}, {variant2}, {variant3}]"
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = _make_api_response(array_response)
+    mock_anthropic_cls.return_value = mock_client
+
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="backend.application.services.cpmd_extractor"):
+        result = extract_solution(_VALID_BLOCK, _DUMMY_API_KEY)
+
+    assert result is not None
+    assert result.code == "13.B9.D1"
+    assert result.title == "Variante 1"
+    assert any("3 variantes" in r.message for r in caplog.records)
