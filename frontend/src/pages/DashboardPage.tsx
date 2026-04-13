@@ -426,8 +426,11 @@ export default function DashboardPage({
   const {
     exportingPdf,
     handleExportPDF,
+    dashboardRef,
     aiDiagnosticRef,
     kpisRef,
+    consumableRef,
+    areaChartRef,
     barChartRef,
     incidentsTableRef,
   } = useExportPdf(logFileName)
@@ -497,7 +500,14 @@ export default function DashboardPage({
   )
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard${exportingPdf ? ' is-exporting' : ''}`} ref={dashboardRef}>
+      <header className="export-header">
+        <h1 className="dashboard__title">HP Logs Analyzer — Reporte Técnico</h1>
+        <div className="dashboard__subheader">
+          {logFileName && <span>Archivo: <strong>{logFileName}</strong></span>}
+          {currentSerialNumber && <span> | Serial: <strong>{currentSerialNumber}</strong></span>}
+        </div>
+      </header>
       {!result && viewMode === 'dashboard' ? (
         /* Sin resultado y vista dashboard: marco de bienvenida */
         <div className="dashboard__frame">
@@ -821,26 +831,30 @@ export default function DashboardPage({
                   )}
 
                   {/* Consumable warnings — colapsado por defecto */}
-                  <ConsumableWarningsPanel warnings={result?.consumable_warnings ?? []} />
+                  <div ref={consumableRef}>
+                    <ConsumableWarningsPanel warnings={result?.consumable_warnings ?? []} />
+                  </div>
 
                   {/* Insight SDS alerts — se oculta si no hay serial o si la integración no está configurada */}
                   <InsightAlertsPanel serial={currentSerialNumber} />
 
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">
-                    <IncidentsChart
-                      events={events}
-                      activeFilter={activeFilter}
-                      visibleSeverities={visibleSeverities}
-                      onSeverityToggle={(sev) =>
-                        setVisibleSeverities((prev) => {
-                          const next = new Set(prev)
-                          if (next.has(sev)) next.delete(sev)
-                          else next.add(sev)
-                          return next
-                        })
-                      }
-                    />
+                    <div ref={areaChartRef}>
+                      <IncidentsChart
+                        events={events}
+                        activeFilter={activeFilter}
+                        visibleSeverities={visibleSeverities}
+                        onSeverityToggle={(sev) =>
+                          setVisibleSeverities((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(sev)) next.delete(sev)
+                            else next.add(sev)
+                            return next
+                          })
+                        }
+                      />
+                    </div>
                     <div ref={barChartRef}>
                       <TopErrorsChart topCodes={topCodes} />
                     </div>
