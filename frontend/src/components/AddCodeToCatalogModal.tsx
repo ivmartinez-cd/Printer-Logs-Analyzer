@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
-import type { ErrorCodeUpsertBody, ErrorSolution } from '../types/api'
-import { getErrorSolution } from '../services/api'
+import type { ErrorCodeUpsertBody } from '../types/api'
 
 export interface AddCodeToCatalogModalProps {
   code: string
   initialDescription: string
   initialSeverity: string
   initialSolutionUrl?: string
-  modelId?: string | null
   title?: string
   submitLabel?: string
   onSave: (body: ErrorCodeUpsertBody) => void | Promise<void>
@@ -21,14 +19,11 @@ const SEVERITY_OPTIONS = [
   { value: 'ERROR', label: 'Error' },
 ]
 
-type CpmdState = 'loading' | 'found' | 'not-found' | 'no-model'
-
 export function AddCodeToCatalogModal({
   code,
   initialDescription,
   initialSeverity,
   initialSolutionUrl = '',
-  modelId,
   title = 'Agregar código al catálogo',
   submitLabel = 'Agregar al catálogo',
   onSave,
@@ -38,8 +33,6 @@ export function AddCodeToCatalogModal({
   const [description, setDescription] = useState(initialDescription)
   const [solutionUrl, setSolutionUrl] = useState(initialSolutionUrl)
   const [severity, setSeverity] = useState(initialSeverity)
-  const [cpmdState, setCpmdState] = useState<CpmdState>(modelId ? 'loading' : 'no-model')
-  const [cpmdSolution, setCpmdSolution] = useState<ErrorSolution | null>(null)
 
   // Sync local state when the modal opens for a different code — intentional setState in effect
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -48,34 +41,6 @@ export function AddCodeToCatalogModal({
     setSeverity(initialSeverity)
     setSolutionUrl(initialSolutionUrl)
   }, [code, initialDescription, initialSeverity, initialSolutionUrl])
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  // Fetch CPMD solution when modelId or code changes — intentional setState in async callback
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!modelId) {
-      setCpmdState('no-model')
-      setCpmdSolution(null)
-      return
-    }
-    setCpmdState('loading')
-    setCpmdSolution(null)
-    const controller = new AbortController()
-    getErrorSolution(modelId, code, controller.signal)
-      .then((sol) => {
-        if (controller.signal.aborted) return
-        if (sol) {
-          setCpmdSolution(sol)
-          setCpmdState('found')
-        } else {
-          setCpmdState('not-found')
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setCpmdState('not-found')
-      })
-    return () => controller.abort()
-  }, [modelId, code])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleSubmit(e: React.FormEvent) {
@@ -170,77 +135,6 @@ export function AddCodeToCatalogModal({
               placeholder="https://..."
               disabled={saving}
             />
-          </div>
-          {/* HP CPMD solution panel */}
-          <div className="add-code-modal__cpmd-section">
-            <div className="add-code-modal__cpmd-header">
-              <span className="add-code-modal__cpmd-icon" aria-hidden="true">📘</span>
-              <span className="add-code-modal__cpmd-title">Solución oficial HP (CPMD)</span>
-            </div>
-            {cpmdState === 'loading' && (
-              <div className="add-code-modal__cpmd-loading" aria-label="Cargando solución CPMD">
-                <span className="log-modal__spinner" aria-hidden="true" />
-                <span className="add-code-modal__cpmd-loading-text">Buscando en CPMD…</span>
-              </div>
-            )}
-            {cpmdState === 'no-model' && (
-              <p className="add-code-modal__cpmd-empty">
-                Seleccioná un modelo en el panel principal para ver la solución del CPMD.
-              </p>
-            )}
-            {cpmdState === 'not-found' && (
-              <p className="add-code-modal__cpmd-empty">
-                No hay información del CPMD para este código. Cargá el CPMD del modelo desde el
-                modal de selección.
-              </p>
-            )}
-            {cpmdState === 'found' && cpmdSolution && (
-              <div className="add-code-modal__cpmd-body">
-                {cpmdSolution.source_page != null && (
-                  <span className="add-code-modal__cpmd-page">pág. {cpmdSolution.source_page}</span>
-                )}
-                {cpmdSolution.cause && (
-                  <div className="add-code-modal__cpmd-block">
-                    <strong className="add-code-modal__cpmd-block-title">Causa</strong>
-                    <p className="add-code-modal__cpmd-text">{cpmdSolution.cause}</p>
-                  </div>
-                )}
-                <div className="add-code-modal__cpmd-block">
-                  <strong className="add-code-modal__cpmd-block-title">Pasos para el técnico</strong>
-                  {cpmdSolution.technician_steps.length > 0 ? (
-                    <ol className="add-code-modal__cpmd-steps">
-                      {cpmdSolution.technician_steps.map((step, i) => (
-                        <li key={i}>{step}</li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <p className="add-code-modal__cpmd-text add-code-modal__cpmd-empty">
-                      Sin pasos extraídos para este código.
-                    </p>
-                  )}
-                </div>
-                {cpmdSolution.frus.length > 0 && (
-                  <div className="add-code-modal__cpmd-block">
-                    <strong className="add-code-modal__cpmd-block-title">Repuestos</strong>
-                    <ul className="add-code-modal__cpmd-frus">
-                      {cpmdSolution.frus.map((fru, i) => (
-                        <li key={i}>
-                          <code className="add-code-modal__cpmd-pn">{fru.part_number}</code>
-                          {fru.description && (
-                            <span className="add-code-modal__cpmd-fru-desc"> — {fru.description}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {cpmdSolution.source_audience && (
-                  <p className="add-code-modal__cpmd-source">
-                    Fuente: sección {cpmdSolution.source_audience}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           <div className="log-modal__actions">

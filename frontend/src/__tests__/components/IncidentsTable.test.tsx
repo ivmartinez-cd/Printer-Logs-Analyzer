@@ -111,13 +111,15 @@ describe('IncidentsTable', () => {
     expect(rowsDesc[1].textContent).toContain('53.B0.02')
   })
 
-  it('click en el botón de código dispara onEditCode con el código correcto', async () => {
-    const onEditCode = vi.fn()
+  it('click en el botón de código dispara onViewSolution (abre Ver solución)', async () => {
+    const onViewSolution = vi.fn()
     const user = userEvent.setup()
-    render(<IncidentsTable incidentRows={[row1]} onEditCode={onEditCode} onViewSolution={vi.fn()} />)
+    render(
+      <IncidentsTable incidentRows={[row1]} onEditCode={vi.fn()} onViewSolution={onViewSolution} />
+    )
 
     await user.click(screen.getByRole('button', { name: '53.B0.02' }))
-    expect(onEditCode).toHaveBeenCalledWith('53.B0.02', 'Fuser error', 'ERROR', '')
+    expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null)
   })
 
   it('click en "Ver solución" dispara onViewSolution con el contenido correcto', async () => {
@@ -137,7 +139,45 @@ describe('IncidentsTable', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Ver solución' }))
-    expect(onViewSolution).toHaveBeenCalledWith('Reemplazar el fusor', 'https://example.com/solution')
+    expect(onViewSolution).toHaveBeenCalledWith(
+      '53.B0.02',
+      'Reemplazar el fusor',
+      'https://example.com/solution'
+    )
+  })
+
+  it('click en el código dispara onViewSolution (abre modal Ver solución)', async () => {
+    const onViewSolution = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <IncidentsTable incidentRows={[row1]} onEditCode={vi.fn()} onViewSolution={onViewSolution} />
+    )
+    await user.click(screen.getByRole('button', { name: /53\.B0\.02/ }))
+    expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null)
+  })
+
+  it('muestra indicador 📘 cuando hasCpmdModel=true', () => {
+    render(
+      <IncidentsTable
+        incidentRows={[row1]}
+        hasCpmdModel={true}
+        onEditCode={vi.fn()}
+        onViewSolution={vi.fn()}
+      />
+    )
+    expect(screen.getByLabelText('Solución CPMD disponible')).toBeInTheDocument()
+  })
+
+  it('no muestra indicador 📘 cuando hasCpmdModel=false', () => {
+    render(
+      <IncidentsTable
+        incidentRows={[row1]}
+        hasCpmdModel={false}
+        onEditCode={vi.fn()}
+        onViewSolution={vi.fn()}
+      />
+    )
+    expect(screen.queryByLabelText('Solución CPMD disponible')).not.toBeInTheDocument()
   })
 
   it('expansión de fila muestra el detalle de eventos internos', async () => {

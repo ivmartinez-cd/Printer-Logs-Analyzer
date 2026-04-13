@@ -17,8 +17,9 @@ export function useModals() {
   const [compareModalOpen, setCompareModalOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
   const [solutionModal, setSolutionModal] = useState<{
-    content: string
-    url?: string | null
+    code: string
+    sdsContent?: string | null
+    sdsUrl?: string | null
   } | null>(null)
   const [helpModalOpen, setHelpModalOpen] = useState(false)
 

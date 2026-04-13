@@ -119,7 +119,7 @@ interface LogPasteModalProps {
   loading: boolean
   error: string | null
   serverWasCold: boolean
-  onAnalyze: (logText: string, fileName?: string, modelId?: string | null) => void
+  onAnalyze: (logText: string, fileName?: string, modelId?: string | null, hasCpmd?: boolean) => void
   onClose: () => void
 }
 
@@ -289,7 +289,10 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
             <button
               type="button"
               className="dashboard__btn"
-              onClick={() => onAnalyze(logText, fileName, selectedModelId)}
+              onClick={() => {
+                const selectedModel = models.find((m) => m.id === selectedModelId)
+                onAnalyze(logText, fileName, selectedModelId, selectedModel?.has_cpmd ?? false)
+              }}
               disabled={!canAnalyze}
             >
               {loading ? (
@@ -366,6 +369,7 @@ export default function DashboardPage({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [logFileName, setLogFileName] = useState<string | null>(null)
   const [currentModelId, setCurrentModelId] = useState<string | null>(null)
+  const [currentModelHasCpmd, setCurrentModelHasCpmd] = useState(false)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
     new Set(['ERROR', 'WARNING', 'INFO'])
   )
@@ -714,7 +718,6 @@ export default function DashboardPage({
                   code={addCodeModalCode}
                   initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
                   initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
-                  modelId={currentModelId}
                   onSave={(body) => handleSaveCodeToCatalog(body, false)}
                   onClose={() => !savingCode && setAddCodeModalCode(null)}
                   saving={savingCode}
@@ -727,7 +730,6 @@ export default function DashboardPage({
                   initialDescription={editCodeInitial.description}
                   initialSeverity={editCodeInitial.severity}
                   initialSolutionUrl={editCodeInitial.solutionUrl}
-                  modelId={currentModelId}
                   title="Editar código en el catálogo"
                   submitLabel="Guardar"
                   onSave={(body) => handleSaveCodeToCatalog(body, true)}
@@ -823,6 +825,7 @@ export default function DashboardPage({
                   <section ref={incidentsTableRef}>
                     <IncidentsTable
                       incidentRows={incidentRows}
+                      hasCpmdModel={currentModelHasCpmd}
                       onEditCode={(code, classification, severity, solutionUrl) =>
                         setEditCodeInitial({
                           code,
@@ -831,14 +834,18 @@ export default function DashboardPage({
                           solutionUrl,
                         })
                       }
-                      onViewSolution={(content, url) => setSolutionModal({ content, url })}
+                      onViewSolution={(code, sdsContent, sdsUrl) =>
+                        setSolutionModal({ code, sdsContent, sdsUrl })
+                      }
                     />
                   </section>
 
                   {/* Fila 4 — Tabla de eventos recientes (colapsable) */}
                   <EventsTable
                     events={filteredEvents}
-                    onViewSolution={(content, url) => setSolutionModal({ content, url })}
+                    onViewSolution={(code, sdsContent, sdsUrl) =>
+                      setSolutionModal({ code, sdsContent, sdsUrl })
+                    }
                   />
                 </>
               )}
@@ -884,8 +891,9 @@ export default function DashboardPage({
           loading={loading}
           error={error}
           serverWasCold={serverWasCold}
-          onAnalyze={(logText, fileName, modelId) => {
+          onAnalyze={(logText, fileName, modelId, hasCpmd) => {
             setCurrentModelId(modelId ?? null)
+            setCurrentModelHasCpmd(hasCpmd ?? false)
             handleAnalyze(logText, fileName, modelId)
           }}
           onClose={() => {
@@ -935,8 +943,10 @@ export default function DashboardPage({
 
       {solutionModal && (
         <SolutionContentModal
-          content={solutionModal.content}
-          url={solutionModal.url}
+          code={solutionModal.code}
+          modelId={currentModelId}
+          sdsContent={solutionModal.sdsContent}
+          sdsUrl={solutionModal.sdsUrl}
           onClose={() => setSolutionModal(null)}
         />
       )}

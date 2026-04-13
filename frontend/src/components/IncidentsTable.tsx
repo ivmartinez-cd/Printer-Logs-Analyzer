@@ -18,11 +18,17 @@ export type IncidentRow = {
 
 interface IncidentsTableProps {
   incidentRows: IncidentRow[]
+  hasCpmdModel?: boolean
   onEditCode: (code: string, classification: string, severity: string, sdsLink: string) => void
-  onViewSolution: (content: string, url?: string | null) => void
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
 }
 
-export function IncidentsTable({ incidentRows, onEditCode, onViewSolution }: IncidentsTableProps) {
+export function IncidentsTable({
+  incidentRows,
+  hasCpmdModel,
+  onEditCode,
+  onViewSolution,
+}: IncidentsTableProps) {
   const [expandedIncidentIds, setExpandedIncidentIds] = useState<Set<string>>(new Set())
   const [expandedMsgs, setExpandedMsgs] = useState<Set<string>>(new Set())
   const [severityFilter, setSeverityFilter] = useState('')
@@ -179,16 +185,20 @@ export function IncidentsTable({ incidentRows, onEditCode, onViewSolution }: Inc
                         type="button"
                         className="dashboard-table__code-link"
                         onClick={() =>
-                          onEditCode(
-                            inc.code,
-                            inc.classification || '',
-                            inc.severity || 'INFO',
-                            inc.sds_link || ''
-                          )
+                          onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link)
                         }
-                        title="Editar en el catálogo"
+                        title="Ver solución"
                       >
                         {inc.code}
+                        {hasCpmdModel && (
+                          <span
+                            className="dashboard-table__cpmd-badge"
+                            aria-label="Solución CPMD disponible"
+                            title="Tiene solución en CPMD"
+                          >
+                            📘
+                          </span>
+                        )}
                       </button>
                     </td>
                     <td
@@ -213,7 +223,7 @@ export function IncidentsTable({ incidentRows, onEditCode, onViewSolution }: Inc
                               type="button"
                               className="dashboard-table__solution-link"
                               onClick={() =>
-                                onViewSolution(inc.sds_solution_content!, inc.sds_link)
+                                onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link)
                               }
                             >
                               Ver solución
