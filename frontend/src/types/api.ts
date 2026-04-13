@@ -52,6 +52,9 @@ export interface ParseLogsResponse {
   global_severity: string
   errors: ParserError[]
   consumable_warnings: ConsumableWarning[]
+  log_start_date: string
+  log_end_date: string
+  total_lines: number
 }
 
 export interface ValidateLogsResponse {
