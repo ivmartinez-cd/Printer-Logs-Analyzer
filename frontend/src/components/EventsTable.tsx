@@ -4,7 +4,7 @@ import { formatDateTime } from '../hooks/useDateFilter'
 
 interface EventsTableProps {
   events: ApiEvent[]
-  onViewSolution: (content: string, url?: string | null) => void
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
 }
 
 export function EventsTable({ events, onViewSolution }: EventsTableProps) {
@@ -154,7 +154,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                           type="button"
                           className="dashboard-table__solution-link"
                           onClick={() =>
-                            onViewSolution(evt.code_solution_content!, evt.code_solution_url)
+                            onViewSolution(evt.code, evt.code_solution_content, evt.code_solution_url)
                           }
                         >
                           Ver solución

@@ -2219,6 +2219,154 @@ button.dashboard-table__solution-link {
   border-radius: 2px;
 }
 
+.dashboard-table__cpmd-badge {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  line-height: 1;
+  vertical-align: middle;
+  opacity: 0.85;
+}
+
+/* solution-content-modal tabs */
+.solution-content-modal__tabs {
+  display: flex;
+  border-bottom: 1px solid #232734;
+  padding: 0 20px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.solution-content-modal__tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.solution-content-modal__tab:hover {
+  color: #c9d1df;
+}
+
+.solution-content-modal__tab--active {
+  color: #4c8bf5;
+  border-bottom-color: #4c8bf5;
+  font-weight: 600;
+}
+
+.solution-content-modal__tab-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.solution-content-modal__empty {
+  margin: 0;
+  padding: 20px;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* CPMD content inside solution modal — mirror add-code-modal__cpmd-* styles */
+.solution-content-modal__tab-content--cpmd {
+  padding: 12px 20px;
+  gap: 4px;
+}
+
+.solution-content-modal__cpmd-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  font-size: 0.8125rem;
+  color: #9aa3b2;
+}
+
+.solution-content-modal__cpmd-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.solution-content-modal__cpmd-page {
+  font-size: 0.75rem;
+  color: #60a5fa;
+  font-style: italic;
+}
+
+.solution-content-modal__cpmd-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.solution-content-modal__cpmd-block-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9aa3b2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.solution-content-modal__cpmd-text {
+  font-size: 0.8125rem;
+  color: #c9d1df;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.solution-content-modal__cpmd-steps {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.solution-content-modal__cpmd-steps li {
+  font-size: 0.8125rem;
+  color: #c9d1df;
+  line-height: 1.5;
+}
+
+.solution-content-modal__cpmd-frus {
+  margin: 0;
+  padding-left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.solution-content-modal__cpmd-frus li {
+  font-size: 0.8125rem;
+  color: #c9d1df;
+}
+
+.solution-content-modal__cpmd-pn {
+  font-family: monospace;
+  font-size: 0.75rem;
+  background: #1a1d26;
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #60a5fa;
+}
+
+.solution-content-modal__cpmd-fru-desc {
+  color: #9aa3b2;
+}
+
+.solution-content-modal__cpmd-source {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+
 /* ── Botón de ayuda "?" en el header principal ───────────────────────────── */
 .dashboard__btn--help-icon {
   display: inline-flex;
