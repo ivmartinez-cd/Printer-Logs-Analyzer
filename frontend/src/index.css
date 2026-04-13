@@ -1698,6 +1698,136 @@ body {
   padding: 20px;
 }
 
+.executive-summary {
+  background: #111522;
+  border: 1px solid #232734;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.executive-summary__scorecards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.exec-scorecard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #232734;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exec-scorecard__label {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a94a6;
+}
+
+.exec-scorecard__value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.exec-scorecard__value--critical {
+  color: #f87171;
+}
+
+.exec-scorecard__value--watch {
+  color: #fbbf24;
+}
+
+.exec-scorecard__value--ok {
+  color: #34d399;
+}
+
+.exec-scorecard__sub {
+  font-size: 0.8rem;
+  color: #9aa3b2;
+}
+
+.executive-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.executive-summary__block {
+  background: rgba(17, 21, 34, 0.6);
+  border: 1px solid #232734;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.executive-summary__block h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: #e6e8ee;
+}
+
+.executive-summary__block ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #c5cddd;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.exec-next-steps {
+  list-style: none;
+  padding: 0;
+}
+
+.exec-next-steps li {
+  display: flex;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #d1d7e4;
+}
+
+.exec-next-steps li strong {
+  color: #f9fafb;
+  font-weight: 600;
+}
+
+.executive-summary__context {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  border-top: 1px solid #232734;
+  padding-top: 12px;
+}
+
+.executive-summary__context-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.executive-summary__context-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #8a94a6;
+  letter-spacing: 0.04em;
+}
+
+.executive-summary__context-value {
+  font-size: 0.95rem;
+  color: #f3f4f6;
+  font-weight: 600;
+}
+
 .section__header-row {
   display: flex;
   align-items: center;
@@ -3141,7 +3271,8 @@ button.dashboard-table__solution-link {
 .is-exporting .dashboard {
   padding: 30px !important;
   max-width: none !important;
-  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #111827 !important;
   gap: 20px !important;
   display: flex !important;
   flex-direction: column !important;
@@ -3176,6 +3307,52 @@ button.dashboard-table__solution-link {
 .is-exporting .collapsible-panel__title {
   color: #1a1a1a !important;
   font-weight: 600 !important;
+}
+
+.is-exporting .section {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.is-exporting .executive-summary {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 24px !important;
+}
+
+.is-exporting .exec-scorecard {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.is-exporting .exec-scorecard__label {
+  color: #6b7280 !important;
+}
+
+.is-exporting .exec-scorecard__sub {
+  color: #4b5563 !important;
+}
+
+.is-exporting .executive-summary__block {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.is-exporting .executive-summary__block h3 {
+  color: #1f2937 !important;
+}
+
+.is-exporting .executive-summary__block ul {
+  color: #374151 !important;
+}
+
+.is-exporting .exec-next-steps li strong {
+  color: #111827 !important;
+}
+
+.is-exporting .executive-summary__context-value {
+  color: #111827 !important;
 }
 
 /* KPIs con contraste */
@@ -3242,6 +3419,12 @@ button.dashboard-table__solution-link {
   padding: 20px !important;
 }
 
+.is-exporting .chart-wrap {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
 .is-exporting .recharts-cartesian-axis-tick-value {
   fill: #374151 !important;
   font-size: 11px !important;
@@ -3256,6 +3439,7 @@ button.dashboard-table__solution-link {
 .is-exporting .dashboard__subheader,
 .is-exporting .collapsible-panel__chevron,
 .is-exporting .db-status-badge,
+.is-exporting .dashboard__header,
 .is-exporting .dashboard__actions,
 .is-exporting .insight-alerts-panel,
 .is-exporting .sds-incident-panel,

@@ -330,6 +330,7 @@ export function SDSIncidentPanel({
         className="collapsible-panel__header"
         onClick={() => setCollapsed((c) => !c)}
         aria-expanded={!collapsed}
+        data-testid="sds-incidents-panel-toggle"
       >
         <span className="collapsible-panel__title">🔧 SDS Engineering Incident</span>
         <span

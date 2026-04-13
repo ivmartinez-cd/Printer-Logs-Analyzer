@@ -4,6 +4,7 @@ import { useToast } from '../contexts/ToastContext'
 export function useExportPdf(logFileName: string | null) {
   const [exportingPdf, setExportingPdf] = useState(false)
   const dashboardRef = useRef<HTMLDivElement>(null)
+  const executiveSummaryRef = useRef<HTMLDivElement>(null)
   const aiDiagnosticRef = useRef<HTMLDivElement>(null)
   const kpisRef = useRef<HTMLDivElement>(null)
   const consumableRef = useRef<HTMLDivElement>(null)
@@ -55,6 +56,7 @@ export function useExportPdf(logFileName: string | null) {
       const aiHasDiagnosis = !!aiEl?.querySelector('.ai-diagnostic-panel__diagnosis')
 
       const sections: Array<{ el: HTMLElement | null; label: string }> = [
+        { el: executiveSummaryRef.current, label: 'Resumen ejecutivo' },
         { el: kpisRef.current, label: 'KPIs' },
         { el: aiHasDiagnosis ? aiEl : null, label: 'Diagnóstico IA' },
         { el: consumableRef.current, label: 'Consumibles' },
@@ -163,6 +165,7 @@ export function useExportPdf(logFileName: string | null) {
     exportingPdf,
     handleExportPDF,
     dashboardRef,
+    executiveSummaryRef,
     aiDiagnosticRef,
     kpisRef,
     consumableRef,
