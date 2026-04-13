@@ -58,7 +58,6 @@ function AlertsTable({ alerts, emptyText }: { alerts: InsightAlert[]; emptyText:
         </thead>
         <tbody>
           {alerts.map((a, i) => (
-            // eslint-disable-next-line react/no-array-index-key
             <tr key={`${a.date}-${a.mibCode}-${i}`}>
               <td>{formatDate(a.date)}</td>
               <td>
@@ -97,11 +96,7 @@ export function InsightAlertsPanel({ serial }: InsightAlertsPanelProps) {
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current')
 
   useEffect(() => {
-    if (!serial) {
-      setData(null)
-      setError(null)
-      return
-    }
+    if (!serial) return
 
     abortRef.current?.abort()
     const controller = new AbortController()
