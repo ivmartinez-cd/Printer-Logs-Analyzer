@@ -38,6 +38,16 @@ Cuatro métricas en la parte superior:
 
 Panel con acento violeta, colapsado debajo de los KPIs. Al expandirlo, hacé click en **"Generar análisis con IA"** para que Claude Haiku procese los incidentes y devuelva un diagnóstico estructurado en tres secciones: **DIAGNÓSTICO / ACCIÓN / PRIORIDAD**.
 
+### 🔔 Alertas del portal SDS (Real-time)
+
+Panel con acento celeste, colapsado debajo del diagnóstico IA. Muestra las alertas actuales e históricas recuperadas en tiempo real desde el portal HP SDS Insight. 
+
+- **Requisito**: Ingresar el **Número de serie** en el modal inicial al pegar los logs.
+- **Pestañas**:
+  - **Activas**: Alertas que requieren atención inmediata en el equipo.
+  - **Historial**: Alertas resueltas o históricas para entender el comportamiento previo.
+- **Estados**: Las alertas se visualizan con su severidad original y la fecha de creación/resolución.
+
 ### 🔧 SDS Engineering Incident
 
 Panel con acento azul, colapsado. Muestra los campos del SDS cargado y el resultado del match contra el log (Coincide / Parcial / No coincide / General). El match soporta tres fuentes de tokens:

@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-13 (unificación visual, fix modales, PRs #39-46 ingesta CPMD y Tabs SDS)
+Última actualización: 2026-04-13 (Integración Insight SDS, unificación visual, fix modales)
 
 ---
 
@@ -15,7 +15,8 @@ Herramienta web interna para analizar logs de impresoras HP: seleccionar modelo,
 2. Pegar el log y pulsar "Analizar". Se ejecutan en paralelo `POST /parser/preview` y `POST /parser/validate`.
 3. Si hay **códigos nuevos** (no en catálogo), aparece la sección para agregarlos uno a uno o ignorarlos.
 4. Opcional: agregar un **SDS Engineering Incident** u observar el Troubleshooting de pasos oficiales y FRUs si el el modelo cuenta con la ingesta y extracción del **CPMD** oficial (Control Panel Message Document).
-5. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos, tablas y contenido enriquecido — todo filtrable.
+5. **Insight SDS (Real-time)**: El panel de alertas del portal SDS consulta en vivo el estado y el historial de alertas del dispositivo si se ingresó el número de serie.
+6. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos, tablas y contenido enriquecido — todo filtrable.
 
 ---
 
@@ -35,7 +36,8 @@ Printer-Logs-Analyzer/
 │   │   └── services/
 │   │       ├── analysis_service.py
 │   │       ├── compare_service.py
-│   │       └── consumable_warning_service.py
+│   │       ├── consumable_warning_service.py
+│   │       └── insight_service.py
 │   ├── infrastructure/
 │   │   ├── config.py
 │   │   ├── content_fetcher.py
@@ -87,11 +89,15 @@ Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones
 
 `POST /analysis/ai-diagnose` — recibe incidentes, llama a Claude Haiku, retorna diagnóstico estructurado en secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
 
-### 3.6 Comparación de snapshots
+### 3.6 Integración Insight SDS
+
+`insight_service.py` en `application/services/`. Maneja autenticación JWT (con caché de 23h) y consulta de `/alerts/current` e `/history`. Proxy seguro para evitar exponer credenciales en el cliente.
+
+### 3.7 Comparación de snapshots
 
 `compare_service.py` retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes).
 
-### 3.7 API endpoints
+### 3.8 API endpoints
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
@@ -109,14 +115,15 @@ Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones
 | GET | `/saved-analyses/{id}` | Detalle de snapshot |
 | DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
 | POST | `/saved-analyses/{id}/compare` | Comparar log nuevo vs snapshot |
+| GET | `/insight/devices/{serial}/alerts` | Proxy de alertas SDS en tiempo real |
 
 Rate limiting (slowapi, por IP): preview y validate → 60/min; upsert → 30/min.
 
-### 3.8 DB fallback
+### 3.9 DB fallback
 
 Switch automático a JSON local cuando PostgreSQL no está disponible. `threading.Lock()` evita race conditions. `/health` reporta `db_mode: "local_fallback"`.
 
-### 3.9 Resiliencia de conexiones (Neon idle timeout)
+### 3.10 Resiliencia de conexiones (Neon idle timeout)
 
 `database.py` → `connect()` hace un **pre-ping** (`SELECT 1`) sobre cada conexión obtenida del pool antes de cederla al caller. Si la conexión fue cerrada por Neon durante idle, se descarta (`putconn(close=True)`) y se reintenta hasta 3 veces. `psycopg2.pool.PoolError` (pool exhausto) lanza `DatabaseUnavailableError` de inmediato sin reintentar. `rollback()` y `putconn()` en el finally están guardados con `try/except` para no propagar `InterfaceError` cuando la conexión ya estaba muerta.
 
@@ -129,13 +136,14 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 1. `DashboardHeader` — logo, logFileName, botones de acción, LiveClock, DbStatusBadge
 2. `KPICards` — 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores
 3. `AIDiagnosticPanel` — panel con acento violeta, colapsado por default, diagnóstico on demand
-4. `SDSIncidentPanel` — panel con acento azul, colapsado por default; sección "Verificar historial de consumibles" si hay overlap con consumibles
-5. `ConsumableWarningsPanel` ("Estado de consumibles") — panel con acento ámbar/rojo, colapsado, solo si `warnings.length > 0`
-6. `DateRangePicker` — botón + popover con 8 presets y calendario de rango libre
-7. `IncidentsChart` — AreaChart eventos/hora con toggles de severidad
-8. `TopErrorsChart` — BarChart top 10 códigos; toggles ERROR/WARNING/INFO (los 3 activos por default)
-9. `IncidentsTable` — agrupada por código, expandible, sort, filtro, búsqueda
-10. `EventsTable` — colapsada por default, todos los eventos crudos
+4. `InsightAlertsPanel` — panel con acento azul/celeste (SDS Portal), colapsado por default; requiere Serial Number
+5. `SDSIncidentPanel` — panel con acento azul, colapsado por default; sección "Verificar historial de consumibles" si hay overlap con consumibles
+6. `ConsumableWarningsPanel` ("Estado de consumibles") — panel con acento ámbar/rojo, colapsado, solo si `warnings.length > 0`
+7. `DateRangePicker` — botón + popover con 8 presets y calendario de rango libre
+8. `IncidentsChart` — AreaChart eventos/hora con toggles de severidad
+9. `TopErrorsChart` — BarChart top 10 códigos; toggles ERROR/WARNING/INFO (los 3 activos por default)
+10. `IncidentsTable` — agrupada por código, expandible, sort, filtro, búsqueda
+11. `EventsTable` — colapsada por default, todos los eventos crudos
 
 ### 4.2 Componentes
 
@@ -144,6 +152,7 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 | `DashboardHeader.tsx` | Header principal con acciones |
 | `KPICards.tsx` | 4 KPIs de salud del log |
 | `AIDiagnosticPanel.tsx` | Diagnóstico IA colapsado; llama a `/analysis/ai-diagnose` on demand |
+| `InsightAlertsPanel.tsx` | Alertas en tiempo real desde el portal SDS; requiere Serial Number |
 | `SDSIncidentPanel.tsx` | Match SDS vs log; sección "Verificar historial de consumibles" si hay overlap con consumibles (prop `consumableWarnings?`) |
 | `ConsumableWarningsPanel.tsx` | "Estado de consumibles" — tabla con texto introductorio; solo si hay warnings; colapsado; acento ámbar o rojo si hay `replace` |
 | `DateRangePicker.tsx` | Picker unificado con presets y rango libre; popover alineado a la derecha |
@@ -168,11 +177,12 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 
 ### 4.3 Paneles colapsables — shell unificado
 
-Los tres paneles colapsables (`AIDiagnosticPanel`, `SDSIncidentPanel`, `ConsumableWarningsPanel`) comparten la clase CSS `.collapsible-panel` definida en `index.css`. El color del borde izquierdo varía por modificador:
+Los paneles colapsables comparten la clase CSS `.collapsible-panel` definida en `index.css`. El color del borde izquierdo varía por modificador:
 
 | Panel | Clase | Color |
 |-------|-------|-------|
 | Diagnóstico con IA | `collapsible-panel--ai` | Violeta `#8b5cf6` |
+| Insight SDS | `collapsible-panel--insight` | Celeste `#0ea5e9` |
 | SDS Engineering Incident | `collapsible-panel--sds` | Azul `#3b82f6` |
 | Estado de consumibles (sin alertas críticas) | `collapsible-panel--consumable` | Ámbar `#d97706` |
 | Estado de consumibles (hay `replace`) | `collapsible-panel--alert` | Rojo `#ef4444` |
@@ -270,7 +280,8 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 | Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners, ADF y 110V); badges orientados a historial |
 | Diagnóstico con IA | Activo — `AIDiagnosticPanel` colapsado, Claude Haiku, secciones DIAGNÓSTICO/ACCIÓN/PRIORIDAD |
 | SDS Engineering Incident | Activo — match numérico (wildcard `z`), por mensaje (normalizado) y por keywords CamelCase desde `sds.code`; tres fuentes de tokens |
-| Paneles colapsables | Unificados — shell `.collapsible-panel` compartido; color por modificador (`--ai`, `--sds`, `--consumable`, `--alert`) |
+| Integración Insight SDS | Activo — alertas en tiempo real (activas/historia) vía proxy seguro; requiere Serial Number |
+| Paneles colapsables | Unificados — shell `.collapsible-panel` compartido; color por modificador (`--ai`, `--sds`, `--consumable`, `--alert`, `--insight`) |
 | Modales | Correcto — solo se cierran con botón explícito; overlay no cierra |
 | Filtros de fecha | DateRangePicker — 8 presets + rango libre con calendario |
 | Gráficos | IncidentsChart (AreaChart) + TopErrorsChart (BarChart top 10, toggles activos por default) |

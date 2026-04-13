@@ -17,6 +17,9 @@
 | `API_KEY` | Clave compartida con el frontend | Todo |
 | `ENV` | Setear a `production` | Logs de advertencia |
 | `ANTHROPIC_API_KEY` | API key de Anthropic (Claude) | CPMD ingest (`POST /models/{id}/cpmd`) y diagnóstico AI |
+| `INSIGHT_PORTAL_URL` | URL base del portal Insight | Alertas SDS en tiempo real |
+| `INSIGHT_API_KEY` | Cliente API Key de Insight | Alertas SDS en tiempo real |
+| `INSIGHT_API_SECRET` | Cliente API Secret de Insight | Alertas SDS en tiempo real |
 
 Si `API_KEY` no está seteada, el backend usa `"dev"` como fallback. Con `ENV=production` loguea un WARNING al arrancar.
 
