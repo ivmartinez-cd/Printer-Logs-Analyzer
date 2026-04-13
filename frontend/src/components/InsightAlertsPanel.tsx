@@ -88,7 +88,7 @@ function AlertsTable({ alerts, emptyText }: { alerts: InsightAlert[]; emptyText:
 }
 
 export function InsightAlertsPanel({ serial }: InsightAlertsPanelProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const [data, setData] = useState<DeviceAlertsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
