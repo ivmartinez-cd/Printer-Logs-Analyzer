@@ -3477,3 +3477,13 @@ button.dashboard-table__solution-link {
 .collapsible-panel__body--hidden {
   display: none;
 }
+
+/* Auxiliares para Reportes */
+.report-only-section {
+  display: none;
+}
+
+body.is-exporting .report-only-section {
+  display: block !important;
+  margin-bottom: 2rem;
+}

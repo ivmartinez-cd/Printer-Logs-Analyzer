@@ -785,16 +785,17 @@ export default function DashboardPage({
               {codesNew.length === 0 && (
                 <>
                   {result && (
-                    <ExecutiveSummary
-                      ref={executiveSummaryRef}
-                      result={result}
-                      filteredIncidents={filteredIncidents}
-                      filteredEvents={filteredEvents}
-                      consumableWarnings={result?.consumable_warnings ?? []}
-                      lastErrorLabel={lastErrorLabel}
-                      logFileName={logFileName}
-                      serialNumber={currentSerialNumber}
-                    />
+                    <div className="report-only-section" ref={executiveSummaryRef}>
+                      <ExecutiveSummary
+                        result={result}
+                        filteredIncidents={filteredIncidents}
+                        filteredEvents={filteredEvents}
+                        consumableWarnings={result?.consumable_warnings ?? []}
+                        lastErrorLabel={lastErrorLabel}
+                        logFileName={logFileName}
+                        serialNumber={currentSerialNumber}
+                      />
+                    </div>
                   )}
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
