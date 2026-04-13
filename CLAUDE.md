@@ -72,8 +72,13 @@ Printer-Logs-Analyzer/
 │   │   ├── parsers/log_parser.py
 │   │   └── services/
 │   │       ├── analysis_service.py
+│   │       ├── ai_diagnosis_service.py
 │   │       ├── compare_service.py
-│   │       └── consumable_warning_service.py
+│   │       ├── consumable_warning_service.py
+│   │       ├── cpmd_extractor.py
+│   │       ├── cpmd_ingest.py
+│   │       ├── cpmd_parser.py
+│   │       └── pdf_extraction_service.py
 │   ├── infrastructure/
 │   │   ├── config.py             # Settings desde .env
 │   │   ├── content_fetcher.py    # validate_ssrf_url + fetch_solution_content
@@ -81,8 +86,10 @@ Printer-Logs-Analyzer/
 │   │   ├── fallback/error_codes_seed.json
 │   │   └── repositories/
 │   │       ├── error_code_repository.py
+│   │       ├── error_solution_repository.py
+│   │       ├── printer_model_repository.py
 │   │       └── saved_analysis_repository.py
-│   ├── migrations/               # 5 migraciones SQL (correr manualmente)
+│   ├── migrations/               # 7 migraciones SQL (correr manualmente)
 │   └── data/                     # Gitignored — JSON local en modo fallback
 └── frontend/
     ├── .prettierrc               # singleQuote, semi:false, printWidth 100
@@ -196,6 +203,11 @@ Todos excepto `/health` requieren `x-api-key`. Sin key → HTTP 401. Logs hasta 
 | GET | `/saved-analyses/{id}` | Obtener snapshot |
 | DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
 | POST | `/saved-analyses/{id}/compare` | Comparar logs vs snapshot |
+| POST | `/analysis/ai-diagnose` | Diagnóstico con Claude Haiku |
+| GET | `/printer-models` | Lista modelos de impresora |
+| POST | `/printer-models/upload-pdf` | Extraer modelos de un PDF con IA |
+| POST | `/models/{id}/cpmd` | Ingestar un PDF CPMD para extraer soluciones oficiales referenciadas |
+| GET | `/models/{model_id}/error-solutions/{code}`| Obtener la solución CPMD para el código de error |
 
 **CORS:** `printer-logs-analyzer.vercel.app`, `localhost:5173/5174`, `127.0.0.1:5173/5174`
 
@@ -206,7 +218,7 @@ Todos excepto `/health` requieren `x-api-key`. Sin key → HTTP 401. Logs hasta 
 
 ### Migraciones SQL (`backend/migrations/`)
 
-Correr manualmente. Las 5 primeras están ejecutadas en producción (Neon). La 006 está pendiente de correr.
+Correr manualmente. Las 5 primeras están ejecutadas en producción (Neon). La 006 y 007 están pendientes.
 
 | Archivo | Contenido |
 |---------|-----------|
@@ -216,6 +228,7 @@ Correr manualmente. Las 5 primeras están ejecutadas en producción (Neon). La 0
 | `004_create_saved_analyses.sql` | Tabla `saved_analyses` con JSONB para incidents |
 | `005_add_solution_content.sql` | `ALTER TABLE error_codes ADD COLUMN solution_content TEXT` |
 | `006_create_printer_models.sql` | Tablas `printer_models`, `printer_consumables`, `consumable_related_codes`; `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` |
+| `007_create_error_solutions.sql` | Tabla `error_solutions` y tabla técnica para relacionar fallos (CPMDs extraídos) |
 
 ### Variables de entorno (dev local)
 
@@ -258,9 +271,10 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `IncidentsChart.tsx` | AreaChart eventos/hora con toggles de severidad |
 | `TopErrorsChart.tsx` | BarChart top 10 códigos de error coloreado por severidad |
 | `AddCodeToCatalogModal.tsx` | Form agregar/editar código del catálogo |
+| `UploadCpmdModal.tsx` | Upload de PDF para documentacion CPMD referenciando paso a paso |
 | `SaveIncidentModal.tsx` | Form guardar análisis con nombre y equipment_identifier |
 | `SDSIncidentModal.tsx` | Pegar SDS; parsea texto → SdsIncidentData |
-| `SDSIncidentPanel.tsx` | Muestra SDS y match vs incidentes del log; **arranca colapsado**; posición: entre AIDiagnosticPanel y ConsumableWarningsPanel; acepta `consumableWarnings?` para mostrar sección "Verificar historial de consumibles" cuando hay solapamiento de códigos |
+| `SDSIncidentPanel.tsx` | Muestra SDS, contenido recuperado y match vs incidentes del log |
 | `ConsumableWarningsPanel.tsx` | "Estado de consumibles" — tabla con texto introductorio de aviso; **arranca colapsada**; solo se renderiza si `warnings.length > 0`; posición: entre SDSIncidentPanel y gráficos; excluye toners y ADF |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |

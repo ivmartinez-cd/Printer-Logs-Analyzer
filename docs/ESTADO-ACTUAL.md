@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-12 (unificación visual paneles colapsables + modal fix + PR #35 keywords SDS)
+Última actualización: 2026-04-13 (unificación visual, fix modales, PRs #39-46 ingesta CPMD y Tabs SDS)
 
 ---
 
@@ -14,8 +14,8 @@ Herramienta web interna para analizar logs de impresoras HP: seleccionar modelo,
 1. Abrir modal "Pegar logs HP" y **seleccionar el modelo de impresora** (obligatorio). Si el modelo no está, hacer click en "+ Cargar nuevo modelo (PDF)" y subir el PDF del Service Cost Data oficial — los modelos y consumibles se extraen con IA (Claude Haiku).
 2. Pegar el log y pulsar "Analizar". Se ejecutan en paralelo `POST /parser/preview` y `POST /parser/validate`.
 3. Si hay **códigos nuevos** (no en catálogo), aparece la sección para agregarlos uno a uno o ignorarlos.
-4. Opcional: agregar un **SDS Engineering Incident** para hacer match contra los códigos del log.
-5. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos y tablas — todo filtrable por fecha.
+4. Opcional: agregar un **SDS Engineering Incident** u observar el Troubleshooting de pasos oficiales y FRUs si el el modelo cuenta con la ingesta y extracción del **CPMD** oficial (Control Panel Message Document).
+5. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos, tablas y contenido enriquecido — todo filtrable.
 
 ---
 
@@ -76,10 +76,12 @@ Printer-Logs-Analyzer/
 
 Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones de código soportan wildcard `z` (cualquier dígito hex). El panel es aviso para verificar historial — no orden de reemplazo.
 
-### 3.4 Modelos de impresora
+### 3.4 Modelos de impresora y CPMD
 
-- `GET /printer-models` — lista modelos disponibles.
-- `POST /printer-models/upload-pdf` — recibe PDF multipart, extrae modelos y consumibles con Claude Haiku (`max_tokens=16000`), persiste en DB. Timeout de respuesta en frontend: 90 s.
+- `GET /printer-models` — lista modelos disponibles. (incluye bandera de disponibilidad bool has_cpmd).
+- `POST /printer-models/upload-pdf` — recibe PDF multipart, extrae modelos y consumibles con Claude Haiku (`max_tokens=16000`), persiste en DB.
+- `POST /models/{id}/cpmd` — endpoint de Ingesta para extraer soluciones de fallos (pasos técnicos de solución, causas y refacciones FRU) de un CPMD referenciado por modelo.
+- Script de CLI `ingest_cpmd`: Para saltar el límite de timeout del Render (30 segs gratuitos), se puede cargar extracciones CPMD procesadas por AI mediante CLI tools locales.
 
 ### 3.5 Diagnóstico con IA
 
@@ -99,6 +101,8 @@ Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones
 | POST | `/error-codes/upsert` | Crear/actualizar código en catálogo |
 | GET | `/printer-models` | Lista modelos de impresora |
 | POST | `/printer-models/upload-pdf` | Extraer modelos de un PDF con IA |
+| POST | `/models/{id}/cpmd` | Ingestar de forma estructurada via AI los pasos de troubleshooting en un pdf oficial CPMD |
+| GET | `/models/{model_id}/error-solutions/{code}` | Recuperar pasos / causa de error CPMD especifico |
 | POST | `/analysis/ai-diagnose` | Diagnóstico con Claude Haiku |
 | POST | `/saved-analyses` | Guardar snapshot |
 | GET | `/saved-analyses` | Listar snapshots |
@@ -149,12 +153,13 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 | `EventsTable.tsx` | Eventos crudos, colapsada por default |
 | `AddCodeToCatalogModal.tsx` | Agregar/editar código del catálogo |
 | `AddPrinterModelModal.tsx` | Subir PDF de Service Cost Data para extraer modelos con IA |
+| `UploadCpmdModal.tsx` | Modal con UI de form para subir un archivo Manual CPMD que complemente un modelo de impresoras |
 | `SaveIncidentModal.tsx` | Guardar snapshot con nombre y equipment identifier |
 | `SDSIncidentModal.tsx` | Pegar SDS y parsear → SdsIncidentData |
 | `SavedAnalysisList.tsx` | Lista de snapshots con búsqueda y evolución por equipo |
 | `EquipmentTimeline.tsx` | LineChart evolución de errores por equipo |
 | `SavedAnalysisDetail.tsx` | Detalle de snapshot y comparación |
-| `SolutionContentModal.tsx` | Muestra contenido de solución guardado |
+| `SolutionContentModal.tsx` | Muestra contenido de solución refactorizado a formato Tabs (Pestaña SDS y Pestaña CPMD). |
 | `HelpModal.tsx` | Ayuda con 9 secciones en orden de aparición en pantalla |
 | `ConfirmModal.tsx` | Modal de confirmación genérico |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
@@ -250,7 +255,8 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 | `003_create_error_codes.sql` | Tabla `error_codes` con UNIQUE(code) | Ejecutada |
 | `004_create_saved_analyses.sql` | Tabla `saved_analyses` con JSONB | Ejecutada |
 | `005_add_solution_content.sql` | `ALTER TABLE error_codes ADD COLUMN solution_content TEXT` | Ejecutada |
-| `006_create_printer_models.sql` | `printer_models`, `printer_consumables`, `consumable_related_codes`; `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` | **Pendiente** |
+| `006_create_printer_models.sql` | `printer_models`, `printer_consumables`, `consumable_related_codes`; `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` | Pendiente |
+| `007_create_error_solutions.sql` | Esquema CPMD solutions | Pendiente |
 
 ---
 
@@ -259,8 +265,9 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 | Área | Estado actual |
 |------|--------------|
 | Parsing logs | Estable — normalización espacios, meses español, tolerancia a blank lines |
-| Modelos de impresora | Fase 4 completa — selector obligatorio en modal, upload PDF con Haiku, consumable warnings |
-| Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners, ADF y 110V); badges orientados a historial; sección "Verificar historial" en SDSIncidentPanel; acento rojo cuando hay `replace` |
+| Modelos de impresora | Fase 4 completa — selector obligatorio, upload PDF con Haiku, banderas has_cpmd globales |
+| CPMD (Troubleshooting) | Modal disponible, ingest CLI script, refactor backend para parsing vía tags semánticos LLM (claude-haiku) y separación lógica a Tabs con Componentes dedicados |
+| Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners, ADF y 110V); badges orientados a historial |
 | Diagnóstico con IA | Activo — `AIDiagnosticPanel` colapsado, Claude Haiku, secciones DIAGNÓSTICO/ACCIÓN/PRIORIDAD |
 | SDS Engineering Incident | Activo — match numérico (wildcard `z`), por mensaje (normalizado) y por keywords CamelCase desde `sds.code`; tres fuentes de tokens |
 | Paneles colapsables | Unificados — shell `.collapsible-panel` compartido; color por modificador (`--ai`, `--sds`, `--consumable`, `--alert`) |
