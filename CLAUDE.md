@@ -46,8 +46,8 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (93 tests)
-npm run test:backend   # pytest backend/tests/ -v (78 tests)
+npm run test:frontend  # vitest run (99 tests)
+npm run test:backend   # pytest backend/tests/ -v (136 tests)
 ```
 
 ---
@@ -78,6 +78,7 @@ Printer-Logs-Analyzer/
 │   │       ├── cpmd_extractor.py
 │   │       ├── cpmd_ingest.py
 │   │       ├── cpmd_parser.py
+│   │       ├── insight_service.py    # Portal SDS API (JWT + Proxy)
 │   │       └── pdf_extraction_service.py
 │   ├── infrastructure/
 │   │   ├── config.py             # Settings desde .env
@@ -100,6 +101,8 @@ Printer-Logs-Analyzer/
     ├── src/
     │   ├── pages/DashboardPage.tsx
     │   ├── components/
+    │   │   ├── InsightAlertsPanel.tsx
+    │   │   └── ...
     │   ├── hooks/
     │   │   ├── useDateFilter.ts
     │   │   ├── useAnalysis.ts
@@ -166,6 +169,14 @@ Retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes — fuente de verdad 
 - **mejoro**: desapareció al menos un ERROR, total ERRORs bajó, sin ERRORs nuevos
 - **estable**: cualquier otro caso
 
+### Insight SDS Service (`application/services/insight_service.py`)
+
+Integración con EKM Insight Portal (v7) para alertas en tiempo real.
+- **Autenticación**: Login Basic (Base64) → JWT. El token se cachea en RAM por 23 horas.
+- **Búsqueda**: Search por Serial Number para obtener `deviceId`.
+- **Alertas**: Fetch de `/alerts/current` y `/alerts/history`.
+- **Errores**: `InsightAPIError` para fallos del portal.
+
 ### Infraestructura
 
 **`auth.py`** — valida header `x-api-key`. HTTP 401 si falta o incorrecta.
@@ -208,6 +219,7 @@ Todos excepto `/health` requieren `x-api-key`. Sin key → HTTP 401. Logs hasta 
 | POST | `/printer-models/upload-pdf` | Extraer modelos de un PDF con IA |
 | POST | `/models/{id}/cpmd` | Ingestar un PDF CPMD para extraer soluciones oficiales referenciadas |
 | GET | `/models/{model_id}/error-solutions/{code}`| Obtener la solución CPMD para el código de error |
+| GET | `/insight/devices/{serial}/alerts` | Proxy de alertas SDS en tiempo real |
 
 **CORS:** `printer-logs-analyzer.vercel.app`, `localhost:5173/5174`, `127.0.0.1:5173/5174`
 

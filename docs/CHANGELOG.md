@@ -4,7 +4,14 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
-**Fase CPMD (PRs #39 al #45): Ingestión y visualización de Soluciones Oficiales Troubleshooting**
+**Fase Insight SDS: Alertas en tiempo real y Proxy Seguro**
+- **Backend - InsightService**: Implementación de autenticación JWT con sistema de caché en memoria de 23 horas. Proxy seguro para recuperar alertas activas e históricas de dispositivos mediante número de serie sin exponer secretos en el cliente.
+- **Frontend - InsightAlertsPanel**: Nuevo componente colapsable con navegación por pestañas (Activas / Historial). Incluye visualización de severidad, metadatos del equipo (Modelo/Zona) y estados de carga.
+- **Integración UI**: Se añadió el campo "N° de serie" al `LogPasteModal` para activar la consulta de alertas de forma opcional.
+- **Seguridad y CI**: Configuración de variables de entorno para Render y Vercel. Cobertura de tests unitarios y de integración (backend y frontend).
+
+---
+
 - **Migración y DB**: Se introduce un nuevo esquema `error_solutions` relacional a fallos vinculandose a `printer_models`. La migración `007` preparó la persistencia (PR #39).
 - **Backend - Ingestión interactiva (Claude-Haiku)**: Se construyó el endpoint `POST /models/{id}/cpmd` y los extractores PDF para parsear limpiamente Causas, Pasos para Técnico y refacciones FRU a partir de los documentos oficiales (Control Panel Message Documents) con IA (PR #40).
 - **Frontend - Upload y banderas Globales**: Se añadió el `UploadCpmdModal.tsx` como UI para proveer pdfs al Ingest de la red. Los modelos adquirieron la bandera paramétrica global indicando que cuenta con CPMD (`has_cpmd`) (PR #41).
