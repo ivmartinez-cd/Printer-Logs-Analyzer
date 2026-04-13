@@ -3116,3 +3116,210 @@ button.dashboard-table__solution-link {
   margin: 8px 16px 12px;
   line-height: 1.5;
 }
+
+/* ==========================================================================
+   Estilos específicos para Exportación PDF
+   ========================================================================== */
+
+.is-exporting {
+  width: 1024px !important;
+  min-width: 1024px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.is-exporting .dashboard {
+  padding: 20px !important;
+  max-width: none !important;
+  background: #ffffff !important;
+}
+
+/* Forzar expansión de paneles colapsables */
+.is-exporting .collapsible-panel__body {
+  display: block !important;
+  max-height: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ajustes de contraste para fondo blanco */
+.is-exporting .collapsible-panel {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  margin-bottom: 20px !important;
+}
+
+.is-exporting .collapsible-panel__title {
+  color: #111827 !important;
+}
+
+.is-exporting .dashboard__title,
+.is-exporting .dashboard__filename {
+  color: #111827 !important;
+}
+
+.is-exporting .kpi-card {
+  background: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.is-exporting .kpi-card__value {
+  color: #111827 !important;
+}
+
+/* Tablas en PDF */
+.is-exporting .incidents-table,
+.is-exporting .events-table {
+  background: transparent !important;
+}
+
+.is-exporting th {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border-bottom: 2px solid #e5e7eb !important;
+}
+
+.is-exporting td {
+  border-bottom: 1px solid #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+/* Ocultar elementos innecesarios en el reporte */
+.is-exporting .dashboard__btn,
+.is-exporting .dashboard__actions,
+.is-exporting .collapsible-panel__chevron,
+.is-exporting .log-modal-overlay,
+.is-exporting .toast-container {
+  display: none !important;
+}
+
+/* Asegurar que los gráficos tengan un tamaño base decente */
+.is-exporting .incidents-chart,
+.is-exporting .top-errors-chart {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 15px !important;
+}
+
+
+/* ==========================================================================
+   Estilos específicos para Exportación PDF (Light Mode)
+   ========================================================================== */
+
+.is-exporting {
+  width: 1024px !important;
+  min-width: 1024px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  /* Eliminar sombras que a veces html2canvas renderiza mal */
+  box-shadow: none !important;
+}
+
+.is-exporting .dashboard {
+  padding: 20px !important;
+  max-width: none !important;
+  background: #ffffff !important;
+  gap: 15px !important;
+}
+
+/* Forzar expansión completa de paneles colapsables */
+.is-exporting .collapsible-panel__body {
+  display: block !important;
+  max-height: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  padding: 12px 16px !important;
+}
+
+/* Ajustes de contraste para fondo blanco */
+.is-exporting .collapsible-panel {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  margin-bottom: 12px !important;
+  box-shadow: none !important;
+}
+
+.is-exporting .collapsible-panel__header {
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #f9fafb !important;
+}
+
+.is-exporting .collapsible-panel__title {
+  color: #111827 !important;
+}
+
+.is-exporting .dashboard__title,
+.is-exporting .dashboard__file-name,
+.is-exporting .dashboard__datetime {
+  color: #111827 !important;
+}
+
+/* KPIs en Light Mode */
+.is-exporting .kpi-card {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+.is-exporting .kpi-card__label {
+  color: #4b5563 !important;
+}
+
+.is-exporting .kpi-card__value {
+  color: #111827 !important;
+}
+
+/* Tablas optimizadas para impresin */
+.is-exporting .incidents-table-container,
+.is-exporting .events-table-container {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+.is-exporting table {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.is-exporting th {
+  background: #f3f4f6 !important;
+  color: #1f2937 !important;
+  border-bottom: 2px solid #d1d5db !important;
+}
+
+.is-exporting td {
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+
+/* Ocultar elementos innecesarios */
+.is-exporting .dashboard__btn,
+.is-exporting .dashboard__header-actions,
+.is-exporting .collapsible-panel__chevron,
+.is-exporting .db-status-badge,
+.is-exporting .log-modal-overlay,
+.is-exporting .toast-container,
+.is-exporting .dashboard__header {
+  display: none !important;
+}
+
+/* Mostrar header especial de exportacin (ver useExportPdf) */
+.export-header {
+  display: none;
+}
+
+.is-exporting .export-header {
+  display: block;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #111827;
+  padding-bottom: 12px;
+}
+
+/* Asegurar que los grficos tengan fondo blanco */
+.is-exporting .incidents-chart,
+.is-exporting .top-errors-chart {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 10px !important;
+}
+
