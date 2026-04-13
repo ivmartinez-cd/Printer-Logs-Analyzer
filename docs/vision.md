@@ -78,9 +78,14 @@ Botón único en el header que abre un popover con 8 presets (Hoy, Esta semana, 
 
 ---
 
-## Catálogo de códigos
+## Soluciones Oficiales y CPMD (Control Panel Message Document)
 
-Hacé click en cualquier **código subrayado** en la tabla de incidentes para agregar o editar su descripción, severidad y URL de solución. El backend descarga y guarda el HTML de la página SDS — podés verlo aunque el link de HP expire.
+Hacé click en cualquier **código subrayado** en la tabla de incidentes para visualizar la solución al error. Esta ventana modal ahora agrupa la información técnica a través de pestañas:
+
+- **Pestaña SDS (Catálogo)**: Si el código cuenta con una URL vinculada, verás el HTML de la página de Smart Device Services descargado por nuestra base. Éste puede leerse aunque el link de HP haya caducado. Desde aquí podés también agregar un nuevo error al catálogo u editarlo.
+- **Pestaña CPMD (Troubleshooting)**: Si el modelo diagnóstico de la impresora seleccionada tiene un documento CPMD ingerido, esta pestaña detallará las causas, los pasos de solución para el técnico en formato de lista y las refacciones FRU relacionadas. Esta información es extraída inteligentemente mediante IA a partir de los diagramas lógicos de la documentación oficial HP CPMD.
+
+Mapear PDFs de CPMD a los modelos es un proceso sencillo (Hacé click en `Agregar CPMD` junto al selector de modelos de impresora para ingestar uno nuevo globalmente con Claude Haiku).
 
 ---
 

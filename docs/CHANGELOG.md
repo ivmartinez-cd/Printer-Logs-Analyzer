@@ -4,6 +4,16 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Fase CPMD (PRs #39 al #45): Ingestión y visualización de Soluciones Oficiales Troubleshooting**
+- **Migración y DB**: Se introduce un nuevo esquema `error_solutions` relacional a fallos vinculandose a `printer_models`. La migración `007` preparó la persistencia (PR #39).
+- **Backend - Ingestión interactiva (Claude-Haiku)**: Se construyó el endpoint `POST /models/{id}/cpmd` y los extractores PDF para parsear limpiamente Causas, Pasos para Técnico y refacciones FRU a partir de los documentos oficiales (Control Panel Message Documents) con IA (PR #40).
+- **Frontend - Upload y banderas Globales**: Se añadió el `UploadCpmdModal.tsx` como UI para proveer pdfs al Ingest de la red. Los modelos adquirieron la bandera paramétrica global indicando que cuenta con CPMD (`has_cpmd`) (PR #41).
+- **Script CLI**: Creado para evitar tiempos de timeout en renders de nube gratuita frente a archivos de muchísimas hojas; `ingest_cpmd.py` inyecta archivos trabajando en background y comunicándose directamente con Neon DB (PR #43).
+- **Refactorizado UI Soluciones (Tabs)**: El panel intermodal de contenido de soluciones abandona la simple URL de enlace para mutar a un diseño Pestañas, separando `Solución SDS` vs la `Solución CPMD` recientemente introducida (PR #45).
+- **Bugs resueltos**: Extractor modificado para tolerar cercos Markdown variables (`fences`) devueltos por Claude (PR #44) y arreglos post-Paso 3, entre ellos manejos 502 / layots y Favicon estático (PR #42).
+
+---
+
 **Refactor: unificar shell visual de los 3 paneles colapsables**
 - Nueva clase CSS `.collapsible-panel` en `index.css` con modificadores de color: `--ai` (violeta `#8b5cf6`), `--sds` (azul `#3b82f6`), `--consumable` (ámbar `#d97706`), `--alert` (rojo `#ef4444`).
 - Clases compartidas: `__header` (botón toggle), `__title`, `__chevron`, `__chevron--expanded` (rotación CSS), `__body` (padding del contenido).
