@@ -37,6 +37,7 @@ import { IncidentsTable, type IncidentRow } from '../components/IncidentsTable'
 import { IncidentsChart } from '../components/IncidentsChart'
 import { TopErrorsChart } from '../components/TopErrorsChart'
 import { DashboardHeader } from '../components/DashboardHeader'
+import { ExecutiveSummary } from '../components/ExecutiveSummary'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useModals } from '../hooks/useModals'
 import { useAnalysis } from '../hooks/useAnalysis'
@@ -427,6 +428,7 @@ export default function DashboardPage({
     exportingPdf,
     handleExportPDF,
     dashboardRef,
+    executiveSummaryRef,
     aiDiagnosticRef,
     kpisRef,
     consumableRef,
@@ -782,6 +784,18 @@ export default function DashboardPage({
 
               {codesNew.length === 0 && (
                 <>
+                  {result && (
+                    <ExecutiveSummary
+                      ref={executiveSummaryRef}
+                      result={result}
+                      filteredIncidents={filteredIncidents}
+                      filteredEvents={filteredEvents}
+                      consumableWarnings={result?.consumable_warnings ?? []}
+                      lastErrorLabel={lastErrorLabel}
+                      logFileName={logFileName}
+                      serialNumber={currentSerialNumber}
+                    />
+                  )}
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
                     <span className="dashboard__subheader-title">

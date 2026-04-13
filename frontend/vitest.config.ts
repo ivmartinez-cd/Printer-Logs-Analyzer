@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react() as any],
   test: {
-    environment: 'node',
+    environment: 'happy-dom',
     include: ['src/__tests__/**/*.test.ts', 'src/__tests__/**/*.test.tsx'],
     setupFiles: ['./src/__tests__/setup.ts'],
   },

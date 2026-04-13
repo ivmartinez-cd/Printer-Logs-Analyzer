@@ -64,6 +64,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           className="collapsible-panel__header"
           onClick={() => setCollapsed((v) => !v)}
           aria-expanded={!collapsed}
+          data-testid="ai-diagnostic-panel-toggle"
         >
           <span className="collapsible-panel__title">🤖 Diagnóstico con IA</span>
           <span
