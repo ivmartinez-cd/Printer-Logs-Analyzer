@@ -37,7 +37,7 @@ export function ConfirmModal({
       aria-labelledby="confirm-modal-title"
       aria-describedby="confirm-modal-desc"
     >
-      <div className="log-modal confirm-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="log-modal confirm-modal">
         <div className="log-modal__header">
           <h2 id="confirm-modal-title" className="log-modal__title">
             {title}

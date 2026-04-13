@@ -56,12 +56,11 @@ export function AddCodeToCatalogModal({
   return (
     <div
       className="log-modal-overlay"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-code-modal-title"
     >
-      <div className="log-modal add-code-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="log-modal add-code-modal">
         <div className="log-modal__header">
           <h2 id="add-code-modal-title" className="log-modal__title">
             {title}

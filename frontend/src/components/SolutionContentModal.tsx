@@ -67,12 +67,11 @@ export function SolutionContentModal({
   return (
     <div
       className="log-modal-overlay"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="solution-modal-title"
     >
-      <div className="log-modal solution-content-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="log-modal solution-content-modal">
         <div className="log-modal__header">
           <h2 id="solution-modal-title" className="log-modal__title">
             Contenido de solución guardado

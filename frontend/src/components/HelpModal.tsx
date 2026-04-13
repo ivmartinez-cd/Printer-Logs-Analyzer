@@ -6,12 +6,11 @@ export function HelpModal({ onClose }: HelpModalProps) {
   return (
     <div
       className="log-modal-overlay"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-modal-title"
     >
-      <div className="log-modal help-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="log-modal help-modal">
         <div className="log-modal__header">
           <h2 id="help-modal-title" className="log-modal__title">
             ¿Cómo funciona HP Logs Analyzer?

@@ -200,12 +200,11 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
     <>
       <div
         className="log-modal-overlay"
-        onClick={onClose}
         role="dialog"
         aria-modal="true"
         aria-labelledby="log-modal-title"
       >
-        <div className="log-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="log-modal">
           <div className="log-modal__header">
             <h2 id="log-modal-title" className="log-modal__title">
               Pegar logs HP
@@ -954,12 +953,11 @@ export default function DashboardPage({
       {compareModalOpen && selectedSavedId && (
         <div
           className="log-modal-overlay"
-          onClick={() => !comparing && setCompareModalOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="compare-modal-title"
         >
-          <div className="log-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="log-modal">
             <div className="log-modal__header">
               <h2 id="compare-modal-title" className="log-modal__title">
                 Comparar con log nuevo
