@@ -65,13 +65,12 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
         </span>
       </button>
 
-      {!collapsed && (
-        <div className="collapsible-panel__body">
-          <p className="consumable-warnings-panel__intro">
-            Estos consumibles superaron su vida útil estimada según el contador de impresión.
-            Verificá en el historial del equipo cuándo fue el último reemplazo antes de actuar.
-          </p>
-          <div className="table-wrap consumable-warnings-panel__scroll">
+      <div className={`collapsible-panel__body ${collapsed ? 'collapsible-panel__body--hidden' : ''}`}>
+        <p className="consumable-warnings-panel__intro">
+          Estos consumibles superaron su vida útil estimada según el contador de impresión.
+          Verificá en el historial del equipo cuándo fue el último reemplazo antes de actuar.
+        </p>
+        <div className="table-wrap consumable-warnings-panel__scroll">
           <table className="dashboard-table consumable-warnings-panel__table">
             <thead>
               <tr>
@@ -116,8 +115,8 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
             </tbody>
           </table>
         </div>
-        </div>
-      )}
+      </div>
+
     </section>
   )
 }

@@ -502,10 +502,20 @@ export default function DashboardPage({
   return (
     <div className={`dashboard${exportingPdf ? ' is-exporting' : ''}`} ref={dashboardRef}>
       <header className="export-header">
-        <h1 className="dashboard__title">HP Logs Analyzer — Reporte Técnico</h1>
-        <div className="dashboard__subheader">
-          {logFileName && <span>Archivo: <strong>{logFileName}</strong></span>}
-          {currentSerialNumber && <span> | Serial: <strong>{currentSerialNumber}</strong></span>}
+        <div className="export-header__left">
+          <h1 className="dashboard__title">HP Logs Analyzer</h1>
+          <p className="dashboard__report-type">Reporte de Análisis de Diagnóstico Técnico</p>
+        </div>
+        <div className="export-header__right dashboard__subheader">
+          <div>Archivo: <strong>{logFileName || 'Logs Pegados'}</strong></div>
+          {currentSerialNumber && <div>Serial: <strong>{currentSerialNumber}</strong></div>}
+          {result && (
+            <div className="export-header__period">
+              Periodo: {new Date(result.log_start_date).toLocaleDateString()} - {new Date(result.log_end_date).toLocaleDateString()}
+            </div>
+          )}
+          {result && <div>Total Eventos: <strong>{result.incidents.length + result.events.length}</strong></div>}
+          <div className="export-header__date">Generado el {new Date().toLocaleString()}</div>
         </div>
       </header>
       {!result && viewMode === 'dashboard' ? (
