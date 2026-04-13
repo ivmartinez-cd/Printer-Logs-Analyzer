@@ -46,8 +46,8 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (99 tests)
-npm run test:backend   # pytest backend/tests/ -v (136 tests)
+npm run test:frontend  # vitest run (137 pruebas - happy-dom)
+npm run test:backend   # pytest backend/tests/ -v (138 pruebas)
 ```
 
 ---
@@ -97,7 +97,7 @@ Printer-Logs-Analyzer/
     ├── .prettierignore           # Incluye src/vite-env.d.ts — no editar
     ├── eslint.config.js
     ├── vite.config.ts            # manualChunks: vendor-react, vendor-charts
-    ├── vitest.config.ts          # environment: node; setupFiles jest-dom
+    ├── vitest.config.ts          # environment: happy-dom; setupFiles setup.ts
     ├── src/
     │   ├── pages/DashboardPage.tsx
     │   ├── components/
@@ -111,7 +111,7 @@ Printer-Logs-Analyzer/
     │   ├── services/api.ts
     │   ├── types/api.ts
     │   └── contexts/ToastContext.tsx
-    └── src/__tests__/            # fixtures/, components/ (jsdom), hooks (node)
+    └── src/__tests__/            # setup.ts, components/ (happy-dom), hooks (happy-dom)
 ```
 
 ---
@@ -219,7 +219,7 @@ Todos excepto `/health` requieren `x-api-key`. Sin key → HTTP 401. Logs hasta 
 | POST | `/printer-models/upload-pdf` | Extraer modelos de un PDF con IA |
 | POST | `/models/{id}/cpmd` | Ingestar un PDF CPMD para extraer soluciones oficiales referenciadas |
 | GET | `/models/{model_id}/error-solutions/{code}`| Obtener la solución CPMD para el código de error |
-| GET | `/insight/devices/{serial}/alerts` | Proxy de alertas SDS en tiempo real |
+| GET | `/parser/preview (extension)` | Ahora incluye `log_start_date`, `log_end_date` y `total_lines` |
 
 **CORS:** `printer-logs-analyzer.vercel.app`, `localhost:5173/5174`, `127.0.0.1:5173/5174`
 
@@ -296,6 +296,7 @@ Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actuali
 | `SavedAnalysisDetail.tsx` | Detalle snapshot con tabla de incidentes y comparación |
 | `SolutionContentModal.tsx` | Muestra contenido de solución guardado; link al URL |
 | `HelpModal.tsx` | Ayuda estática con 6 secciones |
+| `ExecutiveSummary.tsx` | Resumen ejecutivo para reportes; Salud, Items críticos, Siguientes pasos |
 | `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
 
 **Match SDS vs Log (`SDSIncidentPanel`):** `getSdsCodesForMatch` construye los tokens desde `event_context`, `more_info` (split por `or`) y `sds.code` (cuando es CamelCase sin dígitos y con ≥1 keyword significativa — excluye IDs como `"TriageInput2"` y stopwords sueltas como `"Replace"`). Cada token se despacha por `sdsTokenMatchesIncident`:
@@ -322,7 +323,7 @@ Status `'general'` solo cuando `getSdsCodesForMatch` devuelve lista vacía.
 
 ### Tipos (`types/api.ts`)
 
-`Event`, `EnrichedEvent`, `Incident`, `ParseLogsResponse` (includes `consumable_warnings: ConsumableWarning[]`), `ValidateLogsResponse`, `ErrorCodeUpsertBody`, `SavedAnalysisIncidentItem`, `SavedAnalysisSummary`, `SavedAnalysisFull`, `CompareDiff`, `CompareResponse`, `ConsumableWarning`
+`Event`, `EnrichedEvent`, `Incident`, `ParseLogsResponse` (includes `consumable_warnings: ConsumableWarning[]`, `log_start_date`, `log_end_date`, `total_lines`), `ValidateLogsResponse`, `ErrorCodeUpsertBody`, `SavedAnalysisIncidentItem`, `SavedAnalysisSummary`, `SavedAnalysisFull`, `CompareDiff`, `CompareResponse`, `ConsumableWarning`
 
 `CompareDiff.tendencia`: `'mejoro' | 'estable' | 'empeoro'` (sin tildes — espeja exactamente el backend).
 
