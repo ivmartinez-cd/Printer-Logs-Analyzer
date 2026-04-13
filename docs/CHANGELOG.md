@@ -4,6 +4,16 @@ Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
 ---
 
+**Fase: Estabilización de Tests y Reporte Ejecutivo (2026-04-13)**
+- **Migración a Happy-DOM**: Sustitución de `jsdom` por `happy-dom` para resolver inconsistencias de ESM en Vitest 4 y acelerar la ejecución de pruebas.
+- **Cobertura 100%**: Alcanzado el éxito total en las suites de pruebas (138 backend / 137 frontend).
+- **Resumen Ejecutivo**: Nuevo componente inteligente para reportes que agrupa Salud General, Ítems Críticos y Próximos Pasos sugeridos (invisible en UI, activo en exportación).
+- **PDF Profesional**: Rediseño del motor de exportación con soporte para multicanvas (slicing) de tablas largas, modo Light Mode automático de alta fidelidad y expansión dinámica de secciones.
+- **Sincronización de Metadatos**: El backend ahora retorna `log_start_date`, `log_end_date` y `total_lines` para garantizar la precisión de los reportes.
+- **Bugs resueltos**: Corregidos selectores ambiguos en `ExecutiveSummary.test.tsx` y `SDSIncidentPanel.test.tsx` mediante el uso de `data-testid` y `cleanup` automático.
+
+---
+
 **Fase CPMD (PRs #39 al #45): Ingestión y visualización de Soluciones Oficiales Troubleshooting**
 - **Migración y DB**: Se introduce un nuevo esquema `error_solutions` relacional a fallos vinculandose a `printer_models`. La migración `007` preparó la persistencia (PR #39).
 - **Backend - Ingestión interactiva (Claude-Haiku)**: Se construyó el endpoint `POST /models/{id}/cpmd` y los extractores PDF para parsear limpiamente Causas, Pasos para Técnico y refacciones FRU a partir de los documentos oficiales (Control Panel Message Documents) con IA (PR #40).

@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-13 (unificación visual, fix modales, PRs #39-46 ingesta CPMD y Tabs SDS)
+Última actualización: 2026-04-13 (Estabilización de tests happy-dom, 100% pass, Reporte PDF Profesional con Resumen Ejecutivo)
 
 ---
 
@@ -46,14 +46,14 @@ Printer-Logs-Analyzer/
 │   │       ├── saved_analysis_repository.py
 │   │       └── printer_model_repository.py
 │   ├── migrations/               # 6 migraciones SQL (001–005 ejecutadas; 006 pendiente en Neon)
-│   └── tests/                    # pytest — 78 tests
+│   └── tests/                    # pytest — 138 tests
 └── frontend/
     ├── src/pages/DashboardPage.tsx
     ├── src/components/           # Ver tabla de componentes más abajo
     ├── src/hooks/                # useAnalysis, useModals, useDateFilter, useExportPdf
     ├── src/services/api.ts
     ├── src/types/api.ts
-    └── src/__tests__/            # vitest — 93 tests
+    └── src/__tests__/            # vitest — 137 tests (happy-dom)
 ```
 
 ---
@@ -109,6 +109,7 @@ Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones
 | GET | `/saved-analyses/{id}` | Detalle de snapshot |
 | DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
 | POST | `/saved-analyses/{id}/compare` | Comparar log nuevo vs snapshot |
+| GET | `/parser/preview (extension)` | Incluye metadatos: `log_start_date`, `log_end_date`, `total_lines` |
 
 Rate limiting (slowapi, por IP): preview y validate → 60/min; upsert → 30/min.
 
@@ -126,9 +127,10 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 
 ### 4.1 Orden de paneles en el dashboard
 
-1. `DashboardHeader` — logo, logFileName, botones de acción, LiveClock, DbStatusBadge
-2. `KPICards` — 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores
-3. `AIDiagnosticPanel` — panel con acento violeta, colapsado por default, diagnóstico on demand
+1. `ExecutiveSummary` — Panel de reporte profesional (invisible en dashboard UI, activo en PDF)
+2. `DashboardHeader` — logo, logFileName, botones de acción, LiveClock, DbStatusBadge
+3. `KPICards` — 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores
+4. `AIDiagnosticPanel` — panel con acento violeta, colapsado por default, diagnóstico on demand
 4. `SDSIncidentPanel` — panel con acento azul, colapsado por default; sección "Verificar historial de consumibles" si hay overlap con consumibles
 5. `ConsumableWarningsPanel` ("Estado de consumibles") — panel con acento ámbar/rojo, colapsado, solo si `warnings.length > 0`
 6. `DateRangePicker` — botón + popover con 8 presets y calendario de rango libre
@@ -142,6 +144,7 @@ Switch automático a JSON local cuando PostgreSQL no está disponible. `threadin
 | Componente | Propósito |
 |------------|-----------|
 | `DashboardHeader.tsx` | Header principal con acciones |
+| `ExecutiveSummary.tsx` | Resumen ejecutivo inteligente para reportes (Salud, Incidentes, Próximos pasos) |
 | `KPICards.tsx` | 4 KPIs de salud del log |
 | `AIDiagnosticPanel.tsx` | Diagnóstico IA colapsado; llama a `/analysis/ai-diagnose` on demand |
 | `SDSIncidentPanel.tsx` | Match SDS vs log; sección "Verificar historial de consumibles" si hay overlap con consumibles (prop `consumableWarnings?`) |
@@ -186,7 +189,7 @@ Clases comunes: `__header` (botón toggle), `__title`, `__chevron` + `__chevron-
 | `useAnalysis` | Estado y handlers: `loading`, `result`, `pendingResult`, `codesNew`, `handleAnalyze`, `commitPendingResult`, `handleSaveCodeToCatalog`, `handleSaveIncident` |
 | `useModals` | 11 estados de modales |
 | `useDateFilter` | `DateFilter = null \| "YYYY-MM-DD" \| { start, end }`. Funciones puras: `filterEventsByDate`, `filterIncidentsByDate`, `getWeekRange`, etc. |
-| `useExportPdf` | PDF A4 con html2canvas + jsPDF; exporta AI panel (si generado), KPIs, BarChart, tabla |
+| `useExportPdf` | PDF A4 Profesional con html2canvas + jsPDF; incluye ExecutiveSummary, AI panel, KPIs, gráficos y tablas con rebanado automático; fuerza Light Mode |
 
 ### 4.5 Flujo de análisis
 
@@ -239,10 +242,10 @@ Fallback automático a JSON local en `backend/data/` cuando PostgreSQL no está 
 
 | Suite | Herramienta | Tests |
 |-------|-------------|-------|
-| Frontend (hooks + componentes) | vitest | 93 |
-| Backend | pytest | 78 |
+| Frontend (hooks + componentes) | vitest | 137 |
+| Backend | pytest | 138 |
 
-Frontend: `vitest.config.ts` con `environment: node`; tests de componentes declaran `// @vitest-environment jsdom`. Backend: tests en `backend/tests/`; sin `DB_URL` → fallback JSON automático.
+Frontend: `vitest.config.ts` con `environment: happy-dom`; tests de componentes y hooks unificados. Backend: tests en `backend/tests/`; validación de metadatos de sincronización incluida.
 
 ---
 
@@ -276,6 +279,6 @@ Frontend: `vitest.config.ts` con `environment: node`; tests de componentes decla
 | Gráficos | IncidentsChart (AreaChart) + TopErrorsChart (BarChart top 10, toggles activos por default) |
 | Catálogo de códigos | Activo — upsert con fetch de HTML, fallback si link expira |
 | Incidentes guardados | Activo — snapshots, comparación (mejoró/estable/empeoró), evolución por equipo |
-| Exportar PDF | Activo — AI panel (si generado), KPIs, BarChart, tabla de incidencias |
+| Exportar PDF | Profesional — incluye Resumen Ejecutivo, Diagnóstico IA, KPIs, gráficos y tablas rebanadas; modo alta fidelidad |
 | DB fallback | Activo — JSON local automático cuando PostgreSQL no disponible |
 | Deploy | Vercel (frontend) + Render (backend) + Neon (PostgreSQL) |

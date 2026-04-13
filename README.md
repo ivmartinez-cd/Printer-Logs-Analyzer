@@ -22,7 +22,7 @@ Herramienta web para analizar logs de impresoras HP. Seleccionás el modelo, peg
 - **Filtros de fecha** — botón único con popover: 8 presets (Hoy, Esta semana, Semana anterior, Este mes, Mes anterior, Últimos 7 días, Últimos 30 días, Todo) y rango libre con calendario interactivo.
 - **Catálogo de códigos** — agrega descripción, severidad y link de solución SDS. El backend guarda el contenido HTML de la página para verlo aunque el link expire.
 - **Incidentes guardados** — guarda snapshots de análisis, compáralos con logs nuevos (tendencia: mejoró / estable / empeoró) y visualiza la evolución por equipo en un gráfico de línea.
-- **Exportar PDF** — genera un PDF A4 con el Diagnóstico IA (si fue generado), KPIs, gráfico de errores frecuentes y tabla de incidentes.
+- **Exportar PDF Profesional** — genera un reporte A4 de nivel ejecutivo que incluye un Resumen Ejecutivo inteligente (salud general, items críticos, próximos pasos), Diagnóstico IA, KPIs, gráficos de tendencia y tablas detalladas. Implementa rebanado automático de tablas largas y modo de alta fidelidad (Light Mode forzado) para impresión.
 - **Modo offline** — si PostgreSQL no está disponible, la app opera con archivos JSON locales de forma transparente.
 
 ---
@@ -47,13 +47,13 @@ Printer-Logs-Analyzer/
 │   │   ├── fallback/         # Catálogo bundled (JSON read-only)
 │   │   └── repositories/     # ErrorCodeRepository, SavedAnalysisRepository, PrinterModelRepository
 │   ├── migrations/           # 6 migraciones SQL (001–005 ejecutadas en Neon; 006 pendiente)
-│   └── tests/                # pytest — 78 tests
+│   └── tests/                # pytest — 138 pruebas (incluyendo validación de metadatos)
 └── frontend/
     ├── src/pages/            # DashboardPage.tsx (página principal)
     ├── src/components/       # Modales, tablas, gráficos, paneles
     ├── src/hooks/            # useAnalysis, useModals, useDateFilter, useExportPdf
     ├── src/services/api.ts   # Cliente HTTP tipado
-    └── src/__tests__/        # vitest — 93 tests
+    └── src/__tests__/        # vitest — 137 pruebas (happy-dom)
 ```
 
 ---
@@ -138,8 +138,8 @@ npm run dev:backend    # Uvicorn en 0.0.0.0:8000
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (93 tests)
-npm run test:backend   # pytest backend/tests/ -v (78 tests)
+npm run test:frontend  # vitest run (137 pruebas)
+npm run test:backend   # pytest backend/tests/ -v (138 pruebas)
 ```
 
 ---

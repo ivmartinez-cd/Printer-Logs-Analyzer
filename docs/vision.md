@@ -98,6 +98,11 @@ El botón **"Guardar incidente"** en el header guarda un snapshot del análisis 
 
 ---
 
-## Exportar PDF
+## Exportar PDF Profesional
 
-El botón **"Exportar PDF"** genera un PDF A4 con: Diagnóstico IA (si fue generado), KPIs, gráfico de errores frecuentes y tabla de incidencias.
+El botón **"Exportar PDF"** genera un reporte A4 de nivel ejecutivo de alta fidelidad (Light Mode) que incluye:
+- **Resumen Ejecutivo**: Salud general del equipo, detalle de códigos críticos y plan de acción sugerido.
+- **Diagnóstico IA**: Solo si fue generado previamente en el dashboard.
+- **KPIs de Salud**: Resumen de severidad y tasa de errores.
+- **Gráficos de Tendencia**: Top de errores más frecuentes.
+- **Detalle Técnico**: Tablas de incidentes completas, con soporte para rebanado automático en múltiples páginas si son muy extensas.
