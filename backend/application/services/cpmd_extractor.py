@@ -18,7 +18,7 @@ from backend.application.services.cpmd_parser import ErrorBlock
 
 _logger = logging.getLogger(__name__)
 
-MODEL = "claude-3-haiku-20240307"
+MODEL = "claude-haiku-4-5-20251001"
 _MAX_TOKENS = 1024
 _TIMEOUT = 60.0  # seconds per call
 
