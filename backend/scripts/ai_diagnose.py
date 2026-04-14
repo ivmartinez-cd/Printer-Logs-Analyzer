@@ -187,7 +187,7 @@ def call_claude(payload: dict) -> tuple[str, object]:
     client = anthropic.Anthropic(api_key=api_key)
 
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
+        model="claude-haiku-4-5-20251001",
         max_tokens=400,
         system=[
             {
@@ -341,3 +341,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+

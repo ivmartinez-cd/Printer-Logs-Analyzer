@@ -9,7 +9,7 @@ from anthropic import AsyncAnthropic
 
 _logger = logging.getLogger(__name__)
 
-MODEL = "claude-3-haiku-20240307"
+MODEL = "claude-haiku-4-5-20251001"
 
 # Precios por millón de tokens — Claude 3 Haiku
 _PRICE_INPUT = 0.25
