@@ -57,7 +57,6 @@ export function useExportPdf(logFileName: string | null) {
 
       const sections: Array<{ el: HTMLElement | null; label: string }> = [
         { el: executiveSummaryRef.current, label: 'Resumen ejecutivo' },
-        { el: kpisRef.current, label: 'KPIs' },
         { el: aiHasDiagnosis ? aiEl : null, label: 'Diagnóstico IA' },
         { el: consumableRef.current, label: 'Consumibles' },
         { el: areaChartRef.current, label: 'Volumen de Incidentes' },
@@ -84,6 +83,7 @@ export function useExportPdf(logFileName: string | null) {
         })
 
         const imgData = canvas.toDataURL('image/png')
+        if (imgData === 'data:,' || canvas.width === 0 || canvas.height === 0) continue;
         const imgWidthPx = canvas.width
         const imgHeightPx = canvas.height
         
