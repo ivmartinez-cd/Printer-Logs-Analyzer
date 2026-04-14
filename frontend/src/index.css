@@ -3513,3 +3513,35 @@ body.is-exporting .report-only-section {
   display: block !important;
   margin-bottom: 2rem;
 }
+
+/* ==========================================================================
+   Mejoras de Contraste para PDF (AI, Consumibles, Pasos Sugeridos)
+   ========================================================================== */
+
+/* Diagnóstico IA */
+.is-exporting .ai-diagnostic-panel__diagnosis-raw,
+.is-exporting .ai-diagnostic-panel__diagnosis-label,
+.is-exporting .ai-diagnostic-panel__diagnosis-section {
+  color: #111827 !important;
+}
+
+/* Próximos pasos y etiquetas de metadatos */
+.is-exporting .exec-next-steps li,
+.is-exporting .executive-summary__context-label {
+  color: #374151 !important;
+}
+
+/* Consumibles */
+.is-exporting .consumable-warnings-panel__intro,
+.is-exporting .consumable-warnings-panel__part,
+.is-exporting .consumable-warnings-panel__num,
+.is-exporting .consumable-warnings-panel__codes {
+  color: #374151 !important;
+}
+
+/* Fix específico para el badge "Sin alertas" que es blanco sobre verde muy claro */
+.is-exporting .consumable-warnings-panel__badge--ok {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  border: 1px solid #166534 !important;
+}
