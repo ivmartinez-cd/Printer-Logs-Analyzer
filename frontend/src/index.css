@@ -1,4 +1,4 @@
-﻿* {
+* {
   box-sizing: border-box;
 }
 body {
@@ -3330,8 +3330,25 @@ button.dashboard-table__solution-link {
   color: #6b7280 !important;
 }
 
+.is-exporting .exec-scorecard__value {
+  color: #111827 !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  display: block;
+  margin-top: 4px;
+}
+
+.is-exporting .exec-scorecard__value--critical {
+  color: #dc2626 !important;
+}
+
 .is-exporting .exec-scorecard__sub {
   color: #4b5563 !important;
+}
+
+/* Ocultar KPIs viejos para evitar duplicación con el Executive Scorecard */
+.is-exporting .kpis {
+  display: none !important;
 }
 
 .is-exporting .executive-summary__block {
@@ -3434,7 +3451,7 @@ button.dashboard-table__solution-link {
   color: #374151 !important;
 }
 
-/* Ocultar elementos */
+/* Ocultar elementos generales */
 .is-exporting .dashboard__btn,
 .is-exporting .dashboard__subheader,
 .is-exporting .collapsible-panel__chevron,
@@ -3444,6 +3461,15 @@ button.dashboard-table__solution-link {
 .is-exporting .insight-alerts-panel,
 .is-exporting .sds-incident-panel,
 .is-exporting .events-table {
+  display: none !important;
+}
+
+/* Ocultar elementos de la tabla de Incidencias en exportación */
+.is-exporting .table-toolbar,
+.is-exporting .dashboard-table__cell-expand,
+.is-exporting .dashboard-table__th-solution,
+.is-exporting .dashboard-table__cell-solution,
+.is-exporting .dashboard-table__cpmd-badge {
   display: none !important;
 }
 
