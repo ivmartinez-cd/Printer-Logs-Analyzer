@@ -11,19 +11,15 @@ Herramienta web para analizar logs de impresoras HP. Seleccionás el modelo, peg
 ## Características principales
 
 - **Parser de logs HP** — acepta formato TSV o texto copiado del portal (espacios múltiples). Soporta fechas en español (`ene`, `feb`, `mar`…).
-- **Modelos de impresora y consumibles** — selección de modelo obligatoria antes de analizar. Carga de nuevos modelos subiendo el PDF de Service Cost Data oficial (extracción automática con Claude Haiku).
-- **Estado de consumibles** — tabla con categoría, part number, vida útil, contador actual y estado ("Sin alertas" / "Próximo a revisar" / "Revisar historial") basado en los códigos del log y el modelo cargado. Excluye toners, rodillos ADF y consumibles 110V (solo se usa 220V en Argentina). El panel muestra acento rojo cuando hay componentes en estado crítico.
-- **Diagnóstico con IA** — panel colapsado que llama a Claude Haiku on demand; devuelve secciones DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
-- **SDS Engineering Incident** — carga manual de un incidente SDS con match automático contra los incidentes del log. Tres fuentes de tokens: `event_context`, `more_info` (separado por "or") y `sds.code` (CamelCase con keywords). Soporta match numérico (wildcard `z`) y por keywords extraídas (ej. `"ReplaceTrayPickRollers"` → keywords `tray`, `pick`, `roller` → coincide con `"Tray Z feed roller at end of life."`). Muestra sección "Verificar historial de consumibles" si hay solapamiento con consumibles del análisis.
-- **KPIs de severidad** — conteo de incidentes ERROR / WARNING / INFO, incidencias activas, último error crítico y tasa de errores (1 cada N páginas).
-- **Gráfico temporal** — volumen de eventos por hora con toggles de severidad y tooltip con códigos del bucket.
-- **Top 10 errores** — BarChart de los códigos con mayor ocurrencia, coloreado por severidad. Tres toggles (ERROR / WARNING / INFO) activos por default.
-- **Tabla de incidentes** — sort por columna, filtro de severidad, búsqueda por texto y expand de cada incidencia para ver eventos individuales.
-- **Filtros de fecha** — botón único con popover: 8 presets (Hoy, Esta semana, Semana anterior, Este mes, Mes anterior, Últimos 7 días, Últimos 30 días, Todo) y rango libre con calendario interactivo.
-- **Catálogo de códigos** — agrega descripción, severidad y link de solución SDS. El backend guarda el contenido HTML de la página para verlo aunque el link expire.
-- **Resumen Ejecutivo Interactivo** — nuevo panel inteligente para reportes que agrupa Salud General, Ítems Críticos y Próximos Pasos sugeridos (activo en exportación).
 - **Extracción Automática SDS** — extrae logs directamente desde el portal HP SDS mediante el número de serie. El backend gestiona el login, la búsqueda y la conversión de HTML a TSV compatible.
-- **Modo offline** — si PostgreSQL no está disponible, la app opera con archivos JSON locales de forma transparente.
+- **Integración con Portal HP SDS Insight** — visualización de alertas del dispositivo en tiempo real directamente en el dashboard.
+- **Modelos de impresora y consumibles** — carga de nuevos modelos subiendo el PDF de Service Cost Data oficial (extracción automática con Claude Haiku).
+- **Estado de consumibles** — tabla con categoría, part number, vida útil y contador. Excluye toners y componentes 110V. Acenso rojo en estado crítico.
+- **Diagnóstico con IA** — panel colapsado que llama a Claude Haiku on demand; devuelve DIAGNÓSTICO / ACCIÓN / PRIORIDAD.
+- **SDS Engineering Incident** — match automático contra los incidentes del log mediante tokens y keywords.
+- **Resumen Ejecutivo Interactivo** — nuevo panel inteligente para reportes profesionales.
+- **Exportación a PDF** — reporte de alta fidelidad incluyendo todos los paneles generados.
+- **Modo offline** — fallback a JSON local si PostgreSQL no está disponible.
 
 ---
 
@@ -37,140 +33,45 @@ Printer-Logs-Analyzer/
 ├── dev.cmd                   # Script de arranque rápido (Windows)
 ├── backend/
 │   ├── interface/api.py      # FastAPI — todos los endpoints
-│   ├── application/services/sds_web_service.py # Servicio de extracción SDS
-│   ├── migrations/           # Migraciones SQL y carga de datos inicial
-│   └── tests/                # pytest — 142 pruebas
+│   ├── interface/auth.py     # Autenticación x-api-key
+│   ├── domain/entities.py    # Modelos Pydantic
+│   ├── application/
+│   │   ├── parsers/log_parser.py
+│   │   └── services/         # AnalysisService, SDSWebService, AI, Insight
+│   ├── infrastructure/
+│   │   ├── database.py       # SQL Pool y fallback
+│   │   └── repositories/     # Persistencia
+│   ├── migrations/           # Migraciones SQL
+│   └── tests/                # pytest — 177 pruebas
 ├── frontend/
-│   ├── src/pages/            # DashboardPage.tsx (página principal)
-│   └── src/__tests__/        # vitest — 137 pruebas (happy-dom)
+│   ├── src/pages/            # DashboardPage.tsx
+│   ├── src/components/       # LogPasteModal, tablas, gráficos, etc.
+│   └── src/__tests__/        # vitest — 146 pruebas (happy-dom)
 ├── docs/                     # Documentación técnica y assets
-│   └── assets/               # Imágenes y archivos PDF de referencia
 ├── scripts/                  # POCs, utilitarios y scripts de extracción
-└── samples/                  # Logs de muestra (TSV, HTML, CSV)
-```
-
----
-
-## Requisitos
-
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL (local o [Neon](https://neon.tech)) — opcional, la app funciona sin él
-
----
-
-## Setup local
-
-### 1. Clonar e instalar dependencias
-
-```bash
-git clone <repo-url>
-cd Printer-Logs-Analyzer
-
-# Entorno virtual Python
-python -m venv .venv
-source .venv/bin/activate        # Linux/Mac
-# .\.venv\Scripts\Activate.ps1  # Windows PowerShell
-
-pip install -r backend/requirements.txt
-
-# Dependencias Node (raíz + frontend)
-npm install
-```
-
-### 2. Variables de entorno
-
-Crear `.env` en la raíz del proyecto:
-
-```
-DB_URL=postgresql://user:password@host:port/dbname
-API_KEY=tu-clave-secreta
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-Crear `frontend/.env`:
-
-```
-VITE_API_BASE=http://localhost:8000
-VITE_API_KEY=tu-clave-secreta
-```
-
-> Si omitís `DB_URL`, la app arranca en modo fallback con archivos JSON locales bajo `backend/data/`.
-
-### 3. Migraciones (solo si usás PostgreSQL)
-
-```bash
-psql "$DB_URL" -f backend/migrations/001_init.sql
-psql "$DB_URL" -f backend/migrations/002_add_rules_and_rule_tags.sql
-psql "$DB_URL" -f backend/migrations/003_create_error_codes.sql
-psql "$DB_URL" -f backend/migrations/004_create_saved_analyses.sql
-psql "$DB_URL" -f backend/migrations/005_add_solution_content.sql
-psql "$DB_URL" -f backend/migrations/006_create_printer_models.sql
-```
-
----
-
-## Desarrollo
-
-```bash
-# Frontend + backend juntos
-npm run dev
-
-# Por separado
-npm run dev:frontend   # Vite en puerto 5173
-npm run dev:backend    # Uvicorn en 0.0.0.0:8000
-```
-
-> En Windows: `npm run dev:backend` ejecuta `taskkill` antes de arrancar para liberar el puerto 8000.
-
----
-
-## Comandos útiles
-
-```bash
-npm run lint           # ESLint en frontend/src
-npm run typecheck      # tsc --noEmit
-npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (137 pruebas)
-npm run test:backend   # pytest backend/tests/ -v (138 pruebas)
+└── samples/                  # Logs de muestra y archivos de prueba
 ```
 
 ---
 
 ## API — endpoints principales
 
-Todos los endpoints (excepto `/health`) requieren el header `x-api-key`.
-
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/health` | Estado del servidor y modo de BD (`postgres` \| `local_fallback`) |
-| POST | `/parser/preview` | Parsea y analiza el log; enriquece con catálogo; calcula consumable warnings |
+| GET | `/health` | Estado del servidor y modo de BD |
+| POST | `/parser/preview` | Parse + análisis + enriquecimiento |
 | POST | `/parser/validate` | Detecta códigos nuevos sin analizar |
 | POST | `/error-codes/upsert` | Crea o actualiza un código en el catálogo |
+| POST | `/sds/extract-logs` | Extrae logs directamente del portal SDS por serial |
 | GET | `/printer-models` | Lista modelos de impresora disponibles |
-| POST | `/printer-models/upload-pdf` | Extrae modelos y consumibles de un PDF con IA |
 | POST | `/analysis/ai-diagnose` | Genera diagnóstico con Claude Haiku |
 | POST | `/saved-analyses` | Guarda un snapshot de análisis |
-| GET | `/saved-analyses` | Lista los snapshots guardados |
-| GET | `/saved-analyses/{id}` | Detalle de un snapshot |
-| DELETE | `/saved-analyses/{id}` | Eliminar un snapshot |
-| POST | `/saved-analyses/{id}/compare` | Compara logs nuevos contra un snapshot guardado |
-| POST | `/sds/extract-logs` | Extrae logs directamente del portal SDS por serial |
+| GET | `/saved-analyses` | Listar los snapshots guardados |
+| GET | `/insight/devices/{serial}/alerts` | Alertas vivas e historial del portal SDS |
 
 ---
 
-## Deploy en producción
+## Setup local
 
-| Servicio | Plataforma | URL |
-|----------|-----------|-----|
-| Frontend | Vercel | `https://printer-logs-analyzer.vercel.app` |
-| Backend | Render | `https://printer-logs-analyzer.onrender.com` |
-| Base de datos | Neon (PostgreSQL) | — |
-
-**Start command en Render:**
-```
-uvicorn backend.interface.api:app --host 0.0.0.0 --port $PORT
-```
-
-**Variables de entorno en Render:** `DB_URL`, `API_KEY`, `ANTHROPIC_API_KEY`, `ENV=production`  
-**Variables en Vercel:** `VITE_API_BASE`, `VITE_API_KEY`
+Consultar [CLAUDE.md](./CLAUDE.md) para los comandos de instalación y arranque.
+Consultar [docs/ESTADO-ACTUAL.md](./docs/ESTADO-ACTUAL.md) para el detalle del flujo técnico.

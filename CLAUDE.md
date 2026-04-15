@@ -46,8 +46,8 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 npm run lint           # ESLint en frontend/src
 npm run typecheck      # tsc --noEmit en frontend
 npm run format         # Prettier --write src (frontend)
-npm run test:frontend  # vitest run (137 pruebas - happy-dom)
-npm run test:backend   # pytest backend/tests/ -v (138 pruebas)
+npm run test:frontend  # vitest run (146 pruebas - happy-dom)
+npm run test:backend   # pytest backend/tests/ -v (177 pruebas)
 ```
 
 ---
@@ -61,23 +61,58 @@ Printer-Logs-Analyzer/
 ├── package.json                  # Scripts root (dev, lint, typecheck, test:*)
 ├── dev.cmd                       # Script de arranque rápido (Windows)
 ├── docs/                         # Documentación y assets
-│   └── assets/                   # Imágenes y PDFs
-├── samples/                      # hp_log.txt, request.json, HTML samples
-├── scripts/                      # POCs, batch files y utilitarios
+│   ├── assets/                   # Imágenes y PDFs
+│   ├── CHANGELOG.md              # Historial de versiones y hitos
+│   └── ESTADO-ACTUAL.md          # Situación técnica detallada
+├── samples/                      # Logs de muestra (TSV), HTML de portales, CSVs
+├── scripts/                      # POCs, batch files y utilitarios de extracción
 ├── backend/
 │   ├── main.py                   # Entrypoint uvicorn local
-│   ├── interface/api.py          # FastAPI app, todo incluido el /sds/extract-logs
+│   ├── requirements.txt
+│   ├── interface/
+│   │   ├── api.py                # FastAPI app, /sds/extract-logs + todos los endpoints
+│   │   └── auth.py               # Dependencia auth por API key
 │   ├── domain/entities.py        # Pydantic models (Event, Incident, ...)
-│   ├── application/services/
-│   │   ├── sds_web_service.py    # Servicio CORE de hoy: extracción SDS
-│   │   └── ...
-│   ├── infrastructure/config.py  # Settings SDS_WEB_*
+│   ├── application/
+│   │   ├── parsers/log_parser.py # Parser TSV/espacios con soporte español
+│   │   └── services/
+│   │       ├── sds_web_service.py    # Servicio CORE: extracción SDS automatizada
+│   │       ├── analysis_service.py
+│   │       ├── ai_diagnosis_service.py
+│   │       ├── compare_service.py
+│   │       ├── consumable_warning_service.py
+│   │       ├── cpmd_extractor.py
+│   │       ├── cpmd_ingest.py
+│   │       ├── cpmd_parser.py
+│   │       ├── insight_service.py    # Portal SDS API (JWT + Proxy)
+│   │       └── pdf_extraction_service.py
+│   ├── infrastructure/
+│   │   ├── config.py             # Settings (SDS_WEB_*, DB_URL, etc.)
+│   │   ├── content_fetcher.py    # validate_ssrf_url + fetch_solution_content
+│   │   ├── database.py           # psycopg2 con pool y fallback automático
+│   │   ├── fallback/error_codes_seed.json
+│   │   └── repositories/
+│   │       ├── error_code_repository.py
+│   │       ├── error_solution_repository.py
+│   │       ├── printer_model_repository.py
+│   │       └── saved_analysis_repository.py
 │   ├── migrations/               # SQL y data (incl. carga_cpmd_626xx.sql)
-│   └── tests/                    # 142 pruebas
+│   └── tests/                    # 177 pruebas (pytest)
 └── frontend/
-    ├── src/pages/DashboardPage.tsx
-    ├── src/services/api.ts
-    └── src/__tests__/            # 137 pruebas
+    ├── .prettierrc               # Reglas de formato
+    ├── vite.config.ts            # manualChunks optimizados
+    ├── src/
+    │   ├── pages/DashboardPage.tsx
+    │   ├── components/
+    │   │   ├── LogPasteModal.tsx     # Refactorizado: UI de carga/extracción
+    │   │   └── ...
+    │   ├── hooks/
+    │   │   ├── useDateFilter.ts
+    │   │   ├── useAnalysis.ts
+    │   │   └── ...
+    │   ├── services/api.ts       # Cliente HTTP tipado
+    │   └── contexts/ToastContext.tsx
+    └── src/__tests__/            # 146 pruebas (vitest + happy-dom)
 ```
 
 ---
@@ -100,111 +135,19 @@ Todos los modelos son Pydantic con `model_config = {"frozen": True}`.
 
 ### Parser (`application/parsers/log_parser.py`)
 
-Formato de entrada: TSV o espacios múltiples.
+Formato de entrada: TSV o espacios múltiples (normaliza `\s{2,}` → `\t`). Soporta meses en español.
 
-Decisiones clave:
-- **Normaliza `\s{2,}` → `\t`** antes de parsear — logs HP usan espacios en vez de tabs
-- **Meses en español** (`ene→jan`, `mar→mar`, etc.) antes de `strptime`
-- Candidato a header: primeras 3 líneas no vacías (`non_empty_count <= 3`) — tolera líneas en blanco al inicio
-- Tolerante a errores: líneas malformadas en `ParserError` sin detener el parse
-- Retorna `ParserReport` con `events` y `errors`
+### SDS Web Service (`application/services/sds_web_service.py`)
 
-**Sin caché de preview** — eliminado deliberadamente (causaba respuestas con código viejo tras hot-reload).
+**SERVICIO CRÍTICO**: Maneja el login automatizado al portal HP SDS, búsqueda de dispositivos por serial y extracción del HTML de eventos. Convierte el HTML crudo a TSV compatible con el parser interno.
 
 ### Analysis service (`application/services/analysis_service.py`)
 
-- Ordena por timestamp, agrupa por código → un `Incident` por código
-- Severity: máximo de sus eventos (ERROR=3 > WARNING=2 > INFO=1)
-- `sds_link`/`sds_solution_content`: del primer evento con `code_solution_url`
-- `global_severity`: máximo de todos los eventos
-
-### Consumable warning service (`application/services/consumable_warning_service.py`)
-
-`compute_consumable_warnings(events, consumables, max_counter)` — returns `List[ConsumableWarning]` sorted by status (`replace` → `warning` → `ok`), then `usage_pct` desc. Excludes:
-- `category == "toner"` — page counter doesn't reflect toner wear.
-- ADF rollers (`ADF_DESCRIPTION_PATTERNS`: `"adf"`, `"document feeder"`, `"automatic document feeder"`, case-insensitive) — page counter counts prints, not ADF cycles.
-- 110V components (`VOLTAGE_EXCLUSION_PATTERNS`: `"110v"`) — only 220V is used in Argentina.
-
-Both groups are checked by `_is_excluded_by_description(description)`. Code patterns support `z` wildcard (any hex digit). Called from `/parser/preview` when `model_id` is present; failures are logged and skipped without breaking analysis.
-
-### Compare service (`application/services/compare_service.py`)
-
-Retorna `"mejoro"` | `"estable"` | `"empeoro"` (sin tildes — fuente de verdad del backend).
-
-- **empeoro**: ERROR nuevo, ERROR existente +≥3 ocurrencias, total ERRORs +≥20%, o transición 0→N errores
-- **mejoro**: desapareció al menos un ERROR, total ERRORs bajó, sin ERRORs nuevos
-- **estable**: cualquier otro caso
-
-### Infraestructura
-
-**`auth.py`** — valida header `x-api-key`. HTTP 401 si falta o incorrecta.
-
-**`content_fetcher.py`:**
-- `validate_ssrf_url(url)` — requiere `https`, hostname presente, IP no privada/reservada (10.x, 172.16–31.x, 192.168.x, 127.x, 169.254.x). HTTP 422 si falla. Lecturas de `parsed.scheme`/`parsed.hostname` dentro del `try` (lanza `ValueError` con URLs malformadas).
-- `async fetch_solution_content(url)` — `httpx.AsyncClient`, BeautifulSoup, `bleach.clean(tags=[], strip=True)`. Límite 50 KB.
-
-**`database.py`** — `ThreadedConnectionPool` (min=1, max=5), lazy init. Lanza `DatabaseUnavailableError` en timeout/fallo/pool exhausto.
-
-**Repositorios:**
-- `ErrorCodeRepository` — `ErrorCode`: `id, code, severity, description, solution_url, solution_content, created_at, updated_at`
-- `SavedAnalysisRepository` — `SavedAnalysisSnapshot`: `id (UUID), name, equipment_identifier, incidents (List[dict]), global_severity, created_at`
-- Ambos usan `threading.Lock()` (`_local_write_lock`) para serializar el ciclo read-modify-write del JSON de fallback.
+Agrupa por código, calcula severidades y extrae URLs de soluciones del catálogo.
 
 ### DB fallback (offline / firewall corporativo)
 
-Switch automático cuando PostgreSQL no está disponible:
-- `error_codes`: lee de `fallback/error_codes_seed.json`; upserts → `data/error_codes_local.json`
-- `saved_analyses`: CRUD → `data/saved_analyses_local.json`
-- `GET /health` reporta `"db_mode": "local_fallback"`
-
-### API endpoints (`interface/api.py`)
-
-Todos excepto `/health` requieren `x-api-key`. Sin key → HTTP 401. Logs hasta 2M caracteres.
-
-| Método | Ruta | Propósito |
-|--------|------|-----------|
-| GET | `/health` | Health probe; retorna `db_mode`, `db_available` |
-| POST | `/parser/preview` | Parse + análisis + enriquecimiento desde catálogo |
-| POST | `/parser/validate` | Valida formato, detecta códigos nuevos |
-| POST | `/error-codes/upsert` | Crear/actualizar código; fetchea `solution_content` async |
-| POST | `/saved-analyses` | Guardar snapshot |
-| GET | `/saved-analyses` | Listar snapshots |
-| GET | `/saved-analyses/{id}` | Obtener snapshot |
-| DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
-| POST | `/saved-analyses/{id}/compare` | Comparar logs vs snapshot |
-| POST | `/analysis/ai-diagnose` | Diagnóstico con Claude Haiku |
-| GET | `/printer-models` | Lista modelos de impresora |
-| POST | `/printer-models/upload-pdf` | Extraer modelos de un PDF con IA |
-| POST | `/models/{id}/cpmd` | Ingestar un PDF CPMD para extraer soluciones oficiales referenciadas |
-| GET | `/models/{model_id}/error-solutions/{code}`| Obtener la solución CPMD para el código de error |
-| GET | `/parser/preview (extension)` | Ahora incluye `log_start_date`, `log_end_date` y `total_lines` |
-
-**CORS:** `printer-logs-analyzer.vercel.app`, `localhost:5173/5174`, `127.0.0.1:5173/5174`
-
-**Rate limiting** (slowapi, in-memory, por IP):
-- `/parser/preview`: 60/min
-- `/parser/validate`: 60/min
-- `/error-codes/upsert`: 30/min
-
-### Migraciones SQL (`backend/migrations/`)
-
-Correr manualmente. Las 5 primeras están ejecutadas en producción (Neon). La 006 y 007 están pendientes.
-
-| Archivo | Contenido |
-|---------|-----------|
-| `001_init.sql` | `config_versions`, `audit_log`, `rules`, `rule_tags` (legacy, no usadas) |
-| `002_add_rules_and_rule_tags.sql` | Continuación de 001 |
-| `003_create_error_codes.sql` | Tabla `error_codes` con UNIQUE(code) |
-| `004_create_saved_analyses.sql` | Tabla `saved_analyses` con JSONB para incidents |
-| `005_add_solution_content.sql` | `ALTER TABLE error_codes ADD COLUMN solution_content TEXT` |
-| `006_create_printer_models.sql` | Tablas `printer_models`, `printer_consumables`, `consumable_related_codes`; `ALTER TABLE saved_analyses ADD COLUMN model_id UUID` |
-| `007_create_error_solutions.sql` | Tabla `error_solutions` y tabla técnica para relacionar fallos (CPMDs extraídos) |
-
-### Variables de entorno (dev local)
-
-**Backend (`.env` en raíz):** `DB_URL=postgresql://...`, `API_KEY=...`
-
-**Frontend (`frontend/.env`):** `VITE_API_BASE=http://localhost:8000`, `VITE_API_KEY=...`
+Switch automático a JSON local (`backend/data/`) cuando PostgreSQL no está disponible. `threading.Lock()` evita race conditions.
 
 ---
 
@@ -212,120 +155,20 @@ Correr manualmente. Las 5 primeras están ejecutadas en producción (Neon). La 0
 
 ### DashboardPage.tsx
 
-Orquesta vistas (`dashboard` | `saved-list` | `saved-detail`) y hooks. Flujo principal:
+Orquesta vistas y hooks. Flujo: `LogPasteModal` (Carga/Extracción) → Confirmación → Dashboard Principal.
 
-1. "Pegar logs y analizar" → abre `LogPasteModal`
-2. `handleAnalyze()` → `Promise.all([POST /parser/preview, POST /parser/validate])`
-3. Respuesta en `pendingResult` / `pendingCodesNew`
-4. Modal `ConfirmModal` "¿Agregar incidente SDS?" → `SDSIncidentModal` o directo
-5. `commitPendingResult()` mueve `pendingResult` → `result`, muestra dashboard
-6. Render: `<KPICards>` → `<AIDiagnosticPanel>` → `<SDSIncidentPanel>` → `<ConsumableWarningsPanel>` → `<IncidentsChart>` → `<TopErrorsChart>` → `<IncidentsTable>` → `<EventsTable>`
+### LogPasteModal.tsx
 
-Post-upsert de código: actualizar `result` directamente (sin re-fetch). Actualizar `events[]`, `incidents[].events[]`, `incidents[].sds_link` e `incidents[].sds_solution_content` — el botón "Ver solución" lee nivel incidente, no nivel evento.
+Componente especializado que permite al usuario o bien pegar el log manualmente o ingresar un serial para **extracción automática**.
 
-### Hooks
+### useExportPdf.ts
 
-- **`useAnalysis`** — estado y handlers del flujo: `loading`, `result`, `pendingResult`, `codesNew`, `handleAnalyze`, `commitPendingResult`, `handleSaveCodeToCatalog`, `handleSaveIncident`
-- **`useModals`** — 11 estados de modales: `logModalOpen`, `sdsPreModalOpen`, `sdsModalOpen`, `sdsIncident`, `addCodeModalCode`, `editCodeInitial`, `saveIncidentModalOpen`, `compareModalOpen`, `deleteConfirm`, `solutionModal`, `helpModalOpen`
-- **`useDateFilter`** — `DateFilter = null | "YYYY-MM-DD" | { start, end }`. Funciones puras exportadas: `filterEventsByDate`, `filterIncidentsByDate`, `getWeekRange`, `weekInputToRange`, `formatWeekRange`, `formatDayFilter`, `getDateRangeFromEvents`, `formatDateTime`
-- **`useExportPdf`** — PDF A4 con html2canvas (scale 2) + jsPDF (lazy import); refs para AIDiagnosticPanel (si ya fue generado), KPIs, BarChart, tabla de incidentes
-
-### Componentes (`frontend/src/components/`)
-
-| Componente | Propósito |
-|------------|-----------|
-| `DashboardHeader.tsx` | Header: logo, logFileName, botones de acción, LiveClock, DbStatusBadge |
-| `KPICards.tsx` | 4 KPIs: errores/warnings/info, incidencias activas, último error, tasa de errores |
-| `IncidentsTable.tsx` | Tabla incidentes; sort/filtro interno; recibe `IncidentRow[]` ya filtrados por fecha |
-| `EventsTable.tsx` | Tabla eventos colapsable; **arranca colapsada**; sort/filtro interno; recibe `ApiEvent[]` ya filtrados |
-| `IncidentsChart.tsx` | AreaChart eventos/hora con toggles de severidad |
-| `TopErrorsChart.tsx` | BarChart top 10 códigos de error coloreado por severidad |
-| `AddCodeToCatalogModal.tsx` | Form agregar/editar código del catálogo |
-| `UploadCpmdModal.tsx` | Upload de PDF para documentacion CPMD referenciando paso a paso |
-| `SaveIncidentModal.tsx` | Form guardar análisis con nombre y equipment_identifier |
-| `SDSIncidentModal.tsx` | Pegar SDS; parsea texto → SdsIncidentData |
-| `SDSIncidentPanel.tsx` | Muestra SDS, contenido recuperado y match vs incidentes del log |
-| `ConsumableWarningsPanel.tsx` | "Estado de consumibles" — tabla con texto introductorio de aviso; **arranca colapsada**; solo se renderiza si `warnings.length > 0`; posición: entre SDSIncidentPanel y gráficos; excluye toners y ADF |
-| `ConfirmModal.tsx` | Modal de confirmación genérico |
-| `AIDiagnosticPanel.tsx` | Diagnóstico con IA; arranca colapsado, llama a `/analysis/ai-diagnose` on demand |
-| `DateRangePicker.tsx` | Picker de rango de fechas con presets (hoy, semana, mes, N días) y DayPicker interactivo; popover alineado a `right: 0` para no salirse del viewport |
-| `SavedAnalysisList.tsx` | Lista análisis guardados con búsqueda y evolución por equipo |
-| `EquipmentTimeline.tsx` | LineChart evolución de errores por equipo entre snapshots |
-| `SavedAnalysisDetail.tsx` | Detalle snapshot con tabla de incidentes y comparación |
-| `SolutionContentModal.tsx` | Muestra contenido de solución guardado; link al URL |
-| `HelpModal.tsx` | Ayuda estática con 6 secciones |
-| `ExecutiveSummary.tsx` | Resumen ejecutivo para reportes; Salud, Items críticos, Siguientes pasos |
-| `Toast.tsx` | Renderer de notificaciones (consume ToastContext) |
-
-**Match SDS vs Log (`SDSIncidentPanel`):** `getSdsCodesForMatch` construye los tokens desde `event_context`, `more_info` (split por `or`) y `sds.code` (cuando es CamelCase sin dígitos y con ≥1 keyword significativa — excluye IDs como `"TriageInput2"` y stopwords sueltas como `"Replace"`). Cada token se despacha por `sdsTokenMatchesIncident`:
-- **Numérico** (contiene `.`): `incidentCodeMatchesSds` con wildcard `z` (`53.B0.0z` → `53.B0.01`…`53.B0.0F`).
-- **Mensaje** (sin `.`): `extractSdsKeywords` — split CamelCase, lowercase, singular básico (quita `s` final si length > 3), descarta `SDS_STOPWORDS` (`replace`, `check`, `clean`, `verify`, `reset`, `the`, `a`). Match si ≥ `MIN_KEYWORD_MATCHES = 1` keyword aparece en `normalizeForMessageMatch(classification)`. Ej. `"ReplaceTrayPickRollers"` → `["tray","pick","roller"]` → coincide con `"Tray Z feed roller at end of life."`.
-
-Status `'general'` solo cuando `getSdsCodesForMatch` devuelve lista vacía.
-
-### AIDiagnosticPanel
-
-- Arranca **colapsado** (`collapsed: true`). Header-button con chevron (`▶` / `▼ rotado`) hace toggle.
-- Al expandir muestra CTA → loading → diagnosis o error, según estado actual.
-- Llama a `POST /analysis/ai-diagnose` on demand (botón "Generar análisis con IA").
-- El diagnóstico se parsea en secciones `DIAGNÓSTICO / ACCIÓN / PRIORIDAD`; fallback a `<pre>` crudo.
-- `collapsed` es independiente del resto del estado: colapsar/expandir no resetea el diagnóstico ya generado.
-- Resetea `diagnosis` y `error` cuando cambia `result` (nuevo log analizado).
-- El PDF exporta el panel solo si el diagnóstico ya fue generado (detecta `.ai-diagnostic-panel__diagnosis` como descendiente).
-
-### Cliente HTTP (`services/api.ts`)
-
-- `API_BASE`: `VITE_API_URL` → `VITE_API_BASE` → `http://localhost:8000`
-- `API_KEY`: `VITE_API_KEY` → `dev`
-- `apiFetch()` aplica `AbortSignal.timeout(30s)`; health pings usan 10s; `TimeoutError` → mensaje en español
-
-### Tipos (`types/api.ts`)
-
-`Event`, `EnrichedEvent`, `Incident`, `ParseLogsResponse` (includes `consumable_warnings: ConsumableWarning[]`, `log_start_date`, `log_end_date`, `total_lines`), `ValidateLogsResponse`, `ErrorCodeUpsertBody`, `SavedAnalysisIncidentItem`, `SavedAnalysisSummary`, `SavedAnalysisFull`, `CompareDiff`, `CompareResponse`, `ConsumableWarning`
-
-`CompareDiff.tendencia`: `'mejoro' | 'estable' | 'empeoro'` (sin tildes — espeja exactamente el backend).
-
-### Prettier
-
-`.prettierrc`: `singleQuote: true`, `semi: false`, `tabWidth: 2`, `trailingComma: "es5"`, `printWidth: 100`
-
-`.prettierignore` incluye `src/vite-env.d.ts` — **no eliminar nunca**. Si Prettier vacía ese archivo, `tsc -b` falla con errores de `ImportMeta.env` y `./index.css`.
-
-### Tests de componentes
-
-- Cada archivo de test declara `// @vitest-environment jsdom` como primera línea
-- `afterEach(cleanup)` explícito en cada archivo (auto-cleanup no activo en todos los entornos vitest)
-- Preferir `getByRole` o `querySelector` sobre `getByText` (evita matches en padre e hijo)
-- `fixtures/events.ts`: `mockEvent`, `mockIncident`, `mockIncidentRow`, `mockEvents`, `mockIncidents`
+Genera reportes PDF profesionales alineados al Executive Summary y paneles colapsados (si están generados). Fuerza modo Light para legibilidad.
 
 ---
 
 ## Decisiones técnicas importantes
 
-**Parser — espacios:** logs HP usan espacios múltiples en vez de tabs. Normalizar `\s{2,}` → `\t` es el primer paso; sin esto nada parsea.
-
-**Parser — meses en español:** timestamps como `14-mar-2024`. Dict de reemplazo antes de `strptime`.
-
-**`solution_content` en DB:** links HP tienen tokens que expiran. Se fetchea el HTML al guardar el código. Frontend puede mostrar contenido aunque el link esté vencido.
-
-**DB fallback:** switch automático a JSON local cuando PostgreSQL no está disponible. Sin intervención manual. Threading lock evita race conditions en escrituras concurrentes.
-
-**SSRF validation:** `validate_ssrf_url` en `content_fetcher.py`. Rechaza scheme no-https, IPs privadas/reservadas. Lecturas de `parsed.scheme`/`parsed.hostname` dentro del `try` para capturar `ValueError` de URLs malformadas.
-
-**Contrato de tendencia:** backend retorna `"mejoro"` | `"estable"` | `"empeoro"` sin tildes. `types/api.ts` debe espejarlo exactamente — si no, los comparadores nunca matchean en runtime.
-
-**`vite-env.d.ts` en Prettier ignore:** Prettier elimina la directiva `/// <reference>` y rompe `tsc -b`. El archivo debe estar siempre en `.prettierignore`.
-
-**`--reload-dir .` en uvicorn:** En Windows, uvicorn con `--reload` sin `--reload-dir` no detecta cambios. Es obligatorio.
-
-**`taskkill` antes de uvicorn:** procesos Python en Windows no siempre liberan el puerto 8000. Sin `taskkill`, el nuevo servidor no arranca o arranca en el proceso viejo.
-
----
-
-## Deploy
-
-Deploy: Vercel (frontend) + Render (backend). Ver `docs/deploy.md`.
-
-## Deuda técnica conocida
-
-- Las tablas `config_versions`, `rules`, `rule_tags` existen en DB pero no se usan (legacy de v1) — no se eliminan para no correr DDL destructivo en producción.
+- **`vite-env.d.ts` en Prettier ignore:** Prettier elimina la directiva `/// <reference>` y rompe `tsc -b`. Mantenlo siempre en `.prettierignore`.
+- **`--reload-dir .` en uvicorn:** Obligatorio en Windows para detectar cambios.
+- **`taskkill` antes de uvicorn:** Crucial para liberar el puerto 8000 en reinicios rápidos.
