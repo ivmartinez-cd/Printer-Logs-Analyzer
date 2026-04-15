@@ -61,6 +61,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 function App() {
   const [serverWasCold, setServerWasCold] = useState(false)
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
+  const [urlSerial] = useState<string | null>(() => {
+    // Detect serial in URL path: /SERIALNUMBER
+    const path = window.location.pathname.slice(1) // remove leading /
+    if (path && /^[A-Z0-9]{5,20}$/i.test(path)) {
+      return path.toUpperCase()
+    }
+    return null
+  })
 
   useEffect(() => {
     const start = Date.now()
@@ -71,13 +79,18 @@ function App() {
     const id = setInterval(() => {
       getHealth().then(setHealthStatus)
     }, KEEP_ALIVE_INTERVAL_MS)
+
     return () => clearInterval(id)
   }, [])
 
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <DashboardPage serverWasCold={serverWasCold} healthStatus={healthStatus} />
+        <DashboardPage 
+          serverWasCold={serverWasCold} 
+          healthStatus={healthStatus} 
+          initialSerial={urlSerial} 
+        />
         <ToastContainer />
       </ToastProvider>
       <Analytics />

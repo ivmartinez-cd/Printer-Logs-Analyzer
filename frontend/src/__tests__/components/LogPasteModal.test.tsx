@@ -135,7 +135,29 @@ describe('LogPasteModal', () => {
     expect(analyzeBtn).not.toBeDisabled()
     
     fireEvent.click(analyzeBtn)
-    expect(mockOnAnalyze).toHaveBeenCalledWith('some log data', undefined, 'm1', false, null)
+    expect(mockOnAnalyze).toHaveBeenCalledWith('some log data', undefined, 'm1', false, null, false)
+  })
+
+  it('enables analyze button with only serial number (automated flow)', async () => {
+    render(
+      <LogPasteModal
+        loading={false}
+        error={null}
+        serverWasCold={false}
+        onAnalyze={mockOnAnalyze}
+        onClose={mockOnClose}
+      />
+    )
+
+    const serialInput = screen.getByPlaceholderText(/Ej: CNNCQ520HG/i)
+    fireEvent.change(serialInput, { target: { value: 'MXSCS7' } })
+    
+    const analyzeBtn = screen.getByText('Analizar')
+    expect(analyzeBtn).not.toBeDisabled()
+    
+    fireEvent.click(analyzeBtn)
+    // isAutomated should be true because logText is empty
+    expect(mockOnAnalyze).toHaveBeenCalledWith('', undefined, null, false, 'MXSCS7', true)
   })
 
   it('disables analyze button when input is missing', async () => {

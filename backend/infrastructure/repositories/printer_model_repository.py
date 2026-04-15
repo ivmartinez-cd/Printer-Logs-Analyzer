@@ -129,6 +129,52 @@ class PrinterModelRepository:
         consumables = [_row_to_consumable(r) for r in consumable_rows]
         return model, consumables
 
+    def find_best_match(self, name: str) -> Optional[PrinterModel]:
+        """Try to find the best printer model match based on a string name."""
+        try:
+            if not self._db:
+                raise DatabaseUnavailableError("No Database provided")
+            
+            # Simple approach: case-insensitive search for the name inside model_name
+            # or model_name inside the provided name.
+            with self._db.connect() as conn:
+                with conn.cursor() as cur:
+                    # 1. Exact or partial match (case insensitive)
+                    cur.execute(
+                        """
+                        SELECT id, model_name, model_code, family, ampv,
+                               engine_life_pages, notes, created_at, updated_at
+                        FROM printer_models
+                        WHERE LOWER(%s) LIKE LOWER('%%' || model_name || '%%')
+                           OR LOWER(model_name) LIKE LOWER('%%' || %s || '%%')
+                        ORDER BY LENGTH(model_name) DESC
+                        LIMIT 1
+                        """,
+                        (name, name),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        return _row_to_model(row)
+            return None
+        except DatabaseUnavailableError:
+            return self._find_best_match_local(name)
+
+    def _find_best_match_local(self, name: str) -> Optional[PrinterModel]:
+        data = self._load_local()
+        name_lower = name.lower()
+        candidates = []
+        for d in data:
+            m_name_lower = d.get("model_name", "").lower()
+            if m_name_lower in name_lower or name_lower in m_name_lower:
+                candidates.append(d)
+        
+        if not candidates:
+            return None
+            
+        # Pick the one with the longest name (most specific usually)
+        candidates.sort(key=lambda x: len(x.get("model_name", "")), reverse=True)
+        return _dict_to_model(candidates[0])
+
     def create_with_consumables(
         self, model_data: dict, consumables: List[dict]
     ) -> PrinterModel:

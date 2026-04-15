@@ -2,21 +2,27 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-15 (Reorganización de archivos, Tests Refactorizados, Extracción Automática SDS)
+Última actualización: 2026-04-15 (Deep Linking, Resolución Automática de Modelo por Serial)
 
 ---
 
 ## 1. Qué hace la app
 
-Herramienta web interna para analizar logs de impresoras HP: seleccionar modelo, obtener el log (pegado o extracción), ver incidentes agrupados por código, advertencias de consumibles, diagnóstico con IA, SDS match y eventos detallados.
+Herramienta web interna para analizar logs de impresoras HP. El sistema permite identificar un equipo mediante su número de serie, auto-detectar su modelo, extraer sus logs del portal SDS y generar un análisis completo de incidentes, consumibles y diagnóstico AI.
+
+**Nuevas Capacidades de Flujo:**
+- **Deep Linking**: Acceso directo vía URL `https://.../SERIALNUMBER`. La app detecta el serial en la ruta, resuelve el modelo y extrae los logs automáticamente.
+- **Resolución Automática**: Al buscar un serial en el portal SDS, el sistema extrae el nombre del modelo y busca la mejor coincidencia en el catálogo local.
 
 **Flujo del usuario:**
-1. Abrir modal "Pegar logs HP" y **seleccionar el modelo de impresora** (obligatorio).
-2. Obtener el log mediante dos opciones:
-   - **Pegar manualmente**: el log copiado desde el portal.
-   - **Extraer automáticamente**: ingresar el número de serie y pulsar "Extraer logs" (la app se encarga del login y fetch).
-3. Analizar: Se ejecutan `POST /parser/preview` y `POST /parser/validate`.
-4. Si hay **códigos nuevos**, agregarlos o ignorarlos.
+1. **Acceso Directo**: Entrar con el Número de Serie en la URL (recomendado para técnicos).
+2. **Identificación Manual** (LogPasteModal):
+   - Ingresar Número de Serie: habilita el botón "Analizar" inmediatamente.
+   - El modelo se vuelve opcional si hay un serial (se resuelve automáticamente).
+3. **Obtención de Logs**:
+   - **Extracción Totalmente Automática**: Si solo hay serial, la app hace Login -> Search -> Resolve Model -> Fetch Logs -> Analyze.
+   - **Pegado Manual**: Como alternativa, se pueden seguir pegando logs directamente si ya se disponen de ellos.
+4. Analizar: Se ejecutan `POST /parser/preview` y `POST /parser/validate`.
 5. Ver KPIs, Diagnóstico con IA, Insight SDS en vivo, Estado de consumibles y reportes profesionales.
 
 ---

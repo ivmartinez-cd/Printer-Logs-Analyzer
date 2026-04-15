@@ -214,9 +214,21 @@ export interface DeviceAlertsResponse {
   history?: InsightAlert[]
 }
 
+export interface ResolveDeviceResponse {
+  serial: string
+  device_id: string
+  model_name_sds: string
+  suggested_model_id: string | null
+  suggested_model_name: string | null
+  has_cpmd: boolean
+}
+
 export interface ExtractSdsLogsResponse {
   serial: string
   device_id: string
+  model_name_sds: string
+  suggested_model_id: string | null
+  has_cpmd: boolean
   logs_text: string
   event_count: number
 }

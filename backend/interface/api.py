@@ -57,6 +57,27 @@ class ExtractSdsLogsRequest(BaseModel):
     days: int = 30
 
 
+class ResolveDeviceResponse(BaseModel):
+    """Response of GET /sds/resolve-device."""
+    serial: str
+    device_id: str
+    model_name_sds: str
+    suggested_model_id: Optional[UUID] = None
+    suggested_model_name: Optional[str] = None
+    has_cpmd: bool = False
+
+
+class ExtractSdsLogsResponse(BaseModel):
+    """Full response for SDS extraction including model info."""
+    serial: str
+    device_id: str
+    model_name_sds: str
+    suggested_model_id: Optional[UUID] = None
+    has_cpmd: bool = False
+    logs_text: str
+    event_count: int
+
+
 
 MAX_LOGS_LENGTH = 2_000_000
 
@@ -906,13 +927,60 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
         return result
 
-    @app.post("/sds/extract-logs")
+    @app.get("/sds/resolve-device", response_model=ResolveDeviceResponse, dependencies=[Depends(authenticate)])
+    @limiter.limit("20/minute")
+    async def resolve_device_endpoint(
+        request: Request,
+        serial: str,
+    ) -> ResolveDeviceResponse:
+        """Resolve a device info from SDS portal by serial number, including model matching."""
+        if not (settings.sds_web_username and settings.sds_web_password):
+            raise HTTPException(status_code=503, detail="SDS Web not configured")
+
+        serial = serial.strip().upper()
+        if not serial:
+            raise HTTPException(status_code=400, detail="Serial is required")
+
+        try:
+            # 1. Search in SDS
+            sds = get_sds_session(settings)
+            info = await asyncio.to_thread(sds.search_device, serial)
+            
+            # 2. Try to match model in DB
+            suggested_model_id = None
+            suggested_model_name = None
+            has_cpmd = False
+            
+            model_match = await asyncio.to_thread(printer_model_repository.find_best_match, info["model_name"])
+            if model_match:
+                suggested_model_id = model_match.id
+                suggested_model_name = model_match.model_name
+                
+                # Check for CPMD
+                cpmd_models = error_solution_repository.get_model_ids_with_solutions()
+                has_cpmd = str(model_match.id) in cpmd_models
+
+            return ResolveDeviceResponse(
+                serial=serial,
+                device_id=info["id"],
+                model_name_sds=info["model_name"],
+                suggested_model_id=suggested_model_id,
+                suggested_model_name=suggested_model_name,
+                has_cpmd=has_cpmd
+            )
+        except SDSWebError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+        except Exception as exc:
+            logging.exception("Error resolving device by serial: %s", exc)
+            raise HTTPException(status_code=500, detail="Internal error resolving device")
+
+    @app.post("/sds/extract-logs", response_model=ExtractSdsLogsResponse)
     @limiter.limit("10/minute")
     async def extract_sds_logs(
         request: Request,
         body: ExtractSdsLogsRequest,
         _: None = Depends(authenticate),
-    ) -> Dict[str, Any]:
+    ) -> ExtractSdsLogsResponse:
         """Fetch event logs from SDS portal by serial number."""
         if not (settings.sds_web_username and settings.sds_web_password):
             raise HTTPException(
@@ -928,15 +996,32 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             # Running synchronous extraction in a thread to keep FastAPI async
             def _do_extract():
                 sds = get_sds_session(settings)
-                device_id = sds.search_device(serial)
+                # Now search_device returns a dict {"id", "model_name"}
+                info = sds.search_device(serial)
+                device_id = info["id"]
+                model_name_sds = info["model_name"]
+                
                 raw_html = sds.fetch_event_logs_html(device_id, body.days)
                 tsv_text = html_to_tsv(raw_html)
-                return {
-                    "serial": serial,
-                    "device_id": device_id,
-                    "logs_text": tsv_text,
-                    "event_count": len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0
-                }
+                
+                # Try match suggested model
+                suggested_model_id = None
+                has_cpmd = False
+                model_match = printer_model_repository.find_best_match(model_name_sds)
+                if model_match:
+                    suggested_model_id = model_match.id
+                    cpmd_models = error_solution_repository.get_model_ids_with_solutions()
+                    has_cpmd = str(model_match.id) in cpmd_models
+
+                return ExtractSdsLogsResponse(
+                    serial=serial,
+                    device_id=device_id,
+                    model_name_sds=model_name_sds,
+                    suggested_model_id=suggested_model_id,
+                    has_cpmd=has_cpmd,
+                    logs_text=tsv_text,
+                    event_count=len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0
+                )
 
             # Render 30s timeout protection: wait for 28.5s then fail gracefully
             try:
@@ -949,13 +1034,11 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 )
 
         except SDSWebError as exc:
-            raise HTTPException(status_code=502, detail=str(exc)) from exc
+            raise HTTPException(status_code=502, detail=str(exc))
         except HTTPException:
             raise
         except Exception as exc:
-            import logging
-            _logger = logging.getLogger(__name__)
-            _logger.exception("Unexpected error extracting logs: %s", exc)
+            logging.exception("Unexpected error extracting logs: %s", exc)
             raise HTTPException(status_code=500, detail="Error interno durante la extracción")
 
 

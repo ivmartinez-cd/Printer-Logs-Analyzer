@@ -83,8 +83,8 @@ def test_search_device_redirect(mock_session_cls, sds_session):
         url="https://.../devices/123456"
     )
     
-    device_id = sds_session.search_device("SERIAL123")
-    assert device_id == "123456"
+    device_info = sds_session.search_device("SERIAL123")
+    assert device_info["id"] == "123456"
     assert "/search" in mock_sess.get.call_args[0][0]
 
 @patch("requests.Session")
@@ -100,8 +100,8 @@ def test_search_device_list(mock_session_cls, sds_session):
         text='<a href="/PortalWeb/devices/998877">Device Name</a>'
     )
     
-    device_id = sds_session.search_device("SERIAL")
-    assert device_id == "998877"
+    device_info = sds_session.search_device("SERIAL")
+    assert device_info["id"] == "998877"
 
 def test_ensure_session_lazy_login(sds_session):
     """Test that ensure_session triggers login only when needed."""
