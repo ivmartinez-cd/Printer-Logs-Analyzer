@@ -844,7 +844,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         # Run blocking ingestion in a thread so the event loop stays free
         report = await asyncio.to_thread(
             ingest_cpmd,
-            uid,
+            [uid],
             pdf_bytes,
             api_key,                     # positional: api_key
             error_solution_repository,   # positional: repository

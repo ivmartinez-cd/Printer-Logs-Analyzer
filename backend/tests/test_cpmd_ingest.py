@@ -111,7 +111,7 @@ def test_second_call_with_same_hash_returns_skipped() -> None:
             return_value=([high_result], []),
         ),
     ):
-        report1 = ingest_cpmd(_MODEL_ID, _FAKE_PDF, _API_KEY, repository=mock_repo)
+        report1 = ingest_cpmd([_MODEL_ID], _FAKE_PDF, _API_KEY, repository=mock_repo)
 
     assert not report1.skipped
     assert report1.extracted == 1
@@ -129,10 +129,10 @@ def test_second_call_with_same_hash_returns_skipped() -> None:
             return_value=[high_result],
         ) as mock_extract_all,
     ):
-        report2 = ingest_cpmd(_MODEL_ID, _FAKE_PDF, _API_KEY, repository=mock_repo)
+        report2 = ingest_cpmd([_MODEL_ID], _FAKE_PDF, _API_KEY, repository=mock_repo)
 
     assert report2.skipped is True
-    assert report2.reason == "Ya procesado"
+    assert report2.reason == "Todos los modelos ya procesados"
     assert report2.cpmd_hash == _FAKE_HASH
     # PDF must not be re-processed
     mock_extract_blocks.assert_not_called()
@@ -164,7 +164,7 @@ def test_different_hash_is_not_skipped() -> None:
             return_value=([high_result], []),
         ),
     ):
-        report = ingest_cpmd(_MODEL_ID, other_pdf, _API_KEY, repository=mock_repo)
+        report = ingest_cpmd([_MODEL_ID], other_pdf, _API_KEY, repository=mock_repo)
 
     assert not report.skipped
     assert report.cpmd_hash == other_hash
@@ -200,7 +200,7 @@ def test_all_high_confidence_no_llm_calls() -> None:
             "backend.application.services.cpmd_ingest.extract_batch",
         ) as mock_batch,
     ):
-        report = ingest_cpmd(_MODEL_ID, _FAKE_PDF, _API_KEY, repository=mock_repo)
+        report = ingest_cpmd([_MODEL_ID], _FAKE_PDF, _API_KEY, repository=mock_repo)
 
     mock_batch.assert_not_called()
     assert report.regex_ok == 3
@@ -245,7 +245,7 @@ def test_low_confidence_blocks_sent_to_llm() -> None:
             return_value=[llm_solution],
         ) as mock_batch,
     ):
-        report = ingest_cpmd(_MODEL_ID, _FAKE_PDF, _API_KEY, repository=mock_repo)
+        report = ingest_cpmd([_MODEL_ID], _FAKE_PDF, _API_KEY, repository=mock_repo)
 
     mock_batch.assert_called_once()
     assert report.regex_ok == 1
@@ -281,7 +281,7 @@ def test_no_api_key_skips_llm_fallback() -> None:
         ) as mock_batch,
     ):
         # No api_key supplied
-        report = ingest_cpmd(_MODEL_ID, _FAKE_PDF, api_key=None, repository=mock_repo)
+        report = ingest_cpmd([_MODEL_ID], _FAKE_PDF, api_key=None, repository=mock_repo)
 
     mock_batch.assert_not_called()
     assert report.regex_ok == 0
@@ -297,7 +297,7 @@ def test_no_api_key_skips_llm_fallback() -> None:
 def test_extracted_property_equals_regex_plus_llm() -> None:
     """IngestReport.extracted must equal regex_ok + llm_ok."""
     r = IngestReport(
-        model_id=_MODEL_ID,
+        model_ids=[_MODEL_ID],
         cpmd_hash=_FAKE_HASH,
         total_blocks=10,
         regex_ok=7,
@@ -319,7 +319,7 @@ def test_report_contains_correct_model_id_and_hash() -> None:
             return_value=[],
         ),
     ):
-        report = ingest_cpmd(_MODEL_ID, _FAKE_PDF, _API_KEY, repository=mock_repo)
+        report = ingest_cpmd([_MODEL_ID], _FAKE_PDF, _API_KEY, repository=mock_repo)
 
-    assert report.model_id == _MODEL_ID
+    assert report.model_ids == [_MODEL_ID]
     assert report.cpmd_hash == _FAKE_HASH

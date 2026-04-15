@@ -61,7 +61,7 @@ def _make_printer_model() -> PrinterModel:
 
 def _make_ingest_report(skipped: bool = False) -> IngestReport:
     return IngestReport(
-        model_id=_MODEL_ID,
+        model_ids=[_MODEL_ID],
         cpmd_hash=_FAKE_HASH,
         total_blocks=10,
         regex_ok=7,

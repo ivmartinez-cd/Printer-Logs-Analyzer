@@ -61,6 +61,11 @@ class IngestReport:
         """Total successfully extracted (regex + LLM). Back-compat alias."""
         return self.regex_ok + self.llm_ok
 
+    @property
+    def model_id(self) -> UUID | None:
+        """Back-compat: returns the first model_id in the list."""
+        return self.model_ids[0] if self.model_ids else None
+
 
 # ---------------------------------------------------------------------------
 # Public API
