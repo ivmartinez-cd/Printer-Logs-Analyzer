@@ -54,12 +54,15 @@ class SDSWebSession:
         })
 
         # 1. Get login page for initial cookie
+        t_start = time.perf_counter()
         try:
-            self.session.get(f"{self.base_url}/login", timeout=15)
+            self.session.get(f"{self.base_url}/login", timeout=10)
+            _logger.info("Phase: Login page fetch took %.2fs", time.perf_counter() - t_start)
         except requests.RequestException as e:
             raise SDSWebError(f"Failed to reach login page: {e}")
 
         # 2. Post credentials
+        t_post_start = time.perf_counter()
         try:
             resp = self.session.post(
                 f"{self.base_url}/login",
@@ -73,8 +76,9 @@ class SDSWebSession:
                     "Referer": f"{self.base_url}/login",
                 },
                 allow_redirects=True,
-                timeout=15,
+                timeout=10,
             )
+            _logger.info("Phase: Login POST took %.2fs", time.perf_counter() - t_post_start)
         except requests.RequestException as e:
             raise SDSWebError(f"Login request failed: {e}")
 
@@ -90,13 +94,15 @@ class SDSWebSession:
         self._ensure_session()
         serial = serial.strip().upper()
         
+        t_search_start = time.perf_counter()
         try:
             resp = self.session.get(
                 f"{self.base_url}/search",
                 params=[("src", "powerSearch"), ("q", serial), ("s", "devices")],
                 allow_redirects=True,
-                timeout=15,
+                timeout=10,
             )
+            _logger.info("Phase: Device search (%s) took %.2fs", serial, time.perf_counter() - t_search_start)
         except requests.RequestException as e:
             raise SDSWebError(f"Search request failed: {e}")
 
@@ -119,6 +125,7 @@ class SDSWebSession:
         
         date_from = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
         
+        t_fetch_start = time.perf_counter()
         try:
             resp = self.session.get(
                 f"{self.base_url}/devices/{device_id}/hpsmart/eventlogs",
@@ -133,8 +140,9 @@ class SDSWebSession:
                     "x-requested-with": "XMLHttpRequest",
                     "Accept": "*/*",
                 },
-                timeout=30,
+                timeout=20,
             )
+            _logger.info("Phase: Events fetch (%s, %dd) took %.2fs", device_id, days, time.perf_counter() - t_fetch_start)
         except requests.RequestException as e:
             raise SDSWebError(f"Failed to fetch event logs: {e}")
 
@@ -147,10 +155,27 @@ def html_to_tsv(raw_xml_html: str) -> str:
     """Extract table from EKM AJAX response and convert to TSV format."""
     # The response is XML with CDATA containing HTML
     try:
-        # Extract content inside CDATA
-        match = re.search(r'<!\[CDATA\[(.*?)\]\]>', raw_xml_html, re.DOTALL)
-        html_content = match.group(1) if match else raw_xml_html
+        # The response is an XML-like structure <ekm-ajax-response>
+        # with <content><![CDATA[...]]></content>
+        try:
+            # Try parsing as XML first to get the content tag
+            from lxml import etree
+            root = etree.fromstring(raw_xml_html.encode('utf-8'))
+            content_node = root.find('content')
+            if content_node is not None and content_node.text:
+                html_content = content_node.text
+            else:
+                # Fallback to regex if XML parsing fails or node is empty
+                match = re.search(r'<content>\s*<!\[CDATA\[(.*?)\]\]>\s*</content>', raw_xml_html, re.DOTALL)
+                html_content = match.group(1) if match else raw_xml_html
+        except Exception:
+            # Robust fallback: find the largest CDATA block (usually the content)
+            cdatas = re.findall(r'<!\[CDATA\[(.*?)\]\]>', raw_xml_html, re.DOTALL)
+            html_content = max(cdatas, key=len) if cdatas else raw_xml_html
         
+        if not html_content or not html_content.strip():
+            return ""
+
         tree = html.fromstring(html_content)
         table = tree.xpath('//table[@class="data"]')
         if not table:
