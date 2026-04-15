@@ -13,7 +13,8 @@ export interface LogPasteModalProps {
     fileName?: string,
     modelId?: string | null,
     hasCpmd?: boolean,
-    serial?: string | null
+    serial?: string | null,
+    isAutomated?: boolean
   ) => void
   onClose: () => void
 }
@@ -103,7 +104,10 @@ export function LogPasteModal({
     }
   }
 
-  const canAnalyze = !loading && !!logText.trim() && selectedModelId !== null
+  const canAnalyze = !loading && (
+    (!!logText.trim() && selectedModelId !== null) || 
+    (!!serialNumber.trim() && serialNumber.length >= 5)
+  )
 
   return (
     <>
@@ -130,7 +134,7 @@ export function LogPasteModal({
 
           <div className="log-modal__model-section">
             <label className="log-modal__model-label" htmlFor="log-modal-model-select">
-              Modelo de impresora *
+              Modelo de impresora {!serialNumber && '*'}
             </label>
             <div className="log-modal__model-selector">
               <select
@@ -236,7 +240,8 @@ export function LogPasteModal({
                   fileName,
                   selectedModelId,
                   selectedModel?.has_cpmd ?? false,
-                  serialNumber.trim() || null
+                  serialNumber.trim() || null,
+                  !logText.trim() && !!serialNumber.trim() // isAutomated
                 )
               }}
               disabled={!canAnalyze}

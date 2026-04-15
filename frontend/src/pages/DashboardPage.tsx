@@ -1,9 +1,11 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
   compareSavedAnalysis,
   deleteSavedAnalysis,
+  resolveDevice,
+  extractSdsLogs,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -143,9 +145,11 @@ function DbStatusBadge({ status }: { status: HealthStatus | null }) {
 export default function DashboardPage({
   serverWasCold,
   healthStatus,
+  initialSerial,
 }: {
   serverWasCold: boolean
   healthStatus: HealthStatus | null
+  initialSerial?: string | null
 }) {
   const dateFilter = useDateFilter()
   const {
@@ -172,6 +176,7 @@ export default function DashboardPage({
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
     new Set(['ERROR', 'WARNING', 'INFO'])
   )
+  const [autoExtracting, setAutoExtracting] = useState(false)
 
   const toast = useToast()
   const modals = useModals()
@@ -237,6 +242,48 @@ export default function DashboardPage({
     setEditCodeInitial,
     setSaveIncidentModalOpen,
   })
+
+  const autoResolveAndAnalyze = useCallback(async (serial: string) => {
+    setAutoExtracting(true)
+    setError(null)
+    setLogModalOpen(false)
+    try {
+      // 1. Resolve device info
+      const info = await resolveDevice(serial)
+      setCurrentSerialNumber(serial)
+      
+      if (info.suggested_model_id) {
+        setCurrentModelId(info.suggested_model_id)
+        setCurrentModelHasCpmd(info.has_cpmd)
+      } else {
+        toast.showWarning(`Modelo detectado: ${info.model_name_sds}. No se encontró coincidencia exacta en el catálogo local.`)
+      }
+
+      // 2. Extract logs
+      const sdsRes = await extractSdsLogs(serial)
+      if (!sdsRes.logs_text) {
+        throw new Error('No se encontraron logs para este número de serie.')
+      }
+
+      // 3. Analyze
+      const fileName = `Portal_SDS_${serial}.tsv`
+      await handleAnalyze(sdsRes.logs_text, fileName, info.suggested_model_id)
+      
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(msg)
+      toast.showError(msg)
+    } finally {
+      setAutoExtracting(false)
+    }
+  }, [handleAnalyze, setCurrentModelHasCpmd, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast])
+
+  // Effect for Deep Linking: Auto-start if initialSerial is provided
+  useEffect(() => {
+    if (initialSerial) {
+      autoResolveAndAnalyze(initialSerial)
+    }
+  }, [initialSerial, autoResolveAndAnalyze])
 
   const events = useMemo(() => result?.events ?? [], [result])
   const incidents = useMemo(() => result?.incidents ?? [], [result])
@@ -731,7 +778,11 @@ export default function DashboardPage({
           loading={loading}
           error={error}
           serverWasCold={serverWasCold}
-          onAnalyze={(logText, fileName, modelId, hasCpmd, serial) => {
+          onAnalyze={(logText, fileName, modelId, hasCpmd, serial, isAutomated) => {
+            if (isAutomated && serial) {
+              autoResolveAndAnalyze(serial)
+              return
+            }
             setCurrentModelId(modelId ?? null)
             setCurrentModelHasCpmd(hasCpmd ?? false)
             setCurrentSerialNumber(serial ?? null)
@@ -790,6 +841,19 @@ export default function DashboardPage({
           sdsUrl={solutionModal.sdsUrl}
           onClose={() => setSolutionModal(null)}
         />
+      )}
+
+      {autoExtracting && (
+        <div className="log-modal-overlay" style={{ zIndex: 3000 }}>
+          <div className="log-modal" style={{ textAlign: 'center', padding: '40px' }}>
+            <div className="log-modal__spinner" style={{ margin: '0 auto 20px', width: '40px', height: '40px' }} />
+            <h2 className="log-modal__title">Extrayendo logs automáticamente…</h2>
+            <p style={{ marginTop: '10px', color: 'var(--text-secondary)' }}>
+              Estamos conectando con el portal SDS para el equipo <strong>{currentSerialNumber}</strong>.
+              Esto puede tardar hasta 30 segundos.
+            </p>
+          </div>
+        </div>
       )}
 
       {compareModalOpen && selectedSavedId && (

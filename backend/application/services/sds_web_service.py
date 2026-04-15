@@ -89,8 +89,8 @@ class SDSWebSession:
         self.last_login = time.monotonic()
         _logger.info("Successfully logged into SDS Web portal as %s", self.settings.sds_web_username)
 
-    def search_device(self, serial: str) -> str:
-        """Search for a device by serial and return its numeric ID."""
+    def search_device(self, serial: str) -> Dict[str, str]:
+        """Search for a device by serial and return its numeric ID and model name."""
         self._ensure_session()
         serial = serial.strip().upper()
         
@@ -106,18 +106,36 @@ class SDSWebSession:
         except requests.RequestException as e:
             raise SDSWebError(f"Search request failed: {e}")
 
+        # Try to find Model Name in HTML using the class provided by user
+        model_name = "Generico / Desconocido"
+        try:
+            tree = html.fromstring(resp.text)
+            # Match the class "entity-name model"
+            model_links = tree.xpath('//a[contains(@class, "entity-name") and contains(@class, "model")]')
+            if model_links:
+                model_name = model_links[0].text_content().strip()
+                # Clean up multiple spaces/newlines
+                model_name = " ".join(model_name.split())
+        except Exception as e:
+            _logger.warning("Failed to extract model name from SDS response: %s", e)
+
         # If it redirected to a device page, extract ID from URL
+        device_id = None
         if "/devices/" in resp.url:
             match = re.search(r'/devices/(\d+)', resp.url)
             if match:
-                return match.group(1)
+                device_id = match.group(1)
 
         # Otherwise, try to find it in the response text (it might be a list of results)
-        matches = list(set(re.findall(r'/devices/(\d+)', resp.text)))
-        if not matches:
+        if not device_id:
+            matches = list(set(re.findall(r'/devices/(\d+)', resp.text)))
+            if matches:
+                device_id = matches[0]
+
+        if not device_id:
             raise SDSWebError(f"Device with serial {serial} not found in portal")
         
-        return matches[0]
+        return {"id": device_id, "model_name": model_name}
 
     def fetch_event_logs_html(self, device_id: str, days: int = 30) -> str:
         """Fetch event logs for a device in HTML (AJAX response) format."""

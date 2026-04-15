@@ -31,9 +31,18 @@ def test_extract_logs_success(mock_tsv, mock_sds_factory, client):
     """Test successful log extraction via API."""
     mock_sds = MagicMock()
     mock_sds_factory.return_value = mock_sds
-    mock_sds.search_device.return_value = "12345"
+    mock_sds.search_device.return_value = {"id": "12345", "model_name": "HP LaserJet"}
     mock_sds.fetch_event_logs_html.return_value = "<html>...</html>"
     mock_tsv.return_value = "HeaderCol\nDataLine1\nDataLine2"
+    
+    # Mock repositories to avoid DB dependency in these tests
+    with patch("backend.interface.api.PrinterModelRepository") as mock_repo_cls, \
+         patch("backend.interface.api.ErrorSolutionRepository") as mock_sol_repo_cls:
+        
+        mock_repo = mock_repo_cls.return_value
+        mock_repo.find_best_match.return_value = None
+        mock_sol_repo = mock_sol_repo_cls.return_value
+        mock_sol_repo.get_model_ids_with_solutions.return_value = []
     
     response = client.post(
         "/sds/extract-logs",

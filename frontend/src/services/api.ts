@@ -13,6 +13,7 @@ import type {
   IngestReport,
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
+  ResolveDeviceResponse,
 } from '../types/api'
 
 const API_BASE =
@@ -360,6 +361,18 @@ export async function getInsightAlerts(
     15_000
   )
   return handleResponse<DeviceAlertsResponse>(res)
+}
+
+export async function resolveDevice(
+  serial: string,
+  signal?: AbortSignal
+): Promise<ResolveDeviceResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/resolve-device?serial=${encodeURIComponent(serial)}`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    15_000
+  )
+  return handleResponse<ResolveDeviceResponse>(res)
 }
 
 export async function extractSdsLogs(
