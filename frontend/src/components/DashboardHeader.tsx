@@ -28,25 +28,25 @@ function DbStatusBadge({ status }: { status: HealthStatus | null }) {
 }
 
 interface DashboardHeaderProps {
-  logFileName: string | null
   healthStatus: HealthStatus | null
   hasResult: boolean
   exportingPdf: boolean
   onOpenSavedList: () => void
   onAnalyzeNew: () => void
   onSaveIncident: () => void
+  onAddSds: () => void
   onExportPdf: () => void
   onHelp: () => void
 }
 
 export function DashboardHeader({
-  logFileName,
   healthStatus,
   hasResult,
   exportingPdf,
   onOpenSavedList,
   onAnalyzeNew,
   onSaveIncident,
+  onAddSds,
   onExportPdf,
   onHelp,
 }: DashboardHeaderProps) {
@@ -68,7 +68,6 @@ export function DashboardHeader({
           <rect x="6" y="14" width="12" height="8" />
         </svg>
         <h1 className="dashboard__title">HP Logs Analyzer</h1>
-        {logFileName && <span className="dashboard__file-name">{logFileName}</span>}
       </div>
       <div className="dashboard__header-actions">
         <button
@@ -92,6 +91,15 @@ export function DashboardHeader({
             onClick={onSaveIncident}
           >
             Guardar incidente
+          </button>
+        )}
+        {hasResult && (
+          <button
+            type="button"
+            className="dashboard__btn dashboard__btn--secondary"
+            onClick={onAddSds}
+          >
+            Asociar SDS
           </button>
         )}
         {hasResult && (

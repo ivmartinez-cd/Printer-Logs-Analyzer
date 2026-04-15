@@ -10,13 +10,13 @@ afterEach(cleanup)
 // así que no hay módulo externo que mockear — se renderizan directamente.
 
 const defaultProps = {
-  logFileName: null,
   healthStatus: null,
   hasResult: false,
   exportingPdf: false,
   onOpenSavedList: vi.fn(),
   onAnalyzeNew: vi.fn(),
   onSaveIncident: vi.fn(),
+  onAddSds: vi.fn(),
   onExportPdf: vi.fn(),
   onHelp: vi.fn(),
 }
@@ -27,10 +27,7 @@ describe('DashboardHeader', () => {
     expect(screen.getByText('HP Logs Analyzer')).toBeInTheDocument()
   })
 
-  it('muestra logFileName cuando está disponible', () => {
-    render(<DashboardHeader {...defaultProps} logFileName="ejemplo.txt" />)
-    expect(screen.getByText('ejemplo.txt')).toBeInTheDocument()
-  })
+
 
   it('botón "Exportar PDF" solo aparece cuando hasResult es true', () => {
     const { rerender } = render(<DashboardHeader {...defaultProps} hasResult={false} />)
@@ -44,6 +41,7 @@ describe('DashboardHeader', () => {
     const onOpenSavedList = vi.fn()
     const onAnalyzeNew = vi.fn()
     const onSaveIncident = vi.fn()
+    const onAddSds = vi.fn()
     const onExportPdf = vi.fn()
     const onHelp = vi.fn()
 
@@ -55,6 +53,7 @@ describe('DashboardHeader', () => {
         onOpenSavedList={onOpenSavedList}
         onAnalyzeNew={onAnalyzeNew}
         onSaveIncident={onSaveIncident}
+        onAddSds={onAddSds}
         onExportPdf={onExportPdf}
         onHelp={onHelp}
       />
@@ -68,6 +67,9 @@ describe('DashboardHeader', () => {
 
     await user.click(screen.getByText('Guardar incidente'))
     expect(onSaveIncident).toHaveBeenCalledOnce()
+
+    await user.click(screen.getByText('Asociar SDS'))
+    expect(onAddSds).toHaveBeenCalledOnce()
 
     await user.click(screen.getByText('Exportar PDF'))
     expect(onExportPdf).toHaveBeenCalledOnce()

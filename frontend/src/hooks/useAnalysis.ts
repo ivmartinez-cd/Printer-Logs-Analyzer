@@ -14,7 +14,6 @@ interface UseAnalysisOptions {
   resetDateFilter: () => void
   resetFilters: () => void
   setLogModalOpen: (open: boolean) => void
-  setSdsPreModalOpen: (open: boolean) => void
   setAddCodeModalCode: (code: string | null) => void
   setEditCodeInitial: (
     v: { code: string; description: string; severity: string; solutionUrl: string } | null
@@ -28,7 +27,6 @@ export function useAnalysis({
   resetDateFilter,
   resetFilters,
   setLogModalOpen,
-  setSdsPreModalOpen,
   setAddCodeModalCode,
   setEditCodeInitial,
   setSaveIncidentModalOpen,
@@ -36,8 +34,6 @@ export function useAnalysis({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
-  const [pendingResult, setPendingResult] = useState<ParseLogsResponse | null>(null)
-  const [pendingCodesNew, setPendingCodesNew] = useState<string[]>([])
   const [codesNew, setCodesNew] = useState<string[]>([])
   const [savingCode, setSavingCode] = useState(false)
   const [savingIncident, setSavingIncident] = useState(false)
@@ -47,8 +43,6 @@ export function useAnalysis({
     if (!logText.trim()) return
     setError(null)
     setResult(null)
-    setPendingResult(null)
-    setPendingCodesNew([])
     setCodesNew([])
     setLogFileName(fileName ?? null)
     resetDateFilter()
@@ -60,11 +54,10 @@ export function useAnalysis({
         validateLogs(logText).catch(() => ({ codes_new: [] as string[] })),
       ])
       const newCodes = validateRes.codes_new ?? []
-      setPendingResult(data)
-      setPendingCodesNew(newCodes)
+      setResult(data)
+      setCodesNew(newCodes)
       onAnalyzeDone?.(data, newCodes)
       setLogModalOpen(false)
-      setSdsPreModalOpen(true)
       if (newCodes.length > 0) {
         toast.showWarning(
           `Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`
@@ -79,14 +72,7 @@ export function useAnalysis({
     } finally {
       setLoading(false)
     }
-  }, [onAnalyzeDone, setLogFileName, resetDateFilter, resetFilters, setLogModalOpen, setSdsPreModalOpen, toast])
-
-  const commitPendingResult = useCallback(() => {
-    setResult(pendingResult)
-    setCodesNew(pendingCodesNew)
-    setPendingResult(null)
-    setPendingCodesNew([])
-  }, [pendingResult, pendingCodesNew])
+  }, [onAnalyzeDone, setLogFileName, resetDateFilter, resetFilters, setLogModalOpen, toast])
 
   const handleSaveCodeToCatalog = useCallback(async (body: ErrorCodeUpsertBody, isEdit = false) => {
     setError(null)
@@ -191,13 +177,11 @@ export function useAnalysis({
     setError,
     result,
     setResult,
-    pendingResult,
     codesNew,
     setCodesNew,
     savingCode,
     savingIncident,
     handleAnalyze,
-    commitPendingResult,
     handleSaveCodeToCatalog,
     handleSaveIncident,
   }

@@ -3,7 +3,6 @@ import type { SdsIncidentData } from '../components/SDSIncidentModal'
 
 export function useModals() {
   const [logModalOpen, setLogModalOpen] = useState(false)
-  const [sdsPreModalOpen, setSdsPreModalOpen] = useState(false)
   const [sdsModalOpen, setSdsModalOpen] = useState(false)
   const [sdsIncident, setSdsIncident] = useState<SdsIncidentData | null>(null)
   const [addCodeModalCode, setAddCodeModalCode] = useState<string | null>(null)
@@ -26,8 +25,6 @@ export function useModals() {
   return {
     logModalOpen,
     setLogModalOpen,
-    sdsPreModalOpen,
-    setSdsPreModalOpen,
     sdsModalOpen,
     setSdsModalOpen,
     sdsIncident,

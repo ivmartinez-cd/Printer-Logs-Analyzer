@@ -35,6 +35,13 @@ describe('LogPasteModal', () => {
     )
 
     expect(screen.getByText('Pegar logs HP')).toBeInTheDocument()
+    
+    // Manual section should be hidden initially
+    expect(screen.queryByPlaceholderText(/Pegar logs HP aquí/i)).not.toBeInTheDocument()
+
+    // Expand manual section to see the select
+    fireEvent.click(screen.getByText(/Mostrar ingreso manual/i))
+
     await waitFor(() => {
       expect(screen.getByText('Printer 1 (P1)')).toBeInTheDocument()
     })
@@ -94,7 +101,10 @@ describe('LogPasteModal', () => {
       />
     )
 
-    await waitFor(() => screen.getByText('Printer 1 (P1)'))
+    await waitFor(() => screen.getByText(/Mostrar ingreso manual/i))
+    fireEvent.click(screen.getByText(/Mostrar ingreso manual/i))
+
+    await waitFor(() => screen.getByPlaceholderText(/Pegar logs HP aquí/i))
 
     const textarea = screen.getByPlaceholderText(/Pegar logs HP aquí/i)
     fireEvent.change(textarea, { target: { value: 'some log data' } })
@@ -102,7 +112,7 @@ describe('LogPasteModal', () => {
     const select = screen.getByRole('combobox')
     fireEvent.change(select, { target: { value: 'm1' } })
 
-    const analyzeBtn = screen.getByText('Analizar (Manual)')
+    const analyzeBtn = screen.getByText('🚀 Analizar (Manual)')
     expect(analyzeBtn).not.toBeDisabled()
     
     fireEvent.click(analyzeBtn)
@@ -119,8 +129,10 @@ describe('LogPasteModal', () => {
         onClose={mockOnClose}
       />
     )
+    fireEvent.click(screen.getByText(/Mostrar ingreso manual/i))
+    await waitFor(() => screen.getByPlaceholderText(/Pegar logs HP aquí/i))
     
-    const analyzeBtn = screen.getByText('Analizar (Manual)')
+    const analyzeBtn = screen.getByText('🚀 Analizar (Manual)')
     expect(analyzeBtn).toBeDisabled()
   })
 })

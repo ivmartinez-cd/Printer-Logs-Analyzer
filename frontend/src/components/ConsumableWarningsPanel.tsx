@@ -29,7 +29,7 @@ function formatPages(n?: number): string {
 }
 
 export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
 
   if (!warnings || warnings.length === 0) return null
 
