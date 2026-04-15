@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { listPrinterModels, extractSdsLogs } from '../services/api'
+import { listPrinterModels } from '../services/api'
 import type { PrinterModel, UploadPdfResponse } from '../types/api'
 import { AddPrinterModelModal } from './AddPrinterModelModal'
-import { useToast } from '../contexts/ToastContext'
 
 export interface LogPasteModalProps {
   loading: boolean
@@ -34,10 +33,9 @@ export function LogPasteModal({
   const [models, setModels] = useState<PrinterModel[]>([])
   const [addModelOpen, setAddModelOpen] = useState(false)
   const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
-  const [extractingSds, setExtractingSds] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const toast = useToast()
+
 
   useEffect(() => {
     textareaRef.current?.focus()
@@ -52,6 +50,7 @@ export function LogPasteModal({
 
   useEffect(() => {
     if (!loading || !serverWasCold) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlowWarning(false)
       return
     }
@@ -83,31 +82,7 @@ export function LogPasteModal({
     }
   }
 
-  async function handleExtractSds() {
-    if (!serialNumber) return
-    setExtractingSds(true)
-    try {
-      const res = await extractSdsLogs(serialNumber)
-      if (res.logs_text) {
-        setLogText(res.logs_text)
-        setFileName(`Portal_SDS_${serialNumber}.tsv`)
-        toast.showSuccess(`Logs extraídos correctamente (${res.event_count} eventos)`)
-      } else {
-        toast.showWarning('No se encontraron logs para este número de serie.')
-      }
-    } catch (err: unknown) {
-      console.error('Error extracting SDS logs:', err)
-      const errorMsg = err instanceof Error ? err.message : 'Error al extraer logs del portal SDS'
-      toast.showError(errorMsg)
-    } finally {
-      setExtractingSds(false)
-    }
-  }
 
-  const canAnalyze = !loading && (
-    (!!logText.trim() && selectedModelId !== null) || 
-    (!!serialNumber.trim() && serialNumber.length >= 5)
-  )
 
   return (
     <>
@@ -132,104 +107,131 @@ export function LogPasteModal({
             </button>
           </div>
 
-          <div className="log-modal__model-section">
-            <label className="log-modal__model-label" htmlFor="log-modal-model-select">
-              Modelo de impresora {!serialNumber && '*'}
-            </label>
-            <div className="log-modal__model-selector">
-              <select
-                id="log-modal-model-select"
-                className="log-modal__model-select"
-                value={selectedModelId ?? ''}
-                onChange={(e) => setSelectedModelId(e.target.value || null)}
-                disabled={loading}
-              >
-                <option value="">— Elegí un modelo —</option>
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.has_cpmd ? '📘 ' : ''}
-                    {m.model_name} {m.model_code ? `(${m.model_code})` : ''}
-                  </option>
-                ))}
-              </select>
+          <div className="log-modal__method-section">
+            <h3 style={{ color: "var(--accent-primary)", marginBottom: "1rem", fontSize: "1.1rem", display: "flex", alignItems: "center", gap: "8px" }}>
+              ✨ Opción 1: Automático (Recomendado)
+            </h3>
+            <div className="log-modal__model-section" style={{ marginBottom: "0" }}>
+              <label className="log-modal__model-label" htmlFor="log-modal-serial-input">
+                N° de serie del equipo
+                <span className="log-modal__optional-hint"> (para extracción directa del portal SDS)</span>
+              </label>
+              <div className="log-modal__serial-input-wrapper" style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  id="log-modal-serial-input"
+                  type="text"
+                  className="log-modal__serial-input"
+                  placeholder="Ej: CNNCQ520HG"
+                  style={{ flex: 1 }}
+                  value={serialNumber}
+                  onChange={(e) => setSerialNumber(e.target.value.toUpperCase())}
+                  disabled={loading}
+                  maxLength={50}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && serialNumber.length >= 5 && !loading) {
+                      e.preventDefault()
+                      onAnalyze('', undefined, null, false, serialNumber.trim(), true)
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="dashboard__btn"
+                  onClick={() => onAnalyze('', undefined, null, false, serialNumber.trim(), true)}
+                  disabled={loading || serialNumber.length < 5}
+                  style={{ whiteSpace: 'nowrap', minWidth: '160px' }}
+                >
+                  Extraer y Analizar
+                </button>
+              </div>
             </div>
-            <div className="log-modal__model-buttons">
-              <button
-                type="button"
-                className="log-modal__model-add-button"
-                onClick={() => setAddModelOpen(true)}
-                disabled={loading}
-                title="Cargar nuevo modelo desde PDF"
-              >
-                + Cargar nuevo modelo (PDF)
-              </button>
-            </div>
-            {modelSuccessMsg && (
-              <p className="log-modal__model-success">{modelSuccessMsg}</p>
-            )}
           </div>
 
-          <div className="log-modal__model-section">
-            <label className="log-modal__model-label" htmlFor="log-modal-serial-input">
-              N° de serie del equipo
-              <span className="log-modal__optional-hint"> (para extracción automática o alertas SDS)</span>
-            </label>
-            <div className="log-modal__serial-input-wrapper" style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0' }}>
+            <div style={{ flex: 1, borderBottom: '1px solid var(--border-color)', opacity: 0.5 }}></div>
+            <span style={{ padding: '0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', opacity: 0.8 }}>Ó ingreso manual</span>
+            <div style={{ flex: 1, borderBottom: '1px solid var(--border-color)', opacity: 0.5 }}></div>
+          </div>
+
+          <div className="log-modal__method-section" style={{ opacity: serialNumber.length >= 5 ? 0.5 : 1, transition: 'opacity 0.3s ease' }}>
+            <h3 style={{ color: "var(--text-secondary)", marginBottom: "1rem", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px" }}>
+              🖨️ Opción 2: Formato Manual
+            </h3>
+            
+            <div className="log-modal__model-section">
+              <label className="log-modal__model-label" htmlFor="log-modal-model-select">
+                Modelo de impresora *
+              </label>
+              <div className="log-modal__model-selector">
+                <select
+                  id="log-modal-model-select"
+                  className="log-modal__model-select"
+                  value={selectedModelId ?? ''}
+                  onChange={(e) => setSelectedModelId(e.target.value || null)}
+                  disabled={loading}
+                >
+                  <option value="">— Elegí un modelo —</option>
+                  {models.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.has_cpmd ? '📘 ' : ''}
+                      {m.model_name} {m.model_code ? `(${m.model_code})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="log-modal__model-buttons">
+                <button
+                  type="button"
+                  className="log-modal__model-add-button"
+                  onClick={() => setAddModelOpen(true)}
+                  disabled={loading}
+                  title="Cargar nuevo modelo desde PDF"
+                >
+                  + Cargar nuevo modelo (PDF)
+                </button>
+              </div>
+              {modelSuccessMsg && (
+                <p className="log-modal__model-success">{modelSuccessMsg}</p>
+              )}
+            </div>
+
+            <div className="log-modal__file-row">
               <input
-                id="log-modal-serial-input"
-                type="text"
-                className="log-modal__serial-input"
-                placeholder="Ej: CNNCQ520HG"
-                style={{ flex: 1 }}
-                value={serialNumber}
-                onChange={(e) => setSerialNumber(e.target.value.toUpperCase())}
-                disabled={loading || extractingSds}
-                maxLength={50}
-                autoComplete="off"
-                spellCheck={false}
+                ref={fileInputRef}
+                type="file"
+                accept=".log,.txt,.tsv,text/plain"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
               />
               <button
                 type="button"
                 className="log-modal__btn-secondary"
-                onClick={handleExtractSds}
-                disabled={loading || extractingSds || !serialNumber}
-                style={{ whiteSpace: 'nowrap', minWidth: '100px' }}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
               >
-                {extractingSds ? 'Extrayendo…' : 'Extraer logs'}
+                Cargar archivo…
               </button>
+              {fileName && <span className="log-modal__file-name">{fileName}</span>}
             </div>
-          </div>
 
-          <div className="log-modal__file-row">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".log,.txt,.tsv,text/plain"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-            <button
-              type="button"
-              className="log-modal__btn-secondary"
-              onClick={() => fileInputRef.current?.click()}
+            <textarea
+              ref={textareaRef}
+              className="log-modal__textarea"
+              placeholder="Pegar logs HP aquí..."
+              value={logText}
+              onChange={(e) => setLogText(e.target.value)}
               disabled={loading}
-            >
-              Cargar archivo…
-            </button>
-            {fileName && <span className="log-modal__file-name">{fileName}</span>}
+              style={{ minHeight: '150px' }}
+            />
+            {error && <p className="dashboard__error">{error}</p>}
           </div>
 
-          <textarea
-            ref={textareaRef}
-            className="log-modal__textarea"
-            placeholder="Pegar logs HP aquí..."
-            value={logText}
-            onChange={(e) => setLogText(e.target.value)}
-            disabled={loading || selectedModelId === null}
-          />
-          {error && <p className="dashboard__error">{error}</p>}
-
-          <div className="log-modal__actions">
+          <div className="log-modal__actions" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', flex: 1 }}>
+              {serialNumber.length >= 5 ? 'Automático listo' : (!logText.trim() ? '' : (selectedModelId ? 'Manual listo' : 'Seleccioná un modelo para analizar manualmente'))}
+            </span>
             <button
               type="button"
               className="dashboard__btn"
@@ -240,18 +242,18 @@ export function LogPasteModal({
                   fileName,
                   selectedModelId,
                   selectedModel?.has_cpmd ?? false,
-                  serialNumber.trim() || null,
-                  !logText.trim() && !!serialNumber.trim() // isAutomated
+                  undefined,
+                  false
                 )
               }}
-              disabled={!canAnalyze}
+              disabled={loading || !logText.trim() || selectedModelId === null}
             >
               {loading ? (
                 <>
                   <span className="log-modal__spinner" aria-hidden="true" /> Analizando log…
                 </>
               ) : (
-                'Analizar'
+                'Analizar (Manual)'
               )}
             </button>
             <button
