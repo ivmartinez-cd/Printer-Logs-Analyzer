@@ -177,6 +177,7 @@ export default function DashboardPage({
   )
   const [autoExtracting, setAutoExtracting] = useState(false)
   const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
+  const [currentModelName, setCurrentModelName] = useState<string | null>(null)
 
   const toast = useToast()
   const modals = useModals()
@@ -251,6 +252,7 @@ export default function DashboardPage({
       // 1. Extract logs AND resolve device info in a single call
       const sdsRes = await extractSdsLogs(serial)
       setCurrentSerialNumber(serial)
+      setCurrentModelName(sdsRes.model_name_sds)
       
       if (sdsRes.suggested_model_id) {
         setCurrentModelId(sdsRes.suggested_model_id)
@@ -625,7 +627,10 @@ export default function DashboardPage({
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
                     <span className="dashboard__subheader-title">
-                      Panel de errores{logFileName ? ` · ${logFileName}` : ''}
+                      Panel de errores
+                      {currentModelName && ` · ${currentModelName}`}
+                      {currentSerialNumber && ` · ${currentSerialNumber}`}
+                      {!currentSerialNumber && logFileName && ` · ${logFileName}`}
                     </span>
                     <div className="dashboard__subheader-actions">
                       <DateRangePicker
