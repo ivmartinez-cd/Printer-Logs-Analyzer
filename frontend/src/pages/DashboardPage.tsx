@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
   compareSavedAnalysis,
   deleteSavedAnalysis,
-  listPrinterModels,
-  extractSdsLogs,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -15,10 +13,7 @@ import type {
   SavedAnalysisSummary,
   SavedAnalysisFull,
   CompareResponse,
-  PrinterModel,
-  UploadPdfResponse,
 } from '../types/api'
-import { AddPrinterModelModal } from '../components/AddPrinterModelModal'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { SaveIncidentModal } from '../components/SaveIncidentModal'
