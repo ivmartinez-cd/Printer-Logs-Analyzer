@@ -68,7 +68,6 @@ export function DashboardHeader({
           <rect x="6" y="14" width="12" height="8" />
         </svg>
         <h1 className="dashboard__title">HP Logs Analyzer</h1>
-        {logFileName && <span className="dashboard__file-name">{logFileName}</span>}
       </div>
       <div className="dashboard__header-actions">
         <button
