@@ -2,50 +2,87 @@
 
 from __future__ import annotations
 
+import json
 import logging
+from pathlib import Path
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
 from backend.domain.entities import PrinterConsumable, PrinterModel
-from backend.infrastructure.database import Database, DatabaseUnavailableError  # noqa: F401
+from backend.infrastructure.database import Database, DatabaseUnavailableError
 
 _logger = logging.getLogger(__name__)
 
+_LOCAL_PATH = Path(__file__).parent.parent.parent / "migrations" / "printer_models.json"
+
 
 class PrinterModelRepository:
-    def __init__(self, database: Database) -> None:
+    def __init__(self, database: Optional[Database] = None) -> None:
         self._db = database
 
     def list_models(self) -> List[PrinterModel]:
         """Return all printer models without consumables, ordered by model_code."""
-        with self._db.connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT id, model_name, model_code, family, ampv,
-                           engine_life_pages, notes, created_at, updated_at
-                    FROM printer_models
-                    ORDER BY model_code
-                    """
-                )
-                rows = cur.fetchall()
-        return [_row_to_model(r) for r in rows]
+        try:
+            if not self._db:
+                raise DatabaseUnavailableError("No Database provided")
+            with self._db.connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id, model_name, model_code, family, ampv,
+                               engine_life_pages, notes, created_at, updated_at
+                        FROM printer_models
+                        ORDER BY model_code
+                        """
+                    )
+                    rows = cur.fetchall()
+            return [_row_to_model(r) for r in rows]
+        except DatabaseUnavailableError:
+            return self._list_models_local()
+
+    def list_by_family(self, family: str) -> List[PrinterModel]:
+        """Return all printer models belonging to the same family."""
+        try:
+            if not self._db:
+                raise DatabaseUnavailableError("No Database provided")
+            with self._db.connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id, model_name, model_code, family, ampv,
+                               engine_life_pages, notes, created_at, updated_at
+                        FROM printer_models
+                        WHERE family = %s
+                        ORDER BY model_code
+                        """,
+                        (family,),
+                    )
+                    rows = cur.fetchall()
+            return [_row_to_model(r) for r in rows]
+        except DatabaseUnavailableError:
+            return self._list_by_family_local(family)
 
     def get_by_id(self, model_id: UUID) -> Optional[PrinterModel]:
         """Return a single printer model by UUID, or None if not found."""
-        with self._db.connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT id, model_name, model_code, family, ampv,
-                           engine_life_pages, notes, created_at, updated_at
-                    FROM printer_models
-                    WHERE id = %s
-                    """,
-                    (str(model_id),),
-                )
-                row = cur.fetchone()
-        return _row_to_model(row) if row else None
+        try:
+            if not self._db:
+                raise DatabaseUnavailableError("No Database provided")
+            with self._db.connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id, model_name, model_code, family, ampv,
+                               engine_life_pages, notes, created_at, updated_at
+                        FROM printer_models
+                        WHERE id = %s
+                        """,
+                        (str(model_id),),
+                    )
+                    row = cur.fetchone()
+            return _row_to_model(row) if row else None
+        except DatabaseUnavailableError:
+            return self._get_by_id_local(model_id)
 
     def get_with_consumables(
         self, model_id: UUID
@@ -95,12 +132,9 @@ class PrinterModelRepository:
     def create_with_consumables(
         self, model_data: dict, consumables: List[dict]
     ) -> PrinterModel:
-        """Insert a printer model with its consumables in a single transaction.
-
-        Each dict in consumables may include a 'related_codes' key (list[str]).
-        Raises psycopg2.errors.UniqueViolation if model_code/model_name already exists.
-        Raises DatabaseUnavailableError if the DB cannot be reached.
-        """
+        """Insert a printer model with its consumables in a single transaction."""
+        if not self._db:
+            raise DatabaseUnavailableError("No Database provided for writes")
         with self._db.connect() as conn:
             try:
                 with conn.cursor() as cur:
@@ -162,10 +196,72 @@ class PrinterModelRepository:
                 conn.rollback()
                 raise
 
+    # --- Local Fallback ---
+
+    def _load_local(self) -> list:
+        if not _LOCAL_PATH.exists():
+            _logger.warning("[PrinterModelRepo] Local file %s not found", _LOCAL_PATH)
+            return []
+        try:
+            with open(_LOCAL_PATH, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            _logger.error("[PrinterModelRepo] Failed to read local JSON: %s", e)
+            return []
+
+    def _list_models_local(self) -> List[PrinterModel]:
+        data = self._load_local()
+        # Sort by model_code
+        data.sort(key=lambda x: x.get("model_code", ""))
+        return [_dict_to_model(d) for d in data]
+
+    def _list_by_family_local(self, family: str) -> List[PrinterModel]:
+        data = self._load_local()
+        filtered = [d for d in data if d.get("family") == family]
+        filtered.sort(key=lambda x: x.get("model_code", ""))
+        return [_dict_to_model(d) for d in filtered]
+
+    def _get_by_id_local(self, model_id: UUID) -> Optional[PrinterModel]:
+        data = self._load_local()
+        m_id_str = str(model_id)
+        for d in data:
+            if d.get("id") == m_id_str:
+                return _dict_to_model(d)
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+
+def _dict_to_model(d: dict) -> PrinterModel:
+    def parse_dt(val):
+        if not val: return datetime.utcnow()
+        if isinstance(val, datetime): return val
+        # Handle Postgres format: '2026-04-11 20:27:24.213941+00'
+        # Pydantic is strict about the space and the +00 suffix.
+        if isinstance(val, str):
+            try:
+                # Try simple ISO first
+                return datetime.fromisoformat(val.replace(" ", "T"))
+            except ValueError:
+                # Fallback: strip the TZ offset if it's just +00 or similar
+                clean = val.split("+")[0].strip()
+                return datetime.fromisoformat(clean.replace(" ", "T"))
+        return datetime.utcnow()
+
+    return PrinterModel(
+        id=UUID(d["id"]) if isinstance(d["id"], str) else d["id"],
+        model_name=d["model_name"],
+        model_code=d["model_code"],
+        family=d.get("family"),
+        ampv=d.get("ampv"),
+        engine_life_pages=d.get("engine_life_pages"),
+        notes=d.get("notes"),
+        created_at=parse_dt(d.get("created_at")),
+        updated_at=parse_dt(d.get("updated_at")),
+    )
 
 
 def _row_to_model(row: tuple) -> PrinterModel:

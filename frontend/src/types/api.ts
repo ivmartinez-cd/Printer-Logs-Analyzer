@@ -214,3 +214,11 @@ export interface DeviceAlertsResponse {
   history?: InsightAlert[]
 }
 
+export interface ExtractSdsLogsResponse {
+  serial: string
+  device_id: string
+  logs_text: string
+  event_count: number
+}
+
+

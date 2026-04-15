@@ -21,8 +21,8 @@ Herramienta web para analizar logs de impresoras HP. Seleccionás el modelo, peg
 - **Tabla de incidentes** — sort por columna, filtro de severidad, búsqueda por texto y expand de cada incidencia para ver eventos individuales.
 - **Filtros de fecha** — botón único con popover: 8 presets (Hoy, Esta semana, Semana anterior, Este mes, Mes anterior, Últimos 7 días, Últimos 30 días, Todo) y rango libre con calendario interactivo.
 - **Catálogo de códigos** — agrega descripción, severidad y link de solución SDS. El backend guarda el contenido HTML de la página para verlo aunque el link expire.
-- **Incidentes guardados** — guarda snapshots de análisis, compáralos con logs nuevos (tendencia: mejoró / estable / empeoró) y visualiza la evolución por equipo en un gráfico de línea.
-- **Exportar PDF Profesional** — genera un reporte A4 de nivel ejecutivo que incluye un Resumen Ejecutivo inteligente (salud general, items críticos, próximos pasos), Diagnóstico IA, KPIs, gráficos de tendencia y tablas detalladas. Implementa rebanado automático de tablas largas y modo de alta fidelidad (Light Mode forzado) para impresión.
+- **Resumen Ejecutivo Interactivo** — nuevo panel inteligente para reportes que agrupa Salud General, Ítems Críticos y Próximos Pasos sugeridos (activo en exportación).
+- **Extracción Automática SDS** — extrae logs directamente desde el portal HP SDS mediante el número de serie. El backend gestiona el login, la búsqueda y la conversión de HTML a TSV compatible.
 - **Modo offline** — si PostgreSQL no está disponible, la app opera con archivos JSON locales de forma transparente.
 
 ---
@@ -34,26 +34,19 @@ Monorepo con frontend React/TypeScript y backend Python/FastAPI conectados por R
 ```
 Printer-Logs-Analyzer/
 ├── package.json              # Scripts raíz (dev, lint, typecheck, test:*)
+├── dev.cmd                   # Script de arranque rápido (Windows)
 ├── backend/
 │   ├── interface/api.py      # FastAPI — todos los endpoints
-│   ├── interface/auth.py     # Autenticación por x-api-key
-│   ├── domain/entities.py    # Modelos Pydantic (Event, Incident, ConsumableWarning…)
-│   ├── application/
-│   │   ├── parsers/          # Parser TSV/espacios con soporte español
-│   │   └── services/         # AnalysisService, CompareService, ConsumableWarningService
-│   ├── infrastructure/
-│   │   ├── database.py       # psycopg2 con pool, pre-ping y fallback automático
-│   │   ├── content_fetcher.py# Fetch y sanitización de contenido SDS
-│   │   ├── fallback/         # Catálogo bundled (JSON read-only)
-│   │   └── repositories/     # ErrorCodeRepository, SavedAnalysisRepository, PrinterModelRepository
-│   ├── migrations/           # 6 migraciones SQL (001–005 ejecutadas en Neon; 006 pendiente)
-│   └── tests/                # pytest — 138 pruebas (incluyendo validación de metadatos)
-└── frontend/
-    ├── src/pages/            # DashboardPage.tsx (página principal)
-    ├── src/components/       # Modales, tablas, gráficos, paneles
-    ├── src/hooks/            # useAnalysis, useModals, useDateFilter, useExportPdf
-    ├── src/services/api.ts   # Cliente HTTP tipado
-    └── src/__tests__/        # vitest — 137 pruebas (happy-dom)
+│   ├── application/services/sds_web_service.py # Servicio de extracción SDS
+│   ├── migrations/           # Migraciones SQL y carga de datos inicial
+│   └── tests/                # pytest — 142 pruebas
+├── frontend/
+│   ├── src/pages/            # DashboardPage.tsx (página principal)
+│   └── src/__tests__/        # vitest — 137 pruebas (happy-dom)
+├── docs/                     # Documentación técnica y assets
+│   └── assets/               # Imágenes y archivos PDF de referencia
+├── scripts/                  # POCs, utilitarios y scripts de extracción
+└── samples/                  # Logs de muestra (TSV, HTML, CSV)
 ```
 
 ---
@@ -162,6 +155,7 @@ Todos los endpoints (excepto `/health`) requieren el header `x-api-key`.
 | GET | `/saved-analyses/{id}` | Detalle de un snapshot |
 | DELETE | `/saved-analyses/{id}` | Eliminar un snapshot |
 | POST | `/saved-analyses/{id}/compare` | Compara logs nuevos contra un snapshot guardado |
+| POST | `/sds/extract-logs` | Extrae logs directamente del portal SDS por serial |
 
 ---
 

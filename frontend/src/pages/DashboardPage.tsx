@@ -5,6 +5,7 @@ import {
   compareSavedAnalysis,
   deleteSavedAnalysis,
   listPrinterModels,
+  extractSdsLogs,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -147,8 +148,10 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   const [models, setModels] = useState<PrinterModel[]>([])
   const [addModelOpen, setAddModelOpen] = useState(false)
   const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
+  const [extractingSds, setExtractingSds] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const toast = useToast()
 
   useEffect(() => {
     textareaRef.current?.focus()
@@ -158,14 +161,11 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
   useEffect(() => {
     listPrinterModels()
       .then(setModels)
-      .catch(() => {
-        // No bloquear el modal si falla la carga de modelos
-      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
     if (!loading || !serverWasCold) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlowWarning(false)
       return
     }
@@ -194,6 +194,26 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
       const firstCreated = updatedModels.find((m) => response.created.includes(m.model_code))
       if (firstCreated) setSelectedModelId(firstCreated.id)
       setModelSuccessMsg(`Modelo cargado: ${response.created.join(', ')}`)
+    }
+  }
+
+  async function handleExtractSds() {
+    if (!serialNumber) return
+    setExtractingSds(true)
+    try {
+      const res = await extractSdsLogs(serialNumber)
+      if (res.logs_text) {
+        setLogText(res.logs_text)
+        setFileName(`Portal_SDS_${serialNumber}.tsv`)
+        toast.showSuccess(`Logs extraídos correctamente (${res.event_count} eventos)`)
+      } else {
+        toast.showWarning('No se encontraron logs para este número de serie.')
+      }
+    } catch (err: any) {
+      console.error('Error extracting SDS logs:', err)
+      toast.showError(err.message || 'Error al extraer logs del portal SDS')
+    } finally {
+      setExtractingSds(false)
     }
   }
 
@@ -264,20 +284,32 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
           <div className="log-modal__model-section">
             <label className="log-modal__model-label" htmlFor="log-modal-serial-input">
               N° de serie del equipo
-              <span className="log-modal__optional-hint"> (opcional · para alertas SDS)</span>
+              <span className="log-modal__optional-hint"> (para extracción automática o alertas SDS)</span>
             </label>
-            <input
-              id="log-modal-serial-input"
-              type="text"
-              className="log-modal__serial-input"
-              placeholder="Ej: CNNCQ520HG"
-              value={serialNumber}
-              onChange={(e) => setSerialNumber(e.target.value.toUpperCase())}
-              disabled={loading}
-              maxLength={50}
-              autoComplete="off"
-              spellCheck={false}
-            />
+            <div className="log-modal__serial-input-wrapper" style={{ display: 'flex', gap: '8px' }}>
+              <input
+                id="log-modal-serial-input"
+                type="text"
+                className="log-modal__serial-input"
+                placeholder="Ej: CNNCQ520HG"
+                style={{ flex: 1 }}
+                value={serialNumber}
+                onChange={(e) => setSerialNumber(e.target.value.toUpperCase())}
+                disabled={loading || extractingSds}
+                maxLength={50}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="log-modal__btn-secondary"
+                onClick={handleExtractSds}
+                disabled={loading || extractingSds || !serialNumber}
+                style={{ whiteSpace: 'nowrap', minWidth: '100px' }}
+              >
+                {extractingSds ? 'Extrayendo…' : 'Extraer logs'}
+              </button>
+            </div>
           </div>
 
           <div className="log-modal__file-row">
@@ -298,6 +330,7 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
             </button>
             {fileName && <span className="log-modal__file-name">{fileName}</span>}
           </div>
+
           <textarea
             ref={textareaRef}
             className="log-modal__textarea"
@@ -307,6 +340,7 @@ function LogPasteModal({ loading, error, serverWasCold, onAnalyze, onClose }: Lo
             disabled={loading || selectedModelId === null}
           />
           {error && <p className="dashboard__error">{error}</p>}
+
           <div className="log-modal__actions">
             <button
               type="button"

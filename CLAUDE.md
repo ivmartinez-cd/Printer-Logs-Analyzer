@@ -59,56 +59,25 @@ Monorepo: React/TypeScript frontend + Python/FastAPI backend, conectados por RES
 ```
 Printer-Logs-Analyzer/
 ├── package.json                  # Scripts root (dev, lint, typecheck, test:*)
-├── docs/                         # Documentación
-├── samples/                      # hp_log.txt, request.json
+├── dev.cmd                       # Script de arranque rápido (Windows)
+├── docs/                         # Documentación y assets
+│   └── assets/                   # Imágenes y PDFs
+├── samples/                      # hp_log.txt, request.json, HTML samples
+├── scripts/                      # POCs, batch files y utilitarios
 ├── backend/
 │   ├── main.py                   # Entrypoint uvicorn local
-│   ├── requirements.txt
-│   ├── interface/
-│   │   ├── api.py                # FastAPI app, todos los endpoints
-│   │   └── auth.py               # Dependencia auth por API key
-│   ├── domain/entities.py        # Pydantic models
-│   ├── application/
-│   │   ├── parsers/log_parser.py
-│   │   └── services/
-│   │       ├── analysis_service.py
-│   │       ├── ai_diagnosis_service.py
-│   │       ├── compare_service.py
-│   │       ├── consumable_warning_service.py
-│   │       ├── cpmd_extractor.py
-│   │       ├── cpmd_ingest.py
-│   │       ├── cpmd_parser.py
-│   │       └── pdf_extraction_service.py
-│   ├── infrastructure/
-│   │   ├── config.py             # Settings desde .env
-│   │   ├── content_fetcher.py    # validate_ssrf_url + fetch_solution_content
-│   │   ├── database.py           # psycopg2, timeout 5s, DatabaseUnavailableError
-│   │   ├── fallback/error_codes_seed.json
-│   │   └── repositories/
-│   │       ├── error_code_repository.py
-│   │       ├── error_solution_repository.py
-│   │       ├── printer_model_repository.py
-│   │       └── saved_analysis_repository.py
-│   ├── migrations/               # 7 migraciones SQL (correr manualmente)
-│   └── data/                     # Gitignored — JSON local en modo fallback
+│   ├── interface/api.py          # FastAPI app, todo incluido el /sds/extract-logs
+│   ├── domain/entities.py        # Pydantic models (Event, Incident, ...)
+│   ├── application/services/
+│   │   ├── sds_web_service.py    # Servicio CORE de hoy: extracción SDS
+│   │   └── ...
+│   ├── infrastructure/config.py  # Settings SDS_WEB_*
+│   ├── migrations/               # SQL y data (incl. carga_cpmd_626xx.sql)
+│   └── tests/                    # 142 pruebas
 └── frontend/
-    ├── .prettierrc               # singleQuote, semi:false, printWidth 100
-    ├── .prettierignore           # Incluye src/vite-env.d.ts — no editar
-    ├── eslint.config.js
-    ├── vite.config.ts            # manualChunks: vendor-react, vendor-charts
-    ├── vitest.config.ts          # environment: happy-dom; setupFiles setup.ts
-    ├── src/
-    │   ├── pages/DashboardPage.tsx
-    │   ├── components/
-    │   ├── hooks/
-    │   │   ├── useDateFilter.ts
-    │   │   ├── useAnalysis.ts
-    │   │   ├── useModals.ts
-    │   │   └── useExportPdf.ts
-    │   ├── services/api.ts
-    │   ├── types/api.ts
-    │   └── contexts/ToastContext.tsx
-    └── src/__tests__/            # setup.ts, components/ (happy-dom), hooks (happy-dom)
+    ├── src/pages/DashboardPage.tsx
+    ├── src/services/api.ts
+    └── src/__tests__/            # 137 pruebas
 ```
 
 ---

@@ -12,10 +12,10 @@ Herramienta web interna para analizar logs de impresoras HP: seleccionar modelo,
 
 **Flujo del usuario:**
 1. Abrir modal "Pegar logs HP" y **seleccionar el modelo de impresora** (obligatorio). Si el modelo no está, hacer click en "+ Cargar nuevo modelo (PDF)" y subir el PDF del Service Cost Data oficial — los modelos y consumibles se extraen con IA (Claude Haiku).
-2. Pegar el log y pulsar "Analizar". Se ejecutan en paralelo `POST /parser/preview` y `POST /parser/validate`.
-3. Si hay **códigos nuevos** (no en catálogo), aparece la sección para agregarlos uno a uno o ignorarlos.
-4. Opcional: agregar un **SDS Engineering Incident** u observar el Troubleshooting de pasos oficiales y FRUs si el el modelo cuenta con la ingesta y extracción del **CPMD** oficial (Control Panel Message Document).
-5. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos, tablas y contenido enriquecido — todo filtrable.
+3. En el modal, tienes dos opciones: **pegar el log** manualmente o ingresar el **número de serie** y pulsar "Extraer logs" para que la app obtenga los eventos directamente desde el portal HP SDS.
+4. Si hay **códigos nuevos** (no en catálogo), aparece la sección para agregarlos uno a uno o ignorarlos.
+5. Opcional: agregar un **SDS Engineering Incident** u observar el Troubleshooting de pasos oficiales y FRUs si el el modelo cuenta con la ingesta y extracción del **CPMD** oficial (Control Panel Message Document).
+6. Ver KPIs, Diagnóstico con IA, SDS panel, Estado de consumibles, gráficos, tablas y contenido enriquecido — todo filtrable.
 
 ---
 
@@ -25,35 +25,29 @@ Monorepo: frontend React/TypeScript (`frontend/`) + backend Python/FastAPI (`bac
 
 ```
 Printer-Logs-Analyzer/
-├── package.json                  # Scripts raíz (dev, lint, typecheck, test:*)
+├── package.json              # Scripts raíz (dev, lint, typecheck, test:*)
+├── dev.cmd                   # Script de arranque rápido (Windows)
 ├── backend/
-│   ├── interface/api.py          # FastAPI — todos los endpoints
-│   ├── interface/auth.py         # Autenticación x-api-key
-│   ├── domain/entities.py        # Pydantic models (Event, Incident, ConsumableWarning…)
+│   ├── interface/api.py      # FastAPI — todos los endpoints
+│   ├── domain/entities.py    # Modelos Pydantic
 │   ├── application/
 │   │   ├── parsers/log_parser.py
 │   │   └── services/
 │   │       ├── analysis_service.py
-│   │       ├── compare_service.py
-│   │       └── consumable_warning_service.py
+│   │       ├── sds_web_service.py # SERVICIO NUEVO: Login, search y fetch SDS
+│   │       └── ...
 │   ├── infrastructure/
-│   │   ├── config.py
-│   │   ├── content_fetcher.py
-│   │   ├── database.py
-│   │   ├── fallback/error_codes_seed.json
-│   │   └── repositories/
-│   │       ├── error_code_repository.py
-│   │       ├── saved_analysis_repository.py
-│   │       └── printer_model_repository.py
-│   ├── migrations/               # 6 migraciones SQL (001–005 ejecutadas; 006 pendiente en Neon)
-│   └── tests/                    # pytest — 138 tests
-└── frontend/
-    ├── src/pages/DashboardPage.tsx
-    ├── src/components/           # Ver tabla de componentes más abajo
-    ├── src/hooks/                # useAnalysis, useModals, useDateFilter, useExportPdf
-    ├── src/services/api.ts
-    ├── src/types/api.ts
-    └── src/__tests__/            # vitest — 137 tests (happy-dom)
+│   │   ├── config.py         # SDS_WEB_USERNAME / PASSWORD
+│   │   └── ...
+│   └── tests/                # pytest — 142 tests
+├── frontend/
+│   ├── src/pages/DashboardPage.tsx
+│   ├── src/services/api.ts   # extractSdsLogs()
+│   └── src/__tests__/        # vitest — 137 tests
+├── docs/                     # Documentación y assets
+│   └── assets/               # Imágenes y PDFs
+├── scripts/                  # POCs y utilitarios
+└── samples/                  # Logs de muestra
 ```
 
 ---
@@ -109,6 +103,7 @@ Thresholds: ≥100% → `replace`, ≥80% → `warning`, <80% → `ok`. Patrones
 | GET | `/saved-analyses/{id}` | Detalle de snapshot |
 | DELETE | `/saved-analyses/{id}` | Eliminar snapshot |
 | POST | `/saved-analyses/{id}/compare` | Comparar log nuevo vs snapshot |
+| POST | `/sds/extract-logs` | Extraer logs directamente del portal SDS por serial |
 | GET | `/parser/preview (extension)` | Incluye metadatos: `log_start_date`, `log_end_date`, `total_lines` |
 
 Rate limiting (slowapi, por IP): preview y validate → 60/min; upsert → 30/min.
@@ -268,6 +263,7 @@ Frontend: `vitest.config.ts` con `environment: happy-dom`; tests de componentes 
 | Área | Estado actual |
 |------|--------------|
 | Parsing logs | Estable — normalización espacios, meses español, tolerancia a blank lines |
+| Extracción SDS | **NUEVO** — Automatizada vía `requests` con login y persistencia de sesión |
 | Modelos de impresora | Fase 4 completa — selector obligatorio, upload PDF con Haiku, banderas has_cpmd globales |
 | CPMD (Troubleshooting) | Modal disponible, ingest CLI script, refactor backend para parsing vía tags semánticos LLM (claude-haiku) y separación lógica a Tabs con Componentes dedicados |
 | Estado de consumibles | Activo — `ConsumableWarningsPanel` (excluye toners, ADF y 110V); badges orientados a historial |

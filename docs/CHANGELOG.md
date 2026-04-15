@@ -2,6 +2,13 @@
 
 Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
+**Fase: Extracción Automática HP SDS (2026-04-15)**
+- **Extracción Directa**: Implementación de `SDSWebSession` en el backend para realizar login automatizado, búsqueda de equipos y fetch de logs sin intervención manual.
+- **Conversión HTML a TSV**: Nuevo parser para transformar la respuesta dinámica del portal HP SDS en el formato TSV esperado por el sistema de análisis.
+- **Integración UI**: Se añadió el campo de número de serie y el botón "Extraer logs" en el modal de análisis del Dashboard.
+- **Optimización de Carpeta**: Reorganización completa de la raíz del proyecto, moviendo POCs a `scripts/`, assets a `docs/assets/` y muestras a `samples/`.
+- **Sincronización de Logs**: Mejora en el refresco de Toasts y manejo de estados de carga en el frontend.
+
 ---
 
 **Fase: Estabilización de Tests y Reporte Ejecutivo (2026-04-13)**

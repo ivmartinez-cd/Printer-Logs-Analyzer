@@ -29,6 +29,10 @@ class Settings(BaseModel):
     insight_api_key: Optional[str] = Field(None, alias="INSIGHT_API_KEY")
     insight_api_secret: Optional[str] = Field(None, alias="INSIGHT_API_SECRET")
 
+    # SDS Web Portal (for event logs)
+    sds_web_username: Optional[str] = Field(None, alias="SDS_WEB_USERNAME")
+    sds_web_password: Optional[str] = Field(None, alias="SDS_WEB_PASSWORD")
+
     @classmethod
     def from_env(cls) -> "Settings":
         """Load configuration and raise informative errors when missing."""
