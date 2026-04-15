@@ -4,6 +4,13 @@ Guidance for Claude Code when working in this repository.
 
 ---
 
+## Estilo de Comunicación
+- **Brevedad Extrema:** Responde de forma concisa.
+- **Foco en Acción:** Prioriza información técnica y preguntas/pedidos al usuario.
+- **Ahorro de Tokens:** Evita explicaciones largas a menos que se soliciten explícitamente.
+
+---
+
 ## Commands
 
 ### Development
