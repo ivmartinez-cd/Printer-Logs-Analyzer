@@ -50,6 +50,7 @@ export function LogPasteModal({
 
   useEffect(() => {
     if (!loading || !serverWasCold) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlowWarning(false)
       return
     }
