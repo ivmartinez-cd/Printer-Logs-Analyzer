@@ -14,6 +14,8 @@ import type {
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
   ResolveDeviceResponse,
+  InsightMeter,
+  RealtimeConsumable,
 } from '../types/api'
 
 const API_BASE =
@@ -265,6 +267,11 @@ export async function getErrorSolution(
 
 export async function aiDiagnose(
   result: ParseLogsResponse,
+  extra?: {
+    consumables?: RealtimeConsumable[]
+    alerts?: DeviceAlertsResponse | null
+    meters?: InsightMeter[]
+  },
   signal?: AbortSignal
 ): Promise<AIDiagnosisResponse> {
   // Construir incidentes compactos: código, severidad, ocurrencias y descripción si existe
@@ -304,21 +311,36 @@ export async function aiDiagnose(
   const minTs = allTimestamps.length > 0 ? allTimestamps.reduce((a, b) => Math.min(a, b)) : 0
   const maxTs = allTimestamps.length > 0 ? allTimestamps.reduce((a, b) => Math.max(a, b)) : 0
 
-  const metadata =
-    allTimestamps.length > 0
-      ? {
-          total_events: result.events.length,
-          date_range: `${new Date(minTs).toISOString().slice(0, 16).replace('T', ' ')} – ${new Date(maxTs).toISOString().slice(0, 16).replace('T', ' ')}`,
-          firmware,
-          counter_range:
-            allCounters.length > 0
-              ? [
-                  allCounters.reduce((a, b) => Math.min(a, b)),
-                  allCounters.reduce((a, b) => Math.max(a, b)),
-                ]
-              : undefined,
-        }
-      : undefined
+  // Filtrar alertas y metros al último mes
+  const oneMonthAgo = new Date()
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+
+  const alertsHistory = [
+    ...(extra?.alerts?.current ?? []),
+    ...(extra?.alerts?.history ?? []),
+  ].filter((a) => new Date(a.date) >= oneMonthAgo)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 30)
+
+  const metersPattern = (extra?.meters ?? [])
+    .filter((m) => new Date(m.date) >= oneMonthAgo)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  const metadata = {
+    total_events: result.events.length,
+    date_range:
+      allTimestamps.length > 0
+        ? `${new Date(minTs).toISOString().slice(0, 16).replace('T', ' ')} – ${new Date(maxTs).toISOString().slice(0, 16).replace('T', ' ')}`
+        : undefined,
+    firmware,
+    counter_range:
+      allCounters.length > 0
+        ? [Math.min(...allCounters), Math.max(...allCounters)]
+        : undefined,
+    consumables: extra?.consumables,
+    alerts_history: alertsHistory.length > 0 ? alertsHistory : undefined,
+    meters_pattern: metersPattern.length > 0 ? metersPattern : undefined,
+  }
 
   // NOTE: timeout de 60s — el modelo puede tardar 3-5s y queremos margen para cold starts
   const res = await apiFetch(
@@ -361,6 +383,18 @@ export async function getInsightAlerts(
     15_000
   )
   return handleResponse<DeviceAlertsResponse>(res)
+}
+
+export async function getInsightMeters(
+  serial: string,
+  signal?: AbortSignal
+): Promise<InsightMeter[]> {
+  const res = await apiFetch(
+    `${API_BASE}/insight/devices/${encodeURIComponent(serial)}/meters`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    15_000
+  )
+  return handleResponse<InsightMeter[]>(res)
 }
 
 export async function resolveDevice(

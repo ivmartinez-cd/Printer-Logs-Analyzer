@@ -42,6 +42,7 @@ from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
     get_device_info as _insight_get_device_info,
     get_device_consumables as _insight_get_device_consumables,
+    get_device_meters as _insight_get_device_meters,
     InsightConfigError,
     InsightAPIError,
 )
@@ -63,6 +64,7 @@ class ResolveDeviceResponse(BaseModel):
     serial: str
     device_id: str
     model_name_sds: str
+    firmware: Optional[str] = None
     suggested_model_id: Optional[UUID] = None
     suggested_model_name: Optional[str] = None
     has_cpmd: bool = False
@@ -73,6 +75,7 @@ class ExtractSdsLogsResponse(BaseModel):
     serial: str
     device_id: str
     model_name_sds: str
+    firmware: Optional[str] = None
     suggested_model_id: Optional[UUID] = None
     has_cpmd: bool = False
     logs_text: str
@@ -197,6 +200,9 @@ class AiDiagnoseMetadata(BaseModel):
     date_range: Optional[str] = None
     firmware: Optional[str] = None
     counter_range: Optional[List[int]] = None
+    consumables: Optional[List[Dict[str, Any]]] = None
+    alerts_history: Optional[List[Dict[str, Any]]] = None
+    meters_pattern: Optional[List[Dict[str, Any]]] = None
 
 
 class AiDiagnoseRequest(BaseModel):
@@ -964,6 +970,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 serial=serial,
                 device_id=str(info["device_id"]),
                 model_name_sds=info["model_name"] or "Unknown",
+                firmware=info["firmware"],
                 suggested_model_id=suggested_model_id,
                 suggested_model_name=suggested_model_name,
                 has_cpmd=has_cpmd
@@ -975,6 +982,26 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         except Exception as exc:
             logging.exception("Error resolving device by serial: %s", exc)
             raise HTTPException(status_code=500, detail="Internal error resolving device")
+
+    @app.get("/insight/devices/{serial}/meters", dependencies=[Depends(authenticate)])
+    @limiter.limit("20/minute")
+    async def get_insight_meters(request: Request, serial: string) -> List[Dict[str, Any]]:
+        """Return meter history for a device identified by serial number."""
+        info = _insight_get_device_info(
+            settings.insight_portal_url,
+            settings.insight_api_key,
+            settings.insight_api_secret,
+            serial,
+        )
+        if not info["device_id"]:
+            return []
+        
+        return _insight_get_device_meters(
+            settings.insight_portal_url,
+            settings.insight_api_key,
+            settings.insight_api_secret,
+            info["device_id"],
+        )
 
     @app.post("/sds/extract-logs", response_model=ExtractSdsLogsResponse)
     @limiter.limit("10/minute")
@@ -1039,6 +1066,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                     serial=serial,
                     device_id=device_id,
                     model_name_sds=model_name_sds,
+                    firmware=info["firmware"],
                     suggested_model_id=suggested_model_id,
                     has_cpmd=has_cpmd,
                     logs_text=tsv_text,

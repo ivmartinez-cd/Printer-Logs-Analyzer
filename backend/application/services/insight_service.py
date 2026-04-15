@@ -99,6 +99,7 @@ def get_device_info(
         device_id: int | None
         model_name: str | None
         zone: str | None
+        firmware: str | None
         insight_configured: bool
     """
     token = _get_jwt(portal_url, api_key, api_secret)
@@ -115,6 +116,7 @@ def get_device_info(
             "device_id": None,
             "model_name": None,
             "zone": None,
+            "firmware": None,
             "insight_configured": True,
         }
 
@@ -123,13 +125,33 @@ def get_device_info(
     extended = device.get("extendedFields", {})
     model_name: Optional[str] = extended.get("model")
     zone: Optional[str] = extended.get("zone")
+    firmware: Optional[str] = extended.get("firmwareVersion")
 
     return {
         "device_id": device_id,
         "model_name": model_name,
         "zone": zone,
+        "firmware": firmware,
         "insight_configured": True,
     }
+
+
+def get_device_meters(
+    portal_url: str,
+    api_key: str,
+    api_secret: str,
+    device_id: int,
+) -> List[Dict[str, Any]]:
+    """Fetch meter history for the device to identify usage patterns."""
+    token = _get_jwt(portal_url, api_key, api_secret)
+    base = portal_url.rstrip("/")
+
+    ep = f"{base}/PortalAPI/api/devices/{device_id}/meters/history"
+    try:
+        return _insight_get(ep, token)
+    except Exception as e:
+        _logger.warning("Error fetching meters for device %s: %s", device_id, e)
+        return []
 
 
 def get_device_consumables(

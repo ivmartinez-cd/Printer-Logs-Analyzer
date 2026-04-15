@@ -1,9 +1,12 @@
 import { forwardRef, useState, useEffect } from 'react'
 import { aiDiagnose } from '../services/api'
-import type { ParseLogsResponse } from '../types/api'
+import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter } from '../types/api'
 
 interface AIDiagnosticPanelProps {
   result: ParseLogsResponse | null
+  consumables?: RealtimeConsumable[]
+  alerts?: DeviceAlertsResponse | null
+  meters?: InsightMeter[]
 }
 
 // Parsea el texto "DIAGNÓSTICO: ...\nACCIÓN: ...\nPRIORIDAD: ..." en secciones.
@@ -26,7 +29,7 @@ function parseDiagnosis(text: string): { label: string; content: string }[] | nu
 }
 
 export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelProps>(
-  function AIDiagnosticPanel({ result }, ref) {
+  function AIDiagnosticPanel({ result, consumables, alerts, meters }, ref) {
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -46,7 +49,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       setLoading(true)
       setError(null)
       try {
-        const res = await aiDiagnose(result)
+        const res = await aiDiagnose(result, { consumables, alerts, meters })
         setDiagnosis(res.diagnosis)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al generar el diagnóstico')
