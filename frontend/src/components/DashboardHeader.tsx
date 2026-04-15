@@ -35,6 +35,7 @@ interface DashboardHeaderProps {
   onOpenSavedList: () => void
   onAnalyzeNew: () => void
   onSaveIncident: () => void
+  onAddSds: () => void
   onExportPdf: () => void
   onHelp: () => void
 }
@@ -47,6 +48,7 @@ export function DashboardHeader({
   onOpenSavedList,
   onAnalyzeNew,
   onSaveIncident,
+  onAddSds,
   onExportPdf,
   onHelp,
 }: DashboardHeaderProps) {
@@ -91,6 +93,15 @@ export function DashboardHeader({
             onClick={onSaveIncident}
           >
             Guardar incidente
+          </button>
+        )}
+        {hasResult && (
+          <button
+            type="button"
+            className="dashboard__btn dashboard__btn--secondary"
+            onClick={onAddSds}
+          >
+            Asociar SDS
           </button>
         )}
         {hasResult && (

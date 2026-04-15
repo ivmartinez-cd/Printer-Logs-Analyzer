@@ -245,7 +245,6 @@ export default function DashboardPage({
     resetDateFilter: dateFilter.reset,
     resetFilters: () => {},
     setLogModalOpen,
-    setSdsPreModalOpen,
     setAddCodeModalCode,
     setEditCodeInitial,
     setSaveIncidentModalOpen,
@@ -466,6 +465,7 @@ export default function DashboardPage({
             }}
             onAnalyzeNew={() => setLogModalOpen(true)}
             onSaveIncident={() => setSaveIncidentModalOpen(true)}
+            onAddSds={() => setSdsModalOpen(true)}
             onExportPdf={() => handleExportPDF(!!result)}
             onHelp={() => setHelpModalOpen(true)}
           />
@@ -758,28 +758,9 @@ export default function DashboardPage({
           onContinue={(data) => {
             setSdsIncident(data)
             setSdsModalOpen(false)
-            if (pendingResult !== null) commitPendingResult()
           }}
           onClose={() => {
             setSdsModalOpen(false)
-            if (pendingResult !== null) commitPendingResult()
-          }}
-        />
-      )}
-
-      {sdsPreModalOpen && (
-        <ConfirmModal
-          title="¿Agregar incidente SDS?"
-          message="¿Querés asociar un incidente del SDS a este análisis?"
-          confirmLabel="Sí, agregar"
-          cancelLabel="No, continuar"
-          onConfirm={() => {
-            setSdsPreModalOpen(false)
-            setSdsModalOpen(true)
-          }}
-          onCancel={() => {
-            setSdsPreModalOpen(false)
-            commitPendingResult()
           }}
         />
       )}

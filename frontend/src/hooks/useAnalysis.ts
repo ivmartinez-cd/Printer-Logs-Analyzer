@@ -60,11 +60,10 @@ export function useAnalysis({
         validateLogs(logText).catch(() => ({ codes_new: [] as string[] })),
       ])
       const newCodes = validateRes.codes_new ?? []
-      setPendingResult(data)
-      setPendingCodesNew(newCodes)
+      setResult(data)
+      setCodesNew(newCodes)
       onAnalyzeDone?.(data, newCodes)
       setLogModalOpen(false)
-      setSdsPreModalOpen(true)
       if (newCodes.length > 0) {
         toast.showWarning(
           `Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`
