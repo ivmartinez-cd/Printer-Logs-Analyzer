@@ -938,10 +938,20 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                     "event_count": len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0
                 }
 
-            result = await asyncio.to_thread(_do_extract)
-            return result
+            # Render 30s timeout protection: wait for 28.5s then fail gracefully
+            try:
+                result = await asyncio.wait_for(asyncio.to_thread(_do_extract), timeout=28.5)
+                return result
+            except (asyncio.TimeoutError, TimeoutError):
+                raise HTTPException(
+                    status_code=504, 
+                    detail="El portal HP SDS está respondiendo muy lento. El login ya ha sido iniciado; por favor intentá de nuevo en unos segundos."
+                )
+
         except SDSWebError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except HTTPException:
+            raise
         except Exception as exc:
             import logging
             _logger = logging.getLogger(__name__)
