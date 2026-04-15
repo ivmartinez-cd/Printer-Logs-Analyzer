@@ -278,9 +278,11 @@ export default function DashboardPage({
     }
   }, [handleAnalyze, setCurrentModelHasCpmd, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast])
 
+  const autoExtractRef = useRef(false)
   // Effect for Deep Linking: Auto-start if initialSerial is provided
   useEffect(() => {
-    if (initialSerial) {
+    if (initialSerial && !autoExtractRef.current) {
+      autoExtractRef.current = true
       autoResolveAndAnalyze(initialSerial)
     }
   }, [initialSerial, autoResolveAndAnalyze])

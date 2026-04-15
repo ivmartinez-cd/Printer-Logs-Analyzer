@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { previewLogs, validateLogs, upsertErrorCode, createSavedAnalysis } from '../services/api'
 import type {
   ParseLogsResponse,
@@ -43,7 +43,7 @@ export function useAnalysis({
   const [savingIncident, setSavingIncident] = useState(false)
   const toast = useToast()
 
-  async function handleAnalyze(logText: string, fileName?: string, modelId?: string | null) {
+  const handleAnalyze = useCallback(async (logText: string, fileName?: string, modelId?: string | null) => {
     if (!logText.trim()) return
     setError(null)
     setResult(null)
@@ -79,16 +79,16 @@ export function useAnalysis({
     } finally {
       setLoading(false)
     }
-  }
+  }, [onAnalyzeDone, setLogFileName, resetDateFilter, resetFilters, setLogModalOpen, setSdsPreModalOpen, toast])
 
-  function commitPendingResult() {
+  const commitPendingResult = useCallback(() => {
     setResult(pendingResult)
     setCodesNew(pendingCodesNew)
     setPendingResult(null)
     setPendingCodesNew([])
-  }
+  }, [pendingResult, pendingCodesNew])
 
-  async function handleSaveCodeToCatalog(body: ErrorCodeUpsertBody, isEdit = false) {
+  const handleSaveCodeToCatalog = useCallback(async (body: ErrorCodeUpsertBody, isEdit = false) => {
     setError(null)
     setSavingCode(true)
     try {
@@ -147,7 +147,7 @@ export function useAnalysis({
     } finally {
       setSavingCode(false)
     }
-  }
+  }, [setAddCodeModalCode, setEditCodeInitial, toast])
 
   function buildIncidentSummaryItems(incidents: ApiIncident[]): SavedAnalysisIncidentItem[] {
     return incidents.map((inc) => ({
@@ -163,7 +163,7 @@ export function useAnalysis({
     }))
   }
 
-  async function handleSaveIncident(name: string, equipmentIdentifier: string | null) {
+  const handleSaveIncident = useCallback(async (name: string, equipmentIdentifier: string | null) => {
     if (!result) return
     setSavingIncident(true)
     setError(null)
@@ -183,7 +183,7 @@ export function useAnalysis({
     } finally {
       setSavingIncident(false)
     }
-  }
+  }, [result, setSaveIncidentModalOpen, toast])
 
   return {
     loading,
