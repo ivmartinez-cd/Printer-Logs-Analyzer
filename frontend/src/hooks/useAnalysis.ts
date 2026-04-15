@@ -34,8 +34,6 @@ export function useAnalysis({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ParseLogsResponse | null>(null)
-  const [pendingResult, setPendingResult] = useState<ParseLogsResponse | null>(null)
-  const [pendingCodesNew, setPendingCodesNew] = useState<string[]>([])
   const [codesNew, setCodesNew] = useState<string[]>([])
   const [savingCode, setSavingCode] = useState(false)
   const [savingIncident, setSavingIncident] = useState(false)
@@ -76,14 +74,7 @@ export function useAnalysis({
     } finally {
       setLoading(false)
     }
-  }, [onAnalyzeDone, setLogFileName, resetDateFilter, resetFilters, setLogModalOpen, setSdsPreModalOpen, toast])
-
-  const commitPendingResult = useCallback(() => {
-    setResult(pendingResult)
-    setCodesNew(pendingCodesNew)
-    setPendingResult(null)
-    setPendingCodesNew([])
-  }, [pendingResult, pendingCodesNew])
+  }, [onAnalyzeDone, setLogFileName, resetDateFilter, resetFilters, setLogModalOpen, toast])
 
   const handleSaveCodeToCatalog = useCallback(async (body: ErrorCodeUpsertBody, isEdit = false) => {
     setError(null)
@@ -188,13 +179,11 @@ export function useAnalysis({
     setError,
     result,
     setResult,
-    pendingResult,
     codesNew,
     setCodesNew,
     savingCode,
     savingIncident,
     handleAnalyze,
-    commitPendingResult,
     handleSaveCodeToCatalog,
     handleSaveIncident,
   }
