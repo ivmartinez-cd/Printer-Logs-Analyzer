@@ -107,11 +107,11 @@ export function LogPasteModal({
             </button>
           </div>
 
-          <div className="log-modal__method-section">
-            <h3 style={{ color: "var(--accent-primary)", marginBottom: "1rem", fontSize: "1.1rem", display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className="log-modal__method-section" style={{ display: 'flex', flexDirection: 'column', paddingTop: '10px' }}>
+            <h3 style={{ padding: "0 20px", color: "var(--accent-primary)", marginBottom: "0.5rem", marginTop: 0, fontSize: "1.05rem", display: "flex", alignItems: "center", gap: "8px" }}>
               ✨ Opción 1: Automático (Recomendado)
             </h3>
-            <div className="log-modal__model-section" style={{ marginBottom: "0" }}>
+            <div className="log-modal__model-section" style={{ paddingTop: '5px', marginBottom: "0" }}>
               <label className="log-modal__model-label" htmlFor="log-modal-serial-input">
                 N° de serie del equipo
                 <span className="log-modal__optional-hint"> (para extracción directa del portal SDS)</span>
@@ -149,18 +149,18 @@ export function LogPasteModal({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 20px 1rem' }}>
             <div style={{ flex: 1, borderBottom: '1px solid var(--border-color)', opacity: 0.5 }}></div>
-            <span style={{ padding: '0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', opacity: 0.8 }}>Ó ingreso manual</span>
+            <span style={{ padding: '0 1rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>Ó ingreso manual</span>
             <div style={{ flex: 1, borderBottom: '1px solid var(--border-color)', opacity: 0.5 }}></div>
           </div>
 
-          <div className="log-modal__method-section" style={{ opacity: serialNumber.length >= 5 ? 0.5 : 1, transition: 'opacity 0.3s ease' }}>
-            <h3 style={{ color: "var(--text-secondary)", marginBottom: "1rem", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className="log-modal__method-section" style={{ opacity: serialNumber.length >= 5 ? 0.35 : 1, transition: 'opacity 0.3s ease', display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <h3 style={{ padding: "0 20px", margin: "0", color: "var(--text-secondary)", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px" }}>
               🖨️ Opción 2: Formato Manual
             </h3>
             
-            <div className="log-modal__model-section">
+            <div className="log-modal__model-section" style={{ paddingTop: '8px' }}>
               <label className="log-modal__model-label" htmlFor="log-modal-model-select">
                 Modelo de impresora *
               </label>
@@ -223,12 +223,12 @@ export function LogPasteModal({
               value={logText}
               onChange={(e) => setLogText(e.target.value)}
               disabled={loading}
-              style={{ minHeight: '150px' }}
+              style={{ minHeight: '180px', margin: '12px 20px 20px', flex: 1 }}
             />
             {error && <p className="dashboard__error">{error}</p>}
           </div>
 
-          <div className="log-modal__actions" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+        <div className="log-modal__actions">
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', flex: 1 }}>
               {serialNumber.length >= 5 ? 'Automático listo' : (!logText.trim() ? '' : (selectedModelId ? 'Manual listo' : 'Seleccioná un modelo para analizar manualmente'))}
             </span>

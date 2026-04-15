@@ -106,16 +106,23 @@ class SDSWebSession:
         except requests.RequestException as e:
             raise SDSWebError(f"Search request failed: {e}")
 
-        # Try to find Model Name in HTML using the class provided by user
+        # Try to find Model Name in HTML using Regex first.
+        # The user provided snippet: <a href=".../view-model..." class="entity-name model...">Model</a>
         model_name = "Generico / Desconocido"
         try:
-            tree = html.fromstring(resp.text)
-            # Match the class "entity-name model"
-            model_links = tree.xpath('//a[contains(@class, "entity-name") and contains(@class, "model")]')
-            if model_links:
-                model_name = model_links[0].text_content().strip()
-                # Clean up multiple spaces/newlines
-                model_name = " ".join(model_name.split())
+            # First attempt: Regex for view-model or entity-name model links
+            regex_match = re.search(r'<a[^>]*?class="[^"]*?entity-name[^"]*?model[^"]*?"[^>]*?>\s*([^<]+?)\s*</a>', resp.text, re.IGNORECASE)
+            if regex_match:
+                model_name = regex_match.group(1).strip()
+            else:
+                # Second attempt: Fallback to lxml if regex didn't catch it
+                tree = html.fromstring(resp.text)
+                model_links = tree.xpath('//a[contains(@class, "entity-name") and contains(@class, "model")]')
+                if model_links:
+                    model_name = model_links[0].text_content().strip()
+            
+            # Clean up multiple spaces/newlines
+            model_name = " ".join(model_name.split())
         except Exception as e:
             _logger.warning("Failed to extract model name from SDS response: %s", e)
 
