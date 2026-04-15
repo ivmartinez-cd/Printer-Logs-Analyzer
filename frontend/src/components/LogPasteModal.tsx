@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { listPrinterModels, extractSdsLogs } from '../services/api'
+import { listPrinterModels } from '../services/api'
 import type { PrinterModel, UploadPdfResponse } from '../types/api'
 import { AddPrinterModelModal } from './AddPrinterModelModal'
-import { useToast } from '../contexts/ToastContext'
 
 export interface LogPasteModalProps {
   loading: boolean
@@ -36,7 +35,7 @@ export function LogPasteModal({
   const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const toast = useToast()
+
 
   useEffect(() => {
     textareaRef.current?.focus()
