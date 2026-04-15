@@ -129,7 +129,14 @@ function getEventInfoForCode(
 
 
 function DbStatusBadge({ status }: { status: HealthStatus | null }) {
-  if (!status) return null
+  if (status === null) {
+    return (
+      <span className="db-status-badge db-status-badge--connecting">
+        <span className="db-status-badge__spinner" aria-hidden="true" />
+        Conectando al servidor...
+      </span>
+    )
+  }
   const online = status.db_available
   return (
     <span
@@ -177,6 +184,7 @@ export default function DashboardPage({
   )
   const [autoExtracting, setAutoExtracting] = useState(false)
   const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
+  const [currentModelName, setCurrentModelName] = useState<string | null>(null)
 
   const toast = useToast()
   const modals = useModals()
@@ -251,6 +259,7 @@ export default function DashboardPage({
       // 1. Extract logs AND resolve device info in a single call
       const sdsRes = await extractSdsLogs(serial)
       setCurrentSerialNumber(serial)
+      setCurrentModelName(sdsRes.model_name_sds)
       
       if (sdsRes.suggested_model_id) {
         setCurrentModelId(sdsRes.suggested_model_id)
@@ -371,20 +380,19 @@ export default function DashboardPage({
           <div className="dashboard__welcome-wrap">
             <section className="dashboard__welcome">
               <p className="dashboard__tagline">
-                Analiza logs de impresoras HP, detecta errores por severidad y visualiza tendencias
-                en segundos.
+                Análisis técnico avanzado de logs HP con detección inteligente de errores y estado de hardware en tiempo real.
               </p>
               <div className="dashboard__welcome-actions">
                 <button
                   type="button"
-                  className="dashboard__btn dashboard__btn--primary dashboard__btn--welcome"
+                  className="dashboard__btn dashboard__btn--executive"
                   onClick={() => setLogModalOpen(true)}
                 >
-                  Pegar logs y analizar
+                  🚀 Iniciar Nuevo Análisis
                 </button>
                 <button
                   type="button"
-                  className="dashboard__btn dashboard__btn--secondary dashboard__btn--welcome-secondary"
+                  className="dashboard__btn dashboard__btn--executive-secondary"
                   onClick={() => {
                     setViewMode('saved-list')
                     setSavedList(null)
@@ -394,46 +402,46 @@ export default function DashboardPage({
                       .catch(() => setSavedList([]))
                   }}
                 >
-                  Ver logs guardados
+                  📁 Ver Logs Guardados
                 </button>
                 <button
                   type="button"
-                  className="dashboard__btn dashboard__btn--ghost dashboard__btn--help"
+                  className="dashboard__btn dashboard__btn--executive-ghost"
                   onClick={() => setHelpModalOpen(true)}
                   title="¿Cómo funciona?"
                 >
-                  ¿Cómo funciona?
+                  ❓ Guía de Uso
                 </button>
               </div>
               <div className="dashboard__features">
-                <span className="dashboard__features-title">¿Qué vas a ver?</span>
+                <span className="dashboard__features-title">Capacidades del Sistema</span>
                 <div className="dashboard__features-grid">
                   <div className="dashboard__feature-item">
                     <span className="dashboard__feature-icon">📊</span>
                     <div className="dashboard__feature-text">
-                      <strong>KPIs de severidad</strong>
-                      Error · Warning · Info y códigos únicos
+                      <strong>KPIs de Severidad</strong>
+                      Categorización precisa de Errores, Warnings e Información.
                     </div>
                   </div>
                   <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">📈</span>
+                    <span className="dashboard__feature-icon">⚡</span>
                     <div className="dashboard__feature-text">
-                      <strong>Gráfico temporal</strong>
-                      Volumen de eventos filtrable por día
+                      <strong>Hardware Real-Time</strong>
+                      Estado de consumibles, fusores y kits vía HP Insight API.
                     </div>
                   </div>
                   <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">🏅</span>
+                    <span className="dashboard__feature-icon">🧠</span>
                     <div className="dashboard__feature-text">
-                      <strong>Top 5 errores</strong>
-                      Códigos con mayor ocurrencia en el log
+                      <strong>Diagnóstico con IA</strong>
+                      Análisis semántico y recomendaciones de reparación automáticas.
                     </div>
                   </div>
                   <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">📋</span>
+                    <span className="dashboard__feature-icon">📁</span>
                     <div className="dashboard__feature-text">
-                      <strong>Tabla de incidencias</strong>
-                      Timestamp, código, severidad y mensaje
+                      <strong>Base de Conocimiento</strong>
+                      Acceso directo a manuales (CPMD) y soluciones históricas.
                     </div>
                   </div>
                 </div>
@@ -625,7 +633,10 @@ export default function DashboardPage({
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
                     <span className="dashboard__subheader-title">
-                      Panel de errores{logFileName ? ` · ${logFileName}` : ''}
+                      Panel de errores
+                      {currentModelName && ` · ${currentModelName}`}
+                      {currentSerialNumber && ` · ${currentSerialNumber}`}
+                      {!currentSerialNumber && logFileName && ` · ${logFileName}`}
                     </span>
                     <div className="dashboard__subheader-actions">
                       <DateRangePicker
