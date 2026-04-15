@@ -21,4 +21,5 @@ anthropic>=0.40.0
 python-multipart>=0.0.9
 pypdf>=4.0.0
 requests>=2.31.0
+lxml>=5.1.0
 
