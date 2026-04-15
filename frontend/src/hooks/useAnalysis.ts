@@ -27,7 +27,6 @@ export function useAnalysis({
   resetDateFilter,
   resetFilters,
   setLogModalOpen,
-  setSdsPreModalOpen,
   setAddCodeModalCode,
   setEditCodeInitial,
   setSaveIncidentModalOpen,

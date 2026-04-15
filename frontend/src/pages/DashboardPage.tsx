@@ -447,7 +447,6 @@ export default function DashboardPage({
       ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
           <DashboardHeader
-            logFileName={logFileName}
             healthStatus={healthStatus}
             hasResult={!!result}
             exportingPdf={exportingPdf}
