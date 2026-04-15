@@ -2,14 +2,13 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ExecutiveSummary } from '../../components/ExecutiveSummary'
-import type { ParseLogsResponse, Incident, EnrichedEvent, ConsumableWarning } from '../../types/api'
+import type { ParseLogsResponse, Incident, EnrichedEvent } from '../../types/api'
 
 const mockResult: ParseLogsResponse = {
   events: [],
   incidents: [],
   global_severity: 'OK',
   errors: [],
-  consumable_warnings: [],
   log_start_date: '2026-03-01T10:00:00Z',
   log_end_date: '2026-03-10T10:00:00Z',
   total_lines: 1000,
@@ -53,16 +52,14 @@ describe('ExecutiveSummary', () => {
   })
 
   it('muestra alertas de consumibles para reemplazo', () => {
-    const warnings: ConsumableWarning[] = [
+    const warnings: any[] = [
       {
-        part_number: 'W123',
+        sku: 'W123',
         description: 'Toner Black',
-        category: 'Toner',
-        life_pages: 10000,
-        current_counter: 9500,
-        usage_pct: 95,
-        status: 'replace',
-        matched_codes: [],
+        type: 'TONER',
+        percentLeft: 5,
+        pagesLeft: 500,
+        daysLeft: 10,
       },
     ]
     render(<ExecutiveSummary {...defaultProps} consumableWarnings={warnings} />)

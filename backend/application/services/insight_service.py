@@ -87,6 +87,76 @@ def _insight_get(url: str, token: str) -> Any:
     return resp.json()
 
 
+def get_device_info(
+    portal_url: str,
+    api_key: str,
+    api_secret: str,
+    serial: str,
+) -> Dict[str, Any]:
+    """Search for a device by serial and return its identification from Insight API.
+
+    Returns a dict with:
+        device_id: int | None
+        model_name: str | None
+        zone: str | None
+        insight_configured: bool
+    """
+    token = _get_jwt(portal_url, api_key, api_secret)
+    base = portal_url.rstrip("/")
+
+    search_url = (
+        f"{base}/PortalAPI/api/devices/search"
+        f"?q=serial:{serial}&includeExtendedFields=true"
+    )
+    devices: List[Dict[str, Any]] = _insight_get(search_url, token)
+
+    if not devices:
+        return {
+            "device_id": None,
+            "model_name": None,
+            "zone": None,
+            "insight_configured": True,
+        }
+
+    device = devices[0]
+    device_id: int = device["deviceId"]
+    extended = device.get("extendedFields", {})
+    model_name: Optional[str] = extended.get("model")
+    zone: Optional[str] = extended.get("zone")
+
+    return {
+        "device_id": device_id,
+        "model_name": model_name,
+        "zone": zone,
+        "insight_configured": True,
+    }
+
+
+def get_device_consumables(
+    portal_url: str,
+    api_key: str,
+    api_secret: str,
+    device_id: int,
+) -> List[Dict[str, Any]]:
+    """Fetch realtime consumables status from Insight Portal.
+
+    Returns the raw consumables list containing TONER, FUSER, MAINTENANCE_KIT, etc.
+    """
+    token = _get_jwt(portal_url, api_key, api_secret)
+    base = portal_url.rstrip("/")
+
+    ep = f"{base}/PortalAPI/api/devices/{device_id}/consumables"
+    try:
+        res = _insight_get(ep, token)
+        if isinstance(res, dict) and "consumables" in res:
+            return res.get("consumables", [])
+        return []
+    except Exception as e:
+        import logging
+        logging.exception("Error fetching consumables for device %s: %s", device_id, e)
+        return []
+
+
 def get_device_alerts(
     portal_url: str,
     api_key: str,
@@ -104,17 +174,9 @@ def get_device_alerts(
         history: list[AlertItem]
         insight_configured: bool  — always True here (caller handles False case)
     """
-    token = _get_jwt(portal_url, api_key, api_secret)
-    base = portal_url.rstrip("/")
-
-    # 1. Resolve serial → deviceId via the search endpoint
-    search_url = (
-        f"{base}/PortalAPI/api/devices/search"
-        f"?q=serial:{serial}&includeExtendedFields=true"
-    )
-    devices: List[Dict[str, Any]] = _insight_get(search_url, token)
-
-    if not devices:
+    info = get_device_info(portal_url, api_key, api_secret, serial)
+    
+    if not info["device_id"]:
         return {
             "serial": serial,
             "device_id": None,
@@ -125,11 +187,9 @@ def get_device_alerts(
             "insight_configured": True,
         }
 
-    device = devices[0]
-    device_id: int = device["deviceId"]
-    extended = device.get("extendedFields", {})
-    model_name: Optional[str] = extended.get("model")
-    zone: Optional[str] = extended.get("zone")
+    device_id = info["device_id"]
+    token = _get_jwt(portal_url, api_key, api_secret)
+    base = portal_url.rstrip("/")
 
     # 2. Fetch current alerts
     current: List[Dict[str, Any]] = []
@@ -152,8 +212,8 @@ def get_device_alerts(
     return {
         "serial": serial,
         "device_id": device_id,
-        "model": model_name,
-        "zone": zone,
+        "model": info["model_name"],
+        "zone": info["zone"],
         "current": current,
         "history": history,
         "insight_configured": True,

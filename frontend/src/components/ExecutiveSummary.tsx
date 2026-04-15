@@ -3,14 +3,13 @@ import type {
   ParseLogsResponse,
   Incident as ApiIncident,
   EnrichedEvent as ApiEvent,
-  ConsumableWarning,
 } from '../types/api'
 
 interface ExecutiveSummaryProps {
   result: ParseLogsResponse
   filteredIncidents: ApiIncident[]
   filteredEvents: ApiEvent[]
-  consumableWarnings: ConsumableWarning[]
+  consumableWarnings: any[]
   lastErrorLabel: string | null
   logFileName: string | null
   serialNumber: string | null
@@ -110,8 +109,12 @@ export const ExecutiveSummary = forwardRef<HTMLDivElement, ExecutiveSummaryProps
       (i) => i.severity.toUpperCase() === 'WARNING'
     )
     const infoIncidents = filteredIncidents.filter((i) => i.severity.toUpperCase() === 'INFO')
-    const replaceWarnings = consumableWarnings.filter((w) => w.status === 'replace')
-    const warningWarnings = consumableWarnings.filter((w) => w.status === 'warning')
+    const replaceWarnings = consumableWarnings.filter(
+      (w) => typeof w.percentLeft === 'number' && w.percentLeft < 15
+    )
+    const warningWarnings = consumableWarnings.filter(
+      (w) => typeof w.percentLeft === 'number' && w.percentLeft >= 15 && w.percentLeft < 30
+    )
 
     const health = useMemo(
       () => computeHealthStatus(filteredIncidents, lastErrorLabel),
@@ -143,7 +146,7 @@ export const ExecutiveSummary = forwardRef<HTMLDivElement, ExecutiveSummaryProps
       if (replaceWarnings.length > 0) {
         const list = replaceWarnings
           .slice(0, 2)
-          .map((w) => `${w.description} (${Math.round(w.usage_pct)}%)`)
+          .map((w) => `${w.description || 'Desconocido'} (${Math.round(w.percentLeft || 0)}%)`)
           .join(', ')
         const extra = replaceWarnings.length > 2 ? ` y +${replaceWarnings.length - 2}` : ''
         points.push(`Consumibles fuera de vida útil: ${list}${extra}.`)
@@ -178,7 +181,7 @@ export const ExecutiveSummary = forwardRef<HTMLDivElement, ExecutiveSummaryProps
         const w = replaceWarnings[0]
         steps.push({
           owner: 'Operaciones',
-          text: `Programar reemplazo de ${w.description} (${Math.round(w.usage_pct)}% de uso) y validar historial.`,
+          text: `Programar reemplazo de ${w.description || 'Desconocido'} (${Math.round(w.percentLeft || 0)}% de vida útil real restante).`,
         })
       } else if (warningWarnings.length > 0) {
         const w = warningWarnings[0]

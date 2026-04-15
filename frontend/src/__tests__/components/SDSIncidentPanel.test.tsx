@@ -62,29 +62,4 @@ describe('SDSIncidentPanel', () => {
     fireEvent.click(getHeaderButton())
     expect(screen.getByText('❌ No coincide')).toBeInTheDocument()
   })
-
-  it('muestra la tabla de consumibles solapados', () => {
-    const warnings = [
-      {
-        part_number: 'W1',
-        description: 'Pick Roller',
-        category: 'Roller',
-        life_pages: 1000,
-        current_counter: 900,
-        usage_pct: 90,
-        status: 'warning' as const,
-        matched_codes: ['60.00.02'],
-      }
-    ]
-    render(
-      <SDSIncidentPanel 
-        sdsIncident={mockSdsIncident} 
-        incidentRows={mockIncidentRows} 
-        consumableWarnings={warnings}
-      />
-    )
-    fireEvent.click(getHeaderButton())
-    expect(screen.getByText('Verificar historial de consumibles')).toBeInTheDocument()
-    expect(screen.getByText('Pick Roller')).toBeInTheDocument()
-  })
 })

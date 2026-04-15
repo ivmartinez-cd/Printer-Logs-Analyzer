@@ -13,7 +13,6 @@ const mockResult = {
   incidents: [],
   global_severity: 'OK',
   errors: [],
-  consumable_warnings: [],
   log_start_date: '...',
   log_end_date: '...',
   total_lines: 0,

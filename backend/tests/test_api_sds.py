@@ -15,7 +15,10 @@ def mock_settings():
         DB_URL="postgresql://test",
         API_KEY="dev",
         SDS_WEB_USERNAME="testuser",
-        SDS_WEB_PASSWORD="testpassword"
+        SDS_WEB_PASSWORD="testpassword",
+        INSIGHT_PORTAL_URL="https://testportal",
+        INSIGHT_API_KEY="key",
+        INSIGHT_API_SECRET="secret"
     )
 
 @pytest.fixture
@@ -25,13 +28,17 @@ def client(mock_settings):
 
 _HEADERS = {"x-api-key": "dev"}
 
+@patch("backend.interface.api._insight_get_device_consumables")
+@patch("backend.interface.api._insight_get_device_info")
 @patch("backend.interface.api.get_sds_session")
 @patch("backend.interface.api.html_to_tsv")
-def test_extract_logs_success(mock_tsv, mock_sds_factory, client):
+def test_extract_logs_success(mock_tsv, mock_sds_factory, mock_insight_info, mock_insight_consumables, client):
     """Test successful log extraction via API."""
+    mock_insight_info.return_value = {"device_id": 12345, "model_name": "HP LaserJet", "zone": "Zone"}
+    mock_insight_consumables.return_value = [{"type": "TONER", "percentLeft": 100}]
+    
     mock_sds = MagicMock()
     mock_sds_factory.return_value = mock_sds
-    mock_sds.search_device.return_value = {"id": "12345", "model_name": "HP LaserJet"}
     mock_sds.fetch_event_logs_html.return_value = "<html>...</html>"
     mock_tsv.return_value = "HeaderCol\nDataLine1\nDataLine2"
     
@@ -56,7 +63,7 @@ def test_extract_logs_success(mock_tsv, mock_sds_factory, client):
     assert data["event_count"] == 2
     assert "DataLine1" in data["logs_text"]
     
-    mock_sds.search_device.assert_called_once_with("MXSCS7Q00Q")
+    mock_insight_info.assert_called_once_with("https://testportal", "key", "secret", "MXSCS7Q00Q")
     mock_sds.fetch_event_logs_html.assert_called_once_with("12345", 30)
 
 def test_extract_logs_unauthorized(client):
@@ -64,13 +71,11 @@ def test_extract_logs_unauthorized(client):
     response = client.post("/sds/extract-logs", json={"serial": "123"}, headers={"x-api-key": "wrong"})
     assert response.status_code == 401
 
-@patch("backend.interface.api.get_sds_session")
-def test_extract_logs_not_found(mock_sds_factory, client):
+@patch("backend.interface.api._insight_get_device_info")
+def test_extract_logs_not_found(mock_insight_info, client):
     """Test fallback when device is not found."""
-    from backend.application.services.sds_web_service import SDSWebError
-    mock_sds = MagicMock()
-    mock_sds_factory.return_value = mock_sds
-    mock_sds.search_device.side_effect = SDSWebError("Device not found")
+    from backend.application.services.insight_service import InsightAPIError
+    mock_insight_info.return_value = {"device_id": None}
     
     response = client.post(
         "/sds/extract-logs",
@@ -78,8 +83,8 @@ def test_extract_logs_not_found(mock_sds_factory, client):
         headers=_HEADERS
     )
     
-    assert response.status_code == 502
-    assert "Device not found" in response.json()["detail"]
+    assert response.status_code == 404
+    assert "Dispositivo no encontrado" in response.json()["detail"]
 
 def test_extract_logs_missing_serial(client):
     """Verify that serial parameter is required."""

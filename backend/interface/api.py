@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -23,8 +23,7 @@ limiter = Limiter(key_func=get_remote_address)
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
 from backend.application.services.compare_service import calculate_trend
-from backend.application.services.consumable_warning_service import compute_consumable_warnings
-from backend.domain.entities import ConsumableWarning, EnrichedEvent, Event, Incident
+from backend.domain.entities import EnrichedEvent, Event, Incident
 from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.content_fetcher import fetch_solution_content, validate_ssrf_url
 from backend.infrastructure.database import Database
@@ -41,6 +40,8 @@ from backend.interface.auth import authenticate as _authenticate_from_module
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
+    get_device_info as _insight_get_device_info,
+    get_device_consumables as _insight_get_device_consumables,
     InsightConfigError,
     InsightAPIError,
 )
@@ -76,6 +77,7 @@ class ExtractSdsLogsResponse(BaseModel):
     has_cpmd: bool = False
     logs_text: str
     event_count: int
+    realtime_consumables: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 
@@ -127,7 +129,6 @@ class ParseLogsResponse(BaseModel):
     incidents: list[Incident]
     global_severity: str
     errors: list[ParserErrorModel]
-    consumable_warnings: list[ConsumableWarning] = []
     log_start_date: str
     log_end_date: str
     total_lines: int
@@ -360,16 +361,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             for e in report.errors
         ]
 
-        consumable_warnings: list[ConsumableWarning] = []
-        if payload.model_id is not None:
-            try:
-                from backend.infrastructure.database import DatabaseUnavailableError as _DBErr
-                _model, consumables = printer_model_repository.get_with_consumables(payload.model_id)
-                max_counter = max((e.counter for e in events if e.counter > 0), default=0)
-                consumable_warnings = compute_consumable_warnings(events, consumables, max_counter)
-            except Exception as exc:
-                logging.warning("[preview] consumable_warnings skipped: %s", exc)
-
         total_ms = int((time.perf_counter() - t0) * 1000)
         logging.info("[preview] parse_ms=%d db_ms=%d analysis_ms=%d total_ms=%d", parse_ms, db_ms, analysis_ms, total_ms)
 
@@ -383,7 +374,6 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             incidents=analysis.incidents,
             global_severity=analysis.global_severity,
             errors=errors,
-            consumable_warnings=consumable_warnings,
             log_start_date=start_date,
             log_end_date=end_date,
             total_lines=total_lines,
@@ -934,24 +924,34 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         serial: str,
     ) -> ResolveDeviceResponse:
         """Resolve a device info from SDS portal by serial number, including model matching."""
-        if not (settings.sds_web_username and settings.sds_web_password):
-            raise HTTPException(status_code=503, detail="SDS Web not configured")
+        if not (settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret):
+            raise HTTPException(status_code=503, detail="Insight API not configured")
 
         serial = serial.strip().upper()
         if not serial:
             raise HTTPException(status_code=400, detail="Serial is required")
 
         try:
-            # 1. Search in SDS
-            sds = get_sds_session(settings)
-            info = await asyncio.to_thread(sds.search_device, serial)
+            # 1. Search in Insight API
+            info = await asyncio.to_thread(
+                _insight_get_device_info,
+                settings.insight_portal_url,
+                settings.insight_api_key,
+                settings.insight_api_secret,
+                serial,
+            )
+            if not info["device_id"]:
+                raise HTTPException(status_code=404, detail="Device not found in Portal")
             
             # 2. Try to match model in DB
             suggested_model_id = None
             suggested_model_name = None
             has_cpmd = False
             
-            model_match = await asyncio.to_thread(printer_model_repository.find_best_match, info["model_name"])
+            model_match = await asyncio.to_thread(
+                printer_model_repository.find_best_match, 
+                info["model_name"] or "Unknown"
+            )
             if model_match:
                 suggested_model_id = model_match.id
                 suggested_model_name = model_match.model_name
@@ -962,14 +962,16 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
             return ResolveDeviceResponse(
                 serial=serial,
-                device_id=info["id"],
-                model_name_sds=info["model_name"],
+                device_id=str(info["device_id"]),
+                model_name_sds=info["model_name"] or "Unknown",
                 suggested_model_id=suggested_model_id,
                 suggested_model_name=suggested_model_name,
                 has_cpmd=has_cpmd
             )
-        except SDSWebError as exc:
+        except InsightAPIError as exc:
             raise HTTPException(status_code=502, detail=str(exc))
+        except HTTPException:
+            raise
         except Exception as exc:
             logging.exception("Error resolving device by serial: %s", exc)
             raise HTTPException(status_code=500, detail="Internal error resolving device")
@@ -987,6 +989,11 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 status_code=503,
                 detail="Integración SDS Web no configurada (faltan credenciales)"
             )
+        if not (settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret):
+            raise HTTPException(
+                status_code=503,
+                detail="Integración Insight API no configurada"
+            )
 
         serial = body.serial.strip().upper()
         if not serial or len(serial) > 50:
@@ -995,11 +1002,19 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         try:
             # Running synchronous extraction in a thread to keep FastAPI async
             def _do_extract():
+                info = _insight_get_device_info(
+                    settings.insight_portal_url,
+                    settings.insight_api_key,
+                    settings.insight_api_secret,
+                    serial,
+                )
+                if not info["device_id"]:
+                    raise HTTPException(status_code=404, detail="Dispositivo no encontrado en Insight Portal.")
+
                 sds = get_sds_session(settings)
-                # Now search_device returns a dict {"id", "model_name"}
-                info = sds.search_device(serial)
-                device_id = info["id"]
-                model_name_sds = info["model_name"]
+                
+                device_id = str(info["device_id"])
+                model_name_sds = info["model_name"] or "Unknown"
                 
                 raw_html = sds.fetch_event_logs_html(device_id, body.days)
                 tsv_text = html_to_tsv(raw_html)
@@ -1013,6 +1028,13 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                     cpmd_models = error_solution_repository.get_model_ids_with_solutions()
                     has_cpmd = str(model_match.id) in cpmd_models
 
+                realtime_consumables = _insight_get_device_consumables(
+                    settings.insight_portal_url,
+                    settings.insight_api_key,
+                    settings.insight_api_secret,
+                    info["device_id"],
+                )
+
                 return ExtractSdsLogsResponse(
                     serial=serial,
                     device_id=device_id,
@@ -1020,7 +1042,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                     suggested_model_id=suggested_model_id,
                     has_cpmd=has_cpmd,
                     logs_text=tsv_text,
-                    event_count=len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0
+                    event_count=len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0,
+                    realtime_consumables=realtime_consumables
                 )
 
             # Render 30s timeout protection: wait for 28.5s then fail gracefully

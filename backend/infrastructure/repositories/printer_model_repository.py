@@ -147,10 +147,11 @@ class PrinterModelRepository:
                         FROM printer_models
                         WHERE LOWER(%s) LIKE LOWER('%%' || model_name || '%%')
                            OR LOWER(model_name) LIKE LOWER('%%' || %s || '%%')
+                           OR LOWER(%s) LIKE LOWER('%%' || model_code || '%%')
                         ORDER BY LENGTH(model_name) DESC
                         LIMIT 1
                         """,
-                        (name, name),
+                        (name, name, name),
                     )
                     row = cur.fetchone()
                     if row:
@@ -165,7 +166,8 @@ class PrinterModelRepository:
         candidates = []
         for d in data:
             m_name_lower = d.get("model_name", "").lower()
-            if m_name_lower in name_lower or name_lower in m_name_lower:
+            m_code_lower = d.get("model_code", "").lower()
+            if m_name_lower in name_lower or name_lower in m_name_lower or (m_code_lower and m_code_lower in name_lower):
                 candidates.append(d)
         
         if not candidates:
