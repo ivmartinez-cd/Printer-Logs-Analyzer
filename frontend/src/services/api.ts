@@ -12,6 +12,7 @@ import type {
   ErrorSolution,
   IngestReport,
   DeviceAlertsResponse,
+  ExtractSdsLogsResponse,
 } from '../types/api'
 
 const API_BASE =
@@ -359,5 +360,23 @@ export async function getInsightAlerts(
     15_000
   )
   return handleResponse<DeviceAlertsResponse>(res)
+}
+
+export async function extractSdsLogs(
+  serial: string,
+  days: number = 30,
+  signal?: AbortSignal
+): Promise<ExtractSdsLogsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/extract-logs`,
+    {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({ serial, days }),
+      signal,
+    },
+    60_000 // Extraction can take some time
+  )
+  return handleResponse<ExtractSdsLogsResponse>(res)
 }
 

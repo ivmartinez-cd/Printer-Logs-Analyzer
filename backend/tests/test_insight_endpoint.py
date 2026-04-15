@@ -7,6 +7,7 @@ import os
 os.environ.setdefault("DB_URL", "postgresql://test")
 os.environ.setdefault("API_KEY", "dev")
 
+import pytest
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -15,6 +16,12 @@ from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
 
 _HEADERS = {"x-api-key": "dev"}
+
+
+@pytest.fixture(autouse=True)
+def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend.interface.api import limiter
+    monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 
 def _make_settings(with_insight: bool = True) -> Settings:

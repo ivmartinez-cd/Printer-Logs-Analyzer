@@ -61,10 +61,11 @@ def _make_printer_model() -> PrinterModel:
 
 def _make_ingest_report(skipped: bool = False) -> IngestReport:
     return IngestReport(
-        model_id=_MODEL_ID,
+        model_ids=[_MODEL_ID],
         cpmd_hash=_FAKE_HASH,
         total_blocks=10,
-        extracted=8,
+        regex_ok=7,
+        llm_ok=1,
         failed=2,
         skipped=skipped,
         reason="Ya procesado" if skipped else "",
@@ -193,7 +194,9 @@ def test_happy_path_returns_ingest_report(
     assert data["model_id"] == _MODEL_ID_STR
     assert data["cpmd_hash"] == _FAKE_HASH
     assert data["total_blocks"] == 10
-    assert data["extracted"] == 8
+    assert data["extracted"] == 8   # regex_ok(7) + llm_ok(1)
+    assert data["regex_ok"] == 7
+    assert data["llm_ok"] == 1
     assert data["failed"] == 2
     assert data["skipped"] is False
 

@@ -44,6 +44,18 @@ from backend.application.services.insight_service import (
     InsightConfigError,
     InsightAPIError,
 )
+from backend.application.services.sds_web_service import (
+    get_session as get_sds_session,
+    SDSWebError,
+    html_to_tsv,
+)
+
+
+class ExtractSdsLogsRequest(BaseModel):
+    """Body for POST /sds/extract-logs."""
+    serial: str
+    days: int = 30
+
 
 
 MAX_LOGS_LENGTH = 2_000_000
@@ -831,14 +843,20 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
         # Run blocking ingestion in a thread so the event loop stays free
         report = await asyncio.to_thread(
-            ingest_cpmd, uid, pdf_bytes, api_key, error_solution_repository
+            ingest_cpmd,
+            [uid],
+            pdf_bytes,
+            api_key,                     # positional: api_key
+            error_solution_repository,   # positional: repository
         )
 
         return {
             "model_id": str(report.model_id),
             "cpmd_hash": report.cpmd_hash,
             "total_blocks": report.total_blocks,
-            "extracted": report.extracted,
+            "extracted": report.extracted,   # back-compat: regex_ok + llm_ok
+            "regex_ok": report.regex_ok,
+            "llm_ok": report.llm_ok,
             "failed": report.failed,
             "skipped": report.skipped,
             "reason": report.reason,
@@ -887,6 +905,49 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
 
         return result
+
+    @app.post("/sds/extract-logs")
+    @limiter.limit("10/minute")
+    async def extract_sds_logs(
+        request: Request,
+        body: ExtractSdsLogsRequest,
+        _: None = Depends(authenticate),
+    ) -> Dict[str, Any]:
+        """Fetch event logs from SDS portal by serial number."""
+        if not (settings.sds_web_username and settings.sds_web_password):
+            raise HTTPException(
+                status_code=503,
+                detail="Integración SDS Web no configurada (faltan credenciales)"
+            )
+
+        serial = body.serial.strip().upper()
+        if not serial or len(serial) > 50:
+            raise HTTPException(status_code=400, detail="Número de serie inválido")
+
+        try:
+            # Running synchronous extraction in a thread to keep FastAPI async
+            def _do_extract():
+                sds = get_sds_session(settings)
+                device_id = sds.search_device(serial)
+                raw_html = sds.fetch_event_logs_html(device_id, body.days)
+                tsv_text = html_to_tsv(raw_html)
+                return {
+                    "serial": serial,
+                    "device_id": device_id,
+                    "logs_text": tsv_text,
+                    "event_count": len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0
+                }
+
+            result = await asyncio.to_thread(_do_extract)
+            return result
+        except SDSWebError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except Exception as exc:
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.exception("Unexpected error extracting logs: %s", exc)
+            raise HTTPException(status_code=500, detail="Error interno durante la extracción")
+
 
     return app
 
