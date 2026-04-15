@@ -28,7 +28,6 @@ function DbStatusBadge({ status }: { status: HealthStatus | null }) {
 }
 
 interface DashboardHeaderProps {
-  logFileName: string | null
   healthStatus: HealthStatus | null
   hasResult: boolean
   exportingPdf: boolean
@@ -41,7 +40,6 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
-  logFileName,
   healthStatus,
   hasResult,
   exportingPdf,

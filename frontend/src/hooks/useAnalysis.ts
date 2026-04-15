@@ -14,7 +14,6 @@ interface UseAnalysisOptions {
   resetDateFilter: () => void
   resetFilters: () => void
   setLogModalOpen: (open: boolean) => void
-  setSdsPreModalOpen: (open: boolean) => void
   setAddCodeModalCode: (code: string | null) => void
   setEditCodeInitial: (
     v: { code: string; description: string; severity: string; solutionUrl: string } | null

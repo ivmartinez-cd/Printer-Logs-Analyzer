@@ -191,8 +191,6 @@ export default function DashboardPage({
   const {
     logModalOpen,
     setLogModalOpen,
-    sdsPreModalOpen,
-    setSdsPreModalOpen,
     sdsModalOpen,
     setSdsModalOpen,
     sdsIncident,
@@ -231,13 +229,11 @@ export default function DashboardPage({
     error,
     setError,
     result,
-    pendingResult,
     codesNew,
     setCodesNew,
     savingCode,
     savingIncident,
     handleAnalyze,
-    commitPendingResult,
     handleSaveCodeToCatalog,
     handleSaveIncident,
   } = useAnalysis({
