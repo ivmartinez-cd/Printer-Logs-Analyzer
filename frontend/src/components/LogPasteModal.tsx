@@ -109,9 +109,6 @@ export function LogPasteModal({
           </div>
 
           <div className="log-modal__method-section" style={{ display: 'flex', flexDirection: 'column', paddingTop: '10px' }}>
-            <h3 style={{ padding: "0 20px", color: "var(--accent-primary)", marginBottom: "0.5rem", marginTop: 0, fontSize: "1.05rem", display: "flex", alignItems: "center", gap: "8px" }}>
-              ✨ Opción 1: Automático (Recomendado)
-            </h3>
             <div className="log-modal__model-section" style={{ paddingTop: '5px', marginBottom: "0" }}>
               <label className="log-modal__model-label" htmlFor="log-modal-serial-input">
                 N° de serie del equipo
