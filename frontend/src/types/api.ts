@@ -35,15 +35,13 @@ export interface ParserError {
   reason: string
 }
 
-export interface ConsumableWarning {
-  part_number: string
+export interface RealtimeConsumable {
+  type: string
   description: string
-  category: string
-  life_pages: number
-  current_counter: number
-  usage_pct: number
-  status: 'ok' | 'warning' | 'replace'
-  matched_codes: string[]
+  sku: string
+  percentLeft: number
+  pagesLeft: number | null
+  daysLeft: number | null
 }
 
 export interface ParseLogsResponse {
@@ -51,7 +49,6 @@ export interface ParseLogsResponse {
   incidents: Incident[]
   global_severity: string
   errors: ParserError[]
-  consumable_warnings: ConsumableWarning[]
   log_start_date: string
   log_end_date: string
   total_lines: number
@@ -231,6 +228,7 @@ export interface ExtractSdsLogsResponse {
   has_cpmd: boolean
   logs_text: string
   event_count: number
+  realtime_consumables: RealtimeConsumable[]
 }
 
 

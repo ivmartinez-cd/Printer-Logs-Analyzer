@@ -176,6 +176,7 @@ export default function DashboardPage({
     new Set(['ERROR', 'WARNING', 'INFO'])
   )
   const [autoExtracting, setAutoExtracting] = useState(false)
+  const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
 
   const toast = useToast()
   const modals = useModals()
@@ -257,6 +258,8 @@ export default function DashboardPage({
       } else {
         toast.showWarning(`Modelo detectado: ${sdsRes.model_name_sds}. No se encontró coincidencia exacta en el catálogo local.`)
       }
+
+      setRealtimeConsumables(sdsRes.realtime_consumables || [])
 
       if (!sdsRes.logs_text) {
         throw new Error('No se encontraron logs para este número de serie.')
@@ -612,7 +615,7 @@ export default function DashboardPage({
                         result={result}
                         filteredIncidents={filteredIncidents}
                         filteredEvents={filteredEvents}
-                        consumableWarnings={result?.consumable_warnings ?? []}
+                        consumableWarnings={realtimeConsumables}
                         lastErrorLabel={lastErrorLabel}
                         logFileName={logFileName}
                         serialNumber={currentSerialNumber}
@@ -673,13 +676,12 @@ export default function DashboardPage({
                           occurrences: inc.occurrences,
                         })) ?? []
                       }
-                      consumableWarnings={result?.consumable_warnings ?? []}
                     />
                   )}
 
                   {/* Consumable warnings — colapsado por defecto */}
                   <div ref={consumableRef}>
-                    <ConsumableWarningsPanel warnings={result?.consumable_warnings ?? []} />
+                    <ConsumableWarningsPanel warnings={realtimeConsumables} />
                   </div>
 
                   {/* Insight SDS alerts — se oculta si no hay serial o si la integración no está configurada */}

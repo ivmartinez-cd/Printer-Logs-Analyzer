@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import type { SdsIncidentData } from './SDSIncidentModal'
-import type { ConsumableWarning } from '../types/api'
 
 type SdsVsLogStatus = 'match' | 'partial' | 'no_match' | 'general'
 
@@ -250,46 +249,24 @@ function getLastEventRelated(sds: SdsIncidentData, incidentsFull: IncidentFullFo
   return formatLastEvent(latest.end_time)
 }
 
-/**
- * Devuelve los consumibles cuyo matched_codes solapa con los códigos del SDS.
- * Usa incidentCodeMatchesSds para respetar el wildcard "z".
- */
-function getOverlappingConsumables(
-  sds: SdsIncidentData,
-  consumableWarnings: ConsumableWarning[]
-): ConsumableWarning[] {
-  const sdsCodes = getSdsCodesForMatch(sds)
-  if (sdsCodes.length === 0) return []
-  return consumableWarnings.filter((w) =>
-    w.matched_codes.some((mc) => sdsCodes.some((sc) => incidentCodeMatchesSds(mc, sc)))
-  )
-}
 
-function ConsumableStatusLabel({ status }: { status: ConsumableWarning['status'] }) {
-  if (status === 'replace') return <span className="sds-consumable__badge sds-consumable__badge--replace">Revisar historial</span>
-  if (status === 'warning') return <span className="sds-consumable__badge sds-consumable__badge--warning">Próximo a revisar</span>
-  return <span className="sds-consumable__badge sds-consumable__badge--ok">Sin alertas</span>
-}
 
 interface SDSIncidentPanelProps {
   sdsIncident: SdsIncidentData
   incidentRows: IncidentRowForSds[]
   /** Lista completa de incidencias del log (para Parcial y Último evento). Opcional para no romper uso existente. */
   incidentsFull?: IncidentFullForSds[]
-  /** Advertencias de consumibles del análisis actual. Si hay solapamiento con los códigos del SDS se muestra la sección "Verificar historial". */
-  consumableWarnings?: ConsumableWarning[]
+
 }
 
 export function SDSIncidentPanel({
   sdsIncident,
   incidentRows,
   incidentsFull = [],
-  consumableWarnings = [],
 }: SDSIncidentPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
   const estadoSds = getEstadoSds(sdsIncident.created_at)
   const isGeneral = getSdsCodesForMatch(sdsIncident).length === 0
-  const overlappingConsumables = getOverlappingConsumables(sdsIncident, consumableWarnings)
   const eventosRelacionadosCount = isGeneral
     ? null
     : getEventosRelacionadosCount(sdsIncident, incidentsFull)
@@ -375,37 +352,7 @@ export function SDSIncidentPanel({
             </table>
           </div>
 
-          {overlappingConsumables.length > 0 && (
-            <div className="sds-consumable">
-              <p className="sds-consumable__title">Verificar historial de consumibles</p>
-              <p className="sds-consumable__note">
-                Los siguientes consumibles tienen códigos relacionados con este SDS. Verificá en el
-                historial del equipo cuándo fue el último reemplazo antes de actuar.
-              </p>
-              <table className="dashboard-table sds-consumable__table">
-                <thead>
-                  <tr>
-                    <th scope="col">Descripción</th>
-                    <th scope="col">Part number</th>
-                    <th scope="col">Vida útil</th>
-                    <th scope="col">Uso</th>
-                    <th scope="col">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overlappingConsumables.map((w) => (
-                    <tr key={w.part_number} data-status={w.status}>
-                      <td>{w.description}</td>
-                      <td><code className="consumable-warnings-panel__part">{w.part_number}</code></td>
-                      <td className="consumable-warnings-panel__num">{w.life_pages.toLocaleString('es-AR')} págs</td>
-                      <td className="consumable-warnings-panel__num">{w.usage_pct.toFixed(1)}%</td>
-                      <td><ConsumableStatusLabel status={w.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+
         </div>
       )}
     </section>
