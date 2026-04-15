@@ -227,7 +227,6 @@ export function LogPasteModal({
             />
             {error && <p className="dashboard__error">{error}</p>}
           </div>
-        </div>
 
         <div className="log-modal__actions">
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', flex: 1 }}>
