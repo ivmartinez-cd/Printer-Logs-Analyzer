@@ -43,8 +43,6 @@ export function useAnalysis({
     if (!logText.trim()) return
     setError(null)
     setResult(null)
-    setPendingResult(null)
-    setPendingCodesNew([])
     setCodesNew([])
     setLogFileName(fileName ?? null)
     resetDateFilter()
