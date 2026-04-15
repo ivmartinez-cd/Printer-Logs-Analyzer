@@ -11,7 +11,6 @@ import type {
   UploadPdfResponse,
   ErrorSolution,
   IngestReport,
-  IngestReport,
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
 } from '../types/api'
