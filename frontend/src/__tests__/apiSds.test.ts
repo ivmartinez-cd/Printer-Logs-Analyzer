@@ -48,7 +48,7 @@ describe('extractSdsLogs', () => {
     
     await extractSdsLogs('lowercaseserial')
     
-    const [_, options] = mockFetch.mock.calls[0] as [string, RequestInit]
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit]
     expect(options.body).toContain('"serial":"lowercaseserial"')
   })
 

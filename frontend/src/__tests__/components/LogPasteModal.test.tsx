@@ -28,10 +28,10 @@ describe('LogPasteModal', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
-    ;(useToast as any).mockReturnValue(mockToast)
-    ;(listPrinterModels as any).mockResolvedValue([
+    vi.mocked(useToast).mockReturnValue(mockToast as any)
+    vi.mocked(listPrinterModels).mockResolvedValue([
       { id: 'm1', model_name: 'Printer 1', model_code: 'P1', has_cpmd: false },
-    ])
+    ] as any)
   })
 
   afterEach(cleanup)
@@ -54,11 +54,11 @@ describe('LogPasteModal', () => {
   })
 
   it('handles serial number input and extraction success', async () => {
-    ;(extractSdsLogs as any).mockResolvedValue({
+    vi.mocked(extractSdsLogs).mockResolvedValue({
       serial: 'CNNCQ520HG',
       event_count: 10,
       logs_text: 'MOCK LOG DATA',
-    })
+    } as any)
 
     render(
       <LogPasteModal
@@ -88,7 +88,7 @@ describe('LogPasteModal', () => {
   })
 
   it('handles extraction failure', async () => {
-    ;(extractSdsLogs as any).mockRejectedValue(new Error('Portal offline'))
+    vi.mocked(extractSdsLogs).mockRejectedValue(new Error('Portal offline') as any)
 
     render(
       <LogPasteModal

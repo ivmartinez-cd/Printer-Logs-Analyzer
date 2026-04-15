@@ -94,9 +94,10 @@ export function LogPasteModal({
       } else {
         toast.showWarning('No se encontraron logs para este número de serie.')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error extracting SDS logs:', err)
-      toast.showError(err.message || 'Error al extraer logs del portal SDS')
+      const errorMsg = err instanceof Error ? err.message : 'Error al extraer logs del portal SDS'
+      toast.showError(errorMsg)
     } finally {
       setExtractingSds(false)
     }
