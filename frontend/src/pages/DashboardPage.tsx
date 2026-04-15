@@ -4,7 +4,6 @@ import {
   getSavedAnalysis,
   compareSavedAnalysis,
   deleteSavedAnalysis,
-  resolveDevice,
   extractSdsLogs,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
