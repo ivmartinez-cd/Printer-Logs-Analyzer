@@ -4,7 +4,6 @@ import {
   getSavedAnalysis,
   compareSavedAnalysis,
   deleteSavedAnalysis,
-  resolveDevice,
   extractSdsLogs,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
@@ -248,26 +247,24 @@ export default function DashboardPage({
     setError(null)
     setLogModalOpen(false)
     try {
-      // 1. Resolve device info
-      const info = await resolveDevice(serial)
+      // 1. Extract logs AND resolve device info in a single call
+      const sdsRes = await extractSdsLogs(serial)
       setCurrentSerialNumber(serial)
       
-      if (info.suggested_model_id) {
-        setCurrentModelId(info.suggested_model_id)
-        setCurrentModelHasCpmd(info.has_cpmd)
+      if (sdsRes.suggested_model_id) {
+        setCurrentModelId(sdsRes.suggested_model_id)
+        setCurrentModelHasCpmd(sdsRes.has_cpmd)
       } else {
-        toast.showWarning(`Modelo detectado: ${info.model_name_sds}. No se encontró coincidencia exacta en el catálogo local.`)
+        toast.showWarning(`Modelo detectado: ${sdsRes.model_name_sds}. No se encontró coincidencia exacta en el catálogo local.`)
       }
 
-      // 2. Extract logs
-      const sdsRes = await extractSdsLogs(serial)
       if (!sdsRes.logs_text) {
         throw new Error('No se encontraron logs para este número de serie.')
       }
 
       // 3. Analyze
       const fileName = `Portal_SDS_${serial}.tsv`
-      await handleAnalyze(sdsRes.logs_text, fileName, info.suggested_model_id)
+      await handleAnalyze(sdsRes.logs_text, fileName, sdsRes.suggested_model_id)
       
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -278,9 +275,11 @@ export default function DashboardPage({
     }
   }, [handleAnalyze, setCurrentModelHasCpmd, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast])
 
+  const autoExtractRef = useRef(false)
   // Effect for Deep Linking: Auto-start if initialSerial is provided
   useEffect(() => {
-    if (initialSerial) {
+    if (initialSerial && !autoExtractRef.current) {
+      autoExtractRef.current = true
       autoResolveAndAnalyze(initialSerial)
     }
   }, [initialSerial, autoResolveAndAnalyze])
