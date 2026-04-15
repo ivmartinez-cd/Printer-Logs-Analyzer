@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import type { SdsIncidentData } from './SDSIncidentModal'
-import type { SdsIncidentData } from './SDSIncidentModal'
 
 type SdsVsLogStatus = 'match' | 'partial' | 'no_match' | 'general'
 
