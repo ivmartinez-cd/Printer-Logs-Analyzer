@@ -56,7 +56,7 @@ class SDSWebSession:
         # 1. Get login page for initial cookie
         t_start = time.perf_counter()
         try:
-            self.session.get(f"{self.base_url}/login", timeout=10)
+            self.session.get(f"{self.base_url}/login", timeout=15)
             _logger.info("Phase: Login page fetch took %.2fs", time.perf_counter() - t_start)
         except requests.RequestException as e:
             raise SDSWebError(f"Failed to reach login page: {e}")
@@ -100,7 +100,7 @@ class SDSWebSession:
                 f"{self.base_url}/search",
                 params=[("src", "powerSearch"), ("q", serial), ("s", "devices")],
                 allow_redirects=True,
-                timeout=10,
+                timeout=15,
             )
             _logger.info("Phase: Device search (%s) took %.2fs", serial, time.perf_counter() - t_search_start)
         except requests.RequestException as e:
@@ -158,7 +158,7 @@ class SDSWebSession:
                     "x-requested-with": "XMLHttpRequest",
                     "Accept": "*/*",
                 },
-                timeout=20,
+                timeout=25,
             )
             _logger.info("Phase: Events fetch (%s, %dd) took %.2fs", device_id, days, time.perf_counter() - t_fetch_start)
         except requests.RequestException as e:
