@@ -5,9 +5,9 @@ Guidance for Claude Code when working in this repository.
 ---
 
 ## Estilo de Comunicación
-- **Brevedad Extrema:** Responde de forma concisa.
-- **Foco en Acción:** Prioriza información técnica y preguntas/pedidos al usuario.
-- **Ahorro de Tokens:** Evita explicaciones largas a menos que se soliciten explícitamente.
+- **Brevedad Extrema:** Respuestas cortas. Prioriza código o pasos de acción. Solo leo la parte donde pides algo (para ahorrar tokens).
+- **Calidad ante todo:** Ejecutar `npm run typecheck` antes de cada commit. No subir código con errores.
+- **Sin Resúmenes:** No volver a resumir contenido de artefactos generados.
 
 ---
 
@@ -181,7 +181,19 @@ Genera reportes PDF profesionales alineados al Executive Summary y paneles colap
 
 ---
 
-## Calidad y Prevención de Errores (Checklist)
+---
+
+## Lineamientos de Diseño Ejecutivo (Premium)
+
+- **Aesthetics:** Uso de **Glassmorphism** (`backdrop-filter: blur(12px)`), gradientes 135deg y bordes sutiles.
+- **DB Connection Badge:**
+    - **Carga (Naranja):** `.db-status-badge--connecting` (Hex `#fbbf24`) + spinner dinámico.
+    - **Conectada (Verde):** `#4ade80`.
+    - **Offline (Rojo):** `#f87171`.
+- **Botones Ejecutivos:** Usar siempre la clase `.dashboard__btn--executive` para acciones principales en la landing.
+- **Typography:** Fuente moderna (system-ui) con jerarquía clara y pesos semibold para títulos técnicos.
+
+## Checklist de Calidad y Prevención de Errores
 
 Para evitar errores de build en Vercel o regresiones, siempre verifica:
 
@@ -190,3 +202,4 @@ Para evitar errores de build en Vercel o regresiones, siempre verifica:
 3. **Duplicidad de Código:** Al usar herramientas de edición automática, verifica que no existan `imports` duplicados (especialmente en `SDSIncidentPanel.tsx`).
 4. **Propiedades de Componentes:** Si cambias la definición de una interfaz en `types/api.ts`, busca todas las referencias en los componentes para asegurar que las `props` coincidan.
 5. **Vercel Builds:** Si un cambio afecta el build, revisa que no haya props obsoletas pasando a componentes (como el viejo `consumableWarnings`).
+
