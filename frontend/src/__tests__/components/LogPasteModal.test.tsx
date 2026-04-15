@@ -2,33 +2,20 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import { LogPasteModal } from '../../components/LogPasteModal'
-import { useToast } from '../../contexts/ToastContext'
 
 // Mock services
 vi.mock('../../services/api', () => ({
   listPrinterModels: vi.fn(),
-  extractSdsLogs: vi.fn(),
 }))
 
-// Mock Toast context
-vi.mock('../../contexts/ToastContext', () => ({
-  useToast: vi.fn(),
-}))
-
-import { listPrinterModels, extractSdsLogs } from '../../services/api'
+import { listPrinterModels } from '../../services/api'
 
 describe('LogPasteModal', () => {
   const mockOnAnalyze = vi.fn()
   const mockOnClose = vi.fn()
-  const mockToast = {
-    showSuccess: vi.fn(),
-    showError: vi.fn(),
-    showWarning: vi.fn(),
-  }
 
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.mocked(useToast).mockReturnValue(mockToast as any)
     vi.mocked(listPrinterModels).mockResolvedValue([
       { id: 'm1', model_name: 'Printer 1', model_code: 'P1', has_cpmd: false },
     ] as any)
@@ -53,13 +40,7 @@ describe('LogPasteModal', () => {
     })
   })
 
-  it('handles serial number input and extraction success', async () => {
-    vi.mocked(extractSdsLogs).mockResolvedValue({
-      serial: 'CNNCQ520HG',
-      event_count: 10,
-      logs_text: 'MOCK LOG DATA',
-    } as any)
-
+  it('calls onAnalyze with isAutomated=true when automated flow is triggered', async () => {
     render(
       <LogPasteModal
         loading={false}
@@ -76,20 +57,15 @@ describe('LogPasteModal', () => {
     // Value should be upper-cased
     expect(serialInput).toHaveValue('CNNCQ520HG')
 
-    const extractBtn = screen.getByText('Extraer logs')
+    const extractBtn = screen.getByText('Extraer y Analizar')
+    expect(extractBtn).not.toBeDisabled()
+    
     fireEvent.click(extractBtn)
 
-    expect(screen.getByText('Extrayendo…')).toBeInTheDocument()
-
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('MOCK LOG DATA')).toBeInTheDocument()
-      expect(mockToast.showSuccess).toHaveBeenCalledWith(expect.stringContaining('10 eventos'))
-    })
+    expect(mockOnAnalyze).toHaveBeenCalledWith('', undefined, null, false, 'CNNCQ520HG', true)
   })
 
-  it('handles extraction failure', async () => {
-    vi.mocked(extractSdsLogs).mockRejectedValue(new Error('Portal offline') as any)
-
+  it('disables automated extraction button when serial is too short', async () => {
     render(
       <LogPasteModal
         loading={false}
@@ -101,18 +77,13 @@ describe('LogPasteModal', () => {
     )
 
     const serialInput = screen.getByPlaceholderText(/Ej: CNNCQ520HG/i)
-    fireEvent.change(serialInput, { target: { value: 'SERIAL' } })
+    fireEvent.change(serialInput, { target: { value: '1234' } })
     
-    const extractBtn = screen.getByText('Extraer logs')
-    fireEvent.click(extractBtn)
-
-    await waitFor(() => {
-      expect(mockToast.showError).toHaveBeenCalledWith('Portal offline')
-      expect(screen.getByText('Extraer logs')).toBeInTheDocument()
-    })
+    const extractBtn = screen.getByText('Extraer y Analizar')
+    expect(extractBtn).toBeDisabled()
   })
 
-  it('calls onAnalyze when button is clicked and form is valid', async () => {
+  it('calls onAnalyze when manual flow button is clicked and form is valid', async () => {
     render(
       <LogPasteModal
         loading={false}
@@ -131,36 +102,14 @@ describe('LogPasteModal', () => {
     const select = screen.getByRole('combobox')
     fireEvent.change(select, { target: { value: 'm1' } })
 
-    const analyzeBtn = screen.getByText('Analizar')
+    const analyzeBtn = screen.getByText('Analizar (Manual)')
     expect(analyzeBtn).not.toBeDisabled()
     
     fireEvent.click(analyzeBtn)
-    expect(mockOnAnalyze).toHaveBeenCalledWith('some log data', undefined, 'm1', false, null, false)
+    expect(mockOnAnalyze).toHaveBeenCalledWith('some log data', undefined, 'm1', false, undefined, false)
   })
 
-  it('enables analyze button with only serial number (automated flow)', async () => {
-    render(
-      <LogPasteModal
-        loading={false}
-        error={null}
-        serverWasCold={false}
-        onAnalyze={mockOnAnalyze}
-        onClose={mockOnClose}
-      />
-    )
-
-    const serialInput = screen.getByPlaceholderText(/Ej: CNNCQ520HG/i)
-    fireEvent.change(serialInput, { target: { value: 'MXSCS7' } })
-    
-    const analyzeBtn = screen.getByText('Analizar')
-    expect(analyzeBtn).not.toBeDisabled()
-    
-    fireEvent.click(analyzeBtn)
-    // isAutomated should be true because logText is empty
-    expect(mockOnAnalyze).toHaveBeenCalledWith('', undefined, null, false, 'MXSCS7', true)
-  })
-
-  it('disables analyze button when input is missing', async () => {
+  it('disables manual flow analyze button when input is missing', async () => {
     render(
       <LogPasteModal
         loading={false}
@@ -171,7 +120,7 @@ describe('LogPasteModal', () => {
       />
     )
     
-    const analyzeBtn = screen.getByText('Analizar')
+    const analyzeBtn = screen.getByText('Analizar (Manual)')
     expect(analyzeBtn).toBeDisabled()
   })
 })
