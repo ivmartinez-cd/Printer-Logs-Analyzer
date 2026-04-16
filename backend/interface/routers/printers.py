@@ -55,11 +55,7 @@ def get_error_solution(
     repo: PrinterModelRepository = Depends(get_printer_model_repo),
     error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo)
 ) -> dict:
-    try:
-        uid = UUID(model_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="model_id inválido")
-
+    uid = UUID(model_id)
     model = repo.get_by_id(uid)
     if not model:
         raise HTTPException(status_code=404, detail="Modelo no encontrado")
@@ -100,11 +96,7 @@ async def upload_printer_model_pdf(
     if not api_key:
         raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY no configurada.")
 
-    try:
-        extracted = await extract_model_from_pdf(pdf_bytes, api_key)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
-
+    extracted = await extract_model_from_pdf(pdf_bytes, api_key)
     created, skipped = [], []
     total_consumables = 0
 
@@ -133,15 +125,10 @@ async def ingest_cpmd_endpoint(
     repo: PrinterModelRepository = Depends(get_printer_model_repo),
     error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo)
 ) -> dict:
-    try:
-        uid = UUID(model_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="model_id inválido")
-
+    uid = UUID(model_id)
     if not repo.get_by_id(uid):
         raise HTTPException(status_code=404, detail="Modelo no encontrado")
 
-    # Validate file presence and content type
     if file is None:
         raise HTTPException(status_code=400, detail="Se requiere un archivo PDF")
     content_type = file.content_type or ""
@@ -149,32 +136,27 @@ async def ingest_cpmd_endpoint(
     if content_type != "application/pdf" and not filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="El archivo debe ser un PDF")
 
-    # Check Anthropic API key before reading the (potentially large) file
     api_key = settings.anthropic_api_key
     if not api_key:
-        raise HTTPException(
-            status_code=503,
-            detail="Servicio no disponible: ANTHROPIC_API_KEY no configurada.",
-        )
+        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY no configurada.")
 
     pdf_bytes = await file.read()
     if len(pdf_bytes) > _CPMD_MAX_BYTES:
         raise HTTPException(status_code=413, detail="El PDF supera el límite de 20 MB")
 
-    # Run blocking ingestion in a thread so the event loop stays free
     report = await asyncio.to_thread(
         ingest_cpmd,
         [uid],
         pdf_bytes,
-        api_key,                     # positional: api_key
-        error_solution_repo,   # positional: repository
+        api_key,
+        error_solution_repo,
     )
 
     return {
         "model_id": str(report.model_id),
         "cpmd_hash": report.cpmd_hash,
         "total_blocks": report.total_blocks,
-        "extracted": report.extracted,   # back-compat: regex_ok + llm_ok
+        "extracted": report.extracted,
         "regex_ok": report.regex_ok,
         "llm_ok": report.llm_ok,
         "failed": report.failed,

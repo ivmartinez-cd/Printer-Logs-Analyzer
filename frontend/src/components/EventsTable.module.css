@@ -1,0 +1,139 @@
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.table-toolbar__label {
+  font-size: 0.8125rem;
+  color: #9aa3b2;
+}
+
+.table-toolbar__select {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #151821;
+  border: 1px solid #232734;
+  border-radius: 6px;
+  color: #e6e8ee;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.table-toolbar__select:hover,
+.table-toolbar__select:focus {
+  border-color: #3d4452;
+  outline: none;
+}
+
+.table-toolbar__search {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #151821;
+  border: 1px solid #232734;
+  border-radius: 6px;
+  color: #e6e8ee;
+  min-width: 180px;
+}
+
+.table-toolbar__search::placeholder {
+  color: #6b7280;
+}
+
+.table-toolbar__search:hover,
+.table-toolbar__search:focus {
+  border-color: #3d4452;
+  outline: none;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #232734;
+}
+
+.dashboard-table th {
+  font-weight: 600;
+  color: #9aa3b2;
+  background: rgba(0, 0, 0, 0.2);
+  vertical-align: middle;
+}
+
+.dashboard-table__sort-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.dashboard-table__sort-header:hover {
+  color: #e6e8ee;
+}
+
+.dashboard-table__sort-header:focus-visible {
+  outline: 2px solid #4c8bf5;
+  outline-offset: 2px;
+}
+
+.dashboard-table__sort-icon {
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.dashboard-table tbody tr:hover {
+  background: rgba(76, 139, 245, 0.07);
+}
+
+.dashboard-table__th-solution {
+  font-weight: 600;
+  color: #9aa3b2;
+  white-space: nowrap;
+}
+
+.dashboard-table__cell-solution {
+  white-space: nowrap;
+}
+
+.dashboard-table__solution-link {
+  color: #4c8bf5;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-table__solution-link:hover {
+  text-decoration: underline;
+}
+
+.dashboard-table__solution-link:focus-visible {
+  outline: 2px solid #4c8bf5;
+  outline-offset: 2px;
+  border-radius: 2px;
+}

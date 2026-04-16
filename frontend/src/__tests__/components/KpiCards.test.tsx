@@ -21,8 +21,7 @@ describe('KPICards', () => {
     expect(screen.getByText('Último error crítico')).toBeInTheDocument()
     expect(screen.getByText('Tasa de errores')).toBeInTheDocument()
     // 1 ERROR, 1 WARNING, 1 INFO entre los mockIncidents
-    const errorSpan = document.querySelector('.kpi-card__value--error')
-    expect(errorSpan?.textContent).toBe('1')
+    expect(screen.getByTestId('kpi-error-count').textContent).toBe('1')
   })
 
   it('muestra "Sin errores" cuando no hay eventos ERROR', () => {
@@ -49,9 +48,7 @@ describe('KPICards', () => {
         lastErrorLabel="14/3/2024 10:00"
       />
     )
-    // El código aparece en el KPI "Último error crítico"
-    const errorKpiCode = document.querySelector('.kpi-card__value--error[style]')
-    expect(errorKpiCode?.textContent).toBe('53.B0.02')
+    expect(screen.getByTestId('kpi-last-error-code').textContent).toBe('53.B0.02')
     expect(screen.getByText(/14\/3\/2024 10:00/)).toBeInTheDocument()
   })
 
@@ -70,9 +67,7 @@ describe('KPICards', () => {
       />
     )
     // KPI "Incidencias Activas" muestra el total de incidentes
-    const kpiCards = document.querySelectorAll('.kpi-card')
-    const activasCard = Array.from(kpiCards).find((c) => c.textContent?.includes('Incidencias Activas'))
-    expect(activasCard?.querySelector('.kpi-card__value')?.textContent).toBe('5')
+    expect(screen.getByTestId('kpi-active-incidents').textContent).toBe('5')
   })
 
   it('no crashea con arrays vacíos', () => {
