@@ -27,10 +27,10 @@ SYSTEM_PROMPT = (
     "- Clasificá cada consumible en una de estas categories: "
     "roller, fuser, toner, transfer, maintenance_kit, other.\n"
     "- Inferí related_codes (códigos de error HP que indicarían el reemplazo de ese consumible):\n"
-    "  * Rollers de bandejas → [\"53.B0.0z\", \"53.B1.0z\", \"60.0N.0z\"] "
+    '  * Rollers de bandejas → ["53.B0.0z", "53.B1.0z", "60.0N.0z"] '
     "donde N es el número de bandeja\n"
-    "  * Fuser / Maintenance kit → [\"13.B9.0z\", \"50.0z.0z\"]\n"
-    "  * Toner → [\"10.00.0z\"]\n"
+    '  * Fuser / Maintenance kit → ["13.B9.0z", "50.0z.0z"]\n'
+    '  * Toner → ["10.00.0z"]\n'
     "  * Si no hay relación clara, array vacío.\n\n"
     "Si un dato no aparece en el PDF, usar null (nunca omitir la key).\n\n"
     "Estructura de respuesta:\n"
@@ -100,9 +100,7 @@ async def extract_model_from_pdf(pdf_bytes: bytes, api_key: str) -> dict:
     stop_reason = response.stop_reason
     _logger.debug("Claude response length: %d chars, stop_reason: %s", len(raw), stop_reason)
     if stop_reason == "max_tokens":
-        raise ValueError(
-            "Respuesta truncada por max_tokens, aumentá el límite o dividí el PDF"
-        )
+        raise ValueError("Respuesta truncada por max_tokens, aumentá el límite o dividí el PDF")
     if stop_reason != "end_turn":
         _logger.warning("Claude stop_reason inesperado: %s", stop_reason)
 
@@ -117,8 +115,6 @@ async def extract_model_from_pdf(pdf_bytes: bytes, api_key: str) -> dict:
         raise ValueError(f"Claude devolvió JSON inválido: {raw[:500]}") from exc
 
     if "models" not in data or not isinstance(data["models"], list):
-        raise ValueError(
-            f"La respuesta no contiene el campo 'models' como array: {raw[:500]}"
-        )
+        raise ValueError(f"La respuesta no contiene el campo 'models' como array: {raw[:500]}")
 
     return data

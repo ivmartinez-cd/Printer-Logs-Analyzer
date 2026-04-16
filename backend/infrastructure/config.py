@@ -43,9 +43,7 @@ class Settings(BaseModel):
             missing = ", ".join(sorted(err["loc"][0] for err in exc.errors()))
             raise RuntimeError(f"Missing or invalid environment variables: {missing}") from exc
         if instance.api_key == "dev" and os.getenv("ENV") == "production":
-            _logger.warning(
-                "⚠️ ADVERTENCIA: Usando API key por defecto 'dev' en producción"
-            )
+            _logger.warning("⚠️ ADVERTENCIA: Usando API key por defecto 'dev' en producción")
         return instance
 
 

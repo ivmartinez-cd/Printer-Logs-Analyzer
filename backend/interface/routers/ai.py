@@ -1,24 +1,29 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request
-from backend.interface.schemas.ai import AiDiagnoseRequest, AiDiagnoseResponse
-from backend.interface.deps import get_settings
-from backend.interface.auth import authenticate
-from backend.interface.rate_limiter import limiter
+from typing import Any, Dict
+
 from backend.infrastructure.config import Settings
-from typing import Dict, Any
+from backend.interface.auth import authenticate
+from backend.interface.deps import get_settings
+from backend.interface.rate_limiter import limiter
+from backend.interface.schemas.ai import AiDiagnoseRequest, AiDiagnoseResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 router = APIRouter(prefix="/analysis", tags=["AI Diagnosis"])
 _logger = logging.getLogger(__name__)
 
-@router.post("/ai-diagnose", response_model=AiDiagnoseResponse, dependencies=[Depends(authenticate)])
+
+@router.post(
+    "/ai-diagnose",
+    response_model=AiDiagnoseResponse,
+    dependencies=[Depends(authenticate)],
+    summary="Generate technical diagnosis using AI",
+    response_description="Markdown-formatted diagnosis, model info, and cost metadata.",
+)
 @limiter.limit("5/minute")
 async def ai_diagnose(
-    request: Request,
-    body: AiDiagnoseRequest,
-    settings: Settings = Depends(get_settings)
+    request: Request, body: AiDiagnoseRequest, settings: Settings = Depends(get_settings)
 ) -> AiDiagnoseResponse:
     """Generate a technical diagnosis using Anthropic Claude."""
-    import anthropic as _anthropic
     from backend.application.services.ai_diagnosis_service import (
         MODEL,
         call_claude,
@@ -58,10 +63,10 @@ async def ai_diagnose(
     # Claude exceptions are handled by global handler or let them bubble up
     # However, to map Anthropic specific errors to nice messages, I could do it here or in the global handler.
     # I'll let them bubble up for now or just simplify.
-    
+
     diagnosis, tokens = await call_claude(payload, api_key)
     cost = compute_cost(tokens)
-    
+
     return AiDiagnoseResponse(
         diagnosis=diagnosis,
         model=MODEL,

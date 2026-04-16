@@ -26,7 +26,7 @@ def validate_ssrf_url(url: str) -> None:
         scheme = parsed.scheme
         hostname = parsed.hostname
     except Exception:
-        raise HTTPException(status_code=422, detail="URL mal formada.")
+        raise HTTPException(status_code=422, detail="URL mal formada.") from None
 
     if scheme != "https":
         raise HTTPException(status_code=422, detail="Solo se permiten URLs con scheme https://.")
@@ -37,7 +37,9 @@ def validate_ssrf_url(url: str) -> None:
     try:
         addr = ipaddress.ip_address(hostname)
         if any(addr in net for net in _PRIVATE_NETWORKS):
-            raise HTTPException(status_code=422, detail="La URL apunta a una dirección IP privada o reservada.")
+            raise HTTPException(
+                status_code=422, detail="La URL apunta a una dirección IP privada o reservada."
+            )
     except ValueError:
         pass  # hostname is a domain name — not an IP literal
 
@@ -57,7 +59,9 @@ async def fetch_solution_content(url: str) -> str | None:
             )
         }
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=_FETCH_TIMEOUT, follow_redirects=True, headers=headers)
+            response = await client.get(
+                url, timeout=_FETCH_TIMEOUT, follow_redirects=True, headers=headers
+            )
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         for tag in soup(["script", "style", "noscript", "head", "nav", "footer"]):

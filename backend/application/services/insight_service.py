@@ -56,9 +56,7 @@ def _get_jwt(portal_url: str, api_key: str, api_secret: str) -> str:
         raise InsightAPIError(f"Error connecting to Insight portal: {exc}") from exc
 
     if resp.status_code != 200:
-        raise InsightAPIError(
-            f"Insight login failed ({resp.status_code}): {resp.text[:200]}"
-        )
+        raise InsightAPIError(f"Insight login failed ({resp.status_code}): {resp.text[:200]}")
 
     data = resp.json()
     token = data.get("access_token")
@@ -105,10 +103,7 @@ def get_device_info(
     token = _get_jwt(portal_url, api_key, api_secret)
     base = portal_url.rstrip("/")
 
-    search_url = (
-        f"{base}/PortalAPI/api/devices/search"
-        f"?q=serial:{serial}&includeExtendedFields=true"
-    )
+    search_url = f"{base}/PortalAPI/api/devices/search?q=serial:{serial}&includeExtendedFields=true"
     devices: List[Dict[str, Any]] = _insight_get(search_url, token)
 
     if not devices:
@@ -175,6 +170,7 @@ def get_device_consumables(
         return []
     except Exception as e:
         import logging
+
         logging.exception("Error fetching consumables for device %s: %s", device_id, e)
         return []
 
@@ -197,7 +193,7 @@ def get_device_alerts(
         insight_configured: bool  — always True here (caller handles False case)
     """
     info = get_device_info(portal_url, api_key, api_secret, serial)
-    
+
     if not info["device_id"]:
         return {
             "serial": serial,
@@ -216,18 +212,14 @@ def get_device_alerts(
     # 2. Fetch current alerts
     current: List[Dict[str, Any]] = []
     try:
-        current = _insight_get(
-            f"{base}/PortalAPI/api/devices/{device_id}/alerts/current", token
-        )
+        current = _insight_get(f"{base}/PortalAPI/api/devices/{device_id}/alerts/current", token)
     except InsightAPIError as exc:
         _logger.warning("Could not fetch current alerts for device %s: %s", device_id, exc)
 
     # 3. Fetch alert history
     history: List[Dict[str, Any]] = []
     try:
-        history = _insight_get(
-            f"{base}/PortalAPI/api/devices/{device_id}/alerts/history", token
-        )
+        history = _insight_get(f"{base}/PortalAPI/api/devices/{device_id}/alerts/history", token)
     except InsightAPIError as exc:
         _logger.warning("Could not fetch alert history for device %s: %s", device_id, exc)
 

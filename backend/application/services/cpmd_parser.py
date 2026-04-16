@@ -28,8 +28,8 @@ class ErrorBlock:
 
     code: str
     raw_title: str
-    raw_text: str           # full block: header + body (cause + action section)
-    source_audience: str    # 'service' | 'customers'
+    raw_text: str  # full block: header + body (cause + action section)
+    source_audience: str  # 'service' | 'customers'
     source_page: Optional[int]
 
 

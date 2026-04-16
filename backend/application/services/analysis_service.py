@@ -20,7 +20,9 @@ class AnalysisService:
         """Group events by code, build one incident per code. No rules."""
         ordered = sorted(events, key=lambda evt: evt.timestamp)
         if not ordered:
-            return AnalysisResult(incidents=[], global_severity="INFO", metadata={"events_considered": 0})
+            return AnalysisResult(
+                incidents=[], global_severity="INFO", metadata={"events_considered": 0}
+            )
 
         by_code: dict[str, List[EnrichedEvent]] = defaultdict(list)
         for evt in ordered:

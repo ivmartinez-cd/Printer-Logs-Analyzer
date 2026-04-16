@@ -18,16 +18,15 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from anthropic import Anthropic
-
 from backend.application.services.cpmd_parser import ErrorBlock
 
 _logger = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5-20251001"
 _MAX_TOKENS = 1024
-_MAX_TOKENS_BATCH = 8192   # batch calls can produce more output
-_TIMEOUT = 60.0            # seconds per call
-_BATCH_SIZE = 20           # max blocks per batch API call (token budget)
+_MAX_TOKENS_BATCH = 8192  # batch calls can produce more output
+_TIMEOUT = 60.0  # seconds per call
+_BATCH_SIZE = 20  # max blocks per batch API call (token budget)
 
 
 # ---------------------------------------------------------------------------
@@ -314,9 +313,7 @@ def _call_batch_api(client: Anthropic, blocks: List[ErrorBlock]) -> Optional[str
     return response.content[0].text.strip()
 
 
-def _parse_batch_response(
-    blocks: List[ErrorBlock], raw: str
-) -> List[ExtractedSolution]:
+def _parse_batch_response(blocks: List[ErrorBlock], raw: str) -> List[ExtractedSolution]:
     """Parse a batch Haiku response (JSON array) into ExtractedSolution objects.
 
     Tolerates markdown fences and partial failures: any invalid item is
@@ -333,9 +330,7 @@ def _parse_batch_response(
         return []
 
     if not isinstance(data, list):
-        _logger.warning(
-            "[cpmd_extractor] Batch: la respuesta no es un array JSON: %s", raw[:200]
-        )
+        _logger.warning("[cpmd_extractor] Batch: la respuesta no es un array JSON: %s", raw[:200])
         return []
 
     solutions: List[ExtractedSolution] = []

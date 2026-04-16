@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from backend.application.services.cpmd_parser import ErrorBlock, parse_error_blocks_from_text
+from backend.application.services.cpmd_parser import parse_error_blocks_from_text
 
 # ---------------------------------------------------------------------------
 # Fixtures

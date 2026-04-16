@@ -6,20 +6,24 @@ import threading
 from pathlib import Path
 from unittest.mock import patch
 
-
 # ---------------------------------------------------------------------------
 # Test 1-2: saved_analysis_repository — JSON corrupto retorna lista vacía
 # ---------------------------------------------------------------------------
 
+
 def test_saved_analysis_load_local_returns_empty_on_corrupt_json():
-    from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
+    from backend.infrastructure.repositories.saved_analysis_repository import (
+        SavedAnalysisRepository,
+    )
 
     with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
         f.write("{invalid json}")
         tmp_path = Path(f.name)
 
     repo = SavedAnalysisRepository.__new__(SavedAnalysisRepository)
-    with patch("backend.infrastructure.repositories.saved_analysis_repository._LOCAL_PATH", tmp_path):
+    with patch(
+        "backend.infrastructure.repositories.saved_analysis_repository._LOCAL_PATH", tmp_path
+    ):
         result = repo._load_local()
 
     tmp_path.unlink(missing_ok=True)
@@ -27,14 +31,18 @@ def test_saved_analysis_load_local_returns_empty_on_corrupt_json():
 
 
 def test_saved_analysis_load_local_returns_empty_on_empty_file():
-    from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
+    from backend.infrastructure.repositories.saved_analysis_repository import (
+        SavedAnalysisRepository,
+    )
 
     with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
         f.write("")
         tmp_path = Path(f.name)
 
     repo = SavedAnalysisRepository.__new__(SavedAnalysisRepository)
-    with patch("backend.infrastructure.repositories.saved_analysis_repository._LOCAL_PATH", tmp_path):
+    with patch(
+        "backend.infrastructure.repositories.saved_analysis_repository._LOCAL_PATH", tmp_path
+    ):
         result = repo._load_local()
 
     tmp_path.unlink(missing_ok=True)
@@ -44,6 +52,7 @@ def test_saved_analysis_load_local_returns_empty_on_empty_file():
 # ---------------------------------------------------------------------------
 # Test 3-4: error_code_repository — JSON corrupto retorna dict vacío
 # ---------------------------------------------------------------------------
+
 
 def test_error_code_load_fallback_returns_empty_on_corrupt_json():
     from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
@@ -55,8 +64,10 @@ def test_error_code_load_fallback_returns_empty_on_corrupt_json():
     repo = ErrorCodeRepository.__new__(ErrorCodeRepository)
     repo._fallback_cache = None
 
-    with patch("backend.infrastructure.repositories.error_code_repository._LOCAL_PATH", tmp_path), \
-         patch("backend.infrastructure.repositories.error_code_repository._SEED_PATH", tmp_path):
+    with (
+        patch("backend.infrastructure.repositories.error_code_repository._LOCAL_PATH", tmp_path),
+        patch("backend.infrastructure.repositories.error_code_repository._SEED_PATH", tmp_path),
+    ):
         result = repo._load_fallback()
 
     tmp_path.unlink(missing_ok=True)
@@ -73,8 +84,10 @@ def test_error_code_load_fallback_returns_empty_on_empty_file():
     repo = ErrorCodeRepository.__new__(ErrorCodeRepository)
     repo._fallback_cache = None
 
-    with patch("backend.infrastructure.repositories.error_code_repository._LOCAL_PATH", tmp_path), \
-         patch("backend.infrastructure.repositories.error_code_repository._SEED_PATH", tmp_path):
+    with (
+        patch("backend.infrastructure.repositories.error_code_repository._LOCAL_PATH", tmp_path),
+        patch("backend.infrastructure.repositories.error_code_repository._SEED_PATH", tmp_path),
+    ):
         result = repo._load_fallback()
 
     tmp_path.unlink(missing_ok=True)
@@ -85,9 +98,12 @@ def test_error_code_load_fallback_returns_empty_on_empty_file():
 # Test 5: threading lock previene race condition en escritura concurrente
 # ---------------------------------------------------------------------------
 
+
 def test_saved_analysis_write_lock_prevents_race_condition():
     """Two concurrent writes must not corrupt the local JSON file."""
-    from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
+    from backend.infrastructure.repositories.saved_analysis_repository import (
+        SavedAnalysisRepository,
+    )
 
     with tempfile.TemporaryDirectory() as tmpdir:
         local_path = Path(tmpdir) / "saved.json"
@@ -97,16 +113,17 @@ def test_saved_analysis_write_lock_prevents_race_condition():
 
         def write_entry(name: str):
             try:
-                with patch("backend.infrastructure.repositories.saved_analysis_repository._LOCAL_PATH", local_path):
+                with patch(
+                    "backend.infrastructure.repositories.saved_analysis_repository._LOCAL_PATH",
+                    local_path,
+                ):
                     repo = SavedAnalysisRepository.__new__(SavedAnalysisRepository)
                     items = repo._load_local()
                     items.append({"name": name})
                     import time
+
                     time.sleep(0.01)  # amplify race window
-                    local_path.write_text(
-                        json.dumps(items, ensure_ascii=False),
-                        encoding="utf-8"
-                    )
+                    local_path.write_text(json.dumps(items, ensure_ascii=False), encoding="utf-8")
             except Exception as exc:
                 errors.append(exc)
 

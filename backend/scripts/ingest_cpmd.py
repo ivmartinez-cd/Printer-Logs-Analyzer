@@ -23,15 +23,18 @@ import sys
 import time
 from pathlib import Path
 from uuid import UUID
+
 from dotenv import load_dotenv
 
 # Log to stdout so progress lines appear in the terminal
-logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s", stream=sys.stdout)
+logging.basicConfig(
+    level=logging.INFO, format="%(name)s %(levelname)s: %(message)s", stream=sys.stdout
+)
 _logger = logging.getLogger(__name__)
 
 # Pricing reference (Haiku 4.5) — only applies to blocks that go through LLM fallback
-_PRICE_INPUT_PER_M = 0.80    # USD per 1M input tokens
-_PRICE_OUTPUT_PER_M = 4.00   # USD per 1M output tokens
+_PRICE_INPUT_PER_M = 0.80  # USD per 1M input tokens
+_PRICE_OUTPUT_PER_M = 4.00  # USD per 1M output tokens
 _AVG_TOKENS_PER_BLOCK = 600  # rough estimate: ~450 input + 150 output per block
 
 
@@ -113,13 +116,13 @@ def _run_dry_run(pdf_bytes: bytes, threshold: float, target_models: list) -> Non
     total = len(blocks)
     llm_blocks = len(low)
 
-    print(f"\n{'='*55}")
+    print(f"\n{'=' * 55}")
     print(f"  CPMD DRY-RUN  (threshold={threshold:.2f})")
-    print(f"{'='*55}")
+    print(f"{'=' * 55}")
     print(f"  Modelos objetivo:            {len(target_models)}")
     for m in target_models:
         print(f"    - {m.model_name} ({m.model_code})")
-    print(f"{'-'*55}")
+    print(f"{'-' * 55}")
 
     llm_calls_estimate = max(1, llm_blocks // 20) if llm_blocks else 0  # 20 blocks/call
 
@@ -134,20 +137,20 @@ def _run_dry_run(pdf_bytes: bytes, threshold: float, target_models: list) -> Non
     scores = [r.confidence_score for r in results]
     avg_score = sum(scores) / len(scores) if scores else 0.0
 
-    print(f"\n{'='*55}")
+    print(f"\n{'=' * 55}")
     print(f"  CPMD DRY-RUN  (threshold={threshold:.2f})")
-    print(f"{'='*55}")
+    print(f"{'=' * 55}")
     print(f"  Bloques totales:             {total}")
     if total > 0:
-        print(f"  Alta confianza (regex ok):   {len(high)}  ({len(high)/total*100:.0f}%)")
-        print(f"  Baja confianza (-> LLM):      {llm_blocks}  ({llm_blocks/total*100:.0f}%)")
+        print(f"  Alta confianza (regex ok):   {len(high)}  ({len(high) / total * 100:.0f}%)")
+        print(f"  Baja confianza (-> LLM):      {llm_blocks}  ({llm_blocks / total * 100:.0f}%)")
     else:
-        print(f"  Alta confianza (regex ok):   0  (0%)")
-        print(f"  Baja confianza (-> LLM):      0  (0%)")
+        print("  Alta confianza (regex ok):   0  (0%)")
+        print("  Baja confianza (-> LLM):      0  (0%)")
     print(f"  Score promedio:              {avg_score:.3f}")
     print(f"  Llamadas LLM estimadas:      {llm_calls_estimate}")
     print(f"  Costo estimado LLM fallback: ${estimated_cost:.4f} USD")
-    print(f"{'='*55}\n")
+    print(f"{'=' * 55}\n")
 
     if llm_blocks:
         print("Bloques de baja confianza:")
@@ -169,7 +172,7 @@ def main(argv: list[str] | None = None) -> None:
     # Load .env from root (two levels up from scripts/ OR root if running from root)
     # The config.py does it too, but we need DB_URL before lazy imports.
     load_dotenv()
-    
+
     args = _parse_args(argv)
 
     # --- Validate PDF ---
@@ -202,10 +205,12 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(1)
 
     # --- Lazy imports ---
-    from backend.infrastructure.database import Database, DatabaseUnavailableError
-    from backend.infrastructure.repositories.printer_model_repository import PrinterModelRepository
-    from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
     from backend.application.services.cpmd_ingest import ingest_cpmd
+    from backend.infrastructure.database import Database, DatabaseUnavailableError
+    from backend.infrastructure.repositories.error_solution_repository import (
+        ErrorSolutionRepository,
+    )
+    from backend.infrastructure.repositories.printer_model_repository import PrinterModelRepository
 
     db = Database(dsn=db_url) if db_url else None
     model_repo = PrinterModelRepository(db) if db else None
@@ -236,7 +241,9 @@ def main(argv: list[str] | None = None) -> None:
                         print(f"Error: modelo {args.model_id} no encontrado", file=sys.stderr)
                         sys.exit(1)
                 except DatabaseUnavailableError:
-                    _logger.warning("No se pudo conectar a la DB para verificar modelo. Usando ID directamente.")
+                    _logger.warning(
+                        "No se pudo conectar a la DB para verificar modelo. Usando ID directamente."
+                    )
                     # Create a mock model if we can't verify but have the ID
                     mock_m = _MockModel(m_uuid, name="Unknown (ID provided)", code="UNK")
                     target_models.append(mock_m)
@@ -247,7 +254,7 @@ def main(argv: list[str] | None = None) -> None:
         except ValueError:
             print(f"Error: model-id inválido: {args.model_id!r}", file=sys.stderr)
             sys.exit(1)
-    
+
     if args.family:
         if not model_repo:
             print("Error: se requiere DB_URL para resolver familias.", file=sys.stderr)
@@ -255,7 +262,10 @@ def main(argv: list[str] | None = None) -> None:
         try:
             models = model_repo.list_by_family(args.family)
             if not models:
-                print(f"Error: no se encontraron modelos para la familia {args.family}", file=sys.stderr)
+                print(
+                    f"Error: no se encontraron modelos para la familia {args.family}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             # Avoid duplicates if both --model-id and --family are used
             existing_ids = {m.id for m in target_models}
@@ -281,7 +291,7 @@ def main(argv: list[str] | None = None) -> None:
     # --- Run ingestion ---
     start = time.monotonic()
     model_ids = [m.id for m in target_models]
-    
+
     # If exporting SQL, we don't want to skip models just because they are in the DB.
     # We want ALL solutions translated to SQL for those models.
     # To bypass skip logic in ingest_cpmd, we can use a mock repo.
@@ -333,8 +343,6 @@ def main(argv: list[str] | None = None) -> None:
     print(f"  Costo estimado:   ${llm_cost:.4f} USD (solo bloques LLM)")
 
 
-
-
 # ---------------------------------------------------------------------------
 # SQL Export Helper
 # ---------------------------------------------------------------------------
@@ -342,13 +350,14 @@ def main(argv: list[str] | None = None) -> None:
 
 class _DummyRepo:
     """Mock repo that always returns empty to bypass skip logic during SQL export."""
+
     def list_by_model(self, *args, **kwargs):
         return []
-    
+
     def upsert(self, *args, **kwargs):
         """No-op for SQL export."""
         pass
-        
+
     def upsert_batch(self, *args, **kwargs):
         """No-op for SQL export."""
         pass
@@ -356,6 +365,7 @@ class _DummyRepo:
 
 class _MockModel:
     """Simple mock for PrinterModel when DB is unavailable."""
+
     def __init__(self, id_uuid: UUID, name: str, code: str):
         self.id = id_uuid
         self.model_name = name
@@ -370,13 +380,14 @@ def _export_to_sql(output_path: str, solutions: list) -> None:
         "-- Ingesta CPMD exportada a SQL",
         f"-- Fecha: {time.strftime('%Y-%m-%d %H:%M:%S')}",
         "BEGIN;",
-        ""
+        "",
     ]
 
     for s in solutions:
         # Escape strings for SQL (double single quotes)
         def esc(val):
-            if val is None: return "NULL"
+            if val is None:
+                return "NULL"
             return "'" + str(val).replace("'", "''") + "'"
 
         # JSON objects

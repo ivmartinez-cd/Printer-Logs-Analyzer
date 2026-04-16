@@ -1,19 +1,25 @@
-from fastapi import APIRouter, Depends, Request
-from backend.interface.schemas.error_code import ErrorCodeUpsertRequest
-from backend.interface.deps import get_error_code_repo
-from backend.interface.auth import authenticate
-from backend.interface.rate_limiter import limiter
-from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.content_fetcher import fetch_solution_content, validate_ssrf_url
+from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
+from backend.interface.auth import authenticate
+from backend.interface.deps import get_error_code_repo
+from backend.interface.rate_limiter import limiter
+from backend.interface.schemas.error_code import ErrorCodeUpsertRequest
+from fastapi import APIRouter, Depends, Request
 
 router = APIRouter(prefix="/error-codes", tags=["Catalog"])
 
-@router.post("/upsert", dependencies=[Depends(authenticate)])
+
+@router.post(
+    "/upsert",
+    dependencies=[Depends(authenticate)],
+    summary="Add or update an error code in the manual catalog",
+    response_description="The upserted error code metadata including optional warning.",
+)
 @limiter.limit("30/minute")
 async def upsert_error_code(
-    request: Request, 
+    request: Request,
     body: ErrorCodeUpsertRequest,
-    repo: ErrorCodeRepository = Depends(get_error_code_repo)
+    repo: ErrorCodeRepository = Depends(get_error_code_repo),
 ) -> dict:
     solution_content = None
     warning = None
@@ -30,7 +36,7 @@ async def upsert_error_code(
         solution_url=body.solution_url,
         solution_content=solution_content,
     )
-    
+
     res = {
         "id": ec.id,
         "code": ec.code,

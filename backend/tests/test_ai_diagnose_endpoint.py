@@ -12,22 +12,22 @@ os.environ.setdefault("API_KEY", "dev")
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from fastapi.testclient import TestClient
-
 from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.interface.rate_limiter import limiter
+
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_settings(with_anthropic_key: bool = True) -> Settings:
     """Settings de prueba; ANTHROPIC_API_KEY presente solo si se pide.
@@ -87,6 +87,7 @@ _HEADERS = {"x-api-key": "dev"}
 # Test 1: formato correcto cuando la API de Anthropic responde OK
 # ---------------------------------------------------------------------------
 
+
 @patch("backend.application.services.ai_diagnosis_service.AsyncAnthropic")
 def test_ai_diagnose_returns_correct_format(MockAsyncAnthropic: MagicMock) -> None:
     """El endpoint retorna diagnosis, model, tokens_used y cost_usd en el formato correcto."""
@@ -126,6 +127,7 @@ def test_ai_diagnose_returns_correct_format(MockAsyncAnthropic: MagicMock) -> No
 # Test 2: retorna 503 cuando ANTHROPIC_API_KEY no está configurada
 # ---------------------------------------------------------------------------
 
+
 def test_ai_diagnose_returns_503_when_no_api_key() -> None:
     """El endpoint retorna 503 si ANTHROPIC_API_KEY no está configurada."""
     client = TestClient(
@@ -140,6 +142,7 @@ def test_ai_diagnose_returns_503_when_no_api_key() -> None:
 # ---------------------------------------------------------------------------
 # Test 3: retorna 401 con x-api-key incorrecta / 422 si falta el header
 # ---------------------------------------------------------------------------
+
 
 def test_ai_diagnose_rejects_wrong_api_key() -> None:
     """El endpoint retorna 401 si x-api-key es incorrecta."""
@@ -168,6 +171,7 @@ def test_ai_diagnose_missing_header_returns_422() -> None:
 # ---------------------------------------------------------------------------
 # Test 4: payload sin metadata funciona igual
 # ---------------------------------------------------------------------------
+
 
 @patch("backend.application.services.ai_diagnosis_service.AsyncAnthropic")
 def test_ai_diagnose_without_metadata(MockAsyncAnthropic: MagicMock) -> None:

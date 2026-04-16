@@ -1,7 +1,9 @@
 import re
-from typing import List, Dict
-from backend.domain.entities import Event, EnrichedEvent, Incident
+from typing import Dict, List
+
+from backend.domain.entities import EnrichedEvent, Event, Incident
 from backend.infrastructure.repositories.error_code_repository import ErrorCode
+
 
 def normalize_log_text(text: str) -> str:
     """Replace runs of 2+ spaces with a single tab (HP portal copies tabs as spaces)."""
@@ -9,7 +11,10 @@ def normalize_log_text(text: str) -> str:
     normalized = [re.sub(r" {2,}", "\t", line) for line in lines]
     return "\n".join(normalized)
 
-def enrich_events_with_catalog(events: List[Event], catalog_map: Dict[str, ErrorCode]) -> List[EnrichedEvent]:
+
+def enrich_events_with_catalog(
+    events: List[Event], catalog_map: Dict[str, ErrorCode]
+) -> List[EnrichedEvent]:
     enriched: List[EnrichedEvent] = []
     for evt in events:
         row = catalog_map.get(evt.code)
@@ -21,6 +26,7 @@ def enrich_events_with_catalog(events: List[Event], catalog_map: Dict[str, Error
             data["code_solution_content"] = row.solution_content
         enriched.append(EnrichedEvent(**data))
     return enriched
+
 
 def incident_to_summary(inc: Incident) -> dict:
     """Build summary dict for JSONB."""

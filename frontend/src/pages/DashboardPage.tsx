@@ -562,7 +562,7 @@ export default function DashboardPage({
                         </tr>
                       </thead>
                       <tbody>
-                        {(result?.errors ?? []).map((e) => (
+                        {(result?.errors ?? []).map((e: any) => (
                           <tr key={e.line_number}>
                             <td>{e.line_number}</td>
                             <td>
@@ -585,7 +585,7 @@ export default function DashboardPage({
                     con su URL de solución si la tienes.
                   </p>
                   <ul className="dashboard__codes-new-list">
-                    {codesNew.map((code) => {
+                    {codesNew.map((code: string) => {
                       const { description } = getEventInfoForCode(result, code)
                       return (
                         <li key={code} className="dashboard__codes-new-item">
@@ -714,7 +714,7 @@ export default function DashboardPage({
                         classification: r.classification || r.code,
                       }))}
                       incidentsFull={
-                        result?.incidents?.map((inc) => ({
+                        result?.incidents?.map((inc: any) => ({
                           code: inc.code,
                           classification: inc.classification,
                           end_time: inc.end_time,
@@ -822,7 +822,7 @@ export default function DashboardPage({
               setLogModalOpen(false)
               dateFilter.reset()
               toast.showSuccess('Análisis completado')
-            }).catch(err => {
+            }).catch((err: any) => {
               toast.showError(err.message)
             })
           }}

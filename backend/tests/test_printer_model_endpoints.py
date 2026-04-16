@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import os
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -28,6 +27,7 @@ def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.interface.rate_limiter import limiter
 
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
+
 
 from backend.domain.entities import PrinterModel
 from backend.infrastructure.config import Settings

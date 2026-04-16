@@ -12,7 +12,7 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, List
+from typing import List
 from uuid import UUID, uuid4
 
 from backend.infrastructure.database import Database, DatabaseUnavailableError

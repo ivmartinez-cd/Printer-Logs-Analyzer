@@ -7,10 +7,8 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 from uuid import UUID
 
-import pytest
-
-from backend.application.services.cpmd_ingest import IngestReport, ingest_cpmd
 from backend.application.services.cpmd_extractor import ExtractedSolution
+from backend.application.services.cpmd_ingest import IngestReport, ingest_cpmd
 from backend.application.services.cpmd_parser import ErrorBlock
 from backend.application.services.cpmd_structured_extractor import ExtractionResult
 from backend.domain.entities import ErrorSolution, ErrorSolutionFru
@@ -194,7 +192,7 @@ def test_all_high_confidence_no_llm_calls() -> None:
         ),
         patch(
             "backend.application.services.cpmd_ingest.partition_by_confidence",
-            return_value=(results, []),   # all high
+            return_value=(results, []),  # all high
         ),
         patch(
             "backend.application.services.cpmd_ingest.extract_batch",

@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
-from backend.scripts.ingest_cpmd import main
+from backend.application.services.cpmd_extractor import ExtractedSolution
 from backend.application.services.cpmd_parser import ErrorBlock
 from backend.application.services.cpmd_structured_extractor import ExtractionResult
-from backend.application.services.cpmd_extractor import ExtractedSolution
-
+from backend.scripts.ingest_cpmd import main
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -81,18 +79,36 @@ def test_dry_run_shows_block_counts(tmp_path: pytest.TempPathFactory, capsys) ->
 
     blocks = _make_blocks(n_service=2, n_customers=1)
     results = [_make_result(b) for b in blocks]
-    mock_model = MagicMock(id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", model_name="Test Model", model_code="T1")
+    mock_model = MagicMock(
+        id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", model_name="Test Model", model_code="T1"
+    )
 
     with (
         patch("backend.scripts.ingest_cpmd.load_dotenv"),
         patch("backend.infrastructure.database.Database"),
-        patch("backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository") as MockRepo,
+        patch(
+            "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository"
+        ) as MockRepo,
         patch("backend.application.services.cpmd_parser.extract_error_blocks", return_value=blocks),
-        patch("backend.application.services.cpmd_structured_extractor.extract_all", return_value=results),
-        patch("backend.application.services.cpmd_structured_extractor.partition_by_confidence", return_value=(results, [])),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.extract_all",
+            return_value=results,
+        ),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.partition_by_confidence",
+            return_value=(results, []),
+        ),
     ):
         MockRepo.return_value.get_by_id.return_value = mock_model
-        main(argv=["--model-id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "--pdf", str(pdf), "--dry-run"])
+        main(
+            argv=[
+                "--model-id",
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "--pdf",
+                str(pdf),
+                "--dry-run",
+            ]
+        )
 
     captured = capsys.readouterr()
     assert "Bloques totales:" in captured.out
@@ -105,18 +121,35 @@ def test_dry_run_zero_blocks(tmp_path: pytest.TempPathFactory, capsys) -> None:
     """--dry-run with an empty PDF (no blocks) must show 0."""
     pdf = tmp_path / "empty.pdf"
     pdf.write_bytes(b"%PDF-1.4 no blocks here")
-    mock_model = MagicMock(id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", model_name="Test Model", model_code="T1")
+    mock_model = MagicMock(
+        id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", model_name="Test Model", model_code="T1"
+    )
 
     with (
         patch("backend.scripts.ingest_cpmd.load_dotenv"),
         patch("backend.infrastructure.database.Database"),
-        patch("backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository") as MockRepo,
+        patch(
+            "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository"
+        ) as MockRepo,
         patch("backend.application.services.cpmd_parser.extract_error_blocks", return_value=[]),
-        patch("backend.application.services.cpmd_structured_extractor.extract_all", return_value=[]),
-        patch("backend.application.services.cpmd_structured_extractor.partition_by_confidence", return_value=([], [])),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.extract_all", return_value=[]
+        ),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.partition_by_confidence",
+            return_value=([], []),
+        ),
     ):
         MockRepo.return_value.get_by_id.return_value = mock_model
-        main(argv=["--model-id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "--pdf", str(pdf), "--dry-run"])
+        main(
+            argv=[
+                "--model-id",
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "--pdf",
+                str(pdf),
+                "--dry-run",
+            ]
+        )
 
     captured = capsys.readouterr()
     assert "Modelos objetivo:            1" in captured.out
@@ -138,18 +171,39 @@ def test_dry_run_shows_low_confidence_list(tmp_path, capsys) -> None:
     )
     result_high = _make_result(block_high, score=0.9)
     result_low = _make_result(block_low, score=0.2)
-    mock_model = MagicMock(id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", model_name="Test Model", model_code="T1")
+    mock_model = MagicMock(
+        id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", model_name="Test Model", model_code="T1"
+    )
 
     with (
         patch("backend.scripts.ingest_cpmd.load_dotenv"),
         patch("backend.infrastructure.database.Database"),
-        patch("backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository") as MockRepo,
-        patch("backend.application.services.cpmd_parser.extract_error_blocks", return_value=[block_high, block_low]),
-        patch("backend.application.services.cpmd_structured_extractor.extract_all", return_value=[result_high, result_low]),
-        patch("backend.application.services.cpmd_structured_extractor.partition_by_confidence", return_value=([result_high], [result_low])),
+        patch(
+            "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository"
+        ) as MockRepo,
+        patch(
+            "backend.application.services.cpmd_parser.extract_error_blocks",
+            return_value=[block_high, block_low],
+        ),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.extract_all",
+            return_value=[result_high, result_low],
+        ),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.partition_by_confidence",
+            return_value=([result_high], [result_low]),
+        ),
     ):
         MockRepo.return_value.get_by_id.return_value = mock_model
-        main(argv=["--model-id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "--pdf", str(pdf), "--dry-run"])
+        main(
+            argv=[
+                "--model-id",
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "--pdf",
+                str(pdf),
+                "--dry-run",
+            ]
+        )
 
     captured = capsys.readouterr()
     assert "99.FF.FF" in captured.out
@@ -188,9 +242,11 @@ def test_no_anthropic_key_prints_warning_not_error(tmp_path, monkeypatch, capsys
     with (
         patch("backend.scripts.ingest_cpmd.load_dotenv"),
         patch("backend.infrastructure.database.Database"),
-        patch("backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository") as MockRepo,
+        patch(
+            "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository"
+        ) as MockRepo,
     ):
-        MockRepo.return_value.get_by_id.return_value = None # Stop at model verify
+        MockRepo.return_value.get_by_id.return_value = None  # Stop at model verify
         with pytest.raises(SystemExit):
             main(argv=["--model-id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "--pdf", str(pdf)])
 
@@ -208,7 +264,14 @@ def test_exits_1_when_pdf_not_found(monkeypatch, capsys) -> None:
     monkeypatch.setenv("DB_URL", "postgresql://fake:5432/db")
     with patch("backend.scripts.ingest_cpmd.load_dotenv"):
         with pytest.raises(SystemExit) as exc_info:
-            main(argv=["--model-id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "--pdf", "/nonexistent/path/modelo.pdf"])
+            main(
+                argv=[
+                    "--model-id",
+                    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    "--pdf",
+                    "/nonexistent/path/modelo.pdf",
+                ]
+            )
 
     assert exc_info.value.code == 1
     captured = capsys.readouterr()
@@ -242,16 +305,28 @@ def test_dry_run_with_family(tmp_path: pytest.TempPathFactory, capsys) -> None:
     blocks = _make_blocks(n_service=1, n_customers=0)
     results = [_make_result(b) for b in blocks]
 
-    model1 = MagicMock(id="11111111-1111-1111-1111-111111111111", model_name="Model A", model_code="A")
-    model2 = MagicMock(id="22222222-2222-2222-2222-222222222222", model_name="Model B", model_code="B")
+    model1 = MagicMock(
+        id="11111111-1111-1111-1111-111111111111", model_name="Model A", model_code="A"
+    )
+    model2 = MagicMock(
+        id="22222222-2222-2222-2222-222222222222", model_name="Model B", model_code="B"
+    )
 
     with (
         patch("backend.scripts.ingest_cpmd.load_dotenv"),
         patch("backend.infrastructure.database.Database"),
-        patch("backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository") as MockRepo,
+        patch(
+            "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository"
+        ) as MockRepo,
         patch("backend.application.services.cpmd_parser.extract_error_blocks", return_value=blocks),
-        patch("backend.application.services.cpmd_structured_extractor.extract_all", return_value=results),
-        patch("backend.application.services.cpmd_structured_extractor.partition_by_confidence", return_value=(results, [])),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.extract_all",
+            return_value=results,
+        ),
+        patch(
+            "backend.application.services.cpmd_structured_extractor.partition_by_confidence",
+            return_value=(results, []),
+        ),
     ):
         mock_repo_inst = MockRepo.return_value
         mock_repo_inst.list_by_family.return_value = [model1, model2]
@@ -271,7 +346,7 @@ def test_export_sql(tmp_path: pytest.TempPathFactory, capsys) -> None:
     pdf.write_bytes(b"%PDF-1.4 fake")
     sql_out = tmp_path / "test.sql"
 
-    blocks = _make_blocks(n_service=1, n_customers=0)
+    _make_blocks(n_service=1, n_customers=0)
     # mock ErrorSolution so it has the fields needed by _export_to_sql
     mock_sol = MagicMock()
     mock_sol.model_id = "11111111-1111-1111-1111-111111111111"
@@ -296,14 +371,29 @@ def test_export_sql(tmp_path: pytest.TempPathFactory, capsys) -> None:
     with (
         patch("backend.scripts.ingest_cpmd.load_dotenv"),
         patch("backend.infrastructure.database.Database"),
-        patch("backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository") as MockRepo,
-        patch("backend.infrastructure.repositories.error_solution_repository.ErrorSolutionRepository"),
+        patch(
+            "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository"
+        ) as MockRepo,
+        patch(
+            "backend.infrastructure.repositories.error_solution_repository.ErrorSolutionRepository"
+        ),
         patch("backend.application.services.cpmd_ingest.ingest_cpmd", return_value=report),
     ):
-        mock_model = MagicMock(id="11111111-1111-1111-1111-111111111111", model_name="M", model_code="C")
+        mock_model = MagicMock(
+            id="11111111-1111-1111-1111-111111111111", model_name="M", model_code="C"
+        )
         MockRepo.return_value.get_by_id.return_value = mock_model
-        
-        main(argv=["--model-id", "11111111-1111-1111-1111-111111111111", "--pdf", str(pdf), "--output-sql", str(sql_out)])
+
+        main(
+            argv=[
+                "--model-id",
+                "11111111-1111-1111-1111-111111111111",
+                "--pdf",
+                str(pdf),
+                "--output-sql",
+                str(sql_out),
+            ]
+        )
 
     assert sql_out.exists()
     content = sql_out.read_text(encoding="utf-8")
