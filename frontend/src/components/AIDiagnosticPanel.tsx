@@ -20,8 +20,13 @@ interface DiagnosisData {
 
 function parseDiagnosis(text: string): DiagnosisData | null {
   try {
-    // Intentar parsear como JSON directo
-    const cleaned = text.trim()
+    // Eliminar marcas de markdown que el modelo pueda añadir (```json ... ```)
+    const cleaned = text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim()
+
     if (cleaned.startsWith('{')) {
       return JSON.parse(cleaned) as DiagnosisData
     }
