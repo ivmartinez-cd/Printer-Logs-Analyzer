@@ -301,60 +301,69 @@ export function SDSIncidentPanel({
   ]
 
   return (
-    <section className="collapsible-panel collapsible-panel--sds">
+    <div className="glass-card rounded-3xl overflow-hidden shadow-premium-md animate-fade-in-up">
       <button
         type="button"
-        className="collapsible-panel__header"
-        onClick={() => setCollapsed((c) => !c)}
+        className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/[0.08] transition-all group"
+        onClick={() => setCollapsed((v) => !v)}
         aria-expanded={!collapsed}
-        data-testid="sds-incidents-panel-toggle"
       >
-        <span className="collapsible-panel__title">🔧 SDS Engineering Incident</span>
-        <span
-          className={`collapsible-panel__chevron${!collapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
-          aria-hidden="true"
-        >
-          ▶
+        <div className="flex items-center gap-3">
+          <span className="text-xl group-hover:rotate-12 transition-transform duration-300">🔧</span>
+          <span className="font-display font-bold text-lg text-white">SDS Engineering Incident</span>
+        </div>
+        <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90' : ''}`}>
+           ▶
         </span>
       </button>
+
       {!collapsed && (
-        <div className="collapsible-panel__body">
-          <div className="table-wrap">
-            <table className="dashboard-table sds-incident-panel__table">
-              <thead>
-                <tr>
-                  <th scope="col">Campo</th>
-                  <th scope="col">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ label, value, muted }) => (
-                  <tr key={label}>
-                    <td className="sds-incident-panel__label">{label}</td>
-                    <td
-                      className={`sds-incident-panel__value${muted ? ' sds-incident-panel__value--muted' : ''}`}
-                    >
-                      {value ?? '—'}
-                    </td>
-                  </tr>
-                ))}
-                <tr className="sds-incident-panel__vs-row">
-                  <td className="sds-incident-panel__label">SDS vs Log</td>
-                  <td
-                    className="sds-incident-panel__value sds-incident-panel__value--with-explanation"
-                    data-status={sdsVsLog.status}
-                  >
-                    <span className="sds-incident-panel__vs-status">{sdsVsLogLabel}</span>
-                    <span className="sds-incident-panel__vs-explanation">{sdsVsLog.explanation}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div className="p-6 bg-hp-dark/20 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {rows.map(({ label, value, muted }) => (
+              <div key={label} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl group hover:border-white/10 transition-colors">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">
+                   {label}
+                </span>
+                <span className={`text-sm font-semibold truncate block ${muted ? 'text-slate-600' : 'text-slate-300'}`} title={String(value)}>
+                  {value ?? '—'}
+                </span>
+              </div>
+            ))}
           </div>
 
-
+          <div className={`p-5 rounded-[2rem] border flex flex-col md:flex-row items-center gap-6 ${
+            sdsVsLog.status === 'match' ? 'bg-accent-emerald/10 border-accent-emerald/20' : 
+            sdsVsLog.status === 'partial' ? 'bg-accent-amber/10 border-accent-amber/20' : 
+            sdsVsLog.status === 'general' ? 'bg-hp-blue/10 border-hp-blue/20' : 
+            'bg-accent-rose/10 border-accent-rose/20'
+          }`}>
+             <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg ${
+                sdsVsLog.status === 'match' ? 'bg-accent-emerald/20 text-accent-emerald' : 
+                sdsVsLog.status === 'partial' ? 'bg-accent-amber/20 text-accent-amber' : 
+                sdsVsLog.status === 'general' ? 'bg-hp-blue/20 text-hp-blue-vibrant' : 
+                'bg-accent-rose/20 text-accent-rose'
+             }`}>
+                {sdsVsLog.status === 'match' ? '✔' : sdsVsLog.status === 'partial' ? '⚠' : sdsVsLog.status === 'general' ? 'ℹ' : '✘'}
+             </div>
+             <div className="flex-1 text-center md:text-left">
+                <h4 className={`font-display font-bold text-lg mb-1 ${
+                  sdsVsLog.status === 'match' ? 'text-accent-emerald' : 
+                  sdsVsLog.status === 'partial' ? 'text-accent-amber' : 
+                  sdsVsLog.status === 'general' ? 'text-hp-blue-vibrant' : 
+                  'text-accent-rose'
+                }`}>
+                  {sdsVsLogLabel}
+                </h4>
+                <p className="text-slate-400 text-sm italic">
+                  Correlación: <span className="text-slate-200 font-medium not-italic">{sdsVsLog.explanation}</span>
+                </p>
+             </div>
+          </div>
         </div>
       )}
-    </section>
+    </div>
+  )
+}
   )
 }

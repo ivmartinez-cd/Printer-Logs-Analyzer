@@ -72,7 +72,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       try {
         const res = await aiDiagnose(result, { consumables, alerts, meters })
         setDiagnosis(res.diagnosis)
-        setCollapsed(false) // Expandir automáticamente cuando se genera
+        setCollapsed(false)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al generar el diagnóstico')
       } finally {
@@ -83,40 +83,40 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     const data = diagnosis ? parseDiagnosis(diagnosis) : null
 
     return (
-      <div className="collapsible-panel collapsible-panel--ai" ref={ref}>
+      <div className="glass-card rounded-2xl overflow-hidden animate-fade-in-up shadow-premium-md" ref={ref}>
         <button
           type="button"
-          className="collapsible-panel__header"
+          className="w-full flex items-center justify-between p-5 bg-white/[0.03] hover:bg-white/[0.06] transition-all group"
           onClick={() => setCollapsed((v) => !v)}
           aria-expanded={!collapsed}
-          data-testid="ai-diagnostic-panel-toggle"
         >
-          <div className="ai-diagnostic-panel__header-left">
-            <span className="collapsible-panel__title">🤖 Diagnóstico con IA</span>
+          <div className="flex items-center gap-4">
+            <span className="text-xl grayscale group-hover:grayscale-0 transition-all duration-500">🤖</span>
+            <span className="font-display font-bold text-lg text-white">Diagnóstico con IA</span>
             {data && !collapsed && (
-              <span className={`ai-priority-badge ai-priority-badge--${data.prioridad}`}>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                data.prioridad === 'alta' ? 'bg-accent-rose/20 text-accent-rose border border-accent-rose/30' : 
+                data.prioridad === 'media' ? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/30' : 
+                'bg-accent-emerald/20 text-accent-emerald border border-accent-emerald/30'
+              }`}>
                 Prioridad {data.prioridad}
               </span>
             )}
           </div>
-          <span
-            className={`collapsible-panel__chevron${!collapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
-            aria-hidden="true"
-          >
-            ▶
+          <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90' : ''}`}>
+             ▶
           </span>
         </button>
 
-        <div className={`ai-diagnostic-panel__content ${collapsed ? 'collapsible-panel__body--hidden' : ''}`}>
+        <div className={`transition-all duration-300 ease-in-out ${collapsed ? 'max-h-0 opacity-0 overflow-hidden' : 'p-6 opacity-100'}`}>
           {!diagnosis && !loading && !error && (
-            <div className="ai-diagnostic-panel__cta-wrapper">
-              <p className="ai-diagnostic-panel__button-description">
-                Obtené un diagnóstico detallado con correlaciones temporales y recomendación
-                accionable.
+            <div className="flex flex-col items-center gap-6 py-6 text-center">
+              <p className="text-slate-400 max-w-lg leading-relaxed italic text-sm">
+                “Obtené un diagnóstico detallado con correlaciones temporales y recomendación accionable basado en el motor de IA.”
               </p>
               <button
                 type="button"
-                className="ai-diagnostic-panel__button"
+                className="bg-hp-blue-vibrant hover:bg-hp-blue text-white shadow-premium-glow hover:shadow-hp-blue/40 px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95"
                 onClick={() => void handleGenerate()}
               >
                 Generar análisis con IA
@@ -125,18 +125,18 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           )}
 
           {loading && (
-            <div className="ai-diagnostic-panel__loading">
-              <span className="ai-diagnostic-panel__spinner" aria-hidden="true" />
-              <span>Generando diagnóstico…</span>
+            <div className="flex flex-col items-center gap-4 py-8">
+              <span className="w-8 h-8 border-4 border-hp-blue/20 border-t-hp-blue-vibrant rounded-full animate-spin" aria-hidden="true" />
+              <span className="text-hp-blue-vibrant font-semibold animate-pulse">Analizando correlaciones…</span>
             </div>
           )}
 
           {error && !loading && (
-            <div className="ai-diagnostic-panel__error">
-              <span>{error}</span>
+            <div className="bg-accent-rose/10 border border-accent-rose/30 p-4 rounded-xl flex flex-col items-center gap-3">
+              <span className="text-accent-rose text-sm font-medium">{error}</span>
               <button
                 type="button"
-                className="ai-diagnostic-panel__retry-button"
+                className="text-xs font-bold text-white underline underline-offset-4 hover:text-accent-rose transition-colors"
                 onClick={() => void handleGenerate()}
               >
                 Reintentar
@@ -145,30 +145,34 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           )}
 
           {data && !loading && (
-            <div className="ai-diagnostic-result">
-              <div className="ai-diagnostic-result__diagnosis-card">
-                <h4 className="ai-diagnostic-result__section-title">
-                  <span className="ai-diagnostic-result__icon">🔍</span>
+            <div className="space-y-6 animate-scale-in">
+              <div className="bg-white/[0.03] border border-white/5 p-5 rounded-2xl space-y-3">
+                <h4 className="font-display font-bold text-slate-200 flex items-center gap-3">
+                  <span className="text-lg">🔍</span>
                   Hallazgos del Sistema
                 </h4>
-                <p className="ai-diagnostic-result__text">{data.diagnostico}</p>
+                <p className="text-slate-300 leading-relaxed text-sm">{data.diagnostico}</p>
                 {data.impacto && (
-                  <div className="ai-diagnostic-result__impact">
-                    <strong>Impacto estimado:</strong> {data.impacto}
+                  <div className="pt-3 border-t border-white/5 text-xs text-slate-500">
+                    <strong className="text-slate-400 font-bold">Impacto estimado:</strong> {data.impacto}
                   </div>
                 )}
               </div>
 
-              <div className="ai-diagnostic-result__actions-card">
-                <h4 className="ai-diagnostic-result__section-title">
-                  <span className="ai-diagnostic-result__icon">🔧</span>
+              <div className="bg-white/[0.03] border border-white/5 p-5 rounded-2xl space-y-4">
+                <h4 className="font-display font-bold text-slate-200 flex items-center gap-3">
+                  <span className="text-lg">🔧</span>
                   Pasos a Seguir
                 </h4>
-                <ul className="ai-diagnostic-result__actions-list">
+                <ul className="space-y-3">
                   {data.acciones.map((accion, idx) => (
-                    <li key={idx} className="ai-diagnostic-result__action-item">
-                      <span className="ai-diagnostic-result__action-number">{idx + 1}</span>
-                      <span className="ai-diagnostic-result__action-text">{accion}</span>
+                    <li key={idx} className="flex gap-4 group">
+                      <span className="w-6 h-6 shrink-0 bg-hp-blue/10 text-hp-blue-vibrant border border-hp-blue/20 rounded-lg flex items-center justify-center text-[10px] font-bold group-hover:bg-hp-blue-vibrant group-hover:text-white transition-all">
+                        {idx + 1}
+                      </span>
+                      <span className="text-sm text-slate-400 group-hover:text-slate-200 transition-colors leading-relaxed">
+                        {accion}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -177,12 +181,12 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           )}
 
           {diagnosis && !data && !loading && (
-            // Fallback total si falla el parseo
-            <pre className="ai-diagnostic-panel__diagnosis-raw">{diagnosis}</pre>
+            <pre className="bg-hp-dark p-4 rounded-xl text-xs text-slate-500 font-mono overflow-auto max-h-60 border border-white/5">
+              {diagnosis}
+            </pre>
           )}
         </div>
       </div>
     )
-
   }
 )
