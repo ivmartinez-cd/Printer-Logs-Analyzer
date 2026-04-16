@@ -9,13 +9,13 @@ from anthropic import AsyncAnthropic
 
 _logger = logging.getLogger(__name__)
 
-MODEL = "claude-haiku-4-5-20251001"
+MODEL = "claude-opus-4-6"
 
-# Precios por millón de tokens — Claude 3 Haiku
-_PRICE_INPUT = 0.25
-_PRICE_OUTPUT = 1.25
-_PRICE_CACHE_WRITE = 0.30
-_PRICE_CACHE_READ = 0.03
+# Precios por millón de tokens — Claude 4.6 Opus (Abril 2026)
+_PRICE_INPUT = 15.00
+_PRICE_OUTPUT = 75.00
+_PRICE_CACHE_WRITE = 18.75
+_PRICE_CACHE_READ = 1.50
 
 # NOTE: mismo system prompt que el script standalone en backend/scripts/ai_diagnose.py.
 # Si se modifica uno, actualizar el otro para mantener consistencia.
