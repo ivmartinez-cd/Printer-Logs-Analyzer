@@ -34,7 +34,7 @@ _HEADERS = {"x-api-key": "dev"}
 @patch("backend.interface.api.html_to_tsv")
 def test_extract_logs_success(mock_tsv, mock_sds_factory, mock_insight_info, mock_insight_consumables, client):
     """Test successful log extraction via API."""
-    mock_insight_info.return_value = {"device_id": 12345, "model_name": "HP LaserJet", "zone": "Zone"}
+    mock_insight_info.return_value = {"device_id": 12345, "model_name": "HP LaserJet", "zone": "Zone", "firmware": "1.2.3"}
     mock_insight_consumables.return_value = [{"type": "TONER", "percentLeft": 100}]
     
     mock_sds = MagicMock()
@@ -75,7 +75,7 @@ def test_extract_logs_unauthorized(client):
 def test_extract_logs_not_found(mock_insight_info, client):
     """Test fallback when device is not found."""
     from backend.application.services.insight_service import InsightAPIError
-    mock_insight_info.return_value = {"device_id": None}
+    mock_insight_info.return_value = {"device_id": None, "firmware": None}
     
     response = client.post(
         "/sds/extract-logs",
