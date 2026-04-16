@@ -6,7 +6,7 @@ from backend.infrastructure.config import Settings
 
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    from backend.interface.api import limiter
+    from backend.interface.rate_limiter import limiter
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 @pytest.fixture
@@ -28,10 +28,10 @@ def client(mock_settings):
 
 _HEADERS = {"x-api-key": "dev"}
 
-@patch("backend.interface.api._insight_get_device_consumables")
-@patch("backend.interface.api._insight_get_device_info")
-@patch("backend.interface.api.get_sds_session")
-@patch("backend.interface.api.html_to_tsv")
+@patch("backend.interface.routers.sds._insight_get_device_consumables")
+@patch("backend.interface.routers.sds._insight_get_device_info")
+@patch("backend.interface.routers.sds.get_sds_session")
+@patch("backend.interface.routers.sds.html_to_tsv")
 def test_extract_logs_success(mock_tsv, mock_sds_factory, mock_insight_info, mock_insight_consumables, client):
     """Test successful log extraction via API."""
     mock_insight_info.return_value = {"device_id": 12345, "model_name": "HP LaserJet", "zone": "Zone", "firmware": "1.2.3"}
@@ -43,8 +43,8 @@ def test_extract_logs_success(mock_tsv, mock_sds_factory, mock_insight_info, moc
     mock_tsv.return_value = "HeaderCol\nDataLine1\nDataLine2"
     
     # Mock repositories to avoid DB dependency in these tests
-    with patch("backend.interface.api.PrinterModelRepository") as mock_repo_cls, \
-         patch("backend.interface.api.ErrorSolutionRepository") as mock_sol_repo_cls:
+    with patch("backend.interface.routers.sds.PrinterModelRepository") as mock_repo_cls, \
+         patch("backend.interface.routers.sds.ErrorSolutionRepository") as mock_sol_repo_cls:
         
         mock_repo = mock_repo_cls.return_value
         mock_repo.find_best_match.return_value = None
@@ -71,7 +71,7 @@ def test_extract_logs_unauthorized(client):
     response = client.post("/sds/extract-logs", json={"serial": "123"}, headers={"x-api-key": "wrong"})
     assert response.status_code == 401
 
-@patch("backend.interface.api._insight_get_device_info")
+@patch("backend.interface.routers.sds._insight_get_device_info")
 def test_extract_logs_not_found(mock_insight_info, client):
     """Test fallback when device is not found."""
     from backend.application.services.insight_service import InsightAPIError

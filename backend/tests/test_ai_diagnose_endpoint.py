@@ -21,7 +21,7 @@ from backend.interface.api import get_app
 
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    from backend.interface.api import limiter
+    from backend.interface.rate_limiter import limiter
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 

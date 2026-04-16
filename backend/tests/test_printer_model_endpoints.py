@@ -25,7 +25,7 @@ def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     and triggers 429 prematurely. Patching limiter.limit to an identity
     decorator prevents that while still exercising the endpoint logic.
     """
-    from backend.interface.api import limiter
+    from backend.interface.rate_limiter import limiter
 
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
@@ -173,7 +173,7 @@ def test_upload_pdf_returns_503_when_no_api_key() -> None:
 
 
 @patch(
-    "backend.interface.api.extract_model_from_pdf",
+    "backend.interface.routers.printers.extract_model_from_pdf",
     new_callable=AsyncMock,
 )
 @patch(
@@ -207,7 +207,7 @@ def test_upload_pdf_success_creates_models(
 
 
 @patch(
-    "backend.interface.api.extract_model_from_pdf",
+    "backend.interface.routers.printers.extract_model_from_pdf",
     new_callable=AsyncMock,
 )
 @patch(
@@ -244,7 +244,7 @@ def test_upload_pdf_skips_duplicate_model_codes(
 
 
 @patch(
-    "backend.interface.api.extract_model_from_pdf",
+    "backend.interface.routers.printers.extract_model_from_pdf",
     new_callable=AsyncMock,
 )
 def test_upload_pdf_returns_422_on_invalid_json_from_claude(

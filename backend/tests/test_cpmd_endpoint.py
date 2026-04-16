@@ -33,7 +33,7 @@ _NOW = datetime(2024, 3, 14, 10, 0, 0, tzinfo=timezone.utc)
 
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    from backend.interface.api import limiter
+    from backend.interface.rate_limiter import limiter
 
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
@@ -173,7 +173,7 @@ def test_missing_anthropic_key_returns_503(mock_get: MagicMock) -> None:
 @patch(
     "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository.get_by_id",
 )
-@patch("backend.application.services.cpmd_ingest.ingest_cpmd")
+@patch("backend.interface.routers.printers.ingest_cpmd")
 def test_happy_path_returns_ingest_report(
     mock_ingest: MagicMock,
     mock_get_model: MagicMock,
@@ -204,7 +204,7 @@ def test_happy_path_returns_ingest_report(
 @patch(
     "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository.get_by_id",
 )
-@patch("backend.application.services.cpmd_ingest.ingest_cpmd")
+@patch("backend.interface.routers.printers.ingest_cpmd")
 def test_skipped_report_is_returned_correctly(
     mock_ingest: MagicMock,
     mock_get_model: MagicMock,
@@ -229,7 +229,7 @@ def test_skipped_report_is_returned_correctly(
 @patch(
     "backend.infrastructure.repositories.printer_model_repository.PrinterModelRepository.get_by_id",
 )
-@patch("backend.application.services.cpmd_ingest.ingest_cpmd")
+@patch("backend.interface.routers.printers.ingest_cpmd")
 def test_pdf_extension_without_content_type_is_accepted(
     mock_ingest: MagicMock,
     mock_get_model: MagicMock,
