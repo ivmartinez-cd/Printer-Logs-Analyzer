@@ -110,7 +110,7 @@ def test_ai_diagnose_returns_correct_format(MockAsyncAnthropic: MagicMock) -> No
 
     # Valores esperados
     assert data["diagnosis"] == _DIAGNOSIS_TEXT
-    assert data["model"] == "claude-haiku-4-5-20251001"
+    assert data["model"] == "claude-opus-4-6"
     assert data["tokens_used"]["input"] == 300
     assert data["tokens_used"]["output"] == 50
     assert data["tokens_used"]["cache_write"] == 10

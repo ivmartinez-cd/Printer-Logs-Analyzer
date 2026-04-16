@@ -49,12 +49,11 @@ from backend.infrastructure.repositories.error_code_repository import (  # noqa:
 )
 
 # ---------------------------------------------------------------------------
-# Pricing — Claude 3 Haiku (USD por millón de tokens)
-# ---------------------------------------------------------------------------
-_PRICE_INPUT = 0.25
-_PRICE_OUTPUT = 1.25
-_PRICE_CACHE_WRITE = 0.30
-_PRICE_CACHE_READ = 0.03
+# Pricing — Claude 4.6 Opus (Abril 2026)
+_PRICE_INPUT = 15.00
+_PRICE_OUTPUT = 75.00
+_PRICE_CACHE_WRITE = 18.75
+_PRICE_CACHE_READ = 1.50
 
 SYSTEM_PROMPT = """Sos un técnico de impresoras HP LaserJet Enterprise. Recibís un análisis \
 agrupado de eventos del log y generás un diagnóstico breve para el \
@@ -187,7 +186,7 @@ def call_claude(payload: dict) -> tuple[str, object]:
     client = anthropic.Anthropic(api_key=api_key)
 
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-opus-4-6",
         max_tokens=400,
         system=[
             {
@@ -299,7 +298,7 @@ def main() -> None:
     payload = build_payload(result, catalog)
 
     # 6. Llamar a Claude
-    print("\nLlamando a Claude Haiku 4.5...")
+    print("\nLlamando a Claude Opus 4.6...")
     t0 = time.perf_counter()
     try:
         diagnosis, usage = call_claude(payload)
