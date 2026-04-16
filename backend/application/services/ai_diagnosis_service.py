@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 
 from anthropic import AsyncAnthropic
 
@@ -42,20 +43,48 @@ SYSTEM_PROMPT = (
     "- Identificá si una falla es Crónica (recurrente en alertas) vs Puntual.\n"
     "- No inventes códigos. Si el firmware es viejo y ves errores 49/79, sugerí el update.\n"
     "- Genera al menos 2 acciones técnicas concretas.\n"
-    "- NO incluyas explicaciones fuera del JSON."
-
+    "- NO incluyas explicaciones fuera del JSON. NO uses bloques de código markdown."
 )
+
+
+def _extract_json(text: str) -> dict | None:
+    """Extrae y parsea JSON de la respuesta del modelo.
+
+    Maneja: JSON directo, bloques ```json ... ```, o JSON embebido en texto.
+    """
+    # 1. Strip markdown fences (```json ... ``` o ``` ... ```)
+    cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s*```$", "", cleaned.strip())
+
+    # 2. Intentar parse directo
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # 3. Extraer el primer objeto JSON válido con regex (último recurso)
+    match = re.search(r"\{[\s\S]*\}", cleaned)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+
+    _logger.warning("No se pudo extraer JSON de la respuesta IA: %s", text[:200])
+    return None
 
 
 async def call_claude(payload: dict, api_key: str) -> tuple[str, dict]:
     """Llama a la API de Anthropic de forma asíncrona con prompt caching.
 
-    Retorna (texto_diagnóstico, tokens_dict).
+    Retorna (json_string_del_diagnóstico, tokens_dict).
+    El texto retornado es siempre un JSON string válido si el parseo tuvo éxito,
+    o el texto crudo del modelo en caso de fallo.
     """
     client = AsyncAnthropic(api_key=api_key)
     response = await client.messages.create(
         model=MODEL,
-        max_tokens=400,
+        max_tokens=800,  # Aumentado para evitar truncamiento del JSON
         system=[
             {
                 "type": "text",
@@ -70,7 +99,12 @@ async def call_claude(payload: dict, api_key: str) -> tuple[str, dict]:
             }
         ],
     )
-    text = response.content[0].text
+    raw_text = response.content[0].text
+
+    # Parsear en el backend para devolver JSON limpio al frontend
+    parsed = _extract_json(raw_text)
+    text = json.dumps(parsed, ensure_ascii=False) if parsed else raw_text
+
     tokens = {
         "input": getattr(response.usage, "input_tokens", 0) or 0,
         "output": getattr(response.usage, "output_tokens", 0) or 0,
