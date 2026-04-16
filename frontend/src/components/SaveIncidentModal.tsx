@@ -19,61 +19,65 @@ export function SaveIncidentModal({ onSave, onClose, saving }: SaveIncidentModal
 
   return (
     <div
-      className="log-modal-overlay"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-hp-dark/80 backdrop-blur-md animate-fade-in"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="save-incident-modal-title"
     >
-      <div className="log-modal add-code-modal">
-        <div className="log-modal__header">
-          <h2 id="save-incident-modal-title" className="log-modal__title">
-            Guardar como incidente
-          </h2>
-          <button
-            type="button"
-            className="log-modal__close"
+      <div className="glass-card w-full max-w-md shadow-premium-glow animate-scale-in overflow-hidden border border-white/10">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-hp-blue-vibrant mb-1">Archivo de Diagnóstico</span>
+            <h2 className="font-display font-bold text-xl text-white m-0">Guardar <span className="text-hp-blue-vibrant">Incidente</span></h2>
+          </div>
+          <button 
+            type="button" 
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all focus:outline-none" 
             onClick={onClose}
-            aria-label="Cerrar"
             disabled={saving}
           >
-            ×
+            ✕
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="add-code-modal__form">
-          <div className="add-code-modal__field">
-            <label className="add-code-modal__label" htmlFor="save-incident-name">
-              Nombre
+
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500" htmlFor="save-incident-name">
+              Identificador del Análisis <span className="text-accent-rose">*</span>
             </label>
             <input
               id="save-incident-name"
               type="text"
-              className="add-code-modal__input"
+              className="w-full bg-hp-dark/60 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white placeholder:text-slate-600 focus:ring-1 focus:ring-hp-blue-vibrant focus:border-hp-blue-vibrant outline-none transition-all hover:bg-white/5"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Equipo 3 - 14-mar"
+              placeholder="Ej: Análisis Crítico - Planta Norte"
               required
               disabled={saving}
               autoFocus
             />
           </div>
-          <div className="add-code-modal__field">
-            <label className="add-code-modal__label" htmlFor="save-incident-equipment">
-              Equipo (opcional)
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500" htmlFor="save-incident-equipment">
+              Serial / Modelo del Equipo <span className="text-slate-600">(Opcional)</span>
             </label>
             <input
               id="save-incident-equipment"
               type="text"
-              className="add-code-modal__input"
+              className="w-full bg-hp-dark/60 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white placeholder:text-slate-600 focus:ring-1 focus:ring-hp-blue-vibrant focus:border-hp-blue-vibrant outline-none transition-all hover:bg-white/5"
               value={equipment}
               onChange={(e) => setEquipment(e.target.value)}
-              placeholder="Ej: HP OfficeJet 3"
+              placeholder="Ej: CNNCQ520HG"
               disabled={saving}
             />
           </div>
-          <div className="log-modal__actions">
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              className="dashboard__btn dashboard__btn--secondary"
+              className="px-6 py-2.5 rounded-full bg-slate-800 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-slate-700 transition-all border border-white/5"
               onClick={onClose}
               disabled={saving}
             >
@@ -81,10 +85,17 @@ export function SaveIncidentModal({ onSave, onClose, saving }: SaveIncidentModal
             </button>
             <button
               type="submit"
-              className="dashboard__btn dashboard__btn--primary"
+              className="px-10 py-2.5 rounded-full bg-hp-blue-vibrant text-white font-bold text-[11px] uppercase tracking-widest hover:shadow-premium-glow hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 min-w-[120px]"
               disabled={saving || !name.trim()}
             >
-              {saving ? 'Guardando…' : 'Guardar'}
+              {saving ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span>Archivando...</span>
+                </div>
+              ) : (
+                'Archivar Registro'
+              )}
             </button>
           </div>
         </form>

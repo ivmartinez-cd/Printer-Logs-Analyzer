@@ -10,7 +10,7 @@ interface UIState {
     code: string
     description: string
     severity: string
-    solutionUrl: string
+    solutionUrl?: string | null
   } | null
   saveIncidentModalOpen: boolean
   compareModalOpen: boolean
@@ -27,7 +27,7 @@ interface UIState {
   setSdsModalOpen: (open: boolean, incident?: SdsIncidentData | null) => void
   setSdsIncident: (incident: SdsIncidentData | null) => void
   setAddCodeModalCode: (code: string | null) => void
-  setEditCodeInitial: (data: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
+  setEditCodeInitial: (data: { code: string; description: string; severity: string; solutionUrl?: string | null } | null) => void
   setSaveIncidentModalOpen: (open: boolean) => void
   setCompareModalOpen: (open: boolean) => void
   setDeleteConfirm: (data: { id: string; name: string } | null) => void

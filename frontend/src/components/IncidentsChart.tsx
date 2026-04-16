@@ -79,9 +79,9 @@ function bucketEventsByHourWithCodes(
 }
 
 const SEV_COLORS: Record<string, string> = {
-  ERROR: '#ef4444',
-  WARNING: '#f59e0b',
-  INFO: '#3b82f6',
+  ERROR: '#fb7185', // rose-400
+  WARNING: '#fbbf24', // amber-400
+  INFO: '#38bdf8', // sky-400
 }
 
 interface CustomTooltipProps {
@@ -105,9 +105,10 @@ function CustomTooltip({
   const dataPoint = payload[0]?.payload as EnrichedVolumeDataPoint | undefined
   if (!dataPoint) return null
 
+  const date = new Date(label as string)
   const timeLabel = isMultiDay
-    ? new Date(label as string).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    : new Date(label as string).toLocaleString(undefined, {
+    ? date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' })
+    : date.toLocaleString('es-ES', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
@@ -121,62 +122,42 @@ function CustomTooltip({
   if (severities.length === 0) return null
 
   return (
-    <div
-      style={{
-        background: '#151821',
-        border: '1px solid #232734',
-        borderRadius: 6,
-        padding: '8px 12px',
-        minWidth: 160,
-        maxWidth: 260,
-      }}
-    >
-      <div style={{ color: '#e5e7eb', fontWeight: 600, marginBottom: 6, fontSize: 12 }}>
+    <div className="bg-hp-dark/90 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-premium-glow min-w-[200px] animate-scale-in">
+      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">
         {timeLabel}
       </div>
-      {severities.map((sev) => {
-        const codes = dataPoint.codes[sev]
-        const displayed = codes.slice(0, 5)
-        const overflow = codes.length - displayed.length
-        return (
-          <div key={sev} style={{ marginBottom: severities[severities.length - 1] === sev ? 0 : 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: SEV_COLORS[sev],
-                  flexShrink: 0,
-                }}
-              />
-              <span style={{ color: SEV_COLORS[sev], fontWeight: 600, fontSize: 11 }}>
-                {sev}
-              </span>
-              <span style={{ color: '#9aa3b2', fontSize: 11, marginLeft: 'auto' }}>
-                {dataPoint[sev]}
-              </span>
-            </div>
-            {codes.length > 0 && (
-              <div
-                style={{
-                  color: '#c9d1d9',
-                  fontSize: 10,
-                  fontFamily: 'monospace',
-                  paddingLeft: 14,
-                  lineHeight: 1.4,
-                }}
-              >
-                {displayed.join(', ')}
-                {overflow > 0 && (
-                  <span style={{ color: '#6b7280' }}>{` +${overflow} más`}</span>
-                )}
+      <div className="space-y-3">
+        {severities.map((sev) => {
+          const codes = dataPoint.codes[sev]
+          const displayed = codes.slice(0, 5)
+          const overflow = codes.length - displayed.length
+          return (
+            <div key={sev} className="group">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: SEV_COLORS[sev] }} />
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">{sev}</span>
+                </div>
+                <span className="text-xs font-mono font-bold text-slate-300">{dataPoint[sev]}</span>
               </div>
-            )}
-          </div>
-        )
-      })}
+              {codes.length > 0 && (
+                <div className="pl-4 space-y-1">
+                  <div className="flex flex-wrap gap-1">
+                    {displayed.map(c => (
+                      <span key={c} className="text-[9px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-slate-400 group-hover:text-white transition-colors">
+                        {c}
+                      </span>
+                    ))}
+                    {overflow > 0 && (
+                      <span className="text-[9px] text-slate-600 font-bold">+{overflow}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -201,65 +182,85 @@ export function IncidentsChart({
 
   const isMultiDay = volumeData.length > 24
 
-  const title =
-    activeFilter === null
-      ? 'Volumen de incidencias (registro completo)'
-      : typeof activeFilter === 'string'
-        ? `Volumen de incidencias (${new Date(activeFilter + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
-        : `Volumen de incidencias (${formatWeekRange(activeFilter)})`
+  const titlePrefix = activeFilter === null
+    ? 'Registro Completo'
+    : typeof activeFilter === 'string'
+      ? new Date(activeFilter + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+      : formatWeekRange(activeFilter)
 
   return (
-    <section className="section dashboard__chart-left">
-      <h2 className="section__title">{title}</h2>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        {(
-          [
-            ['ERROR', '#ef4444'],
-            ['WARNING', '#f59e0b'],
-            ['INFO', '#3b82f6'],
-          ] as const
-        ).map(([sev, color]) => {
-          const active = visibleSeverities.has(sev)
-          return (
-            <button
-              key={sev}
-              onClick={() => onSeverityToggle(sev)}
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                padding: '2px 8px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                border: `1px solid ${color}`,
-                background: active ? color : 'transparent',
-                color: active ? '#fff' : color,
-                opacity: active ? 1 : 0.6,
-                transition: 'all 0.15s',
-              }}
-            >
-              {sev}
-            </button>
-          )
-        })}
+    <div className="flex flex-col h-full animate-fade-in-up">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-hp-blue-vibrant mb-1">Análisis Progresivo</span>
+          <h3 className="font-display font-bold text-lg text-white m-0">Volumen de Incidencias <span className="text-slate-500 font-medium">({titlePrefix})</span></h3>
+        </div>
+        <div className="flex p-1 bg-white/5 rounded-xl border border-white/5">
+          {(
+            [
+              ['ERROR', '#fb7185'],
+              ['WARNING', '#fbbf24'],
+              ['INFO', '#38bdf8'],
+            ] as const
+          ).map(([sev, color]) => {
+            const active = visibleSeverities.has(sev)
+            return (
+              <button
+                key={sev}
+                onClick={() => onSeverityToggle(sev)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  active ? 'bg-white/10 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                 <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: active ? color : '#475569' }} />
+                    {sev}
+                 </div>
+              </button>
+            )
+          })}
+        </div>
       </div>
-      <div className="chart-wrap">
+
+      <div className="flex-1 min-h-[300px] w-full relative">
         {volumeData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={volumeData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#232734" />
+            <AreaChart data={volumeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorError" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#fb7185" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#fb7185" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorWarning" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorInfo" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} vertical={false} />
               <XAxis
                 dataKey="time"
-                stroke="#9aa3b2"
-                tick={{ fontSize: 11 }}
-                interval={Math.max(0, Math.ceil(volumeData.length / 10) - 1)}
+                stroke="#64748b"
+                tick={{ fontSize: 10, fontWeight: 500 }}
+                tickLine={false}
+                axisLine={false}
+                interval={Math.max(0, Math.ceil(volumeData.length / 8) - 1)}
                 tickFormatter={(v) => {
                   const d = new Date(v)
                   return isMultiDay
-                    ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                    : d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                    ? d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
+                    : d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
                 }}
               />
-              <YAxis stroke="#9aa3b2" tick={{ fontSize: 11 }} />
+              <YAxis 
+                stroke="#64748b" 
+                tick={{ fontSize: 10, fontWeight: 500 }} 
+                tickLine={false}
+                axisLine={false}
+              />
               <Tooltip
                 content={(props) => (
                   <CustomTooltip
@@ -268,47 +269,54 @@ export function IncidentsChart({
                     isMultiDay={isMultiDay}
                   />
                 )}
+                cursor={{ stroke: '#ffffff', strokeOpacity: 0.1, strokeWidth: 1 }}
               />
-              <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
               {visibleSeverities.has('ERROR') && (
                 <Area
                   type="monotone"
                   dataKey="ERROR"
-                  stackId="a"
-                  stroke="#ef4444"
+                  stackId="1"
+                  stroke="#fb7185"
                   strokeWidth={2}
-                  fill="#ef4444"
-                  fillOpacity={0.7}
+                  fillOpacity={1}
+                  fill="url(#colorError)"
+                  animationDuration={1500}
                 />
               )}
               {visibleSeverities.has('WARNING') && (
                 <Area
                   type="monotone"
                   dataKey="WARNING"
-                  stackId="a"
-                  stroke="#f59e0b"
+                  stackId="1"
+                  stroke="#fbbf24"
                   strokeWidth={2}
-                  fill="#f59e0b"
-                  fillOpacity={0.7}
+                  fillOpacity={1}
+                  fill="url(#colorWarning)"
+                  animationDuration={1500}
                 />
               )}
               {visibleSeverities.has('INFO') && (
                 <Area
                   type="monotone"
                   dataKey="INFO"
-                  stackId="a"
-                  stroke="#3b82f6"
+                  stackId="1"
+                  stroke="#38bdf8"
                   strokeWidth={2}
-                  fill="#3b82f6"
-                  fillOpacity={0.7}
+                  fillOpacity={1}
+                  fill="url(#colorInfo)"
+                  animationDuration={1500}
                 />
               )}
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="chart-placeholder">Sin datos para el gráfico</div>
+          <div className="absolute inset-0 flex items-center justify-center opacity-30 italic text-sm text-slate-400">
+             Consultando registros históricos…
+          </div>
         )}
       </div>
-    </section>
+    </div>
+  )
+}
   )
 }

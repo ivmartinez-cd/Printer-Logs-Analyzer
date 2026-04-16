@@ -67,60 +67,77 @@ export function KPICards({
   const errorRate = computeErrorRate(filteredEvents)
 
   return (
-    <div className={styles.kpis}>
-      <div className={styles['kpi-card']}>
-        <div className={styles['kpi-card__label']}>Estado de errores</div>
-        <div className={styles['kpi-card__values']}>
-          <span className={`${styles['kpi-card__value']} ${styles['kpi-card__value--error']}`} data-testid="kpi-error-count">{errorCount}</span>
-          <span className={styles['kpi-card__values-sep']}>·</span>
-          <span className={`${styles['kpi-card__value']} ${styles['kpi-card__value--warning']}`}>{warningCount}</span>
-          <span className={styles['kpi-card__values-sep']}>·</span>
-          <span className={`${styles['kpi-card__value']} ${styles['kpi-card__value--info']}`}>{infoCount}</span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
+      {/* Estado de Errores */}
+      <Card 
+        label="Estado de errores"
+        sub="crítico · advertencia · info"
+      >
+        <div className="flex items-center gap-3 font-display text-2xl font-bold tracking-tight">
+          <span className="text-accent-rose" data-testid="kpi-error-count">{errorCount}</span>
+          <span className="text-white/20 select-none">·</span>
+          <span className="text-accent-amber">{warningCount}</span>
+          <span className="text-white/20 select-none">·</span>
+          <span className="text-hp-blue-vibrant">{infoCount}</span>
         </div>
-        <div className={styles['kpi-card__sub']}>crítico · advertencia · info</div>
-      </div>
-      <div className={styles['kpi-card']}>
-        <div className={styles['kpi-card__label']}>Incidencias Activas</div>
-        <div className={styles['kpi-card__value']} data-testid="kpi-active-incidents">{filteredIncidents.length}</div>
-        <div className={styles['kpi-card__sub']}>incidentes detectados en el log</div>
-      </div>
-      <div className={styles['kpi-card']}>
-        <div className={styles['kpi-card__label']}>Último error crítico</div>
+      </Card>
+
+      {/* Incidencias Activas */}
+      <Card 
+        label="Incidencias Activas"
+        sub="incidentes detectados en el log"
+      >
+        <div className="font-display text-3xl font-bold tracking-tight text-white" data-testid="kpi-active-incidents">
+          {filteredIncidents.length}
+        </div>
+      </Card>
+
+      {/* Último error crítico */}
+      <Card 
+        label="Último error crítico"
+        sub={lastErrorEvent ? `${lastErrorLabel} · registrado` : 'Ningún error registrado'}
+      >
         {lastErrorEvent ? (
-          <>
-            <div
-              className={`${styles['kpi-card__value']} ${styles['kpi-card__value--error']}`}
-              data-testid="kpi-last-error-code"
-            >
-              {lastErrorEvent.code}
-            </div>
-            <div className={styles['kpi-card__sub']}>{lastErrorLabel} · último error registrado</div>
-          </>
+          <div className="font-display text-3xl font-bold tracking-tight text-accent-rose" data-testid="kpi-last-error-code">
+            {lastErrorEvent.code}
+          </div>
         ) : (
-          <>
-            <div
-              className={styles['kpi-card__value']}
-              style={{ fontSize: '1rem', color: 'var(--color-success, #22c55e)' }}
-            >
-              Sin errores
-            </div>
-            <div className={styles['kpi-card__sub']}>último error registrado</div>
-          </>
+          <div className="font-display text-xl font-bold text-accent-emerald">
+            Sin errores
+          </div>
         )}
-      </div>
-      <div className={styles['kpi-card']}>
-        <div className={styles['kpi-card__label']}>Tasa de errores</div>
-        <div
-          className={styles['kpi-card__value']}
-          style={
-            errorRate.labelColor
-              ? { fontSize: '1rem', color: errorRate.labelColor }
-              : { fontSize: errorRate.label === '—' ? '1.5rem' : '0.95rem', fontWeight: 700 }
-          }
+      </Card>
+
+      {/* Tasa de errores */}
+      <Card 
+        label="Tasa de errores"
+        sub={errorRate.sub}
+      >
+        <div 
+          className="font-display font-bold tracking-tight"
+          style={{ 
+            fontSize: errorRate.label === '—' ? '24px' : '1.1rem',
+            color: errorRate.labelColor || 'inherit'
+          }}
         >
           {errorRate.label}
         </div>
-        <div className={styles['kpi-card__sub']}>{errorRate.sub}</div>
+      </Card>
+    </div>
+  )
+}
+
+function Card({ label, sub, children }: { label: string; sub: string; children: React.ReactNode }) {
+  return (
+    <div className="glass-card glass-card--hover p-5 rounded-2xl flex flex-col gap-3">
+      <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+        {label}
+      </div>
+      <div className="flex-1 flex items-center">
+        {children}
+      </div>
+      <div className="text-[11px] font-medium text-slate-600 truncate">
+        {sub}
       </div>
     </div>
   )
