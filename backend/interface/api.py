@@ -10,6 +10,7 @@ from slowapi import _rate_limit_exceeded_handler
 from backend.infrastructure.config import Settings, get_settings
 from backend.interface.rate_limiter import limiter
 from backend.interface.exception_handlers import register_exception_handlers
+from backend.infrastructure.database import Database
 from backend.interface.routers import (
     analysis,
     sds,
