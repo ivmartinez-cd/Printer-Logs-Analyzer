@@ -21,29 +21,26 @@ _PRICE_CACHE_READ = 1.50
 # NOTE: mismo system prompt que el script standalone en backend/scripts/ai_diagnose.py.
 # Si se modifica uno, actualizar el otro para mantener consistencia.
 SYSTEM_PROMPT = (
-    "Sos un experto técnico senior de HP LaserJet. Tu diagnóstico debe ser de "
-    "nivel quirúrgico, fundamentado en datos.\n\n"
+    "Sos un experto técnico senior de HP LaserJet. Analizás datos y generás diagnósticos concisos.\n\n"
     "Recibirás:\n"
     "1. Incidentes del log (agrupados).\n"
     "2. Estado de consumibles (real-time).\n"
     "3. Historial de alertas del portal (último mes).\n"
     "4. Patrón de contadores/metros.\n\n"
-    "Tu objetivo es CORRELACIONAR estos datos. Por ejemplo, si ves atascos en "
-    "el log y el fusor está al 2% o tiene alertas de 'paper jam' recurrentes "
-    "en el portal, el diagnóstico debe ser contundente.\n\n"
-    "Responde UNICAMENTE con un objeto JSON válido con la siguiente estructura:\n"
+    "CORRELACIONÁ los datos para identificar la causa raíz.\n\n"
+    "Responde UNICAMENTE con este JSON (sin texto adicional, sin markdown):\n"
     "{\n"
-    "  \"diagnostico\": \"Resumen técnico del problema raíz.\",\n"
-    "  \"acciones\": [\"Acción 1\", \"Acción 2\"],\n"
-    "  \"prioridad\": \"alta\" | \"media\" | \"baja\",\n"
-    "  \"impacto\": \"Descripción breve del impacto en el equipo.\"\n"
+    "  \"diagnostico\": \"[MAX 60 palabras. Causa raíz técnica con código de error y correlación.]\",\n"
+    "  \"acciones\": [\"[Acción 1, max 20 palabras]\", \"[Acción 2, max 20 palabras]\", \"[Acción 3 opcional]\"],\n"
+    "  \"prioridad\": \"alta\",\n"
+    "  \"impacto\": \"[MAX 20 palabras. Consecuencia operativa concreta.]\"\n"
     "}\n\n"
-    "Reglas:\n"
-    "- Español rioplatense, técnico y extremadamente directo.\n"
-    "- Identificá si una falla es Crónica (recurrente en alertas) vs Puntual.\n"
-    "- No inventes códigos. Si el firmware es viejo y ves errores 49/79, sugerí el update.\n"
-    "- Genera al menos 2 acciones técnicas concretas.\n"
-    "- NO incluyas explicaciones fuera del JSON. NO uses bloques de código markdown."
+    "Reglas OBLIGATORIAS:\n"
+    "- diagnostico: máximo 60 palabras. Directo al punto.\n"
+    "- acciones: máximo 3 items, cada uno máximo 20 palabras.\n"
+    "- impacto: máximo 20 palabras.\n"
+    "- prioridad: solo 'alta', 'media' o 'baja'.\n"
+    "- Solo JSON. Sin bloques de código. Sin explicaciones fuera del JSON."
 )
 
 
@@ -84,7 +81,7 @@ async def call_claude(payload: dict, api_key: str) -> tuple[str, dict]:
     client = AsyncAnthropic(api_key=api_key)
     response = await client.messages.create(
         model=MODEL,
-        max_tokens=800,  # Aumentado para evitar truncamiento del JSON
+        max_tokens=1024,
         system=[
             {
                 "type": "text",
@@ -100,6 +97,13 @@ async def call_claude(payload: dict, api_key: str) -> tuple[str, dict]:
         ],
     )
     raw_text = response.content[0].text
+    stop_reason = getattr(response, "stop_reason", None)
+
+    # Advertir si la respuesta fue truncada por el límite de tokens
+    if stop_reason == "max_tokens":
+        _logger.warning(
+            "Respuesta IA truncada por max_tokens. Texto parcial: %s", raw_text[:300]
+        )
 
     # Parsear en el backend para devolver JSON limpio al frontend
     parsed = _extract_json(raw_text)
