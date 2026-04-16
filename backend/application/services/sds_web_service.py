@@ -65,7 +65,7 @@ class SDSWebSession:
             self.session.get(f"{self.base_url}/login", timeout=15)
             _logger.info("Phase: Login page fetch took %.2fs", time.perf_counter() - t_start)
         except requests.RequestException as e:
-            raise SDSWebError(f"Failed to reach login page: {e}")
+            raise SDSWebError(f"Failed to reach login page: {e}") from e
 
         # 2. Post credentials
         t_post_start = time.perf_counter()
@@ -86,7 +86,7 @@ class SDSWebSession:
             )
             _logger.info("Phase: Login POST took %.2fs", time.perf_counter() - t_post_start)
         except requests.RequestException as e:
-            raise SDSWebError(f"Login request failed: {e}")
+            raise SDSWebError(f"Login request failed: {e}") from e
 
         if resp.status_code != 200 or "login" in resp.url.lower():
             self.session = None
@@ -114,7 +114,7 @@ class SDSWebSession:
                 "Phase: Device search (%s) took %.2fs", serial, time.perf_counter() - t_search_start
             )
         except requests.RequestException as e:
-            raise SDSWebError(f"Search request failed: {e}")
+            raise SDSWebError(f"Search request failed: {e}") from e
 
         # Try to find Model Name in HTML using Regex first.
         # The user provided snippet: <a href=".../view-model..." class="entity-name model...">Model</a>
@@ -190,7 +190,7 @@ class SDSWebSession:
                 time.perf_counter() - t_fetch_start,
             )
         except requests.RequestException as e:
-            raise SDSWebError(f"Failed to fetch event logs: {e}")
+            raise SDSWebError(f"Failed to fetch event logs: {e}") from e
 
         if resp.status_code != 200:
             raise SDSWebError(f"Error fetching event logs ({resp.status_code}): {resp.text[:200]}")
@@ -266,7 +266,7 @@ def html_to_tsv(raw_xml_html: str) -> str:
         return "\n".join(rows)
     except Exception as e:
         _logger.error("Error parsing SDS HTML to TSV: %s", e)
-        raise SDSWebError(f"Failed to parse log data: {e}")
+        raise SDSWebError(f"Failed to parse log data: {e}") from e
 
 
 _session_cache: Optional[SDSWebSession] = None

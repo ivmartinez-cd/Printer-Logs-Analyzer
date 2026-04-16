@@ -1,12 +1,12 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional, List, Callable, Any
-from uuid import UUID
 from pathlib import Path
+from typing import Any, Callable, Generic, List, Optional, TypeVar
+from uuid import UUID
 
-from backend.infrastructure.database import Database, DatabaseUnavailableError
 from backend.domain.exceptions import ResourceNotFoundError
+from backend.infrastructure.database import Database, DatabaseUnavailableError
 
 T = TypeVar('T')
 ID_TYPE = TypeVar('ID_TYPE')
@@ -38,7 +38,7 @@ class BaseRepository(ABC, Generic[T, ID_TYPE]):
         return result
 
     # Interfaz común de CRUD que los repositorios deben implementar (o usar fallbacks manuales):
-    
+
     def get_by_id(self, entity_id: ID_TYPE) -> Optional[T]:
         """Obtiene una entidad por su ID principal."""
         return self._execute_with_fallback(

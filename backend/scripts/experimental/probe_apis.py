@@ -1,13 +1,14 @@
+import json
 import os
 import sys
-import json
+
 from dotenv import load_dotenv
 
 load_dotenv('.env')
 
 sys.path.append(os.path.abspath('.'))
-from backend.infrastructure.config import Settings
 from backend.application.services.sds_web_service import SDSWebSession
+from backend.infrastructure.config import Settings
 
 settings = Settings(DB_URL='sqlite:///:memory:', API_KEY='dummy', SDS_WEB_USERNAME=os.environ.get('SDS_WEB_USERNAME'), SDS_WEB_PASSWORD=os.environ.get('SDS_WEB_PASSWORD'))
 session = SDSWebSession(settings)
@@ -34,6 +35,6 @@ for ep in endpoints:
             if 'model' in str(data).lower():
                 print("Model string exists in JSON!")
             break
-        except:
+        except Exception:
             if len(resp.text) > 0:
                 print("Returned HTML/Text instead of JSON.")

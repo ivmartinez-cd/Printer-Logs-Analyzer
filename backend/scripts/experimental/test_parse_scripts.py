@@ -1,5 +1,5 @@
-import re
 import json
+import re
 
 with open('device_dashboard.html', encoding='utf-8') as f:
     html = f.read()

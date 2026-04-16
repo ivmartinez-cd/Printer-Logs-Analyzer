@@ -26,7 +26,7 @@ def validate_ssrf_url(url: str) -> None:
         scheme = parsed.scheme
         hostname = parsed.hostname
     except Exception:
-        raise HTTPException(status_code=422, detail="URL mal formada.")
+        raise HTTPException(status_code=422, detail="URL mal formada.") from None
 
     if scheme != "https":
         raise HTTPException(status_code=422, detail="Solo se permiten URLs con scheme https://.")

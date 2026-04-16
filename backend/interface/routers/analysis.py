@@ -95,7 +95,7 @@ def validate_logs(
     if len(payload.logs) > MAX_LOGS_LENGTH:
         raise HTTPException(status_code=400, detail="logs exceeds max length")
 
-    lines_non_empty = [l for l in payload.logs.splitlines() if l.strip()]
+    lines_non_empty = [line for line in payload.logs.splitlines() if line.strip()]
     total_lines = len(lines_non_empty)
     if total_lines == 0:
         return ValidateLogsResponse(total_lines=0, codes_detected=[], codes_new=[], errors=[])

@@ -1,4 +1,5 @@
 from lxml import html
+
 tree = html.parse('device_dashboard.html')
 print('Title:', tree.xpath('//title/text()'))
 print('Device Name Title:', tree.xpath('//*[@class=\"entity-name model\"]/text()'))

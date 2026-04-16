@@ -128,7 +128,7 @@ def get_saved_analysis(
     try:
         uid = UUID(id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid id")
+        raise HTTPException(status_code=400, detail="Invalid id") from None
     snap = repo.get_by_id(uid)
     if not snap:
         raise HTTPException(status_code=404, detail="Saved analysis not found")
@@ -155,7 +155,7 @@ def delete_saved_analysis(
     try:
         uid = UUID(id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid id")
+        raise HTTPException(status_code=400, detail="Invalid id") from None
     if not repo.delete(uid):
         raise HTTPException(status_code=404, detail="Saved analysis not found")
 
@@ -177,7 +177,7 @@ def compare_saved_analysis(
     try:
         uid = UUID(id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid id")
+        raise HTTPException(status_code=400, detail="Invalid id") from None
     snap = repo.get_by_id(uid)
     if not snap:
         raise HTTPException(status_code=404, detail="Saved analysis not found")

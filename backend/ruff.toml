@@ -14,8 +14,10 @@ ignore = [
     "E501",
     "E402",
     "F401",
-    "F841",
-    "E701",
+    "B008",
+]
+exclude = [
+    "scripts/experimental",
 ]
 
 [format]
