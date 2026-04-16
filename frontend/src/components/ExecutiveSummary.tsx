@@ -4,6 +4,7 @@ import type {
   Incident as ApiIncident,
   EnrichedEvent as ApiEvent,
 } from '../types/api'
+import styles from './ExecutiveSummary.module.css'
 
 interface ExecutiveSummaryProps {
   result: ParseLogsResponse
@@ -233,26 +234,26 @@ export const ExecutiveSummary = forwardRef<HTMLDivElement, ExecutiveSummaryProps
     const consumableRiskCount = replaceWarnings.length + warningWarnings.length
 
     return (
-      <section className="executive-summary" ref={ref}>
-        <div className="executive-summary__scorecards">
-          <article className="exec-scorecard">
-            <span className="exec-scorecard__label">Salud general</span>
-            <span className={`exec-scorecard__value exec-scorecard__value--${health.variant}`}>
+      <section className={styles['executive-summary']} ref={ref}>
+        <div className={styles['executive-summary__scorecards']}>
+          <article className={styles['exec-scorecard']}>
+            <span className={styles['exec-scorecard__label']}>Salud general</span>
+            <span className={`${styles['exec-scorecard__value']} ${styles[`exec-scorecard__value--${health.variant}`]}`}>
               {health.label}
             </span>
-            <span className="exec-scorecard__sub">{health.description}</span>
+            <span className={styles['exec-scorecard__sub']}>{health.description}</span>
           </article>
-          <article className="exec-scorecard">
-            <span className="exec-scorecard__label">Incidentes críticos</span>
-            <span className="exec-scorecard__value">{criticalIncidents.length}</span>
-            <span className="exec-scorecard__sub">
+          <article className={styles['exec-scorecard']}>
+            <span className={styles['exec-scorecard__label']}>Incidentes críticos</span>
+            <span className={styles['exec-scorecard__value']}>{criticalIncidents.length}</span>
+            <span className={styles['exec-scorecard__sub']}>
               {warningIncidents.length} warning · {infoIncidents.length} info
             </span>
           </article>
-          <article className="exec-scorecard">
-            <span className="exec-scorecard__label">Consumibles en riesgo</span>
-            <span className="exec-scorecard__value">{consumableRiskCount}</span>
-            <span className="exec-scorecard__sub">
+          <article className={styles['exec-scorecard']}>
+            <span className={styles['exec-scorecard__label']}>Consumibles en riesgo</span>
+            <span className={styles['exec-scorecard__value']}>{consumableRiskCount}</span>
+            <span className={styles['exec-scorecard__sub']}>
               {replaceWarnings.length > 0
                 ? `${replaceWarnings.length} para reemplazo inmediato`
                 : warningWarnings.length > 0
@@ -260,26 +261,26 @@ export const ExecutiveSummary = forwardRef<HTMLDivElement, ExecutiveSummaryProps
                   : 'Sin alertas activas'}
             </span>
           </article>
-          <article className="exec-scorecard">
-            <span className="exec-scorecard__label">Errores / 1.000 pág.</span>
-            <span className="exec-scorecard__value">{density.label}</span>
-            <span className="exec-scorecard__sub">{density.sub}</span>
+          <article className={styles['exec-scorecard']}>
+            <span className={styles['exec-scorecard__label']}>Errores / 1.000 pág.</span>
+            <span className={styles['exec-scorecard__value']}>{density.label}</span>
+            <span className={styles['exec-scorecard__sub']}>{density.sub}</span>
           </article>
         </div>
 
-        <div className="executive-summary__grid">
-          <div className="executive-summary__block">
-            <h3>Lo más relevante</h3>
-            <ul>
+        <div className={styles['executive-summary__grid']}>
+          <div className={styles['executive-summary__block']}>
+            <h3 className={styles['executive-summary__block-title']}>Lo más relevante</h3>
+            <ul className={styles['executive-summary__block-list']}>
               {summaryPoints.map((item, idx) => (
                 <li key={idx}>{item}</li>
               ))}
             </ul>
           </div>
 
-          <div className="executive-summary__block">
-            <h3>Próximos pasos sugeridos</h3>
-            <ul className="exec-next-steps">
+          <div className={styles['executive-summary__block']}>
+            <h3 className={styles['executive-summary__block-title']}>Próximos pasos sugeridos</h3>
+            <ul className={styles['exec-next-steps']}>
               {nextSteps.map((step, idx) => (
                 <li key={`${step.owner}-${idx}`}>
                   <strong>{step.owner}:</strong> {step.text}
@@ -289,11 +290,11 @@ export const ExecutiveSummary = forwardRef<HTMLDivElement, ExecutiveSummaryProps
           </div>
         </div>
 
-        <div className="executive-summary__context">
+        <div className={styles['executive-summary__context']}>
           {contextItems.map((item) => (
-            <div key={item.label} className="executive-summary__context-item">
-              <span className="executive-summary__context-label">{item.label}</span>
-              <span className="executive-summary__context-value">{item.value}</span>
+            <div key={item.label} className={styles['executive-summary__context-item']}>
+              <span className={styles['executive-summary__context-label']}>{item.label}</span>
+              <span className={styles['executive-summary__context-value']}>{item.value}</span>
             </div>
           ))}
         </div>

@@ -14,6 +14,7 @@ import type {
   SavedAnalysisSummary,
   SavedAnalysisFull,
   CompareResponse,
+  ErrorCodeUpsertBody,
 } from '../types/api'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -36,8 +37,6 @@ import { TopErrorsChart } from '../components/TopErrorsChart'
 import { DashboardHeader } from '../components/DashboardHeader'
 import { ExecutiveSummary } from '../components/ExecutiveSummary'
 import { useExportPdf } from '../hooks/useExportPdf'
-import { useModals } from '../hooks/useModals'
-import { useAnalysis } from '../hooks/useAnalysis'
 import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
 import { LogPasteModal } from '../components/LogPasteModal'
@@ -49,6 +48,8 @@ import {
   getWindowForDate,
   type DateFilter,
 } from '../hooks/useDateFilter'
+import { useAnalysisStore } from '../store/useAnalysisStore'
+import { useUIStore } from '../store/useUIStore'
 
 
 function getIncidentTableRows(
@@ -164,31 +165,25 @@ export default function DashboardPage({
     setSelectedWeekRange,
     activeFilter,
   } = dateFilter
-  const [viewMode, setViewMode] = useState<'dashboard' | 'saved-list' | 'saved-detail'>('dashboard')
-  const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
-  const [savedListSearch, setSavedListSearch] = useState('')
-  const [savedDetail, setSavedDetail] = useState<SavedAnalysisFull | null>(null)
-  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
-  const [compareLogText, setCompareLogText] = useState('')
-  const [compareFileName, setCompareFileName] = useState<string | undefined>(undefined)
-  const [comparing, setComparing] = useState(false)
-  const compareFileInputRef = useRef<HTMLInputElement>(null)
-  const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
-  const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [logFileName, setLogFileName] = useState<string | null>(null)
-  const [currentModelId, setCurrentModelId] = useState<string | null>(null)
-  const [currentModelHasCpmd, setCurrentModelHasCpmd] = useState(false)
-  const [currentSerialNumber, setCurrentSerialNumber] = useState<string | null>(null)
-  const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
-    new Set(['ERROR', 'WARNING', 'INFO'])
-  )
-  const [autoExtracting, setAutoExtracting] = useState(false)
-  const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
-  const [currentModelName, setCurrentModelName] = useState<string | null>(null)
+  const {
+    result,
+    loading,
+    error,
+    setError,
+    viewMode,
+    setViewMode,
+    logFileName,
+    handleAnalyze,
+    handleSaveCodeToCatalog: storeSaveCode,
+    handleSaveIncident,
+    codesNew,
+    setCodesNew,
+    savingCode,
+    savingIncident,
+  } = useAnalysisStore()
 
   const toast = useToast()
-  const modals = useModals()
+
   const {
     logModalOpen,
     setLogModalOpen,
@@ -209,8 +204,29 @@ export default function DashboardPage({
     solutionModal,
     setSolutionModal,
     helpModalOpen,
-    setHelpModalOpen,
-  } = modals
+    setHelpModalOpen
+  } = useUIStore()
+
+  const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
+  const [savedListSearch, setSavedListSearch] = useState('')
+  const [savedDetail, setSavedDetail] = useState<SavedAnalysisFull | null>(null)
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
+  const [compareLogText, setCompareLogText] = useState('')
+  const [compareFileName, setCompareFileName] = useState<string | undefined>(undefined)
+  const [comparing, setComparing] = useState(false)
+  const compareFileInputRef = useRef<HTMLInputElement>(null)
+  const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
+  const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [currentModelId, setCurrentModelId] = useState<string | null>(null)
+  const [currentModelHasCpmd, setCurrentModelHasCpmd] = useState(false)
+  const [currentSerialNumber, setCurrentSerialNumber] = useState<string | null>(null)
+  const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
+    new Set(['ERROR', 'WARNING', 'INFO'])
+  )
+  const [autoExtracting, setAutoExtracting] = useState(false)
+  const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
+  const [currentModelName, setCurrentModelName] = useState<string | null>(null)
 
   const insightData = useInsightData(currentSerialNumber)
 
@@ -226,28 +242,6 @@ export default function DashboardPage({
     barChartRef,
     incidentsTableRef,
   } = useExportPdf(logFileName)
-
-  const {
-    loading,
-    error,
-    setError,
-    result,
-    codesNew,
-    setCodesNew,
-    savingCode,
-    savingIncident,
-    handleAnalyze,
-    handleSaveCodeToCatalog,
-    handleSaveIncident,
-  } = useAnalysis({
-    setLogFileName,
-    resetDateFilter: dateFilter.reset,
-    resetFilters: () => {},
-    setLogModalOpen,
-    setAddCodeModalCode,
-    setEditCodeInitial,
-    setSaveIncidentModalOpen,
-  })
 
   const autoResolveAndAnalyze = useCallback(async (serial: string) => {
     setAutoExtracting(true)
@@ -276,7 +270,7 @@ export default function DashboardPage({
       const fileName = `Portal_SDS_${serial}.tsv`
       await handleAnalyze(sdsRes.logs_text, fileName, sdsRes.suggested_model_id)
       
-    } catch (e) {
+    } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       setError(msg)
       toast.showError(msg)
@@ -331,6 +325,42 @@ export default function DashboardPage({
   const incidentRows = useMemo(
     () => getIncidentTableRows(incidents, events, activeFilter),
     [incidents, events, activeFilter]
+  )
+
+  const handleSaveCodeToCatalog = useCallback(
+    async (body: ErrorCodeUpsertBody, isEdit = false) => {
+      try {
+        const res = await storeSaveCode(body, isEdit)
+        const baseMsg = isEdit
+          ? `Código ${body.code} actualizado`
+          : `Código ${body.code} agregado al catálogo`
+        if (res.warning) {
+          toast.showWarning(`${baseMsg}. ${res.warning}`)
+        } else if (body.solution_url && (res as any).solution_content_saved) {
+          toast.showSuccess(`${baseMsg} — contenido de solución guardado`)
+        } else {
+          toast.showSuccess(baseMsg)
+        }
+        setAddCodeModalCode(null)
+        setEditCodeInitial(null)
+      } catch (e: Error | any) {
+        toast.showError(e.message)
+      }
+    },
+    [storeSaveCode, toast, setAddCodeModalCode, setEditCodeInitial]
+  )
+
+  const onSaveIncident = useCallback(
+    async (name: string, equipmentIdentifier: string | null) => {
+      try {
+        await handleSaveIncident(name, equipmentIdentifier)
+        setSaveIncidentModalOpen(false)
+        toast.showSuccess('Incidente guardado')
+      } catch (e: Error | any) {
+        toast.showError(e.message)
+      }
+    },
+    [handleSaveIncident, toast, setSaveIncidentModalOpen]
   )
 
   return (
@@ -581,7 +611,7 @@ export default function DashboardPage({
                   <button
                     type="button"
                     className="dashboard__btn dashboard__btn--secondary"
-                    onClick={() => setCodesNew([])}
+                    onClick={() => setCodesNew(() => [])}
                   >
                     Ignorar y ver resultados
                   </button>
@@ -788,7 +818,13 @@ export default function DashboardPage({
             setCurrentModelId(modelId ?? null)
             setCurrentModelHasCpmd(hasCpmd ?? false)
             setCurrentSerialNumber(serial ?? null)
-            handleAnalyze(logText, fileName, modelId)
+            handleAnalyze(logText, fileName, modelId).then(() => {
+              setLogModalOpen(false)
+              dateFilter.reset()
+              toast.showSuccess('Análisis completado')
+            }).catch(err => {
+              toast.showError(err.message)
+            })
           }}
           onClose={() => {
             setError(null)
@@ -799,7 +835,7 @@ export default function DashboardPage({
 
       {saveIncidentModalOpen && result && (
         <SaveIncidentModal
-          onSave={handleSaveIncident}
+          onSave={onSaveIncident}
           onClose={() => !savingIncident && setSaveIncidentModalOpen(false)}
           saving={savingIncident}
         />

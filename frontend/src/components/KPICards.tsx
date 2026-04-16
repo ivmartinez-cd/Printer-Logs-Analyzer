@@ -1,4 +1,5 @@
 import type { EnrichedEvent as ApiEvent, Incident as ApiIncident } from '../types/api'
+import styles from './KPICards.module.css'
 
 interface KPICardsProps {
   filteredIncidents: ApiIncident[]
@@ -66,51 +67,51 @@ export function KPICards({
   const errorRate = computeErrorRate(filteredEvents)
 
   return (
-    <div className="kpis">
-      <div className="kpi-card">
-        <div className="kpi-card__label">Estado de errores</div>
-        <div className="kpi-card__values">
-          <span className="kpi-card__value kpi-card__value--error">{errorCount}</span>
-          <span className="kpi-card__values-sep">·</span>
-          <span className="kpi-card__value kpi-card__value--warning">{warningCount}</span>
-          <span className="kpi-card__values-sep">·</span>
-          <span className="kpi-card__value kpi-card__value--info">{infoCount}</span>
+    <div className={styles.kpis}>
+      <div className={styles['kpi-card']}>
+        <div className={styles['kpi-card__label']}>Estado de errores</div>
+        <div className={styles['kpi-card__values']}>
+          <span className={`${styles['kpi-card__value']} ${styles['kpi-card__value--error']}`} data-testid="kpi-error-count">{errorCount}</span>
+          <span className={styles['kpi-card__values-sep']}>·</span>
+          <span className={`${styles['kpi-card__value']} ${styles['kpi-card__value--warning']}`}>{warningCount}</span>
+          <span className={styles['kpi-card__values-sep']}>·</span>
+          <span className={`${styles['kpi-card__value']} ${styles['kpi-card__value--info']}`}>{infoCount}</span>
         </div>
-        <div className="kpi-card__sub">crítico · advertencia · info</div>
+        <div className={styles['kpi-card__sub']}>crítico · advertencia · info</div>
       </div>
-      <div className="kpi-card">
-        <div className="kpi-card__label">Incidencias Activas</div>
-        <div className="kpi-card__value">{filteredIncidents.length}</div>
-        <div className="kpi-card__sub">incidentes detectados en el log</div>
+      <div className={styles['kpi-card']}>
+        <div className={styles['kpi-card__label']}>Incidencias Activas</div>
+        <div className={styles['kpi-card__value']} data-testid="kpi-active-incidents">{filteredIncidents.length}</div>
+        <div className={styles['kpi-card__sub']}>incidentes detectados en el log</div>
       </div>
-      <div className="kpi-card">
-        <div className="kpi-card__label">Último error crítico</div>
+      <div className={styles['kpi-card']}>
+        <div className={styles['kpi-card__label']}>Último error crítico</div>
         {lastErrorEvent ? (
           <>
             <div
-              className="kpi-card__value kpi-card__value--error"
-              style={{ fontSize: '1rem', fontWeight: 700 }}
+              className={`${styles['kpi-card__value']} ${styles['kpi-card__value--error']}`}
+              data-testid="kpi-last-error-code"
             >
               {lastErrorEvent.code}
             </div>
-            <div className="kpi-card__sub">{lastErrorLabel} · último error registrado</div>
+            <div className={styles['kpi-card__sub']}>{lastErrorLabel} · último error registrado</div>
           </>
         ) : (
           <>
             <div
-              className="kpi-card__value"
+              className={styles['kpi-card__value']}
               style={{ fontSize: '1rem', color: 'var(--color-success, #22c55e)' }}
             >
               Sin errores
             </div>
-            <div className="kpi-card__sub">último error registrado</div>
+            <div className={styles['kpi-card__sub']}>último error registrado</div>
           </>
         )}
       </div>
-      <div className="kpi-card">
-        <div className="kpi-card__label">Tasa de errores</div>
+      <div className={styles['kpi-card']}>
+        <div className={styles['kpi-card__label']}>Tasa de errores</div>
         <div
-          className="kpi-card__value"
+          className={styles['kpi-card__value']}
           style={
             errorRate.labelColor
               ? { fontSize: '1rem', color: errorRate.labelColor }
@@ -119,7 +120,7 @@ export function KPICards({
         >
           {errorRate.label}
         </div>
-        <div className="kpi-card__sub">{errorRate.sub}</div>
+        <div className={styles['kpi-card__sub']}>{errorRate.sub}</div>
       </div>
     </div>
   )

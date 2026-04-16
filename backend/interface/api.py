@@ -8,8 +8,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
 from backend.infrastructure.config import Settings, get_settings
-from backend.infrastructure.database import Database
 from backend.interface.rate_limiter import limiter
+from backend.interface.exception_handlers import register_exception_handlers
 from backend.interface.routers import (
     analysis,
     sds,
@@ -37,6 +37,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    register_exception_handlers(app)
     
     app.add_middleware(
         CORSMiddleware,

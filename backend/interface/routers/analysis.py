@@ -28,7 +28,6 @@ _logger = logging.getLogger(__name__)
 
 MAX_LOGS_LENGTH = 2_000_000
 
-
 @router.post("/preview", response_model=ParseLogsResponse, dependencies=[Depends(authenticate)])
 @limiter.limit("60/minute")
 def parse_logs(
@@ -48,11 +47,7 @@ def parse_logs(
     catalog_map = error_code_repository.get_by_codes(unique_codes)
     
     events = enrich_events_with_catalog(report.events, catalog_map)
-    try:
-        analysis = analysis_service.analyze(events)
-    except RuntimeError as exc:
-        _logger.error("Analysis failed: %s", exc)
-        raise HTTPException(status_code=503, detail="Analysis failed") from exc
+    analysis = analysis_service.analyze(events)
 
     errors = [
         ParserErrorModel(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)

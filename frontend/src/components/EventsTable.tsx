@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { EnrichedEvent as ApiEvent } from '../types/api'
 import { formatDateTime } from '../hooks/useDateFilter'
+import styles from './EventsTable.module.css'
 
 interface EventsTableProps {
   events: ApiEvent[]
@@ -74,13 +75,13 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
       </button>
       {!isCollapsed && (
         <>
-          <div className="table-toolbar">
-            <label className="table-toolbar__label" htmlFor="events-severity-filter">
+          <div className={styles['table-toolbar']}>
+            <label className={styles['table-toolbar__label']} htmlFor="events-severity-filter">
               Severidad:
             </label>
             <select
               id="events-severity-filter"
-              className="table-toolbar__select"
+              className={styles['table-toolbar__select']}
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
               aria-label="Filtrar por severidad"
@@ -90,21 +91,21 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
               <option value="WARNING">Advertencia</option>
               <option value="INFO">Info</option>
             </select>
-            <label className="table-toolbar__label" htmlFor="events-search-filter">
+            <label className={styles['table-toolbar__label']} htmlFor="events-search-filter">
               Buscar:
             </label>
             <input
               id="events-search-filter"
               type="search"
-              className="table-toolbar__search"
+              className={styles['table-toolbar__search']}
               placeholder="Código o mensaje..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               aria-label="Buscar en código o mensaje"
             />
           </div>
-          <div className="table-wrap">
-            <table className="dashboard-table">
+          <div className={styles['table-wrap']}>
+            <table className={styles['dashboard-table']}>
               <thead>
                 <tr>
                   {[
@@ -123,18 +124,18 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                       >
                         <button
                           type="button"
-                          className="dashboard-table__sort-header"
+                          className={styles['dashboard-table__sort-header']}
                           onClick={() => handleSortChange(key)}
                         >
                           {label}
-                          <span className="dashboard-table__sort-icon" aria-hidden>
+                          <span className={styles['dashboard-table__sort-icon']} aria-hidden>
                             {sort.column === key ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ' ⇅'}
                           </span>
                         </button>
                       </th>
                     )
                   })}
-                  <th className="dashboard-table__th-solution">Solución</th>
+                  <th className={styles['dashboard-table__th-solution']}>Solución</th>
                 </tr>
               </thead>
               <tbody>
@@ -148,11 +149,11 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                       </span>
                     </td>
                     <td>{evt.code_description?.trim() || evt.code || '—'}</td>
-                    <td className="dashboard-table__cell-solution">
+                    <td className={styles['dashboard-table__cell-solution']}>
                       {evt.code_solution_content?.trim() ? (
                         <button
                           type="button"
-                          className="dashboard-table__solution-link"
+                          className={styles['dashboard-table__solution-link']}
                           onClick={() =>
                             onViewSolution(evt.code, evt.code_solution_content, evt.code_solution_url)
                           }
@@ -164,7 +165,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                           href={evt.code_solution_url.trim()}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="dashboard-table__solution-link"
+                          className={styles['dashboard-table__solution-link']}
                           title="Este link puede haber vencido"
                         >
                           Ver solución ⚠

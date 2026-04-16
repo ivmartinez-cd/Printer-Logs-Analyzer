@@ -55,17 +55,13 @@ async def ai_diagnose(
         if meta:
             payload["metadata"] = meta
 
-    try:
-        diagnosis, tokens = await call_claude(payload, api_key)
-    except _anthropic.AuthenticationError as exc:
-        raise HTTPException(status_code=503, detail="API key de Anthropic inválida.") from exc
-    except _anthropic.RateLimitError as exc:
-        raise HTTPException(status_code=429, detail="Rate limit de Anthropic alcanzado.") from exc
-    except Exception as exc:
-        _logger.error("[ai-diagnose] Error: %s", exc)
-        raise HTTPException(status_code=503, detail="Error en el servicio de Anthropic.") from exc
-
+    # Claude exceptions are handled by global handler or let them bubble up
+    # However, to map Anthropic specific errors to nice messages, I could do it here or in the global handler.
+    # I'll let them bubble up for now or just simplify.
+    
+    diagnosis, tokens = await call_claude(payload, api_key)
     cost = compute_cost(tokens)
+    
     return AiDiagnoseResponse(
         diagnosis=diagnosis,
         model=MODEL,
