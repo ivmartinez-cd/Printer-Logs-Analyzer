@@ -20,7 +20,7 @@ _HEADERS = {"x-api-key": "dev"}
 
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    from backend.interface.api import limiter
+    from backend.interface.rate_limiter import limiter
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 
@@ -73,7 +73,7 @@ def test_insight_endpoint_returns_not_configured_when_no_env() -> None:
 # Test 2: Returns alert data when Insight is configured and serial exists
 # ---------------------------------------------------------------------------
 
-@patch("backend.interface.api._insight_get_device_alerts")
+@patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
     """Returns alert data when the portal responds correctly."""
     mock_get.return_value = _MOCK_ALERT_RESPONSE
@@ -96,7 +96,7 @@ def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
 # Test 3: Returns 200 with empty lists when serial is not found in portal
 # ---------------------------------------------------------------------------
 
-@patch("backend.interface.api._insight_get_device_alerts")
+@patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_empty_when_serial_not_found(mock_get: MagicMock) -> None:
     """When the serial doesn't exist in the portal, returns empty alert lists."""
     mock_get.return_value = {
@@ -140,7 +140,7 @@ def test_insight_endpoint_rejects_wrong_api_key() -> None:
 # Test 5: Returns 502 when Insight portal is unreachable
 # ---------------------------------------------------------------------------
 
-@patch("backend.interface.api._insight_get_device_alerts")
+@patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_502_on_portal_error(mock_get: MagicMock) -> None:
     """Returns 502 when the Insight portal API call fails."""
     from backend.application.services.insight_service import InsightAPIError
@@ -160,7 +160,7 @@ def test_insight_endpoint_returns_502_on_portal_error(mock_get: MagicMock) -> No
 # Test 6: Serial is normalized to uppercase
 # ---------------------------------------------------------------------------
 
-@patch("backend.interface.api._insight_get_device_alerts")
+@patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_normalizes_serial_to_uppercase(mock_get: MagicMock) -> None:
     """Serial number is uppercased before forwarding to the portal."""
     mock_get.return_value = {**_MOCK_ALERT_RESPONSE, "serial": "CNNCQ520HG"}
