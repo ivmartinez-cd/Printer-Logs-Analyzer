@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 ## Estilo de Comunicación
 - **Brevedad Extrema:** Respuestas cortas. Prioriza código o pasos de acción. Solo leo la parte donde pides algo (para ahorrar tokens).
-- **Calidad ante todo:** Ejecutar `npm run typecheck` antes de cada commit. No subir código con errores.
+- **Calidad ante todo (OBLIGATORIO):** Ejecutar `npm run typecheck` y los tests pertinentes (`test:frontend` / `test:backend`) después de **CADA** cambio y antes de cada commit. No subir código con errores.
 - **Sin Resúmenes:** No volver a resumir contenido de artefactos generados.
 
 ---
@@ -193,13 +193,14 @@ Genera reportes PDF profesionales alineados al Executive Summary y paneles colap
 - **Botones Ejecutivos:** Usar siempre la clase `.dashboard__btn--executive` para acciones principales en la landing.
 - **Typography:** Fuente moderna (system-ui) con jerarquía clara y pesos semibold para títulos técnicos.
 
-## Checklist de Calidad y Prevención de Errores
+### Mandato de Estabilidad (Zero-Failure Policy)
 
-Para evitar errores de build en Vercel o regresiones, siempre verifica:
+Para evitar errores de build en Vercel o regresiones, es **obligatorio** verificar después de cada cambio:
 
-1. **Frontend Typecheck:** Ejecuta `npm run typecheck` en la raíz antes de commitear cualquier cambio en `.ts` o `.tsx`.
-2. **Backend Tests:** Ejecuta `npm run test:backend` (pytest) antes de commitear cambios en la lógica de servicios.
-3. **Duplicidad de Código:** Al usar herramientas de edición automática, verifica que no existan `imports` duplicados (especialmente en `SDSIncidentPanel.tsx`).
-4. **Propiedades de Componentes:** Si cambias la definición de una interfaz en `types/api.ts`, busca todas las referencias en los componentes para asegurar que las `props` coincidan.
-5. **Vercel Builds:** Si un cambio afecta el build, revisa que no haya props obsoletas pasando a componentes (como el viejo `consumableWarnings`).
+1. **Frontend Typecheck:** Ejecuta `npm run typecheck` en la raíz. Si falla, el deploy en Vercel fallará.
+2. **Backend Tests:** Ejecuta `npm run test:backend` (pytest). Se han configurado 160+ pruebas que cubren toda la lógica crítica.
+3. **Frontend Tests:** Ejecuta `npm run test:frontend` (vitest). Validar componentes y hooks críticos.
+4. **Linting:** Ejecuta `ruff check backend` para asegurar que el código Python sigue los estándares configurados.
+5. **Consistencia de Props:** Si cambias una interfaz en `types/api.ts`, busca todas las referencias para asegurar que las `props` coincidan. No dejar props obsoletas.
+
 
