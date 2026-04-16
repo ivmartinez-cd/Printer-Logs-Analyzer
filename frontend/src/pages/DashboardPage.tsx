@@ -38,6 +38,7 @@ import { ExecutiveSummary } from '../components/ExecutiveSummary'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useModals } from '../hooks/useModals'
 import { useAnalysis } from '../hooks/useAnalysis'
+import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
 import { LogPasteModal } from '../components/LogPasteModal'
 import {
@@ -210,6 +211,8 @@ export default function DashboardPage({
     helpModalOpen,
     setHelpModalOpen,
   } = modals
+
+  const insightData = useInsightData(currentSerialNumber)
 
   const {
     exportingPdf,
@@ -664,7 +667,13 @@ export default function DashboardPage({
                   </section>
 
                   {/* Diagnóstico con IA — llama a /analysis/ai-diagnose on demand */}
-                  <AIDiagnosticPanel ref={aiDiagnosticRef} result={result} />
+                  <AIDiagnosticPanel
+                    ref={aiDiagnosticRef}
+                    result={result}
+                    consumables={realtimeConsumables}
+                    alerts={insightData.data}
+                    meters={insightData.meters}
+                  />
 
                   {/* SDS Engineering Incident — colapsado por defecto */}
                   {sdsIncident && (
@@ -691,7 +700,12 @@ export default function DashboardPage({
                   </div>
 
                   {/* Insight SDS alerts — se oculta si no hay serial o si la integración no está configurada */}
-                  <InsightAlertsPanel serial={currentSerialNumber} />
+                  <InsightAlertsPanel
+                    serial={currentSerialNumber}
+                    data={insightData.data}
+                    loading={insightData.loading}
+                    error={insightData.error}
+                  />
 
                   {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
                   <div className="dashboard__charts-row">

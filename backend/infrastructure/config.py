@@ -49,8 +49,11 @@ class Settings(BaseModel):
         return instance
 
 
-def get_settings(cache: dict = {}) -> Settings:
+_settings_cache: dict = {}
+
+
+def get_settings() -> Settings:
     """Return cached settings to avoid re-parsing values in hot paths."""
-    if "settings" not in cache:
-        cache["settings"] = Settings.from_env()
-    return cache["settings"]
+    if "settings" not in _settings_cache:
+        _settings_cache["settings"] = Settings.from_env()
+    return _settings_cache["settings"]

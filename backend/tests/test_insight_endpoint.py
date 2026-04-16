@@ -38,6 +38,7 @@ _MOCK_ALERT_RESPONSE = {
     "device_id": 142699,
     "model": "LaserJet Managed E60175dn",
     "zone": "ZUC Quilmes",
+    "firmware": "2406048_051375",
     "current": [],
     "history": [
         {

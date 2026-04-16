@@ -11,10 +11,18 @@ os.environ.setdefault("API_KEY", "dev")
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
+
+
+@pytest.fixture(autouse=True)
+def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend.interface.api import limiter
+    monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 
 # ---------------------------------------------------------------------------

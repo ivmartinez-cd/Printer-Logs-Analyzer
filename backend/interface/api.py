@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import Body, Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -42,6 +42,7 @@ from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
     get_device_info as _insight_get_device_info,
     get_device_consumables as _insight_get_device_consumables,
+    get_device_meters as _insight_get_device_meters,
     InsightConfigError,
     InsightAPIError,
 )
@@ -63,6 +64,7 @@ class ResolveDeviceResponse(BaseModel):
     serial: str
     device_id: str
     model_name_sds: str
+    firmware: Optional[str] = None
     suggested_model_id: Optional[UUID] = None
     suggested_model_name: Optional[str] = None
     has_cpmd: bool = False
@@ -73,6 +75,7 @@ class ExtractSdsLogsResponse(BaseModel):
     serial: str
     device_id: str
     model_name_sds: str
+    firmware: Optional[str] = None
     suggested_model_id: Optional[UUID] = None
     has_cpmd: bool = False
     logs_text: str
@@ -197,6 +200,9 @@ class AiDiagnoseMetadata(BaseModel):
     date_range: Optional[str] = None
     firmware: Optional[str] = None
     counter_range: Optional[List[int]] = None
+    consumables: Optional[List[Dict[str, Any]]] = None
+    alerts_history: Optional[List[Dict[str, Any]]] = None
+    meters_pattern: Optional[List[Dict[str, Any]]] = None
 
 
 class AiDiagnoseRequest(BaseModel):
@@ -293,6 +299,11 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         version="0.1.0",
         description="MVP API for ingesting and parsing HP printer logs.",
     )
+    
+    # Override settings dependency if provided (crucial for tests)
+    if settings:
+        app.dependency_overrides[get_settings] = lambda: settings
+        
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_middleware(
@@ -592,13 +603,12 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         response_model=AiDiagnoseResponse,
         dependencies=[Depends(authenticate)],
     )
-    @limiter.limit("20/minute")
-    async def ai_diagnose(request: Request, body: AiDiagnoseRequest) -> AiDiagnoseResponse:
-        """Genera un diagnóstico automático del log usando Claude Haiku.
-
-        El frontend manda el result ya calculado — el backend NO re-parsea el log.
-        Retorna 503 si ANTHROPIC_API_KEY no está configurada.
-        """
+    @limiter.limit("5/minute")
+    async def ai_diagnose(
+        request: Request,
+        body: AiDiagnoseRequest,
+    ) -> AiDiagnoseResponse:
+        """Generate a technical diagnosis using Anthropic Claude."""
         import anthropic as _anthropic
 
         from backend.application.services.ai_diagnosis_service import (
@@ -611,7 +621,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         if not api_key:
             raise HTTPException(
                 status_code=503,
-                detail="Servicio de diagnóstico AI no disponible: ANTHROPIC_API_KEY no configurada.",
+                detail="Servicio de diagnóstico AI no disponible: ANTHROPIC_API_KEY no configurada."
             )
 
         # Armar payload compacto para el modelo (ordenado por severidad desc)
@@ -964,6 +974,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                 serial=serial,
                 device_id=str(info["device_id"]),
                 model_name_sds=info["model_name"] or "Unknown",
+                firmware=info["firmware"],
                 suggested_model_id=suggested_model_id,
                 suggested_model_name=suggested_model_name,
                 has_cpmd=has_cpmd
@@ -976,12 +987,31 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             logging.exception("Error resolving device by serial: %s", exc)
             raise HTTPException(status_code=500, detail="Internal error resolving device")
 
-    @app.post("/sds/extract-logs", response_model=ExtractSdsLogsResponse)
+    @app.get("/insight/devices/{serial}/meters", dependencies=[Depends(authenticate)])
+    @limiter.limit("20/minute")
+    async def get_insight_meters(request: Request, serial: str) -> List[Dict[str, Any]]:
+        """Return meter history for a device identified by serial number."""
+        info = _insight_get_device_info(
+            settings.insight_portal_url,
+            settings.insight_api_key,
+            settings.insight_api_secret,
+            serial,
+        )
+        if not info["device_id"]:
+            return []
+        
+        return _insight_get_device_meters(
+            settings.insight_portal_url,
+            settings.insight_api_key,
+            settings.insight_api_secret,
+            info["device_id"],
+        )
+
+    @app.post("/sds/extract-logs", response_model=ExtractSdsLogsResponse, dependencies=[Depends(authenticate)])
     @limiter.limit("10/minute")
     async def extract_sds_logs(
         request: Request,
         body: ExtractSdsLogsRequest,
-        _: None = Depends(authenticate),
     ) -> ExtractSdsLogsResponse:
         """Fetch event logs from SDS portal by serial number."""
         if not (settings.sds_web_username and settings.sds_web_password):
@@ -1039,6 +1069,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
                     serial=serial,
                     device_id=device_id,
                     model_name_sds=model_name_sds,
+                    firmware=info["firmware"],
                     suggested_model_id=suggested_model_id,
                     has_cpmd=has_cpmd,
                     logs_text=tsv_text,

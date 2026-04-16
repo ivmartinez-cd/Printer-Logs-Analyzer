@@ -207,14 +207,23 @@ export interface DeviceAlertsResponse {
   device_id?: number | null
   model?: string | null
   zone?: string | null
+  firmware?: string | null
   current?: InsightAlert[]
   history?: InsightAlert[]
+}
+
+export interface InsightMeter {
+  date: string
+  engineCycles: number
+  description: string
+  value: number
 }
 
 export interface ResolveDeviceResponse {
   serial: string
   device_id: string
   model_name_sds: string
+  firmware: string | null
   suggested_model_id: string | null
   suggested_model_name: string | null
   has_cpmd: boolean
@@ -224,6 +233,7 @@ export interface ExtractSdsLogsResponse {
   serial: string
   device_id: string
   model_name_sds: string
+  firmware: string | null
   suggested_model_id: string | null
   has_cpmd: boolean
   logs_text: string

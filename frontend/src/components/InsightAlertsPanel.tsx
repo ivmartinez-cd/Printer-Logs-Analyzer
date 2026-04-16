@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { getInsightAlerts } from '../services/api'
+import { useState } from 'react'
 import type { DeviceAlertsResponse, InsightAlert } from '../types/api'
 
 interface InsightAlertsPanelProps {
@@ -87,48 +86,16 @@ function AlertsTable({ alerts, emptyText }: { alerts: InsightAlert[]; emptyText:
   )
 }
 
-export function InsightAlertsPanel({ serial }: InsightAlertsPanelProps) {
+interface InsightAlertsPanelProps {
+  serial: string | null
+  data: DeviceAlertsResponse | null
+  loading: boolean
+  error: string | null
+}
+
+export function InsightAlertsPanel({ serial, data, loading, error }: InsightAlertsPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
-  const [data, setData] = useState<DeviceAlertsResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [prevSerial, setPrevSerial] = useState<string | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current')
-
-  // Patrón recomendado: Resetear estado durante el render cuando cambian las props
-  // Esto evita el error de "setState in effect" y renders en cascada.
-  if (serial !== prevSerial) {
-    setPrevSerial(serial)
-    setData(null)
-    setError(null)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    if (!serial) return
-
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const res = await getInsightAlerts(serial, controller.signal)
-        if (!controller.signal.aborted) setData(res)
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError(err instanceof Error ? err.message : 'Error al consultar alertas del portal')
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoading(false)
-      }
-    }
-
-    void fetchData()
-    return () => controller.abort()
-  }, [serial])
 
 
   // Hide panel when not configured or no serial
