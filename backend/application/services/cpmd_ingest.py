@@ -25,7 +25,6 @@ from uuid import UUID
 from backend.application.services.cpmd_extractor import ExtractedSolution, extract_batch
 from backend.application.services.cpmd_parser import ErrorBlock, extract_error_blocks
 from backend.application.services.cpmd_structured_extractor import (
-    ExtractionResult,
     extract_all,
     partition_by_confidence,
 )
@@ -49,9 +48,9 @@ class IngestReport:
     model_ids: List[UUID]
     cpmd_hash: str
     total_blocks: int = 0
-    regex_ok: int = 0       # blocks resolved by regex (no API call)
-    llm_ok: int = 0         # blocks resolved by LLM fallback
-    failed: int = 0         # blocks that neither extractor could handle
+    regex_ok: int = 0  # blocks resolved by regex (no API call)
+    llm_ok: int = 0  # blocks resolved by LLM fallback
+    failed: int = 0  # blocks that neither extractor could handle
     solutions: List[ErrorSolution] = None  # extracted entities
     skipped: bool = False
     reason: str = ""
@@ -246,5 +245,5 @@ def _persist_batch(
     else:
         for entity in entities:
             repo.upsert(entity)
-    
+
     return entities

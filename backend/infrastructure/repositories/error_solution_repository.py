@@ -15,6 +15,7 @@ from uuid import UUID
 
 from backend.domain.entities import ErrorSolution, ErrorSolutionFru
 from backend.infrastructure.database import Database, DatabaseUnavailableError
+from backend.infrastructure.repositories.base_repository import BaseRepository
 
 _LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "error_solutions.json"
 
@@ -24,14 +25,11 @@ _EPOCH = datetime(2000, 1, 1, tzinfo=timezone.utc)
 _local_write_lock = threading.Lock()
 
 
-class ErrorSolutionRepository:
+class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
     """Repository for error_solutions (PostgreSQL/Neon).
 
     Falls back to a local JSON file when the database is unreachable.
     """
-
-    def __init__(self, database: Database | None = None) -> None:
-        self._db = database or Database()
 
     # ------------------------------------------------------------------
     # Public interface
@@ -39,17 +37,11 @@ class ErrorSolutionRepository:
 
     def get_by_model_and_code(self, model_id: UUID, code: str) -> Optional[ErrorSolution]:
         """Return a solution by (model_id, code), or None if not found."""
-        try:
-            return self._get_by_model_and_code_db(model_id, code)
-        except DatabaseUnavailableError:
-            return self._get_by_model_and_code_local(model_id, code)
+        return self._execute_with_fallback(self._get_by_model_and_code_db, self._get_by_model_and_code_local, model_id, code)
 
     def upsert(self, solution: ErrorSolution) -> ErrorSolution:
         """Insert or update a solution. Uses (model_id, code) as the unique key."""
-        try:
-            return self._upsert_db(solution)
-        except DatabaseUnavailableError:
-            return self._upsert_local(solution)
+        return self._execute_with_fallback(self._upsert_db, self._upsert_local, solution)
 
     def upsert_batch(self, solutions: List[ErrorSolution]) -> int:
         """Insert or update multiple solutions in a single transaction.
@@ -68,33 +60,21 @@ class ErrorSolutionRepository:
 
     def delete_by_model(self, model_id: UUID) -> int:
         """Delete all solutions for a model. Returns the number of rows deleted."""
-        try:
-            return self._delete_by_model_db(model_id)
-        except DatabaseUnavailableError:
-            return self._delete_by_model_local(model_id)
+        return self._execute_with_fallback(self._delete_by_model_db, self._delete_by_model_local, model_id)
 
     def list_by_model(self, model_id: UUID) -> List[ErrorSolution]:
         """Return all solutions for a model, ordered by code."""
-        try:
-            return self._list_by_model_db(model_id)
-        except DatabaseUnavailableError:
-            return self._list_by_model_local(model_id)
+        return self._execute_with_fallback(self._list_by_model_db, self._list_by_model_local, model_id)
 
     def get_model_ids_with_solutions(self) -> set:
         """Return the set of model_id strings that have at least one solution."""
-        try:
-            return self._get_model_ids_with_solutions_db()
-        except DatabaseUnavailableError:
-            return self._get_model_ids_with_solutions_local()
-
+        return self._execute_with_fallback(self._get_model_ids_with_solutions_db, self._get_model_ids_with_solutions_local)
 
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
 
-    def _get_by_model_and_code_db(
-        self, model_id: UUID, code: str
-    ) -> Optional[ErrorSolution]:
+    def _get_by_model_and_code_db(self, model_id: UUID, code: str) -> Optional[ErrorSolution]:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -184,7 +164,6 @@ class ErrorSolutionRepository:
             conn.commit()
         return count
 
-
     def _delete_by_model_db(self, model_id: UUID) -> int:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
@@ -241,9 +220,7 @@ class ErrorSolutionRepository:
         with open(_LOCAL_PATH, "w", encoding="utf-8") as f:
             json.dump(items, f, ensure_ascii=False, indent=2)
 
-    def _get_by_model_and_code_local(
-        self, model_id: UUID, code: str
-    ) -> Optional[ErrorSolution]:
+    def _get_by_model_and_code_local(self, model_id: UUID, code: str) -> Optional[ErrorSolution]:
         items = self._load_local()
         model_id_str = str(model_id)
         item = next(
@@ -348,9 +325,7 @@ def _dict_to_solution(d: dict) -> ErrorSolution:
     raw_frus = d.get("frus") or []
     raw_steps = d.get("technician_steps") or []
     created_at_raw = d.get("created_at")
-    created_at = (
-        datetime.fromisoformat(created_at_raw) if created_at_raw else _EPOCH
-    )
+    created_at = datetime.fromisoformat(created_at_raw) if created_at_raw else _EPOCH
     return ErrorSolution(
         id=d.get("id"),
         model_id=UUID(str(d["model_id"])),

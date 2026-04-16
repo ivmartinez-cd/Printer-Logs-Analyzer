@@ -1,23 +1,18 @@
-import logging
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
-from typing import List, Dict, Any
-from uuid import UUID
-from backend.interface.schemas.printer import PrinterModelResponse
-from backend.interface.deps import (
-    get_printer_model_repo, 
-    get_error_solution_repo, 
-    get_settings
-)
-from backend.interface.auth import authenticate
-from backend.interface.rate_limiter import limiter
-from backend.infrastructure.config import Settings
-from backend.infrastructure.repositories.printer_model_repository import PrinterModelRepository
-from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
-from backend.application.services.pdf_extraction_service import extract_model_from_pdf
-from backend.application.services.cpmd_ingest import ingest_cpmd, IngestReport
 import asyncio
-import anthropic as _anthropic
+import logging
+from typing import Any, Dict, List
+from uuid import UUID
+
 import psycopg2.errors
+from backend.application.services.cpmd_ingest import ingest_cpmd
+from backend.application.services.pdf_extraction_service import extract_model_from_pdf
+from backend.infrastructure.config import Settings
+from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
+from backend.infrastructure.repositories.printer_model_repository import PrinterModelRepository
+from backend.interface.auth import authenticate
+from backend.interface.deps import get_error_solution_repo, get_printer_model_repo, get_settings
+from backend.interface.rate_limiter import limiter
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
 router = APIRouter(tags=["Printers & CPMD"])
 _logger = logging.getLogger(__name__)
@@ -25,10 +20,17 @@ _logger = logging.getLogger(__name__)
 _PDF_MAX_BYTES = 10 * 1024 * 1024
 _CPMD_MAX_BYTES = 20 * 1024 * 1024
 
-@router.get("/printer-models", response_model=List[Dict[str, Any]], dependencies=[Depends(authenticate)])
+
+@router.get(
+    "/printer-models",
+    response_model=List[Dict[str, Any]],
+    dependencies=[Depends(authenticate)],
+    summary="List all printer models in the catalog",
+    response_description="A list of models with metadata and CPMD availability.",
+)
 def list_printer_models(
     repo: PrinterModelRepository = Depends(get_printer_model_repo),
-    error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo)
+    error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo),
 ) -> list:
     models = repo.list_models()
     try:
@@ -48,12 +50,18 @@ def list_printer_models(
         for m in models
     ]
 
-@router.get("/models/{model_id}/error-solutions/{code}", dependencies=[Depends(authenticate)])
+
+@router.get(
+    "/models/{model_id}/error-solutions/{code}",
+    dependencies=[Depends(authenticate)],
+    summary="Get a specific error solution for a model",
+    response_description="Detailed solution including technician steps and FRUs.",
+)
 def get_error_solution(
-    model_id: str, 
+    model_id: str,
     code: str,
     repo: PrinterModelRepository = Depends(get_printer_model_repo),
-    error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo)
+    error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo),
 ) -> dict:
     uid = UUID(model_id)
     model = repo.get_by_id(uid)
@@ -71,19 +79,27 @@ def get_error_solution(
         "title": solution.title,
         "cause": solution.cause,
         "technician_steps": solution.technician_steps,
-        "frus": [{"part_number": f.part_number, "description": f.description} for f in solution.frus],
+        "frus": [
+            {"part_number": f.part_number, "description": f.description} for f in solution.frus
+        ],
         "source_audience": solution.source_audience,
         "source_page": solution.source_page,
         "cpmd_hash": solution.cpmd_hash,
     }
 
-@router.post("/printer-models/upload-pdf", dependencies=[Depends(authenticate)])
+
+@router.post(
+    "/printer-models/upload-pdf",
+    dependencies=[Depends(authenticate)],
+    summary="Upload a printer model PDF to extract product data",
+    response_description="Stats about created models and consumables.",
+)
 @limiter.limit("10/minute")
 async def upload_printer_model_pdf(
     request: Request,
     file: UploadFile = File(...),
     settings: Settings = Depends(get_settings),
-    repo: PrinterModelRepository = Depends(get_printer_model_repo)
+    repo: PrinterModelRepository = Depends(get_printer_model_repo),
 ) -> dict:
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="El archivo debe ser un PDF")
@@ -109,21 +125,23 @@ async def upload_printer_model_pdf(
             total_consumables += len(consumables)
         except psycopg2.errors.UniqueViolation:
             skipped.append(model_code)
-    
-    return {
-        "created": created, 
-        "skipped": skipped, 
-        "total_consumables": total_consumables
-    }
 
-@router.post("/models/{model_id}/cpmd", dependencies=[Depends(authenticate)])
+    return {"created": created, "skipped": skipped, "total_consumables": total_consumables}
+
+
+@router.post(
+    "/models/{model_id}/cpmd",
+    dependencies=[Depends(authenticate)],
+    summary="Ingest a CPMD (Service Manual) PDF for a model",
+    response_description="A report of extracted error solutions from the manual.",
+)
 async def ingest_cpmd_endpoint(
     model_id: str,
     request: Request,
     file: UploadFile = File(...),
     settings: Settings = Depends(get_settings),
     repo: PrinterModelRepository = Depends(get_printer_model_repo),
-    error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo)
+    error_solution_repo: ErrorSolutionRepository = Depends(get_error_solution_repo),
 ) -> dict:
     uid = UUID(model_id)
     if not repo.get_by_id(uid):

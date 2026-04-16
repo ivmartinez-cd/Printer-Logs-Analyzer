@@ -4,89 +4,77 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 from uuid import UUID
 
 from backend.domain.entities import PrinterConsumable, PrinterModel
 from backend.infrastructure.database import Database, DatabaseUnavailableError
+from backend.infrastructure.repositories.base_repository import BaseRepository
 
 _logger = logging.getLogger(__name__)
 
 _LOCAL_PATH = Path(__file__).parent.parent.parent / "migrations" / "printer_models.json"
 
 
-class PrinterModelRepository:
-    def __init__(self, database: Optional[Database] = None) -> None:
-        self._db = database
+class PrinterModelRepository(BaseRepository[PrinterModel, UUID]):
+    # __init__ ya es manejado por BaseRepository
 
     def list_models(self) -> List[PrinterModel]:
         """Return all printer models without consumables, ordered by model_code."""
-        try:
-            if not self._db:
-                raise DatabaseUnavailableError("No Database provided")
-            with self._db.connect() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT id, model_name, model_code, family, ampv,
-                               engine_life_pages, notes, created_at, updated_at
-                        FROM printer_models
-                        ORDER BY model_code
-                        """
-                    )
-                    rows = cur.fetchall()
-            return [_row_to_model(r) for r in rows]
-        except DatabaseUnavailableError:
-            return self._list_models_local()
+        return self._execute_with_fallback(self._list_models_db, self._list_models_local)
+
+    def _list_models_db(self) -> List[PrinterModel]:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, model_name, model_code, family, ampv,
+                           engine_life_pages, notes, created_at, updated_at
+                    FROM printer_models
+                    ORDER BY model_code
+                    """
+                )
+                rows = cur.fetchall()
+        return [_row_to_model(r) for r in rows]
 
     def list_by_family(self, family: str) -> List[PrinterModel]:
         """Return all printer models belonging to the same family."""
-        try:
-            if not self._db:
-                raise DatabaseUnavailableError("No Database provided")
-            with self._db.connect() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT id, model_name, model_code, family, ampv,
-                               engine_life_pages, notes, created_at, updated_at
-                        FROM printer_models
-                        WHERE family = %s
-                        ORDER BY model_code
-                        """,
-                        (family,),
-                    )
-                    rows = cur.fetchall()
-            return [_row_to_model(r) for r in rows]
-        except DatabaseUnavailableError:
-            return self._list_by_family_local(family)
+        return self._execute_with_fallback(self._list_by_family_db, self._list_by_family_local, family)
 
-    def get_by_id(self, model_id: UUID) -> Optional[PrinterModel]:
-        """Return a single printer model by UUID, or None if not found."""
-        try:
-            if not self._db:
-                raise DatabaseUnavailableError("No Database provided")
-            with self._db.connect() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT id, model_name, model_code, family, ampv,
-                               engine_life_pages, notes, created_at, updated_at
-                        FROM printer_models
-                        WHERE id = %s
-                        """,
-                        (str(model_id),),
-                    )
-                    row = cur.fetchone()
-            return _row_to_model(row) if row else None
-        except DatabaseUnavailableError:
-            return self._get_by_id_local(model_id)
+    def _list_by_family_db(self, family: str) -> List[PrinterModel]:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, model_name, model_code, family, ampv,
+                           engine_life_pages, notes, created_at, updated_at
+                    FROM printer_models
+                    WHERE family = %s
+                    ORDER BY model_code
+                    """,
+                    (family,),
+                )
+                rows = cur.fetchall()
+        return [_row_to_model(r) for r in rows]
 
-    def get_with_consumables(
-        self, model_id: UUID
-    ) -> tuple[PrinterModel, List[PrinterConsumable]]:
+    def _get_by_id_db(self, model_id: UUID) -> Optional[PrinterModel]:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, model_name, model_code, family, ampv,
+                           engine_life_pages, notes, created_at, updated_at
+                    FROM printer_models
+                    WHERE id = %s
+                    """,
+                    (str(model_id),),
+                )
+                row = cur.fetchone()
+        return _row_to_model(row) if row else None
+
+    def get_with_consumables(self, model_id: UUID) -> tuple[PrinterModel, List[PrinterConsumable]]:
         """Return a model with its full consumables list (including related_codes)."""
         with self._db.connect() as conn:
             with conn.cursor() as cur:
@@ -101,7 +89,8 @@ class PrinterModelRepository:
                 )
                 model_row = cur.fetchone()
                 if not model_row:
-                    raise ValueError(f"Printer model {model_id} not found")
+                    from backend.domain.exceptions import ResourceNotFoundError
+                    raise ResourceNotFoundError("PrinterModel", str(model_id))
 
                 cur.execute(
                     """
@@ -131,34 +120,31 @@ class PrinterModelRepository:
 
     def find_best_match(self, name: str) -> Optional[PrinterModel]:
         """Try to find the best printer model match based on a string name."""
-        try:
-            if not self._db:
-                raise DatabaseUnavailableError("No Database provided")
-            
-            # Simple approach: case-insensitive search for the name inside model_name
-            # or model_name inside the provided name.
-            with self._db.connect() as conn:
-                with conn.cursor() as cur:
-                    # 1. Exact or partial match (case insensitive)
-                    cur.execute(
-                        """
-                        SELECT id, model_name, model_code, family, ampv,
-                               engine_life_pages, notes, created_at, updated_at
-                        FROM printer_models
-                        WHERE LOWER(%s) LIKE LOWER('%%' || model_name || '%%')
-                           OR LOWER(model_name) LIKE LOWER('%%' || %s || '%%')
-                           OR LOWER(%s) LIKE LOWER('%%' || model_code || '%%')
-                        ORDER BY LENGTH(model_name) DESC
-                        LIMIT 1
-                        """,
-                        (name, name, name),
-                    )
-                    row = cur.fetchone()
-                    if row:
-                        return _row_to_model(row)
-            return None
-        except DatabaseUnavailableError:
-            return self._find_best_match_local(name)
+        return self._execute_with_fallback(self._find_best_match_db, self._find_best_match_local, name)
+
+    def _find_best_match_db(self, name: str) -> Optional[PrinterModel]:
+        # Simple approach: case-insensitive search for the name inside model_name
+        # or model_name inside the provided name.
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                # 1. Exact or partial match (case insensitive)
+                cur.execute(
+                    """
+                    SELECT id, model_name, model_code, family, ampv,
+                           engine_life_pages, notes, created_at, updated_at
+                    FROM printer_models
+                    WHERE LOWER(%s) LIKE LOWER('%%' || model_name || '%%')
+                       OR LOWER(model_name) LIKE LOWER('%%' || %s || '%%')
+                       OR LOWER(%s) LIKE LOWER('%%' || model_code || '%%')
+                    ORDER BY LENGTH(model_name) DESC
+                    LIMIT 1
+                    """,
+                    (name, name, name),
+                )
+                row = cur.fetchone()
+                if row:
+                    return _row_to_model(row)
+        return None
 
     def _find_best_match_local(self, name: str) -> Optional[PrinterModel]:
         data = self._load_local()
@@ -167,19 +153,21 @@ class PrinterModelRepository:
         for d in data:
             m_name_lower = d.get("model_name", "").lower()
             m_code_lower = d.get("model_code", "").lower()
-            if m_name_lower in name_lower or name_lower in m_name_lower or (m_code_lower and m_code_lower in name_lower):
+            if (
+                m_name_lower in name_lower
+                or name_lower in m_name_lower
+                or (m_code_lower and m_code_lower in name_lower)
+            ):
                 candidates.append(d)
-        
+
         if not candidates:
             return None
-            
+
         # Pick the one with the longest name (most specific usually)
         candidates.sort(key=lambda x: len(x.get("model_name", "")), reverse=True)
         return _dict_to_model(candidates[0])
 
-    def create_with_consumables(
-        self, model_data: dict, consumables: List[dict]
-    ) -> PrinterModel:
+    def create_with_consumables(self, model_data: dict, consumables: List[dict]) -> PrinterModel:
         """Insert a printer model with its consumables in a single transaction."""
         if not self._db:
             raise DatabaseUnavailableError("No Database provided for writes")
@@ -285,8 +273,10 @@ class PrinterModelRepository:
 
 def _dict_to_model(d: dict) -> PrinterModel:
     def parse_dt(val):
-        if not val: return datetime.utcnow()
-        if isinstance(val, datetime): return val
+        if not val:
+            return datetime.utcnow()
+        if isinstance(val, datetime):
+            return val
         # Handle Postgres format: '2026-04-11 20:27:24.213941+00'
         # Pydantic is strict about the space and the +00 suffix.
         if isinstance(val, str):

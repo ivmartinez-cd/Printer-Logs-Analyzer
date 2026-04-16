@@ -76,6 +76,7 @@ Reglas:
 # compute_pattern
 # ---------------------------------------------------------------------------
 
+
 def compute_pattern(incident: Incident) -> str:
     """Genera una descripción breve del patrón temporal del incidente."""
     events = incident.events
@@ -124,6 +125,7 @@ def compute_pattern(incident: Incident) -> str:
 # ---------------------------------------------------------------------------
 # build_payload
 # ---------------------------------------------------------------------------
+
 
 def build_payload(result: AnalysisResult, catalog: dict) -> dict:
     """Arma el dict compacto para enviar al modelo."""
@@ -176,6 +178,7 @@ def build_payload(result: AnalysisResult, catalog: dict) -> dict:
 # call_claude
 # ---------------------------------------------------------------------------
 
+
 def call_claude(payload: dict) -> tuple[str, object]:
     """Llama a la API de Anthropic con prompt caching. Retorna (texto, usage)."""
     api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -211,6 +214,7 @@ def call_claude(payload: dict) -> tuple[str, object]:
 # compute_cost
 # ---------------------------------------------------------------------------
 
+
 def compute_cost(usage: object) -> float:
     """Calcula el costo en USD a partir del objeto usage de Anthropic."""
     input_tok = getattr(usage, "input_tokens", 0) or 0
@@ -229,6 +233,7 @@ def compute_cost(usage: object) -> float:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     # Verificar API key antes de hacer cualquier trabajo pesado
@@ -340,10 +345,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-

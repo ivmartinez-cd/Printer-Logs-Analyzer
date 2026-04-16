@@ -12,12 +12,11 @@ os.environ.setdefault("DB_URL", "postgresql://test")
 os.environ.setdefault("API_KEY", "dev")
 
 import pytest
-from fastapi.testclient import TestClient
-
 from backend.application.services.cpmd_ingest import IngestReport
 from backend.domain.entities import PrinterModel
 from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
+from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -194,7 +193,7 @@ def test_happy_path_returns_ingest_report(
     assert data["model_id"] == _MODEL_ID_STR
     assert data["cpmd_hash"] == _FAKE_HASH
     assert data["total_blocks"] == 10
-    assert data["extracted"] == 8   # regex_ok(7) + llm_ok(1)
+    assert data["extracted"] == 8  # regex_ok(7) + llm_ok(1)
     assert data["regex_ok"] == 7
     assert data["llm_ok"] == 1
     assert data["failed"] == 2

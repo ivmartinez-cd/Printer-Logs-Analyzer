@@ -7,13 +7,12 @@ import os
 os.environ.setdefault("DB_URL", "postgresql://test")
 os.environ.setdefault("API_KEY", "dev")
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from fastapi.testclient import TestClient
-
+import pytest
 from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
+from fastapi.testclient import TestClient
 
 _HEADERS = {"x-api-key": "dev"}
 
@@ -21,6 +20,7 @@ _HEADERS = {"x-api-key": "dev"}
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.interface.rate_limiter import limiter
+
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 
@@ -61,6 +61,7 @@ _MOCK_ALERT_RESPONSE = {
 # Test 1: Returns insight_configured: False when env vars are not set
 # ---------------------------------------------------------------------------
 
+
 def test_insight_endpoint_returns_not_configured_when_no_env() -> None:
     """Returns {insight_configured: false} gracefully when integration is not set up."""
     client = TestClient(get_app(settings=_make_settings(with_insight=False)))
@@ -72,6 +73,7 @@ def test_insight_endpoint_returns_not_configured_when_no_env() -> None:
 # ---------------------------------------------------------------------------
 # Test 2: Returns alert data when Insight is configured and serial exists
 # ---------------------------------------------------------------------------
+
 
 @patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
@@ -95,6 +97,7 @@ def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
 # ---------------------------------------------------------------------------
 # Test 3: Returns 200 with empty lists when serial is not found in portal
 # ---------------------------------------------------------------------------
+
 
 @patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_empty_when_serial_not_found(mock_get: MagicMock) -> None:
@@ -123,6 +126,7 @@ def test_insight_endpoint_returns_empty_when_serial_not_found(mock_get: MagicMoc
 # Test 4: Returns 401 with wrong API key
 # ---------------------------------------------------------------------------
 
+
 def test_insight_endpoint_rejects_wrong_api_key() -> None:
     """Returns 401 if x-api-key is incorrect."""
     client = TestClient(
@@ -139,6 +143,7 @@ def test_insight_endpoint_rejects_wrong_api_key() -> None:
 # ---------------------------------------------------------------------------
 # Test 5: Returns 502 when Insight portal is unreachable
 # ---------------------------------------------------------------------------
+
 
 @patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_502_on_portal_error(mock_get: MagicMock) -> None:
@@ -159,6 +164,7 @@ def test_insight_endpoint_returns_502_on_portal_error(mock_get: MagicMock) -> No
 # ---------------------------------------------------------------------------
 # Test 6: Serial is normalized to uppercase
 # ---------------------------------------------------------------------------
+
 
 @patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_normalizes_serial_to_uppercase(mock_get: MagicMock) -> None:

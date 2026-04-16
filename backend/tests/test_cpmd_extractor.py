@@ -6,9 +6,8 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from backend.application.services.cpmd_parser import ErrorBlock
 from backend.application.services.cpmd_extractor import ExtractedSolution, extract_solution
+from backend.application.services.cpmd_parser import ErrorBlock
 
 # ---------------------------------------------------------------------------
 # Helpers

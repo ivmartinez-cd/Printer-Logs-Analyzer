@@ -1,12 +1,11 @@
 """Tests for calculate_trend — the core comparison logic."""
 
-import pytest
 from backend.application.services.compare_service import calculate_trend
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 class FakeIncident:
     def __init__(self, code: str, severity: str, occurrences: int):
@@ -31,6 +30,7 @@ def diff(nuevos=None, desaparecidos=None, cambios=None):
 # Test 1: nuevo código ERROR → empeoro
 # ---------------------------------------------------------------------------
 
+
 def test_new_error_code_returns_empeoro():
     saved = []
     current = [FakeIncident("53.B0.02", "ERROR", 5)]
@@ -41,6 +41,7 @@ def test_new_error_code_returns_empeoro():
 # ---------------------------------------------------------------------------
 # Test 2: nuevo código WARNING → no empeoro por ese motivo
 # ---------------------------------------------------------------------------
+
 
 def test_new_warning_code_is_not_empeoro():
     saved = []
@@ -53,6 +54,7 @@ def test_new_warning_code_is_not_empeoro():
 # Test 3: ERROR existente sube ≥ 3 ocurrencias → empeoro
 # ---------------------------------------------------------------------------
 
+
 def test_error_delta_gte3_returns_empeoro():
     saved = [saved_inc("53.B0.02", "ERROR", 2)]
     current = [FakeIncident("53.B0.02", "ERROR", 5)]
@@ -63,6 +65,7 @@ def test_error_delta_gte3_returns_empeoro():
 # ---------------------------------------------------------------------------
 # Test 4: ERROR existente sube < 3 → no empeoro por ese motivo
 # ---------------------------------------------------------------------------
+
 
 def test_error_delta_lt3_is_not_empeoro_by_delta():
     # saved=100, current=101: delta=1 (<3) and increase=1% (<20%) → estable
@@ -76,6 +79,7 @@ def test_error_delta_lt3_is_not_empeoro_by_delta():
 # Test 5: snapshot tenía 0 errores y ahora hay 1+ → empeoro
 # ---------------------------------------------------------------------------
 
+
 def test_zero_to_one_errors_returns_empeoro():
     saved = [saved_inc("60.00.01", "WARNING", 3)]
     current = [FakeIncident("60.00.01", "WARNING", 3), FakeIncident("53.B0.02", "ERROR", 1)]
@@ -86,6 +90,7 @@ def test_zero_to_one_errors_returns_empeoro():
 # ---------------------------------------------------------------------------
 # Test 6: total ERRORs sube ≥ 20% → empeoro
 # ---------------------------------------------------------------------------
+
 
 def test_total_errors_increase_20pct_returns_empeoro():
     saved = [saved_inc("53.B0.02", "ERROR", 10)]
@@ -98,6 +103,7 @@ def test_total_errors_increase_20pct_returns_empeoro():
 # Test 7: ERROR desaparece y total baja → mejoro
 # ---------------------------------------------------------------------------
 
+
 def test_error_disappears_returns_mejoro():
     saved = [saved_inc("53.B0.02", "ERROR", 5), saved_inc("60.00.01", "WARNING", 3)]
     current = [FakeIncident("60.00.01", "WARNING", 3)]
@@ -108,6 +114,7 @@ def test_error_disappears_returns_mejoro():
 # ---------------------------------------------------------------------------
 # Test 8: sin cambios relevantes → estable
 # ---------------------------------------------------------------------------
+
 
 def test_no_changes_returns_estable():
     saved = [saved_inc("53.B0.02", "ERROR", 5)]
@@ -120,6 +127,7 @@ def test_no_changes_returns_estable():
 # Test 9: listas vacías no crashean
 # ---------------------------------------------------------------------------
 
+
 def test_empty_inputs_return_estable():
     assert calculate_trend([], [], diff()) == "estable"
 
@@ -127,6 +135,7 @@ def test_empty_inputs_return_estable():
 # ---------------------------------------------------------------------------
 # Test 10: mejoro requiere que no haya nuevos ERRORs
 # ---------------------------------------------------------------------------
+
 
 def test_mejoro_requires_no_new_errors():
     """A desaparecido + nuevo ERROR simultáneamente = empeoro, not mejoro."""

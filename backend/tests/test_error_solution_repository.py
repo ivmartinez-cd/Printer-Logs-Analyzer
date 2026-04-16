@@ -4,14 +4,11 @@ import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
-from uuid import UUID, uuid4
-
-import pytest
+from uuid import UUID
 
 from backend.domain.entities import ErrorSolution, ErrorSolutionFru
 from backend.infrastructure.repositories.error_solution_repository import (
     ErrorSolutionRepository,
-    _LOCAL_PATH,
 )
 
 # ---------------------------------------------------------------------------

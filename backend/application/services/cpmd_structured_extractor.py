@@ -13,7 +13,7 @@ Public API:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from backend.application.services.cpmd_extractor import ExtractedSolution
@@ -23,13 +23,13 @@ from backend.application.services.cpmd_parser import ErrorBlock
 # Confidence weights  (must sum to 1.0)
 # ---------------------------------------------------------------------------
 
-_W_CAUSE = 0.35        # cause extracted and has substance
-_W_STEPS = 0.35        # at least one technician step found
-_W_STEP_LEN = 0.15     # at least one step is long enough to be real
-_W_FRUS = 0.15         # FRUs block parsed (only counted when FRU markers exist)
+_W_CAUSE = 0.35  # cause extracted and has substance
+_W_STEPS = 0.35  # at least one technician step found
+_W_STEP_LEN = 0.15  # at least one step is long enough to be real
+_W_FRUS = 0.15  # FRUs block parsed (only counted when FRU markers exist)
 
-_MIN_CAUSE_LEN = 30    # chars
-_MIN_STEP_LEN = 15     # chars
+_MIN_CAUSE_LEN = 30  # chars
+_MIN_STEP_LEN = 15  # chars
 
 # ---------------------------------------------------------------------------
 # Compiled regexes
@@ -61,9 +61,7 @@ _FRU_SECTION_RE = re.compile(
 #   J8J70-67903   →  letter + mixed alphanumeric + dash + 5 digits
 # Unified: 1-3 uppercase letters, followed by 0-5 alphanumeric chars, dash, 4-6 digits,
 # optionally another dash + 3 digits.
-_PART_NUMBER_RE = re.compile(
-    r"\b([A-Z]{1,3}[A-Z0-9]{0,5}-\d{4,6}(?:-\d{3})?)\b"
-)
+_PART_NUMBER_RE = re.compile(r"\b([A-Z]{1,3}[A-Z0-9]{0,5}-\d{4,6}(?:-\d{3})?)\b")
 
 # Page markers injected by the PDF reader, noise for extraction
 _PAGE_MARKER_RE = re.compile(r"<<<PAGE\s+\d+>>>")
@@ -184,7 +182,7 @@ def _extract_cause(text: str, audience: str) -> str:
     if first_newline == -1:
         return ""
 
-    cause_block = text[first_newline:action_match.start()]
+    cause_block = text[first_newline : action_match.start()]
     lines = cause_block.splitlines()
 
     # Filter noise: skip lines that are empty, all-caps headers, or FRU tables
@@ -219,7 +217,7 @@ def _extract_steps(text: str, audience: str) -> List[str]:
     if action_match is None:
         return []
 
-    action_text = text[action_match.end():]
+    action_text = text[action_match.end() :]
 
     # Stop at a FRU section if present
     fru_match = _FRU_SECTION_RE.search(action_text)
@@ -249,7 +247,7 @@ def _extract_frus(text: str) -> Tuple[List[Dict[str, str]], bool]:
     if fru_match is None:
         return [], False
 
-    fru_block = text[fru_match.end():]
+    fru_block = text[fru_match.end() :]
 
     frus: List[Dict[str, str]] = []
     lines = fru_block.splitlines()
@@ -266,7 +264,7 @@ def _extract_frus(text: str) -> Tuple[List[Dict[str, str]], bool]:
         part_number = pn_match.group(1)
 
         # Description is the rest of the line after the part number, cleaned up
-        rest = stripped[pn_match.end():].strip()
+        rest = stripped[pn_match.end() :].strip()
         # Sometimes the SKU (shorter code like "CF237A") appears right after the PN
         # Strip it if it matches the short-code pattern
         rest = re.sub(r"^[A-Z]{1,3}\d{4,5}[A-Z]?\s*", "", rest).strip()

@@ -26,9 +26,15 @@ class EnrichedEvent(Event):
     """Event enriched with data from the error_codes catalog."""
 
     code_severity: Optional[str] = Field(None, description="Severity from error_codes catalog")
-    code_description: Optional[str] = Field(None, description="Description from error_codes catalog")
-    code_solution_url: Optional[str] = Field(None, description="Solution URL from error_codes catalog")
-    code_solution_content: Optional[str] = Field(None, description="Fetched text content of the solution page")
+    code_description: Optional[str] = Field(
+        None, description="Description from error_codes catalog"
+    )
+    code_solution_url: Optional[str] = Field(
+        None, description="Solution URL from error_codes catalog"
+    )
+    code_solution_content: Optional[str] = Field(
+        None, description="Fetched text content of the solution page"
+    )
 
 
 class Incident(BaseModel):
@@ -38,7 +44,9 @@ class Incident(BaseModel):
     code: str
     classification: str
     severity: str = Field(..., description="INFO, WARNING or ERROR from event type")
-    severity_weight: int = Field(..., description="Numeric score for sorting (1=INFO, 2=WARNING, 3=ERROR)")
+    severity_weight: int = Field(
+        ..., description="Numeric score for sorting (1=INFO, 2=WARNING, 3=ERROR)"
+    )
     occurrences: int
     start_time: datetime
     end_time: datetime

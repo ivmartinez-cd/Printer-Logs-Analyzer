@@ -9,11 +9,8 @@ Tests cover:
 
 from __future__ import annotations
 
-import pytest
-
 from backend.application.services.cpmd_parser import ErrorBlock
 from backend.application.services.cpmd_structured_extractor import (
-    ExtractionResult,
     extract_all,
     extract_one,
     partition_by_confidence,
@@ -22,6 +19,7 @@ from backend.application.services.cpmd_structured_extractor import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_block(
     code: str = "13.B9.00",
@@ -79,8 +77,10 @@ class TestTypicalBlock:
         result = extract_one(block)
         assert result.solution is not None
         assert len(result.solution.cause) >= 30
-        assert "worn fuser rollers" in result.solution.cause.lower() \
-               or "fusing cycle" in result.solution.cause.lower()
+        assert (
+            "worn fuser rollers" in result.solution.cause.lower()
+            or "fusing cycle" in result.solution.cause.lower()
+        )
 
     def test_steps_extracted(self):
         block = _make_block(raw_text=_TYPICAL_BLOCK_TEXT)
@@ -90,9 +90,7 @@ class TestTypicalBlock:
         assert any("fuser" in s.lower() for s in steps)
 
     def test_steps_max_five(self):
-        long_text = _TYPICAL_BLOCK_TEXT + "\n".join(
-            f"{i}. Step {i}" for i in range(5, 15)
-        )
+        long_text = _TYPICAL_BLOCK_TEXT + "\n".join(f"{i}. Step {i}" for i in range(5, 15))
         block = _make_block(raw_text=long_text)
         result = extract_one(block)
         assert len(result.solution.technician_steps) <= 5
@@ -210,6 +208,7 @@ class TestEdgeCases:
 # extract_all
 # ---------------------------------------------------------------------------
 
+
 class TestExtractAll:
     def test_returns_one_result_per_block(self):
         blocks = [
@@ -229,6 +228,7 @@ class TestExtractAll:
 # ---------------------------------------------------------------------------
 # partition_by_confidence
 # ---------------------------------------------------------------------------
+
 
 class TestPartitionByConfidence:
     def test_splits_correctly(self):
@@ -268,6 +268,7 @@ class TestPartitionByConfidence:
 # Confidence score arithmetic
 # ---------------------------------------------------------------------------
 
+
 class TestConfidenceScore:
     def test_score_in_valid_range(self):
         for text in [_TYPICAL_BLOCK_TEXT, _TYPICAL_FRU_BLOCK_TEXT, _NO_ACTION_TEXT, "\n"]:
@@ -281,11 +282,7 @@ class TestConfidenceScore:
         assert result.confidence_score >= 0.85
 
     def test_missing_cause_lowers_score(self):
-        no_cause = (
-            "\n50.00.00   Error\n\n"
-            "Recommended action for service\n"
-            "1. Replace the fuser.\n"
-        )
+        no_cause = "\n50.00.00   Error\n\nRecommended action for service\n1. Replace the fuser.\n"
         block = _make_block(raw_text=no_cause)
         result = extract_one(block)
         # cause is missing → should lose the cause weight

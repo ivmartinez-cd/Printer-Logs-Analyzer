@@ -135,7 +135,13 @@ class ErrorCodeRepository:
                         updated_at = NOW()
                     RETURNING id, code, severity, description, solution_url, solution_content, created_at, updated_at
                     """,
-                    (code, severity or None, description or None, solution_url or None, solution_content or None),
+                    (
+                        code,
+                        severity or None,
+                        description or None,
+                        solution_url or None,
+                        solution_content or None,
+                    ),
                 )
                 row = cur.fetchone()
             conn.commit()
@@ -188,7 +194,9 @@ class ErrorCodeRepository:
     ) -> ErrorCode:
         """Insert or update an error code in the local JSON file."""
         with _local_write_lock:
-            return self._upsert_local_locked(code, severity, description, solution_url, solution_content)
+            return self._upsert_local_locked(
+                code, severity, description, solution_url, solution_content
+            )
 
     def _upsert_local_locked(
         self,

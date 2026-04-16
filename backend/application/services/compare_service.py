@@ -37,9 +37,7 @@ def calculate_trend(
     cambios_ocurrencias = diff.get("cambios_ocurrencias") or []
 
     total_saved_errors = sum(
-        i.get("occurrences") or 0
-        for i in saved_incidents
-        if _severity_is_error(i.get("severity"))
+        i.get("occurrences") or 0 for i in saved_incidents if _severity_is_error(i.get("severity"))
     )
     total_current_errors = sum(
         inc.occurrences

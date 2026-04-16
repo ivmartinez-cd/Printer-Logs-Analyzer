@@ -15,9 +15,18 @@ logger = logging.getLogger(__name__)
 DATE_FORMAT = "%d-%b-%Y %H:%M:%S"
 
 _ES_MONTHS = {
-    "ene": "Jan", "feb": "Feb", "mar": "Mar", "abr": "Apr",
-    "may": "May", "jun": "Jun", "jul": "Jul", "ago": "Aug",
-    "sep": "Sep", "oct": "Oct", "nov": "Nov", "dic": "Dec",
+    "ene": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "abr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "ago": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dic": "Dec",
 }
 HEADER_KEYWORDS = {"tipo", "type", "código", "codigo", "fecha", "date"}
 TYPE_MAP = {"error": "ERROR", "warning": "WARNING", "info": "INFO"}
@@ -114,7 +123,9 @@ class LogParser:
                     " ".join(tokens[6:]) if len(tokens) > 6 else "",
                 ]
             else:
-                raise ValueError("Expected 6 tab-separated columns (or 6+ space-separated: type code date time counter firmware [help])")
+                raise ValueError(
+                    "Expected 6 tab-separated columns (or 6+ space-separated: type code date time counter firmware [help])"
+                )
         if is_candidate_header and self._looks_like_header(parts):
             raise ValueError("Header row skipped")
 

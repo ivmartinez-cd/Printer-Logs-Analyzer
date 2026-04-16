@@ -12,11 +12,10 @@ os.environ.setdefault("DB_URL", "postgresql://test")
 os.environ.setdefault("API_KEY", "dev")
 
 import pytest
-from fastapi.testclient import TestClient
-
 from backend.domain.entities import ErrorSolution, ErrorSolutionFru, PrinterModel
 from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
+from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -66,6 +65,7 @@ def _make_solution() -> ErrorSolution:
 @pytest.fixture(autouse=True)
 def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.interface.api import limiter
+
     monkeypatch.setattr(limiter, "limit", lambda *args, **kwargs: lambda f: f)
 
 
@@ -80,9 +80,7 @@ def no_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
 @patch(
     "backend.infrastructure.repositories.error_solution_repository.ErrorSolutionRepository.get_by_model_and_code",
 )
-def test_get_error_solution_returns_200(
-    mock_get_sol: MagicMock, mock_get_model: MagicMock
-) -> None:
+def test_get_error_solution_returns_200(mock_get_sol: MagicMock, mock_get_model: MagicMock) -> None:
     """Returns 200 with full solution when both model and solution exist."""
     mock_get_model.return_value = _make_printer_model()
     mock_get_sol.return_value = _make_solution()
@@ -114,9 +112,7 @@ def test_get_error_solution_404_when_code_not_found(
     mock_get_sol.return_value = None
 
     client = TestClient(get_app(settings=_make_settings()))
-    response = client.get(
-        f"/models/{_MODEL_ID_STR}/error-solutions/99.XX.XX", headers=_HEADERS
-    )
+    response = client.get(f"/models/{_MODEL_ID_STR}/error-solutions/99.XX.XX", headers=_HEADERS)
 
     assert response.status_code == 404
 
@@ -129,9 +125,7 @@ def test_get_error_solution_404_when_model_not_found(mock_get_model: MagicMock) 
     mock_get_model.return_value = None
 
     client = TestClient(get_app(settings=_make_settings()))
-    response = client.get(
-        f"/models/{_MODEL_ID_STR}/error-solutions/{_CODE}", headers=_HEADERS
-    )
+    response = client.get(f"/models/{_MODEL_ID_STR}/error-solutions/{_CODE}", headers=_HEADERS)
 
     assert response.status_code == 404
 
@@ -139,9 +133,7 @@ def test_get_error_solution_404_when_model_not_found(mock_get_model: MagicMock) 
 def test_get_error_solution_400_invalid_model_id() -> None:
     """Returns 400 for a non-UUID model_id."""
     client = TestClient(get_app(settings=_make_settings()), raise_server_exceptions=False)
-    response = client.get(
-        "/models/not-a-uuid/error-solutions/49.FF.09", headers=_HEADERS
-    )
+    response = client.get("/models/not-a-uuid/error-solutions/49.FF.09", headers=_HEADERS)
     assert response.status_code == 400
 
 
@@ -163,9 +155,7 @@ def test_get_error_solution_requires_auth() -> None:
 @patch(
     "backend.infrastructure.repositories.error_solution_repository.ErrorSolutionRepository.get_model_ids_with_solutions",
 )
-def test_list_printer_models_has_cpmd_true(
-    mock_ids: MagicMock, mock_list: MagicMock
-) -> None:
+def test_list_printer_models_has_cpmd_true(mock_ids: MagicMock, mock_list: MagicMock) -> None:
     """Model with solutions gets has_cpmd=True."""
     mock_list.return_value = [_make_printer_model()]
     mock_ids.return_value = {_MODEL_ID_STR}
@@ -185,9 +175,7 @@ def test_list_printer_models_has_cpmd_true(
 @patch(
     "backend.infrastructure.repositories.error_solution_repository.ErrorSolutionRepository.get_model_ids_with_solutions",
 )
-def test_list_printer_models_has_cpmd_false(
-    mock_ids: MagicMock, mock_list: MagicMock
-) -> None:
+def test_list_printer_models_has_cpmd_false(mock_ids: MagicMock, mock_list: MagicMock) -> None:
     """Model without solutions gets has_cpmd=False."""
     mock_list.return_value = [_make_printer_model()]
     mock_ids.return_value = set()
