@@ -26,22 +26,28 @@ export function HelpModal({ onClose }: HelpModalProps) {
             <h3 className="help-modal__section-title">Flujo de análisis</h3>
             <ol className="help-modal__steps">
               <li>
-                En el modal "Pegar logs HP", <strong>seleccioná el modelo de impresora</strong> del
-                listado. Si el modelo no aparece, hacé click en{' '}
-                <strong>"+ Cargar nuevo modelo (PDF)"</strong> y subí el PDF del Service Cost Data
-                oficial de HP — los modelos y consumibles se extraen automáticamente con IA.
+                <strong>Opción 1 — Deep Link (recomendado para técnicos):</strong> Ingresá
+                directamente a <code>https://printer-logs-analyzer.vercel.app/SERIALNUMBER</code>.
+                La app detecta el serial en la URL, resuelve el modelo automáticamente y extrae los
+                logs del portal HP SDS sin ninguna acción adicional.
               </li>
               <li>
-                <strong>Pegá el log</strong> en el área de texto y hacé click en{' '}
-                <strong>"Analizar"</strong>.
+                <strong>Opción 2 — Extracción automática por serial:</strong> En el modal inicial,
+                ingresá el número de serie. El sistema hace Login → Búsqueda → Resolución de modelo
+                → Extracción de logs → Análisis de forma completamente automatizada.
+              </li>
+              <li>
+                <strong>Opción 3 — Log manual:</strong> Seleccioná el modelo de impresora del
+                listado, pegá el log exportado desde el portal HP y hacé click en{' '}
+                <strong>"Analizar"</strong>. El modelo es opcional si hay serial (se resuelve solo).
               </li>
               <li>
                 El backend parsea cada línea, agrupa los eventos por código formando incidentes, y
-                los enriquece con el catálogo de códigos.
+                los enriquece con el catálogo de códigos y soluciones CPMD.
               </li>
               <li>
                 Opcional: agregar un <strong>SDS Engineering Incident</strong> para hacer match
-                contra los códigos del log.
+                automático contra los códigos del log.
               </li>
             </ol>
           </section>
@@ -84,15 +90,45 @@ export function HelpModal({ onClose }: HelpModalProps) {
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">Diagnóstico con IA</h3>
             <p className="help-modal__intro-text">
-              Panel violeta colapsado por defecto, debajo de los KPIs. Al expandirlo, hacé click en{' '}
-              <strong>"Generar análisis con IA"</strong> para que Claude Haiku procese los incidentes
-              y devuelva un diagnóstico estructurado en tres secciones:{' '}
-              <strong>DIAGNÓSTICO / ACCIÓN / PRIORIDAD</strong>.
+              Panel ejecutivo colapsado por defecto. Al expandirlo, hacé click en{' '}
+              <strong>"Generar análisis con IA"</strong> para que <strong>Claude Opus 4.6</strong>{' '}
+              procese los incidentes del log, el estado de consumibles y el historial de alertas.
+              El resultado se muestra en formato ejecutivo con:
+            </p>
+            <ul className="help-modal__list">
+              <li>
+                <strong>Diagnóstico:</strong> causa raíz técnica en máximo 60 palabras, con código
+                de error y correlación temporal.
+              </li>
+              <li>
+                <strong>Acciones:</strong> hasta 3 pasos accionables priorizados.
+              </li>
+              <li>
+                <strong>Prioridad:</strong> badge coloreado (<em>alta / media / baja</em>).
+              </li>
+              <li>
+                <strong>Impacto operativo:</strong> consecuencia concreta en máximo 20 palabras.
+              </li>
+            </ul>
+            <p className="help-modal__note">
+              Colapsar el panel no resetea el diagnóstico ya generado. El análisis considera
+              correlaciones temporales entre eventos, consumibles en tiempo real e historial del
+              portal. Límite: 5 diagnósticos por minuto.
+            </p>
+          </section>
+
+          {/* ALERTAS INSIGHT EN VIVO */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">Alertas Insight en vivo</h3>
+            <p className="help-modal__intro-text">
+              Panel colapsado que consulta la API oficial HP Insight al cargar el dashboard (si se
+              ingresó un número de serie). Muestra las alertas activas del dispositivo y el
+              historial del último mes directamente desde el portal.
             </p>
             <p className="help-modal__note">
-              El diagnóstico considera correlaciones temporales entre eventos, causalidad probable y
-              da una recomendación accionable. Colapsar el panel no resetea el diagnóstico ya
-              generado.
+              Requiere que el entorno tenga configuradas las credenciales de la API Insight
+              (INSIGHT_API_KEY, INSIGHT_API_SECRET). Si no están configuradas, el panel se oculta
+              automáticamente.
             </p>
           </section>
 
@@ -100,8 +136,8 @@ export function HelpModal({ onClose }: HelpModalProps) {
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">SDS Engineering Incident</h3>
             <p className="help-modal__intro-text">
-              Panel colapsado debajo del Diagnóstico con IA. Permite cargar manualmente un incidente
-              SDS y hacer match contra los códigos del log.
+              Panel colapsado que permite cargar manualmente un incidente SDS y hacer match contra
+              los códigos del log analizado.
             </p>
             <ul className="help-modal__list">
               <li>
@@ -122,20 +158,26 @@ export function HelpModal({ onClose }: HelpModalProps) {
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">Estado de consumibles</h3>
             <p className="help-modal__intro-text">
-              Panel colapsado debajo del SDS. Aparece solo si el modelo cargado tiene consumibles
-              (rollers, fusers, maintenance kits, etc.) con códigos del log asociados.
-            </p>
-            <p className="help-modal__note">
-              <strong>Qué se muestra y qué no:</strong> se excluyen los tóners y los rodillos del
-              ADF (Automatic Document Feeder) porque el contador de páginas impresas no refleja su
-              desgaste real. Solo se incluyen componentes cuyo ciclo de vida está directamente
-              vinculado al contador de la impresora.
+              Panel colapsado con dos fuentes de datos:
             </p>
             <ul className="help-modal__list">
               <li>
-                Tabla con: categoría, descripción, part number, vida útil estimada, contador actual,
-                % de uso y estado.
+                <strong>Datos CPMD (catálogo local):</strong> aparece si el modelo cargado tiene
+                consumibles con códigos del log asociados. Muestra categoría, part number, vida útil
+                estimada, contador actual, % de uso y estado.
               </li>
+              <li>
+                <strong>Consumibles en tiempo real (Insight API):</strong> si el equipo fue
+                identificado por serial, muestra datos directos del portal HP: % restante de tóner /
+                componente, páginas estimadas restantes y días restantes.
+              </li>
+            </ul>
+            <p className="help-modal__note">
+              <strong>Qué se muestra y qué no:</strong> se excluyen los tóners de la sección CPMD y
+              los rodillos du ADF (Automatic Document Feeder). Solo se incluyen componentes cuyo
+              ciclo de vida está vinculado al contador de la impresora.
+            </p>
+            <ul className="help-modal__list">
               <li>
                 <strong>Verde "Sin alertas"</strong>: uso por debajo del 80% de la vida útil.
               </li>
@@ -144,8 +186,8 @@ export function HelpModal({ onClose }: HelpModalProps) {
               </li>
               <li>
                 <strong>Rojo "Revisar historial"</strong>: el contador supera el 100% de la vida
-                útil documentada. Esto es un aviso para verificar en el historial del equipo cuándo
-                fue el último reemplazo — no una orden de cambio inmediato.
+                útil documentada. Verificar en el historial del equipo cuándo fue el último
+                reemplazo — no es una orden de cambio inmediato.
               </li>
               <li>
                 Los patrones de código soportan el comodín <code>z</code> (cualquier dígito hex):
@@ -208,7 +250,8 @@ export function HelpModal({ onClose }: HelpModalProps) {
             <ul className="help-modal__list">
               <li>
                 <strong>Incidencias:</strong> agrupadas por código, con sort, búsqueda, filtro por
-                severidad y expand de cada incidencia para ver sus eventos.
+                severidad y expand de cada incidencia para ver sus eventos individuales. Hacé click
+                en el código subrayado para ver o editar la entrada del catálogo.
               </li>
               <li>
                 <strong>Eventos del período:</strong> tabla colapsada por defecto con todos los
@@ -232,6 +275,31 @@ export function HelpModal({ onClose }: HelpModalProps) {
               <li>
                 Si el análisis detecta <strong>códigos nuevos</strong> (no están en el catálogo),
                 aparece una sección para agregarlos uno a uno o ignorarlos.
+              </li>
+              <li>
+                Si el modelo tiene CPMD cargado, cada código muestra automáticamente los pasos
+                técnicos del manual de servicio y los FRUs asociados, sin necesidad de abrir el PDF.
+              </li>
+            </ul>
+          </section>
+
+          {/* CARGA DE MODELOS Y CPMD */}
+          <section className="help-modal__section">
+            <h3 className="help-modal__section-title">Modelos de impresora y CPMD</h3>
+            <ul className="help-modal__list">
+              <li>
+                <strong>Nuevo modelo:</strong> Hacé click en{' '}
+                <strong>"+ Cargar nuevo modelo (PDF)"</strong> y subí el PDF del{' '}
+                <em>Service Cost Data</em> oficial de HP. Los modelos y consumables se extraen
+                automáticamente con IA (Claude).
+              </li>
+              <li>
+                <strong>Ingesta CPMD:</strong> Una vez creado el modelo, podés subir el PDF del{' '}
+                <em>Service Manual (CPMD)</em>. El pipeline híbrido extrae automáticamente todas las
+                soluciones técnicas (pasos + FRUs) por código de error.
+              </li>
+              <li>
+                Los modelos con CPMD cargado muestran el badge <em>"CPMD"</em> en el selector.
               </li>
             </ul>
           </section>
@@ -260,9 +328,10 @@ export function HelpModal({ onClose }: HelpModalProps) {
           <section className="help-modal__section">
             <h3 className="help-modal__section-title">Exportar PDF</h3>
             <p className="help-modal__intro-text">
-              El botón <strong>"Exportar PDF"</strong> en el header genera un PDF A4 con el
-              Diagnóstico IA (si fue generado), KPIs, gráfico de errores frecuentes y tabla de
-              incidencias.
+              El botón <strong>"Exportar PDF"</strong> en el header genera un PDF A4 ejecutivo en
+              modo Light que incluye: Resumen Ejecutivo, Diagnóstico IA (si fue generado), KPIs,
+              gráfico de errores frecuentes y tabla completa de incidencias. Los filtros, botones de
+              expansión y links de solución se ocultan automáticamente para mayor claridad.
             </p>
           </section>
         </div>
