@@ -154,10 +154,12 @@ export default function DashboardPage({
   serverWasCold,
   healthStatus,
   initialSerial,
+  initialAnalysisId,
 }: {
   serverWasCold: boolean
   healthStatus: HealthStatus | null
   initialSerial?: string | null
+  initialAnalysisId?: string | null
 }) {
   const dateFilter = useDateFilter()
   const {
@@ -167,6 +169,7 @@ export default function DashboardPage({
   } = dateFilter
   const {
     result,
+    setResult,
     loading,
     error,
     setError,
@@ -228,6 +231,21 @@ export default function DashboardPage({
   const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
 
+  // URL Sync Effect: Write state to URL
+  useEffect(() => {
+    let newPath = '/'
+    if (viewMode === 'dashboard' && currentSerialNumber) {
+      newPath = `/${currentSerialNumber}`
+    } else if (viewMode === 'saved-detail' && selectedSavedId) {
+      newPath = `/analysis/${selectedSavedId}`
+    }
+
+    if (window.location.pathname !== newPath) {
+      // Use pushState to allow "Back" button navigation
+      window.history.pushState({ viewMode, currentSerialNumber, selectedSavedId }, '', newPath)
+    }
+  }, [viewMode, currentSerialNumber, selectedSavedId])
+
   const insightData = useInsightData(currentSerialNumber)
 
   const {
@@ -279,14 +297,30 @@ export default function DashboardPage({
     }
   }, [handleAnalyze, setCurrentModelHasCpmd, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast])
 
-  const autoExtractRef = useRef(false)
   // Effect for Deep Linking: Auto-start if initialSerial is provided
   useEffect(() => {
-    if (initialSerial && !autoExtractRef.current) {
-      autoExtractRef.current = true
-      autoResolveAndAnalyze(initialSerial)
+    if (initialSerial) {
+      if (initialSerial !== currentSerialNumber) {
+        autoResolveAndAnalyze(initialSerial)
+      }
+    } else if (!initialAnalysisId) {
+      // Reset if we go back to root
+      setCurrentSerialNumber(null)
+      setResult(null)
     }
-  }, [initialSerial, autoResolveAndAnalyze])
+  }, [initialSerial, initialAnalysisId, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
+
+  // Effect for Deep Linking: Load saved analysis if analysisId is provided
+  useEffect(() => {
+    if (initialAnalysisId && initialAnalysisId !== selectedSavedId) {
+      setViewMode('saved-detail')
+      setSelectedSavedId(initialAnalysisId)
+      setSavedDetail(null)
+      getSavedAnalysis(initialAnalysisId)
+        .then(setSavedDetail)
+        .catch(() => toast.showError('Error al cargar análisis guardado'))
+    }
+  }, [initialAnalysisId, selectedSavedId, setViewMode, toast])
 
   const events = useMemo(() => result?.events ?? [], [result])
   const incidents = useMemo(() => result?.incidents ?? [], [result])

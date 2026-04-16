@@ -58,19 +58,40 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
   }
 }
 
+interface LocationInfo {
+  serial: string | null
+  analysisId: string | null
+}
+
+function parseLocation(): LocationInfo {
+  const path = window.location.pathname.slice(1) // remove leading /
+  
+  // 1. Saved analysis: /analysis/[ID]
+  if (path.startsWith('analysis/')) {
+    const id = path.split('/')[1]
+    return { serial: null, analysisId: id || null }
+  }
+
+  // 2. Serial: /[SERIAL]
+  if (path && /^[A-Z0-9]{5,20}$/i.test(path)) {
+    return { serial: path.toUpperCase(), analysisId: null }
+  }
+
+  return { serial: null, analysisId: null }
+}
+
 function App() {
   const [serverWasCold, setServerWasCold] = useState(false)
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
-  const [urlSerial] = useState<string | null>(() => {
-    // Detect serial in URL path: /SERIALNUMBER
-    const path = window.location.pathname.slice(1) // remove leading /
-    if (path && /^[A-Z0-9]{5,20}$/i.test(path)) {
-      return path.toUpperCase()
-    }
-    return null
-  })
+  const [locationInfo, setLocationInfo] = useState<LocationInfo>(parseLocation)
 
   useEffect(() => {
+    // Escuchar cambios en la URL (Botón Atrás/Adelante)
+    const handlePopState = () => {
+      setLocationInfo(parseLocation())
+    }
+    window.addEventListener('popstate', handlePopState)
+
     const start = Date.now()
     getHealth().then((h) => {
       if (Date.now() - start > COLD_START_THRESHOLD_MS) setServerWasCold(true)
@@ -80,7 +101,10 @@ function App() {
       getHealth().then(setHealthStatus)
     }, KEEP_ALIVE_INTERVAL_MS)
 
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
 
   return (
@@ -89,8 +113,10 @@ function App() {
         <DashboardPage 
           serverWasCold={serverWasCold} 
           healthStatus={healthStatus} 
-          initialSerial={urlSerial} 
+          initialSerial={locationInfo.serial} 
+          initialAnalysisId={locationInfo.analysisId}
         />
+
         <ToastContainer />
       </ToastProvider>
       <Analytics />
