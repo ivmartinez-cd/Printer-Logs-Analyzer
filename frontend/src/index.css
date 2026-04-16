@@ -1650,31 +1650,143 @@ body {
   border-color: #4c8bf5;
 }
 
-.ai-diagnostic-panel__retry-button:focus-visible {
-  outline: 2px solid #4c8bf5;
-  outline-offset: 2px;
+/* Header: título + badge de prioridad alineados al mismo nivel */
+.ai-diagnostic-panel__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
 }
 
-/* Estado de Ã©xito: contenido del diagnÃ³stico */
-.ai-diagnostic-panel__diagnosis {
+/* Badge de prioridad con colores por nivel */
+.ai-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid;
+}
+
+.ai-priority-badge--alta {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.ai-priority-badge--media {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.ai-priority-badge--baja {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+/* Resultado estructurado */
+.ai-diagnostic-result {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-diagnostic-result__diagnosis-card {
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
   padding: 14px 16px;
+}
+
+.ai-diagnostic-result__actions-card {
+  background: rgba(22, 163, 74, 0.05);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.ai-diagnostic-result__section-title {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #c9d1de;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-diagnostic-result__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.ai-diagnostic-result__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #d4dbe8;
+}
+
+.ai-diagnostic-result__impact {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #a5b4c8;
+}
+
+.ai-diagnostic-result__impact strong {
+  color: #c9d1de;
+}
+
+.ai-diagnostic-result__actions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.ai-diagnostic-panel__diagnosis-section {
-  font-size: 0.8125rem;
+.ai-diagnostic-result__action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ai-diagnostic-result__action-number {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(22, 163, 74, 0.2);
+  border: 1px solid rgba(22, 163, 74, 0.4);
+  color: #4ade80;
+  border-radius: 50%;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.ai-diagnostic-result__action-text {
+  font-size: 0.875rem;
   line-height: 1.55;
   color: #c9d1de;
+  flex: 1;
 }
 
-.ai-diagnostic-panel__diagnosis-label {
-  font-weight: 700;
-  color: #e6e8ee;
-}
-
-/* Fallback cuando el parseo de etiquetas falla */
+/* Fallback cuando el parseo falla completamente */
 .ai-diagnostic-panel__diagnosis-raw {
   font-size: 0.8125rem;
   line-height: 1.55;
@@ -1683,6 +1795,7 @@ body {
   word-break: break-word;
   margin: 0;
   font-family: inherit;
+  padding: 14px 16px;
 }
 
 /* â”€â”€ KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */

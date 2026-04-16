@@ -34,8 +34,13 @@ describe('AIDiagnosticPanel', () => {
     expect(screen.getByText('Generar análisis con IA')).toBeInTheDocument()
   })
 
-  it('llama a aiDiagnose y muestra el resultado parseado', async () => {
-    const mockDiagnosis = 'DIAGNÓSTICO: Todo ok.\nACCIÓN: Ninguna.\nPRIORIDAD: Baja.'
+  it('llama a aiDiagnose y muestra el resultado estructurado', async () => {
+    const mockDiagnosis = JSON.stringify({
+      diagnostico: 'Falla crítica en zona del fusor.',
+      acciones: ['Reemplazar kit de mantenimiento', 'Actualizar firmware'],
+      prioridad: 'alta',
+      impacto: 'El equipo puede dejar de imprimir.',
+    })
     vi.mocked(api.aiDiagnose).mockResolvedValue({ 
       diagnosis: mockDiagnosis,
       model: 'test-model',
@@ -50,10 +55,10 @@ describe('AIDiagnosticPanel', () => {
     expect(screen.getByText('Generando diagnóstico…')).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByText('DIAGNÓSTICO:')).toBeInTheDocument()
-      expect(screen.getByText('Todo ok.')).toBeInTheDocument()
-      expect(screen.getByText('ACCIÓN:')).toBeInTheDocument()
-      expect(screen.getByText('Ninguna.')).toBeInTheDocument()
+      expect(screen.getByText('Falla crítica en zona del fusor.')).toBeInTheDocument()
+      expect(screen.getByText('Reemplazar kit de mantenimiento')).toBeInTheDocument()
+      expect(screen.getByText('Actualizar firmware')).toBeInTheDocument()
+      expect(screen.getByText(/Prioridad alta/i)).toBeInTheDocument()
     })
   })
 

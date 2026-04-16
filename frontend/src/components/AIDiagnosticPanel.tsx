@@ -11,21 +11,37 @@ interface AIDiagnosticPanelProps {
 
 // Parsea el texto "DIAGNÓSTICO: ...\nACCIÓN: ...\nPRIORIDAD: ..." en secciones.
 // Retorna null si el formato no matchea (fallback a texto crudo).
-function parseDiagnosis(text: string): { label: string; content: string }[] | null {
-  // Strippear asteriscos dobles de cada línea por si el modelo usa markdown
-  // a pesar de la instrucción explícita de no hacerlo
-  const sanitized = text
-    .split('\n')
-    .map((line) => line.replace(/\*\*/g, '').trim())
-    .join('\n')
-  const regex = /(DIAGNÓSTICO|ACCIÓN|PRIORIDAD):\s*([\s\S]*?)(?=\n(?:DIAGNÓSTICO|ACCIÓN|PRIORIDAD):|$)/g
-  const sections: { label: string; content: string }[] = []
-  let match: RegExpExecArray | null
-  while ((match = regex.exec(sanitized)) !== null) {
-    sections.push({ label: match[1], content: match[2].trim() })
+interface DiagnosisData {
+  diagnostico: string
+  acciones: string[]
+  prioridad: 'alta' | 'media' | 'baja'
+  impacto?: string
+}
+
+function parseDiagnosis(text: string): DiagnosisData | null {
+  try {
+    // Intentar parsear como JSON directo
+    const cleaned = text.trim()
+    if (cleaned.startsWith('{')) {
+      return JSON.parse(cleaned) as DiagnosisData
+    }
+  } catch (e) {
+    console.warn('Failed to parse AI diagnosis as JSON:', e)
   }
-  // Necesitamos al menos DIAGNÓSTICO y ACCIÓN para considerar el parseo exitoso
-  return sections.length >= 2 ? sections : null
+
+  // Fallback: Si no es JSON, intentar parsear etiquetas (legacy)
+  const regex = /(DIAGNÓSTICO|ACCIÓN|PRIORIDAD):\s*([\s\S]*?)(?=\n(?:DIAGNÓSTICO|ACCIÓN|PRIORIDAD):|$)/g
+  const data: Partial<DiagnosisData> = { acciones: [] }
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(text)) !== null) {
+    const key = match[1]
+    const content = match[2].trim()
+    if (key === 'DIAGNÓSTICO') data.diagnostico = content
+    if (key === 'ACCIÓN') data.acciones = content.split('. ').filter(s => s.length > 5)
+    if (key === 'PRIORIDAD') data.prioridad = content.toLowerCase() as any
+  }
+
+  return data.diagnostico ? (data as DiagnosisData) : null
 }
 
 export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelProps>(
@@ -51,6 +67,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       try {
         const res = await aiDiagnose(result, { consumables, alerts, meters })
         setDiagnosis(res.diagnosis)
+        setCollapsed(false) // Expandir automáticamente cuando se genera
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al generar el diagnóstico')
       } finally {
@@ -58,7 +75,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       }
     }
 
-    const sections = diagnosis ? parseDiagnosis(diagnosis) : null
+    const data = diagnosis ? parseDiagnosis(diagnosis) : null
 
     return (
       <div className="collapsible-panel collapsible-panel--ai" ref={ref}>
@@ -69,7 +86,14 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           aria-expanded={!collapsed}
           data-testid="ai-diagnostic-panel-toggle"
         >
-          <span className="collapsible-panel__title">🤖 Diagnóstico con IA</span>
+          <div className="ai-diagnostic-panel__header-left">
+            <span className="collapsible-panel__title">🤖 Diagnóstico con IA</span>
+            {data && !collapsed && (
+              <span className={`ai-priority-badge ai-priority-badge--${data.prioridad}`}>
+                Prioridad {data.prioridad}
+              </span>
+            )}
+          </div>
           <span
             className={`collapsible-panel__chevron${!collapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
             aria-hidden="true"
@@ -79,7 +103,6 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
         </button>
 
         <div className={`ai-diagnostic-panel__content ${collapsed ? 'collapsible-panel__body--hidden' : ''}`}>
-          {/* Estado inicial: CTA para generar el diagnóstico */}
           {!diagnosis && !loading && !error && (
             <div className="ai-diagnostic-panel__cta-wrapper">
               <p className="ai-diagnostic-panel__button-description">
@@ -96,7 +119,6 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
             </div>
           )}
 
-          {/* Estado de carga */}
           {loading && (
             <div className="ai-diagnostic-panel__loading">
               <span className="ai-diagnostic-panel__spinner" aria-hidden="true" />
@@ -104,7 +126,6 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
             </div>
           )}
 
-          {/* Estado de error con botón de reintento */}
           {error && !loading && (
             <div className="ai-diagnostic-panel__error">
               <span>{error}</span>
@@ -118,24 +139,45 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
             </div>
           )}
 
-          {/* Estado de éxito: diagnóstico parseado o texto crudo */}
-          {diagnosis && !loading && (
-            <div className="ai-diagnostic-panel__diagnosis">
-              {sections ? (
-                sections.map((s) => (
-                  <div key={s.label} className="ai-diagnostic-panel__diagnosis-section">
-                    <span className="ai-diagnostic-panel__diagnosis-label">{s.label}: </span>
-                    <span>{s.content}</span>
+          {data && !loading && (
+            <div className="ai-diagnostic-result">
+              <div className="ai-diagnostic-result__diagnosis-card">
+                <h4 className="ai-diagnostic-result__section-title">
+                  <span className="ai-diagnostic-result__icon">🔍</span>
+                  Hallazgos del Sistema
+                </h4>
+                <p className="ai-diagnostic-result__text">{data.diagnostico}</p>
+                {data.impacto && (
+                  <div className="ai-diagnostic-result__impact">
+                    <strong>Impacto estimado:</strong> {data.impacto}
                   </div>
-                ))
-              ) : (
-                // Fallback si el parseo de etiquetas falla
-                <pre className="ai-diagnostic-panel__diagnosis-raw">{diagnosis}</pre>
-              )}
+                )}
+              </div>
+
+              <div className="ai-diagnostic-result__actions-card">
+                <h4 className="ai-diagnostic-result__section-title">
+                  <span className="ai-diagnostic-result__icon">🔧</span>
+                  Pasos a Seguir
+                </h4>
+                <ul className="ai-diagnostic-result__actions-list">
+                  {data.acciones.map((accion, idx) => (
+                    <li key={idx} className="ai-diagnostic-result__action-item">
+                      <span className="ai-diagnostic-result__action-number">{idx + 1}</span>
+                      <span className="ai-diagnostic-result__action-text">{accion}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
+          )}
+
+          {diagnosis && !data && !loading && (
+            // Fallback total si falla el parseo
+            <pre className="ai-diagnostic-panel__diagnosis-raw">{diagnosis}</pre>
           )}
         </div>
       </div>
     )
+
   }
 )
