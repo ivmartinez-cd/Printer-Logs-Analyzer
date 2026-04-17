@@ -147,7 +147,7 @@ export function UploadCpmdModal({ modelId, modelName, onClose, onSuccess }: Uplo
                   <div className="absolute inset-0 flex items-center justify-center text-xl">🤖</div>
                </div>
                <div className="text-center">
-                  <h4 className="text- hp-blue-vibrant font-bold text-sm uppercase tracking-[0.2em] mb-2">Procesando Inteligencia</h4>
+                  <h4 className="text-hp-blue-vibrant font-bold text-sm uppercase tracking-[0.2em] mb-2">Ingesta de Inteligencia</h4>
                   <p className="text-sm text-slate-400 max-w-xs mx-auto leading-relaxed">
                     Extrayendo conocimiento técnico y procedimientos de reparación. No cierre esta ventana.
                   </p>

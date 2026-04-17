@@ -37,7 +37,7 @@ describe('SolutionContentModal', () => {
       />
     )
     expect(
-      screen.getByText('Sin información disponible para este código.')
+      screen.getByText(/Sin información técnica disponible para este código/i)
     ).toBeInTheDocument()
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })
@@ -54,7 +54,7 @@ describe('SolutionContentModal', () => {
     )
     expect(screen.getByText('Reemplazar el fusor')).toBeInTheDocument()
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
-    expect(screen.queryByText('Solución CPMD')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Manual de Servicio/)).not.toBeInTheDocument()
   })
 
   it('muestra dos tabs cuando hay SDS y modelId, tab CPMD activo por default mientras carga', () => {
@@ -68,10 +68,10 @@ describe('SolutionContentModal', () => {
         onClose={vi.fn()}
       />
     )
-    expect(screen.getByRole('tab', { name: 'Solución SDS' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Solución CPMD/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Diagnóstico Remoto \(SDS\)/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Manual de Servicio \(CPMD\)/ })).toBeInTheDocument()
     // Tab CPMD activo por default
-    expect(screen.getByRole('tab', { name: /Solución CPMD/ })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /Manual de Servicio \(CPMD\)/ })).toHaveAttribute(
       'aria-selected',
       'true'
     )
@@ -89,7 +89,7 @@ describe('SolutionContentModal', () => {
       />
     )
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /Solución CPMD/ })).toHaveAttribute(
+      expect(screen.getByRole('tab', { name: /Manual de Servicio \(CPMD\)/ })).toHaveAttribute(
         'aria-selected',
         'true'
       )
@@ -112,7 +112,7 @@ describe('SolutionContentModal', () => {
       />
     )
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: 'Solución SDS' })).toHaveAttribute(
+      expect(screen.getByRole('tab', { name: /Diagnóstico Remoto \(SDS\)/ })).toHaveAttribute(
         'aria-selected',
         'true'
       )
@@ -153,14 +153,12 @@ describe('SolutionContentModal', () => {
     await waitFor(() => {
       expect(screen.getByText('Fuser assembly failed')).toBeInTheDocument()
     })
-    await user.click(screen.getByRole('tab', { name: 'Solución SDS' }))
+    await user.click(screen.getByRole('tab', { name: /Diagnóstico Remoto \(SDS\)/ }))
     expect(screen.getByText('Contenido SDS')).toBeInTheDocument()
     expect(screen.queryByText('Fuser assembly failed')).not.toBeInTheDocument()
   })
 
   it('modal de edición ya no contiene el panel CPMD (AddCodeToCatalogModal)', async () => {
-    // This is a structural test — just verify that SolutionContentModal has the CPMD panel
-    // and AddCodeToCatalogModal does not (covered by import verification)
     const { AddCodeToCatalogModal } = await import('../../components/AddCodeToCatalogModal')
     render(
       <AddCodeToCatalogModal
@@ -172,11 +170,11 @@ describe('SolutionContentModal', () => {
         saving={false}
       />
     )
-    expect(screen.queryByText('Solución oficial HP (CPMD)')).not.toBeInTheDocument()
-    expect(screen.queryByText('Buscando en CPMD…')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Manual de Servicio/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Consultando CPMD/)).not.toBeInTheDocument()
   })
 
-  it('botón Cerrar invoca onClose', async () => {
+  it('botón Finalizar Revisión invoca onClose', async () => {
     const onClose = vi.fn()
     const user = userEvent.setup()
     render(
@@ -187,8 +185,8 @@ describe('SolutionContentModal', () => {
         onClose={onClose}
       />
     )
-    // The action button has text "Cerrar"; the × button has aria-label="Cerrar"
-    const [, actionClose] = screen.getAllByRole('button', { name: 'Cerrar' })
+    // The action button has text "Finalizar Revisión"; the × button has title in some components or just X
+    const actionClose = screen.getByText('Finalizar Revisión')
     await user.click(actionClose)
     expect(onClose).toHaveBeenCalledOnce()
   })

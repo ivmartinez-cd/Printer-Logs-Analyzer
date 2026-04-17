@@ -83,18 +83,21 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     const data = diagnosis ? parseDiagnosis(diagnosis) : null
 
     return (
-      <div className="glass-card rounded-2xl overflow-hidden animate-fade-in-up shadow-premium-md" ref={ref}>
+      <div className={`glass-card rounded-3xl overflow-hidden animate-fade-in-up shadow-premium-lg border-l-4 transition-all duration-500 ${diagnosis ? 'border-l-hp-blue-vibrant shadow-hp-blue/10' : 'border-l-white/10'}`} ref={ref}>
         <button
           type="button"
-          className="w-full flex items-center justify-between p-5 bg-white/[0.03] hover:bg-white/[0.06] transition-all group"
+          data-testid="ai-diagnostic-panel-toggle"
+          className="w-full flex items-center justify-between px-5 py-3.5 bg-white/[0.03] hover:bg-white/[0.06] transition-all group"
           onClick={() => setCollapsed((v) => !v)}
           aria-expanded={!collapsed}
         >
-          <div className="flex items-center gap-4">
-            <span className="text-xl grayscale group-hover:grayscale-0 transition-all duration-500">🤖</span>
-            <span className="font-display font-bold text-lg text-white">Diagnóstico con IA</span>
+          <div className="flex items-center gap-3">
+            <span className={`text-lg transition-transform duration-500 ${loading ? 'animate-spin' : diagnosis ? 'animate-pulse scale-110' : 'group-hover:rotate-12'}`}>
+              {loading ? '⏳' : diagnosis ? '🤖' : '🧠'}
+            </span>
+            <span className="font-display font-bold text-sm text-white uppercase tracking-tight">Diagnóstico Inteligente IA</span>
             {data && !collapsed && (
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                 data.prioridad === 'alta' ? 'bg-accent-rose/20 text-accent-rose border border-accent-rose/30' : 
                 data.prioridad === 'media' ? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/30' : 
                 'bg-accent-emerald/20 text-accent-emerald border border-accent-emerald/30'
@@ -103,12 +106,12 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
               </span>
             )}
           </div>
-          <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90' : ''}`}>
+          <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90 text-[10px]' : 'text-[10px]'}`}>
              ▶
           </span>
         </button>
 
-        <div className={`transition-all duration-300 ease-in-out ${collapsed ? 'max-h-0 opacity-0 overflow-hidden' : 'p-6 opacity-100'}`}>
+        <div className={`transition-all duration-300 ease-in-out ${collapsed ? 'max-h-0 opacity-0 overflow-hidden' : 'p-5 opacity-100'}`}>
           {!diagnosis && !loading && !error && (
             <div className="flex flex-col items-center gap-6 py-6 text-center">
               <p className="text-slate-400 max-w-lg leading-relaxed italic text-sm">
@@ -127,7 +130,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           {loading && (
             <div className="flex flex-col items-center gap-4 py-8">
               <span className="w-8 h-8 border-4 border-hp-blue/20 border-t-hp-blue-vibrant rounded-full animate-spin" aria-hidden="true" />
-              <span className="text-hp-blue-vibrant font-semibold animate-pulse">Analizando correlaciones…</span>
+              <span className="text-hp-blue-vibrant font-semibold animate-pulse">Generando diagnóstico…</span>
             </div>
           )}
 

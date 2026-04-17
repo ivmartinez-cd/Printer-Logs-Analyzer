@@ -8,28 +8,41 @@
     --hp-blue-vibrant: #00a1e0;
     --hp-dark: #0a0c10;
     --hp-darker: #050608;
-    --glass-bg: rgba(15, 18, 25, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(10, 12, 16, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.15);
     --accent-amber: #f59e0b;
     --accent-rose: #f43f5e;
     --accent-teal: #14b8a6;
   }
 
   body {
-    @apply bg-hp-darker text-slate-300 font-sans antialiased selection:bg-hp-blue/30 selection:text-white;
+    background-color: var(--hp-darker);
+    color: #cbd5e1; /* slate-300 */
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     margin: 0;
     min-height: 100vh;
   }
 
+  body::selection {
+    background-color: rgba(0, 150, 214, 0.3);
+    color: white;
+  }
+
   h1, h2, h3, h4, .font-display {
-    @apply font-display tracking-tight;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.025em; /* tracking-tight */
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-glass-bg backdrop-blur-xl border border-glass-border rounded-[2rem] shadow-2xl;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(32px);
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   }
 
   .shadow-premium-glow {
@@ -37,7 +50,22 @@
   }
 
   .btn-hp-primary {
-    @apply px-6 py-3 bg-hp-blue text-white font-bold rounded-2xl shadow-premium-glow hover:bg-hp-blue-vibrant hover:scale-[1.02] active:scale-[0.98] transition-all;
+    padding: 0.75rem 1.5rem; /* px-6 py-3 */
+    color: white;
+    font-weight: 700;
+    border-radius: 1rem; /* rounded-2xl */
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    box-shadow: 0 0 15px -3px rgba(0,150,214,0.3); /* shadow-premium-glow */
+    background-color: var(--hp-blue);
+  }
+  .btn-hp-primary:hover {
+    transform: scale(1.02);
+    background-color: var(--hp-blue-vibrant);
+  }
+  .btn-hp-primary:active {
+    transform: scale(0.98);
   }
 
   .scrollbar-premium {
@@ -45,13 +73,147 @@
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
   }
 
+  /* DateRangePicker Premium Styles */
+  .date-range-picker__button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .date-range-picker__button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--hp-blue-vibrant);
+  }
+
+  .date-range-picker__popover {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 50;
+    background: var(--hp-darker);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    padding: 1rem;
+    min-width: 480px;
+  }
+
+  .date-range-picker__layout {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .date-range-picker__presets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 140px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    padding-right: 1rem;
+  }
+
+  .date-range-picker__preset-button {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .date-range-picker__preset-button:hover {
+    background: rgba(0, 150, 214, 0.1);
+    color: var(--hp-blue-vibrant);
+  }
+
+  .date-range-picker__calendar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .date-range-picker__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .date-range-picker__cancel-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    border-radius: 0.75rem;
+  }
+
+  .date-range-picker__apply-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--hp-blue-vibrant);
+    color: white;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .date-range-picker__apply-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .scrollbar-premium::-webkit-scrollbar {
     width: 6px;
   }
 
   .scrollbar-premium::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+    background-color: rgba(255, 255, 255, 0.1); /* bg-white/10 */
+    border-radius: 9999px; /* rounded-full */
   }
+  .scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2); /* bg-white/20 */
+  }
+
+  .report-only-section {
+    display: none !important;
+  }
+}
+
+@media print {
+  .report-only-section {
+    display: block !important;
+  }
+}
+
+/* Show PDF-only sections in the html2canvas clone used by useExportPdf */
+body.is-exporting .report-only-section {
+  display: block !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @layer utilities {
@@ -66,24 +228,4 @@
   .animate-scale-in {
     animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
 }
-
-/* Global utility for HP Brand colors in Tailwind */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;

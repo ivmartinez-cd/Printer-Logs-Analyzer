@@ -150,7 +150,7 @@ export function DashboardAnalyticView({
         <div className="bg-hp-blue/10 border border-hp-blue/20 p-6 rounded-[2rem] animate-fade-in-up shadow-premium-glow" role="status">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <h3 className="font-display font-bold text-xl text-white mb-2">✨ Nuevos códigos detectados</h3>
+              <h3 className="font-display font-bold text-xl text-white mb-2">✨ Se detectaron nuevos códigos</h3>
               <p className="text-slate-400 text-sm">
                 Se encontraron <strong>{codesNew.length}</strong> códigos que no están en el catálogo maestro.
               </p>
@@ -235,7 +235,7 @@ export function DashboardAnalyticView({
               <div className="w-2 h-8 bg-hp-blue-vibrant rounded-full shadow-premium-glow" />
               <div>
                 <h2 className="font-display text-2xl font-bold tracking-tight text-white m-0">
-                  Panel de Análisis
+                  Panel de errores y análisis
                 </h2>
                 {currentModelName && (
                   <p className="text-xs font-semibold text-slate-500 mt-0.5 uppercase tracking-widest">
@@ -315,11 +315,12 @@ export function DashboardAnalyticView({
 
           {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
-            <div ref={refs.areaChartRef} className="glass-card p-6 rounded-3xl group">
-              <div className="flex items-center justify-between mb-6">
+            <div ref={refs.areaChartRef} className="glass-card p-6 rounded-3xl group h-[500px] flex flex-col">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display font-bold text-slate-200">Cronología de Eventos</h3>
               </div>
-              <IncidentsChart
+              <div className="flex-1 min-h-0">
+                <IncidentsChart
                 events={result.events}
                 activeFilter={activeFilter}
                 visibleSeverities={visibleSeverities}
@@ -332,10 +333,13 @@ export function DashboardAnalyticView({
                   })
                 }
               />
+              </div>
             </div>
-            <div ref={refs.barChartRef} className="glass-card p-6 rounded-3xl">
-               <h3 className="font-display font-bold text-slate-200 mb-6">Top Eventos Críticos</h3>
-              <TopErrorsChart topCodes={getTopIncidentsForChart(result.incidents, result.events, activeFilter, 5)} />
+            <div ref={refs.barChartRef} className="glass-card p-6 rounded-3xl h-[500px] flex flex-col">
+               <h3 className="font-display font-bold text-slate-200 mb-4">Top Eventos Críticos</h3>
+               <div className="flex-1 min-h-0">
+                  <TopErrorsChart topCodes={getTopIncidentsForChart(result.incidents, result.events, activeFilter, 5)} />
+               </div>
             </div>
           </div>
 

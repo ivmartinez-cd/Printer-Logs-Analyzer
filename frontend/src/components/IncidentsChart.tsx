@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import type { EnrichedEvent as ApiEvent } from '../types/api'
@@ -222,22 +221,22 @@ export function IncidentsChart({
         </div>
       </div>
 
-      <div className="flex-1 min-h-[300px] w-full relative">
+      <div className="flex-1 w-full relative">
         {volumeData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={volumeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={volumeData} margin={{ top: 10, right: 10, left: -20, bottom: 30 }}>
               <defs>
                 <linearGradient id="colorError" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#fb7185" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#fb7185" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#fb7185" stopOpacity={0.65}/>
+                  <stop offset="95%" stopColor="#fb7185" stopOpacity={0.05}/>
                 </linearGradient>
                 <linearGradient id="colorWarning" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.45}/>
+                  <stop offset="95%" stopColor="#fbbf24" stopOpacity={0.03}/>
                 </linearGradient>
                 <linearGradient id="colorInfo" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.02}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} vertical={false} />
@@ -271,15 +270,14 @@ export function IncidentsChart({
                 )}
                 cursor={{ stroke: '#ffffff', strokeOpacity: 0.1, strokeWidth: 1 }}
               />
-              {visibleSeverities.has('ERROR') && (
+              {visibleSeverities.has('INFO') && (
                 <Area
                   type="monotone"
-                  dataKey="ERROR"
-                  stackId="1"
-                  stroke="#fb7185"
-                  strokeWidth={2}
+                  dataKey="INFO"
+                  stroke="#38bdf8"
+                  strokeWidth={1.5}
                   fillOpacity={1}
-                  fill="url(#colorError)"
+                  fill="url(#colorInfo)"
                   animationDuration={1500}
                 />
               )}
@@ -287,7 +285,6 @@ export function IncidentsChart({
                 <Area
                   type="monotone"
                   dataKey="WARNING"
-                  stackId="1"
                   stroke="#fbbf24"
                   strokeWidth={2}
                   fillOpacity={1}
@@ -295,15 +292,14 @@ export function IncidentsChart({
                   animationDuration={1500}
                 />
               )}
-              {visibleSeverities.has('INFO') && (
+              {visibleSeverities.has('ERROR') && (
                 <Area
                   type="monotone"
-                  dataKey="INFO"
-                  stackId="1"
-                  stroke="#38bdf8"
-                  strokeWidth={2}
+                  dataKey="ERROR"
+                  stroke="#fb7185"
+                  strokeWidth={2.5}
                   fillOpacity={1}
-                  fill="url(#colorInfo)"
+                  fill="url(#colorError)"
                   animationDuration={1500}
                 />
               )}
@@ -316,7 +312,5 @@ export function IncidentsChart({
         )}
       </div>
     </div>
-  )
-}
   )
 }

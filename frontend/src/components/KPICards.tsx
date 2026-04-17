@@ -1,5 +1,4 @@
 import type { EnrichedEvent as ApiEvent, Incident as ApiIncident } from '../types/api'
-import styles from './KPICards.module.css'
 
 interface KPICardsProps {
   filteredIncidents: ApiIncident[]
@@ -67,27 +66,27 @@ export function KPICards({
   const errorRate = computeErrorRate(filteredEvents)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up">
       {/* Estado de Errores */}
       <Card 
         label="Estado de errores"
         sub="crítico · advertencia · info"
       >
-        <div className="flex items-center gap-3 font-display text-2xl font-bold tracking-tight">
-          <span className="text-accent-rose" data-testid="kpi-error-count">{errorCount}</span>
-          <span className="text-white/20 select-none">·</span>
-          <span className="text-accent-amber">{warningCount}</span>
-          <span className="text-white/20 select-none">·</span>
-          <span className="text-hp-blue-vibrant">{infoCount}</span>
+        <div className="flex items-baseline gap-2 font-display font-black tracking-tighter">
+          <span className="text-5xl text-accent-rose" data-testid="kpi-error-count">{errorCount}</span>
+          <span className="text-white/10 select-none text-3xl">·</span>
+          <span className="text-4xl text-accent-amber">{warningCount}</span>
+          <span className="text-white/10 select-none text-2xl">·</span>
+          <span className="text-3xl text-hp-blue-vibrant">{infoCount}</span>
         </div>
       </Card>
 
       {/* Incidencias Activas */}
       <Card 
         label="Incidencias Activas"
-        sub="incidentes detectados en el log"
+        sub="en el período analizado"
       >
-        <div className="font-display text-3xl font-bold tracking-tight text-white" data-testid="kpi-active-incidents">
+        <div className="font-display text-6xl font-black tracking-tighter text-white" data-testid="kpi-active-incidents">
           {filteredIncidents.length}
         </div>
       </Card>
@@ -95,14 +94,14 @@ export function KPICards({
       {/* Último error crítico */}
       <Card 
         label="Último error crítico"
-        sub={lastErrorEvent ? `${lastErrorLabel} · registrado` : 'Ningún error registrado'}
+        sub={lastErrorEvent ? `${lastErrorLabel?.split(',')[1] || ''} · REGISTRADO` : 'SIN ERRORES REGISTRADOS'}
       >
         {lastErrorEvent ? (
-          <div className="font-display text-3xl font-bold tracking-tight text-accent-rose" data-testid="kpi-last-error-code">
+          <div className="font-display text-5xl font-black tracking-tighter text-accent-rose uppercase" data-testid="kpi-last-error-code">
             {lastErrorEvent.code}
           </div>
         ) : (
-          <div className="font-display text-xl font-bold text-accent-emerald">
+          <div className="font-display text-2xl font-black text-accent-emerald uppercase opacity-60">
             Sin errores
           </div>
         )}
@@ -114,9 +113,9 @@ export function KPICards({
         sub={errorRate.sub}
       >
         <div 
-          className="font-display font-bold tracking-tight"
+          className="font-display font-black tracking-tighter"
           style={{ 
-            fontSize: errorRate.label === '—' ? '24px' : '1.1rem',
+            fontSize: errorRate.label === '—' ? '24px' : '2.2rem',
             color: errorRate.labelColor || 'inherit'
           }}
         >
@@ -129,14 +128,14 @@ export function KPICards({
 
 function Card({ label, sub, children }: { label: string; sub: string; children: React.ReactNode }) {
   return (
-    <div className="glass-card glass-card--hover p-5 rounded-2xl flex flex-col gap-3">
-      <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+    <div className="glass-card glass-card--hover p-6 rounded-3xl flex flex-col gap-2 min-h-[160px]">
+      <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
         {label}
       </div>
       <div className="flex-1 flex items-center">
         {children}
       </div>
-      <div className="text-[11px] font-medium text-slate-600 truncate">
+      <div className="text-[10px] font-bold text-slate-600 truncate uppercase tracking-wider">
         {sub}
       </div>
     </div>

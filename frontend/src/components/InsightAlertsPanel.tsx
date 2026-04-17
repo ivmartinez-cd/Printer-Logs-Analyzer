@@ -1,6 +1,32 @@
 import { useState } from 'react'
 import type { DeviceAlertsResponse, InsightAlert } from '../types/api'
 
+const ALERT_CLASS_LABEL: Record<string, string> = {
+  '1': 'Consumible',
+  '2': 'Hardware',
+  '3': 'Papelería',
+  '4': 'Comunicación',
+  '5': 'General',
+  '6': 'Accesorio',
+  '7': 'Mantenimiento',
+  'Consumable': 'Consumible',
+  'Hardware': 'Hardware',
+  'PaperPath': 'Papelería',
+  'System': 'Sistema',
+}
+
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
+  return d.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 function SeverityBadge({ level }: { level: number }) {
   const label = level >= 4 ? 'Crítico' : level >= 3 ? 'Moderado' : 'Bajo'
   return (
@@ -92,19 +118,19 @@ export function InsightAlertsPanel({ serial, data, loading, error }: InsightAler
     <div className={`glass-card rounded-3xl overflow-hidden shadow-premium-md animate-fade-in-up border-l-4 transition-all ${hasActiveAlert ? 'border-l-accent-rose' : 'border-l-hp-blue/40'}`}>
       <button
         type="button"
-        className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/[0.08] transition-all group"
+        className="w-full flex items-center justify-between px-5 py-3 bg-white/5 hover:bg-white/[0.08] transition-all group"
         onClick={() => setCollapsed((c) => !c)}
         aria-expanded={!collapsed}
       >
         <div className="flex items-center gap-3">
-          <span className={`text-xl transition-transform duration-500 ${hasActiveAlert ? 'animate-pulse scale-110' : 'group-hover:scale-110'}`}>
+          <span className={`text-lg transition-transform duration-500 ${hasActiveAlert ? 'animate-pulse scale-110' : 'group-hover:scale-110'}`}>
             {hasActiveAlert ? '🔔' : '🔕'}
           </span>
-          <span className="font-display font-bold text-lg text-white">Alertas del portal SDS</span>
-          {serial && <span className="text-xs font-semibold text-hp-blue-vibrant opacity-60">· {serial}</span>}
-          {!loading && data && <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">({totalAlerts})</span>}
+          <span className="font-display font-bold text-sm text-white uppercase tracking-tight">Alertas del portal SDS</span>
+          {serial && <span className="text-[10px] font-bold text-hp-blue-vibrant opacity-60">· {serial}</span>}
+          {!loading && data && <span className="text-[9px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">({totalAlerts})</span>}
         </div>
-        <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90' : ''}`}>
+        <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90 text-[10px]' : 'text-[10px]'}`}>
            ▶
         </span>
       </button>
@@ -169,7 +195,5 @@ export function InsightAlertsPanel({ serial, data, loading, error }: InsightAler
         </div>
       )}
     </div>
-  )
-}
   )
 }

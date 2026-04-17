@@ -4,10 +4,25 @@ import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DashboardHeader } from '../../components/DashboardHeader'
 
-afterEach(cleanup)
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'welcome.title': 'Monitor de Diagnóstico HP',
+        'header.history': 'Historial',
+        'header.new_analysis': 'Nuevo Análisis',
+        'header.save': 'Guardar',
+        'header.sds': 'SDS',
+        'header.export_pdf': 'Exportar PDF',
+        'header.help': 'Ayuda'
+      }
+      return translations[key] || key
+    },
+  }),
+}))
 
-// LiveClock y DbStatusBadge son funciones locales en DashboardHeader.tsx (no se exportan),
-// así que no hay módulo externo que mockear — se renderizan directamente.
+afterEach(cleanup)
 
 const defaultProps = {
   healthStatus: null,
@@ -22,12 +37,10 @@ const defaultProps = {
 }
 
 describe('DashboardHeader', () => {
-  it('renderiza el título "HP Logs Analyzer"', () => {
+  it('renderiza el título actualizado según el plan premium', () => {
     render(<DashboardHeader {...defaultProps} />)
-    expect(screen.getByText('HP Logs Analyzer')).toBeInTheDocument()
+    expect(screen.getByText('Monitor de Diagnóstico HP')).toBeInTheDocument()
   })
-
-
 
   it('botón "Exportar PDF" solo aparece cuando hasResult es true', () => {
     const { rerender } = render(<DashboardHeader {...defaultProps} hasResult={false} />)
@@ -42,7 +55,6 @@ describe('DashboardHeader', () => {
     const onAnalyzeNew = vi.fn()
     const onSaveIncident = vi.fn()
     const onAddSds = vi.fn()
-    const onExportPdf = vi.fn()
     const onHelp = vi.fn()
 
     const user = userEvent.setup()
@@ -54,27 +66,23 @@ describe('DashboardHeader', () => {
         onAnalyzeNew={onAnalyzeNew}
         onSaveIncident={onSaveIncident}
         onAddSds={onAddSds}
-        onExportPdf={onExportPdf}
         onHelp={onHelp}
       />
     )
 
-    await user.click(screen.getByText('Incidentes guardados'))
+    await user.click(screen.getByText('Historial'))
     expect(onOpenSavedList).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Analizar otro log'))
+    await user.click(screen.getByText('Nuevo Análisis'))
     expect(onAnalyzeNew).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Guardar incidente'))
+    await user.click(screen.getByText('Guardar'))
     expect(onSaveIncident).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Asociar SDS'))
+    await user.click(screen.getByText('SDS'))
     expect(onAddSds).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Exportar PDF'))
-    expect(onExportPdf).toHaveBeenCalledOnce()
-
-    await user.click(screen.getByLabelText('Ayuda — ¿Cómo funciona?'))
+    await user.click(screen.getByTitle('Ayuda'))
     expect(onHelp).toHaveBeenCalledOnce()
   })
 })

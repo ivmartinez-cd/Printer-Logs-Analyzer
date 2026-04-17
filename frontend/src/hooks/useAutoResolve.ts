@@ -5,7 +5,7 @@ import { useUIStore } from '../store/useUIStore'
 import { useToast } from '../contexts/ToastContext'
 
 export function useAutoResolve() {
-  const toast = useToast()
+  const { showWarning, showError } = useToast()
   const setError = useAnalysisStore((s) => s.setError)
   const handleAnalyze = useAnalysisStore((s) => s.handleAnalyze)
   const setLogModalOpen = useUIStore((s) => s.setLogModalOpen)
@@ -25,27 +25,27 @@ export function useAutoResolve() {
       const sdsRes = await extractSdsLogs(serial)
       setCurrentSerialNumber(serial)
       setCurrentModelName(sdsRes.model_name_sds)
-      
+
       if (sdsRes.suggested_model_id) {
         setCurrentModelId(sdsRes.suggested_model_id)
         setCurrentModelHasCpmd(sdsRes.has_cpmd)
       } else {
-        toast.showWarning(`Modelo detectado: ${sdsRes.model_name_sds}. No se encontró coincidencia exacta.`)
+        showWarning(`Modelo detectado: ${sdsRes.model_name_sds}. No se encontró coincidencia exacta.`)
       }
-      
+
       setRealtimeConsumables(sdsRes.realtime_consumables || [])
-      
+
       if (!sdsRes.logs_text) {
         throw new Error('No se encontraron logs.')
       }
-      
+
       await handleAnalyze(sdsRes.logs_text, `Portal_SDS_${serial}.tsv`, sdsRes.suggested_model_id)
     } catch (e: any) {
-      toast.showError(e.message)
+      showError(e.message)
     } finally {
       setAutoExtracting(false)
     }
-  }, [handleAnalyze, setError, setLogModalOpen, toast])
+  }, [handleAnalyze, setError, setLogModalOpen, showWarning, showError])
 
   return {
     autoExtracting,

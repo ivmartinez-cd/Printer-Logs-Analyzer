@@ -38,12 +38,12 @@ export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
 
   return (
     <div className="flex flex-col h-full animate-fade-in-up">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-hp-blue-vibrant mb-1">Impacto Acumulado</span>
-          <h3 className="font-display font-bold text-lg text-white m-0">Top Errores</h3>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col flex-shrink-0 min-w-0">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-hp-blue-vibrant mb-1 whitespace-nowrap">Impacto Acumulado</span>
+          <h3 className="font-display font-bold text-xl text-white m-0 leading-tight whitespace-nowrap">Errores más frecuentes</h3>
         </div>
-        <div className="flex p-1 bg-white/5 rounded-xl border border-white/5">
+        <div className="flex p-1 bg-white/[0.08] rounded-xl border border-white/10 w-fit">
           {(
             [
               ['ERROR', '#fb7185'],
@@ -70,7 +70,7 @@ export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
         </div>
       </div>
 
-      <div className="flex-1 min-h-[300px] w-full relative">
+      <div className="flex-1 w-full relative">
         <div className="absolute inset-0">
           {activeSeverities.size === 0 ? (
             <div className="flex items-center justify-center h-full opacity-30 italic text-sm text-slate-400">
@@ -81,8 +81,8 @@ export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
               <BarChart
                 data={filteredCodes}
                 layout="vertical"
-                margin={{ top: 0, right: 40, left: 0, bottom: 0 }}
-                barSize={16}
+                margin={{ top: 0, right: 40, left: 0, bottom: 40 }}
+                barSize={32}
                 barGap={8}
               >
                 <defs>
@@ -134,12 +134,11 @@ export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
                     return null;
                   }}
                 />
-                <Bar dataKey="count" radius={[0, 10, 10, 0]} animationDuration={1000}>
+                <Bar dataKey="count" radius={[0, 10, 10, 0]} animationDuration={1000} barSize={24}>
                   {filteredCodes.map((entry, index) => {
                     const sev = (entry.severity ?? '').toUpperCase();
-                    const fill = sev === 'ERROR' ? 'url(#barError)' : sev === 'WARNING' ? 'url(#barWarning)' : 'url(#barInfo)';
-                    const stroke = sev === 'ERROR' ? '#fb7185' : sev === 'WARNING' ? '#fbbf24' : '#38bdf8';
-                    return <Cell key={`cell-${index}`} fill={fill} stroke={stroke} strokeWidth={1} strokeOpacity={0.3} />;
+                    const fill = sev === 'ERROR' ? '#fb7185' : sev === 'WARNING' ? '#fbbf24' : '#38bdf8';
+                    return <Cell key={`cell-${index}`} fill={fill} />;
                   })}
                 </Bar>
               </BarChart>
@@ -152,7 +151,5 @@ export function TopErrorsChart({ topCodes }: TopErrorsChartProps) {
         </div>
       </div>
     </div>
-  )
-}
   )
 }

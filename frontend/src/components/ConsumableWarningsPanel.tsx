@@ -40,17 +40,17 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
     <div className={`glass-card rounded-3xl overflow-hidden shadow-premium-md animate-fade-in-up border-l-4 ${hasAlert ? 'border-l-accent-rose' : 'border-l-hp-blue-vibrant'}`}>
       <button
         type="button"
-        className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/[0.08] transition-all group"
+        className="w-full flex items-center justify-between px-5 py-3 bg-white/5 hover:bg-white/[0.08] transition-all group"
         onClick={() => setCollapsed((c) => !c)}
         aria-expanded={!collapsed}
       >
         <div className="flex items-center gap-3">
-          <span className={`text-xl transition-transform duration-500 ${hasAlert ? 'animate-pulse scale-110' : 'group-hover:scale-110'}`}>
+          <span className={`text-lg transition-transform duration-500 ${hasAlert ? 'animate-pulse scale-110' : 'group-hover:scale-110'}`}>
             {hasAlert ? '🚨' : '⚙️'}
           </span>
-          <span className="font-display font-bold text-lg text-white">Estado de consumibles en tiempo real ({warnings.length})</span>
+          <span className="font-display font-bold text-sm text-white uppercase tracking-tight">Estado de consumibles en tiempo real ({warnings.length})</span>
         </div>
-        <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90' : ''}`}>
+        <span className={`text-slate-500 group-hover:text-white transition-all transform duration-300 ${!collapsed ? 'rotate-90 text-[10px]' : 'text-[10px]'}`}>
            ▶
         </span>
       </button>
@@ -131,7 +131,5 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
         </div>
       )}
     </div>
-  )
-}
   )
 }

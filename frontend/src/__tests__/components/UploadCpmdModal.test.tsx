@@ -40,7 +40,7 @@ describe('UploadCpmdModal', () => {
       />
     )
     expect(screen.getByText(MODEL_NAME)).toBeInTheDocument()
-    expect(screen.getByText('Elegir PDF…')).toBeInTheDocument()
+    expect(screen.getByText('Elegir Archivo')).toBeInTheDocument()
   })
 
   it('rejects files over 20 MB', async () => {
@@ -78,7 +78,7 @@ describe('UploadCpmdModal', () => {
     fireEvent.change(input, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(screen.getByText(/procesando cpmd con ia/i)).toBeInTheDocument()
+      expect(screen.getByText(/Ingesta de Inteligencia/i)).toBeInTheDocument()
     })
   })
 
@@ -105,9 +105,9 @@ describe('UploadCpmdModal', () => {
     fireEvent.change(input, { target: { files: [makeFile('cpmd.pdf', 1024)] } })
 
     await waitFor(() => {
-      expect(screen.getByText(/8 soluciones cargadas/i)).toBeInTheDocument()
+      expect(screen.getByText(/8 soluciones técnicas/i)).toBeInTheDocument()
     })
-    expect(screen.getByText(/2 no se pudieron extraer/i)).toBeInTheDocument()
+    expect(screen.getByText(/fueron omitidas/i)).toBeInTheDocument()
     expect(onSuccess).toHaveBeenCalledTimes(1)
   })
 
@@ -134,7 +134,7 @@ describe('UploadCpmdModal', () => {
     fireEvent.change(input, { target: { files: [makeFile('cpmd.pdf', 1024)] } })
 
     await waitFor(() => {
-      expect(screen.getByText(/ya fue procesado anteriormente/i)).toBeInTheDocument()
+      expect(screen.getByText(/ya ha sido indexado previamente/i)).toBeInTheDocument()
     })
   })
 
@@ -159,7 +159,7 @@ describe('UploadCpmdModal', () => {
     expect(retryBtn).toBeInTheDocument()
     // Clicking retry goes back to idle (shows file picker again)
     fireEvent.click(retryBtn)
-    expect(screen.getByText('Elegir PDF…')).toBeInTheDocument()
+    expect(screen.getByText('Elegir Archivo')).toBeInTheDocument()
   })
 
   it('cancel button calls onClose in idle state', () => {

@@ -85,14 +85,16 @@ export function SolutionContentModal({
 
         {/* Tab Strip */}
         {showTabs && (
-          <div className="flex items-center bg-white/[0.02] border-b border-white/5 px-2">
+          <div className="flex items-center bg-white/[0.02] border-b border-white/5 px-2" role="tablist">
             {[
               { id: 'cpmd', label: 'Manual de Servicio (CPMD)', icon: '📘' },
-              { id: 'sds', label: 'Diagnostico Remoto (SDS)', icon: '📡' }
+              { id: 'sds', label: 'Diagnóstico Remoto (SDS)', icon: '📡' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
                 className={`relative px-6 py-4 text-[11px] font-bold uppercase tracking-widest transition-all hover:text-white ${
                   activeTab === tab.id ? 'text-white' : 'text-slate-500'
                 }`}

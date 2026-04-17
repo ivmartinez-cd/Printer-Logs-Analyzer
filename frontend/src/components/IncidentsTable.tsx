@@ -101,6 +101,7 @@ export function IncidentsTable({
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Severidad:</span>
             <select
+              aria-label="Filtrar por severidad"
               className="bg-hp-dark/40 border border-white/10 rounded-lg text-xs py-1.5 px-3 text-slate-300 focus:border-hp-blue-vibrant transition-all"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
@@ -115,6 +116,7 @@ export function IncidentsTable({
              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Buscar:</span>
              <input
               type="search"
+              aria-label="Buscar en código o clasificación"
               className="bg-hp-dark/40 border border-white/10 rounded-lg text-xs py-1.5 px-3 text-slate-300 w-48 focus:border-hp-blue-vibrant transition-all"
               placeholder="Código o descripción..."
               value={searchFilter}
@@ -163,6 +165,7 @@ export function IncidentsTable({
                     <td className="p-4">
                       <button
                         type="button"
+                        aria-label={isExpanded ? 'Contraer detalle' : 'Expandir detalle'}
                         className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${isExpanded ? 'bg-hp-blue-vibrant text-white shadow-premium-glow rotate-90' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
                         onClick={() => toggleIncident(inc.id)}
                       >
@@ -176,7 +179,7 @@ export function IncidentsTable({
                         onClick={() => onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link)}
                       >
                         {inc.code}
-                        {hasCpmdModel && <span className="text-xs" title="Solución CPMD">📘</span>}
+                        {hasCpmdModel && <span className="text-xs" title="Solución CPMD" aria-label="Solución CPMD disponible">📘</span>}
                       </button>
                     </td>
                     <td className="p-4 text-xs text-slate-400 font-medium max-w-[200px] truncate" title={inc.classification}>
@@ -202,7 +205,7 @@ export function IncidentsTable({
                             className="text-[10px] font-bold text-hp-blue-vibrant hover:underline uppercase tracking-wide"
                             onClick={() => onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link)}
                           >
-                            Ver Solución
+                            Ver solución
                           </button>
                         ) : null}
                         <button
@@ -210,6 +213,7 @@ export function IncidentsTable({
                           className="p-1.5 rounded-lg bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 transition-all"
                           onClick={() => onEditCode(inc.code, inc.classification || '', inc.severity || 'INFO', inc.sds_link || '')}
                           title="Editar código"
+                          aria-label="Editar código"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                             <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5M18.364 4.636a2 2 0 0 1 2.828 2.828l-10.121 10.121-4 1 1-4 10.121-10.121z" />

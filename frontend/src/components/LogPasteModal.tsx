@@ -37,73 +37,6 @@ export function LogPasteModal({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-
-  useEffect(() => {
-    textareaRef.current?.focus()
-  }, [])
-
-  // Fetch models on mount
-  useEffect(() => {
-    listPrinterModels()
-      .then(setModels)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (!loading || !serverWasCold) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSlowWarning(false)
-      return
-    }
-    const id = setTimeout(() => setSlowWarning(true), 3000)
-    return () => clearTimeout(id)
-  }, [loading, serverWasCold])
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string
-      setLogText(text)
-      setFileName(file.name)
-      textareaRef.current?.focus()
-    }
-    reader.readAsText(file)
-  }
-
-  async function handleUploadSuccess(response: UploadPdfResponse) {
-    setAddModelOpen(false)
-    const updatedModels = await listPrinterModels().catch(() => models)
-    setModels(updatedModels)
-    if (response.created.length > 0) {
-      const firstCreated = updatedModels.find((m) => response.created.includes(m.model_code))
-      if (firstCreated) setSelectedModelId(firstCreated.id)
-      setModelSuccessMsg(`Modelo cargado: ${response.created.join(', ')}`)
-    }
-  }
-
-
-
-export function LogPasteModal({
-  loading,
-  error,
-  serverWasCold,
-  onAnalyze,
-  onClose,
-}: LogPasteModalProps) {
-  const [logText, setLogText] = useState('')
-  const [fileName, setFileName] = useState<string | undefined>(undefined)
-  const [slowWarning, setSlowWarning] = useState(false)
-  const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
-  const [serialNumber, setSerialNumber] = useState('')
-  const [models, setModels] = useState<PrinterModel[]>([])
-  const [addModelOpen, setAddModelOpen] = useState(false)
-  const [modelSuccessMsg, setModelSuccessMsg] = useState<string | null>(null)
-  const [manualExpanded, setManualExpanded] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
@@ -207,7 +140,7 @@ export function LogPasteModal({
                     onClick={() => onAnalyze('', undefined, null, false, serialNumber.trim(), true)}
                     disabled={loading || serialNumber.length < 5}
                   >
-                    🚀 Extraer y Analizar
+                    🚀 Procesar Análisis
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium mt-3 leading-relaxed border-t border-white/5 pt-3 italic">
@@ -227,7 +160,7 @@ export function LogPasteModal({
                 className="relative z-10 px-6 py-2 bg-hp-dark border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:text-white hover:border-white/20 transition-all flex items-center gap-3 group"
               >
                 <span>{manualExpanded ? '−' : '+'}</span>
-                <span className="uppercase tracking-widest">{manualExpanded ? 'Ocultar' : 'Mostrar'} Ingesta Manual</span>
+                <span className="uppercase tracking-widest">{manualExpanded ? 'Ocultar' : 'Mostrar'} Ingesta de Telemetría</span>
                 <span className="opacity-30 group-hover:translate-x-1 transition-transform">→</span>
               </button>
             </div>
@@ -335,7 +268,7 @@ export function LogPasteModal({
                     }}
                     disabled={loading || !logText.trim() || selectedModelId === null}
                   >
-                    {loading ? 'Sincronizando...' : 'Ejecutar Análisis Manual'}
+                    {loading ? 'Sincronizando...' : '🚀 Procesar Análisis'}
                   </button>
                 </div>
               </div>

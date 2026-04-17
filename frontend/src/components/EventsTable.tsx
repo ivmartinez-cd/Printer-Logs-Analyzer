@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { EnrichedEvent as ApiEvent } from '../types/api'
 import { formatDateTime } from '../hooks/useDateFilter'
-import styles from './EventsTable.module.css'
 
 interface EventsTableProps {
   events: ApiEvent[]
@@ -65,6 +64,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
     <div className="glass-card rounded-3xl overflow-hidden shadow-premium-md animate-fade-in-up">
       <button
         type="button"
+        aria-label="Alternar visualización de eventos"
         className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/[0.08] transition-all group"
         onClick={() => setIsCollapsed((c) => !c)}
       >
@@ -84,6 +84,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Severidad:</span>
                 <select
+                  aria-label="Filtrar por severidad"
                   className="bg-hp-dark/40 border border-white/10 rounded-lg text-xs py-1.5 px-3 text-slate-300 focus:border-hp-blue-vibrant transition-all"
                   value={severityFilter}
                   onChange={(e) => setSeverityFilter(e.target.value)}
@@ -98,6 +99,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Buscar:</span>
                  <input
                   type="search"
+                  aria-label="Buscar en código o mensaje"
                   className="bg-hp-dark/40 border border-white/10 rounded-lg text-xs py-1.5 px-3 text-slate-300 w-48 focus:border-hp-blue-vibrant transition-all"
                   placeholder="Código o mensaje..."
                   value={searchFilter}
@@ -170,7 +172,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                               onViewSolution(evt.code, evt.code_solution_content, evt.code_solution_url)
                             }
                           >
-                            Ver Solución
+                            Ver solución
                           </button>
                         ) : (
                           <span className="text-slate-700 text-xs">—</span>
@@ -185,7 +187,5 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
         </div>
       )}
     </div>
-  )
-}
   )
 }

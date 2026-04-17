@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { HealthStatus } from '../services/api'
 import { DbStatusBadge } from './DbStatusBadge'
 
@@ -38,6 +39,8 @@ export function DashboardHeader({
   onExportPdf,
   onHelp,
 }: DashboardHeaderProps) {
+  const { t } = useTranslation()
+
   return (
     <header className="glass-card flex items-center justify-between px-6 py-4 rounded-3xl sticky top-2 z-50 animate-fade-in-up">
       <div className="flex items-center gap-4">
@@ -58,7 +61,7 @@ export function DashboardHeader({
           </svg>
         </div>
         <h1 className="font-display text-xl font-bold tracking-tight text-white m-0">
-          HP Logs Analyzer
+          {t('welcome.title')}
         </h1>
       </div>
 
@@ -69,14 +72,14 @@ export function DashboardHeader({
             className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
             onClick={onOpenSavedList}
           >
-            Historial
+            {t('header.history')}
           </button>
           <button
             type="button"
             className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-hp-blue-vibrant/20 border border-hp-blue-vibrant/20 hover:bg-hp-blue-vibrant/30 transition-all"
             onClick={onAnalyzeNew}
           >
-            Nuevo Análisis
+            {t('header.new_analysis')}
           </button>
         </div>
 
@@ -84,12 +87,12 @@ export function DashboardHeader({
           <div className="flex items-center gap-2 border-l border-white/10 pl-3 ml-1">
             <HeaderAction 
               icon="💾" 
-              label="Guardar" 
+              label={t('header.save')} 
               onClick={onSaveIncident} 
             />
             <HeaderAction 
               icon="🔗" 
-              label="SDS" 
+              label={t('header.sds')} 
               onClick={onAddSds} 
             />
             <button
@@ -98,7 +101,7 @@ export function DashboardHeader({
               onClick={onExportPdf}
               disabled={exportingPdf}
             >
-              {exportingPdf ? 'Generando...' : 'Exportar PDF'}
+              {exportingPdf ? t('header.generating') : t('header.export_pdf')}
             </button>
           </div>
         )}
@@ -110,7 +113,7 @@ export function DashboardHeader({
             type="button"
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-hp-blue-vibrant hover:border-hp-blue-vibrant/40 transition-all"
             onClick={onHelp}
-            title="Ayuda"
+            title={t('header.help')}
           >
              ?
           </button>

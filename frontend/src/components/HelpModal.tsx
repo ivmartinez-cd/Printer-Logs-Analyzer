@@ -86,7 +86,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 bg-green-400/5 border border-green-400/20 rounded-xl text-center">
                      <span className="block text-[8px] font-bold text-green-400 uppercase tracking-widest">Normal</span>
-                     <span className="text-[9px] text-slate-500">Uso < 80%</span>
+                     <span className="text-[9px] text-slate-500">Uso {'<'} 80%</span>
                   </div>
                   <div className="p-3 bg-accent-amber/5 border border-accent-amber/20 rounded-xl text-center">
                      <span className="block text-[8px] font-bold text-accent-amber uppercase tracking-widest">Atención</span>

@@ -21,6 +21,9 @@ export default {
           lighter: '#121216',
           surface: '#18181b',
         },
+        'hp-darker': '#050608',
+        'glass-bg': 'rgba(15, 18, 25, 0.7)',
+        'glass-border': 'rgba(255, 255, 255, 0.08)',
         slate: {
           850: '#1e293b', // Mapped from original
           950: '#020617',

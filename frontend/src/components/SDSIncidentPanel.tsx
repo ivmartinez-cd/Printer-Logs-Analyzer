@@ -304,6 +304,7 @@ export function SDSIncidentPanel({
     <div className="glass-card rounded-3xl overflow-hidden shadow-premium-md animate-fade-in-up">
       <button
         type="button"
+        data-testid="sds-incidents-panel-toggle"
         className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/[0.08] transition-all group"
         onClick={() => setCollapsed((v) => !v)}
         aria-expanded={!collapsed}
@@ -363,7 +364,5 @@ export function SDSIncidentPanel({
         </div>
       )}
     </div>
-  )
-}
   )
 }

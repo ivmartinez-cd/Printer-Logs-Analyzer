@@ -134,5 +134,3 @@ export function SDSIncidentModal({ onContinue, onClose }: SDSIncidentModalProps)
     </div>
   )
 }
-  )
-}

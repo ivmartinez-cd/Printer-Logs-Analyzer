@@ -96,12 +96,40 @@ export default function DashboardPage({
   const { exportingPdf, handleExportPDF, dashboardRef, executiveSummaryRef, aiDiagnosticRef, kpisRef, consumableRef, areaChartRef, barChartRef, incidentsTableRef } = useExportPdf(logFileName)
 
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const lastScrollY = useRef(0)
 
-  // Initialization effects
   useEffect(() => {
-    if (initialSerial && initialSerial !== sds.currentSerialNumber) sds.autoResolveAndAnalyze(initialSerial)
-    else if (!initialSerial && !initialAnalysisId) { sds.setCurrentSerialNumber(null); setResult(null) }
-  }, [initialSerial, initialAnalysisId, sds.autoResolveAndAnalyze, sds.setCurrentSerialNumber, setResult])
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      // Solo actuar si nos hemos movido más de 10px para evitar rebotes
+      if (Math.abs(currentScrollY - lastScrollY.current) < 10) return
+
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setHeaderVisible(false) // Bajando: ocultar
+      } else {
+        setHeaderVisible(true) // Subiendo: mostrar
+      }
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+  const autoResolveRef = useRef(sds.autoResolveAndAnalyze)
+  autoResolveRef.current = sds.autoResolveAndAnalyze
+
+  // Initialization effects — deps limited to URL-driven values to prevent spurious resets
+  useEffect(() => {
+    if (initialSerial) {
+      autoResolveRef.current(initialSerial)
+    } else if (!initialAnalysisId) {
+      // Only reset when there is genuinely nothing active (deep-link cleared or first mount at /)
+      sds.setCurrentSerialNumber(null)
+      setResult(null)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSerial, initialAnalysisId])
 
   useEffect(() => {
     if (initialAnalysisId && initialAnalysisId !== history.selectedSavedId) history.handleOpenDetail(initialAnalysisId)
@@ -147,17 +175,19 @@ export default function DashboardPage({
         </div>
       ) : (
         <div className="flex flex-col gap-8 max-w-[1600px] mx-auto w-full animate-fade-in">
-          <DashboardHeader
-            healthStatus={healthStatus}
-            hasResult={!!result}
-            exportingPdf={exportingPdf}
-            onOpenSavedList={history.handleOpenList}
-            onAnalyzeNew={() => setLogModalOpen(true)}
-            onSaveIncident={() => setSaveIncidentModalOpen(true)}
-            onAddSds={() => setSdsModalOpen(true)}
-            onExportPdf={() => handleExportPDF(!!result)}
-            onHelp={() => setHelpModalOpen(true)}
-          />
+          <div className={`sticky top-0 z-50 transition-all duration-500 transform ${headerVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+            <DashboardHeader
+              healthStatus={healthStatus}
+              hasResult={!!result}
+              exportingPdf={exportingPdf}
+              onOpenSavedList={history.handleOpenList}
+              onAnalyzeNew={() => setLogModalOpen(true)}
+              onSaveIncident={() => setSaveIncidentModalOpen(true)}
+              onAddSds={() => setSdsModalOpen(true)}
+              onExportPdf={() => handleExportPDF(!!result)}
+              onHelp={() => setHelpModalOpen(true)}
+            />
+          </div>
 
           <div className="transition-all duration-500">
             <HistoryView 

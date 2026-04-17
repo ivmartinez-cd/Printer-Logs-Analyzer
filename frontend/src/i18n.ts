@@ -8,9 +8,9 @@ const resources = {
       welcome: {
         title: 'HP Logs Analyzer',
         tagline: 'Advanced technical analysis of HP logs with intelligent error detection and real-time hardware status.',
-        cta_new: '🚀 Start New Analysis',
-        cta_saved: '📁 View Saved Logs',
-        cta_guide: '❓ Usage Guide',
+        cta_new: 'Start New Analysis',
+        cta_saved: 'View Saved Logs',
+        cta_guide: 'Usage Guide',
         capabilities: 'System Capabilities',
         feat_kpi_title: 'Severity KPIs',
         feat_kpi_desc: 'Accurate categorization of Errors, Warnings, and Info.',
@@ -32,11 +32,11 @@ const resources = {
   es: {
     translation: {
       welcome: {
-        title: 'HP Logs Analyzer',
+        title: 'Monitor de Diagnóstico HP',
         tagline: 'Análisis técnico avanzado de logs HP con detección inteligente de errores y estado de hardware en tiempo real.',
-        cta_new: '🚀 Iniciar Nuevo Análisis',
-        cta_saved: '📁 Ver Logs Guardados',
-        cta_guide: '❓ Guía de Uso',
+        cta_new: 'Analizar Nuevo',
+        cta_saved: 'Explorar Historial',
+        cta_guide: 'Guía de Uso',
         capabilities: 'Capacidades del Sistema',
         feat_kpi_title: 'KPIs de Severidad',
         feat_kpi_desc: 'Categorización precisa de Errores, Warnings e Información.',
@@ -52,6 +52,15 @@ const resources = {
         db_connected: 'DB conectada',
         db_offline: 'DB offline · modo local',
         connecting: 'Conectando al servidor...'
+      },
+      header: {
+        history: 'Historial',
+        new_analysis: 'Nuevo Análisis',
+        save: 'Guardar',
+        sds: 'SDS',
+        export_pdf: 'Exportar PDF',
+        generating: 'Generando...',
+        help: 'Ayuda'
       }
     }
   }

@@ -33,7 +33,7 @@ describe('SDSIncidentPanel', () => {
   it('se expande al hacer click en el header', () => {
     render(<SDSIncidentPanel sdsIncident={mockSdsIncident} incidentRows={mockIncidentRows} />)
     fireEvent.click(getHeaderButton())
-    expect(screen.getByText('Campo')).toBeInTheDocument()
+    expect(screen.getByText('Código')).toBeInTheDocument()
     // 60.00.02 aparece múltiples veces (Código y Contexto evento)
     expect(screen.getAllByText('60.00.02').length).toBeGreaterThanOrEqual(1)
   })
