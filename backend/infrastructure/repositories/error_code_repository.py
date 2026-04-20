@@ -21,7 +21,7 @@ from backend.infrastructure.database import Database, DatabaseUnavailableError
 #   → backend/data/error_codes_local.json                    (runtime writable copy)
 _FALLBACK_DIR = Path(__file__).parent.parent / "fallback"
 _SEED_PATH = _FALLBACK_DIR / "error_codes_seed.json"
-_LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "error_codes_local.json"
+_LOCAL_PATH = Path(__file__).parent.parent.parent.parent / "data" / "error_codes_local.json"
 
 _EPOCH = datetime(2000, 1, 1, tzinfo=timezone.utc)
 

@@ -8,21 +8,25 @@ from uuid import UUID
 from backend.domain.exceptions import ResourceNotFoundError
 from backend.infrastructure.database import Database, DatabaseUnavailableError
 
-T = TypeVar('T')
-ID_TYPE = TypeVar('ID_TYPE')
+T = TypeVar("T")
+ID_TYPE = TypeVar("ID_TYPE")
 
 _logger = logging.getLogger(__name__)
+
 
 class BaseRepository(ABC, Generic[T, ID_TYPE]):
     """
     Repositorio base genérico que implementa el patrón de fallback
     cuando la base de datos PostgreSQL/Neon no está disponible.
     """
+
     def __init__(self, database: Optional[Database] = None) -> None:
         self._db = database or Database()
-        self.resource_name = self.__class__.__name__.replace('Repository', '')
+        self.resource_name = self.__class__.__name__.replace("Repository", "")
 
-    def _execute_with_fallback(self, db_func: Callable[..., Any], local_func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    def _execute_with_fallback(
+        self, db_func: Callable[..., Any], local_func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         try:
             if not self._db:
                 raise DatabaseUnavailableError("No Database provided")
@@ -30,7 +34,9 @@ class BaseRepository(ABC, Generic[T, ID_TYPE]):
         except DatabaseUnavailableError:
             return local_func(*args, **kwargs)
 
-    def get_or_404(self, get_func: Callable[..., Optional[T]], resource_id: Any, *args: Any, **kwargs: Any) -> T:
+    def get_or_404(
+        self, get_func: Callable[..., Optional[T]], resource_id: Any, *args: Any, **kwargs: Any
+    ) -> T:
         """Intenta obtener un recurso y si no lo encuentra, lanza ResourceNotFoundError de la Fase 2."""
         result = get_func(*args, **kwargs)
         if not result:
@@ -41,26 +47,15 @@ class BaseRepository(ABC, Generic[T, ID_TYPE]):
 
     def get_by_id(self, entity_id: ID_TYPE) -> Optional[T]:
         """Obtiene una entidad por su ID principal."""
-        return self._execute_with_fallback(
-            self._get_by_id_db,
-            self._get_by_id_local,
-            entity_id
-        )
+        return self._execute_with_fallback(self._get_by_id_db, self._get_by_id_local, entity_id)
 
     def get_all(self) -> List[T]:
         """Obtiene todas las entidades."""
-        return self._execute_with_fallback(
-            self._get_all_db,
-            self._get_all_local
-        )
+        return self._execute_with_fallback(self._get_all_db, self._get_all_local)
 
     def delete(self, entity_id: ID_TYPE) -> int:
         """Elimina una entidad por ID, devuelve la cantidad de registros borrados."""
-        return self._execute_with_fallback(
-            self._delete_db,
-            self._delete_local,
-            entity_id
-        )
+        return self._execute_with_fallback(self._delete_db, self._delete_local, entity_id)
 
     # Métodos a implementar por los repositorios concretos
 

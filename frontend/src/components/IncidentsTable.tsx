@@ -18,14 +18,12 @@ export type IncidentRow = {
 
 interface IncidentsTableProps {
   incidentRows: IncidentRow[]
-  hasCpmdModel?: boolean
   onEditCode: (code: string, classification: string, severity: string, sdsLink: string) => void
   onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
 }
 
 export function IncidentsTable({
   incidentRows,
-  hasCpmdModel,
   onEditCode,
   onViewSolution,
 }: IncidentsTableProps) {
@@ -190,15 +188,6 @@ export function IncidentsTable({
                         title="Ver solución"
                       >
                         {inc.code}
-                        {hasCpmdModel && (
-                          <span
-                            className="dashboard-table__cpmd-badge"
-                            aria-label="Solución CPMD disponible"
-                            title="Tiene solución en CPMD"
-                          >
-                            📘
-                          </span>
-                        )}
                       </button>
                     </td>
                     <td
@@ -208,7 +197,7 @@ export function IncidentsTable({
                       {inc.classification || inc.code}
                     </td>
                     <td>
-                      <span className={`badge badge--${(inc.severity || 'info').toLowerCase()}`}>
+                      <span className={'badge badge--' + (inc.severity || 'info').toLowerCase()}>
                         {inc.severity}
                       </span>
                     </td>
@@ -218,7 +207,7 @@ export function IncidentsTable({
                     <td className="dashboard-table__cell-solution">
                       <span className="dashboard-table__cell-actions">
                         <span className="dashboard-table__cell-actions-left">
-                          {inc.sds_solution_content ? (
+                          {inc.sds_solution_content || inc.sds_link ? (
                             <button
                               type="button"
                               className="dashboard-table__solution-link"
@@ -228,18 +217,8 @@ export function IncidentsTable({
                             >
                               Ver solución
                             </button>
-                          ) : inc.sds_link ? (
-                            <a
-                              href={inc.sds_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="dashboard-table__solution-link"
-                              title="Este link puede haber vencido"
-                            >
-                              Ver solución ⚠
-                            </a>
                           ) : (
-                            <span className="dashboard-table__cell-actions-placeholder">—</span>
+                            <span className="dashboard-table__cell-actions-placeholder">Sin solución registrada</span>
                           )}
                         </span>
                         <button

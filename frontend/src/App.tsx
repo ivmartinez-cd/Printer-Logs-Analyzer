@@ -61,23 +61,35 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 interface LocationInfo {
   serial: string | null
   analysisId: string | null
+  isSavedList: boolean
+  isMonitor: boolean
 }
 
 function parseLocation(): LocationInfo {
   const path = window.location.pathname.slice(1) // remove leading /
   
-  // 1. Saved analysis: /analysis/[ID]
+  // 1. Saved analysis detail: /analysis/[ID]
   if (path.startsWith('analysis/')) {
     const id = path.split('/')[1]
-    return { serial: null, analysisId: id || null }
+    return { serial: null, analysisId: id || null, isSavedList: false, isMonitor: false }
   }
 
-  // 2. Serial: /[SERIAL]
+  // 2. Saved list: /saved-analyses
+  if (path === 'saved-analyses') {
+    return { serial: null, analysisId: null, isSavedList: true, isMonitor: false }
+  }
+
+  // 3. Monitor: /monitor
+  if (path === 'monitor') {
+    return { serial: null, analysisId: null, isSavedList: false, isMonitor: true }
+  }
+
+  // 4. Serial: /[SERIAL]
   if (path && /^[A-Z0-9]{5,20}$/i.test(path)) {
-    return { serial: path.toUpperCase(), analysisId: null }
+    return { serial: path.toUpperCase(), analysisId: null, isSavedList: false, isMonitor: false }
   }
 
-  return { serial: null, analysisId: null }
+  return { serial: null, analysisId: null, isSavedList: false, isMonitor: false }
 }
 
 function App() {
@@ -86,11 +98,12 @@ function App() {
   const [locationInfo, setLocationInfo] = useState<LocationInfo>(parseLocation)
 
   useEffect(() => {
-    // Escuchar cambios en la URL (Botón Atrás/Adelante)
+    // Escuchar cambios en la URL (Botón Atrás/Adelante y navegación interna)
     const handlePopState = () => {
       setLocationInfo(parseLocation())
     }
     window.addEventListener('popstate', handlePopState)
+    window.addEventListener('hp-navigation-change', handlePopState as EventListener)
 
     const start = Date.now()
     getHealth().then((h) => {
@@ -104,6 +117,7 @@ function App() {
     return () => {
       clearInterval(id)
       window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('hp-navigation-change', handlePopState as EventListener)
     }
   }, [])
 
@@ -115,11 +129,13 @@ function App() {
           healthStatus={healthStatus} 
           initialSerial={locationInfo.serial} 
           initialAnalysisId={locationInfo.analysisId}
+          initialIsSavedList={locationInfo.isSavedList}
+          initialIsMonitor={locationInfo.isMonitor}
         />
 
         <ToastContainer />
       </ToastProvider>
-      <Analytics />
+      {import.meta.env.VITE_VERCEL && <Analytics />}
     </ErrorBoundary>
   )
 }

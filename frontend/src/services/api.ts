@@ -7,10 +7,7 @@ import type {
   SavedAnalysisFull,
   CompareResponse,
   AIDiagnosisResponse,
-  PrinterModel,
-  UploadPdfResponse,
   ErrorSolution,
-  IngestReport,
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
   ResolveDeviceResponse,
@@ -76,10 +73,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 export async function previewLogs(
   logs: string,
-  modelId?: string | null,
+  modelFamily?: string | null,
   signal?: AbortSignal
 ): Promise<ParseLogsResponse> {
-  const body = modelId ? { logs, model_id: modelId } : { logs }
+  const body = modelFamily ? { logs, model_family: modelFamily } : { logs }
   const res = await apiFetch(`${API_BASE}/parser/preview`, {
     method: 'POST',
     headers: apiHeaders(),
@@ -128,6 +125,25 @@ export async function upsertErrorCode(
   })
   return handleResponse<UpsertErrorCodeResult>(res)
 }
+
+export interface SolutionProxyResult {
+  content: string | null
+  source: 'live' | 'cache'
+  url: string | null
+}
+
+export async function getSolutionProxy(
+  code: string,
+  signal?: AbortSignal
+): Promise<SolutionProxyResult> {
+  const res = await apiFetch(`${API_BASE}/error-codes/${encodeURIComponent(code)}/solution-proxy`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<SolutionProxyResult>(res)
+}
+
 
 // --- Saved analyses (incidents) ---
 
@@ -195,68 +211,15 @@ export async function deleteSavedAnalysis(id: string, signal?: AbortSignal): Pro
 
 // --- Modelos de impresora ---
 
-export async function listPrinterModels(signal?: AbortSignal): Promise<PrinterModel[]> {
-  const res = await apiFetch(`${API_BASE}/printer-models`, {
-    method: 'GET',
-    headers: apiHeaders(),
-    signal,
-  })
-  return handleResponse<PrinterModel[]>(res)
-}
 
-export async function uploadPrinterModelPdf(
-  file: File,
-  signal?: AbortSignal
-): Promise<UploadPdfResponse> {
-  const formData = new FormData()
-  formData.append('file', file)
-  // NOTE: No setear Content-Type — el browser lo setea con el boundary correcto
-  const res = await apiFetch(
-    `${API_BASE}/printer-models/upload-pdf`,
-    {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY },
-      body: formData,
-      signal,
-    },
-    90_000 // Claude puede tardar en procesar PDFs grandes
-  )
-  return handleResponse<UploadPdfResponse>(res)
-}
-
-export async function uploadCpmd(
-  modelId: string,
-  file: File,
-  signal?: AbortSignal
-): Promise<IngestReport> {
-  const formData = new FormData()
-  formData.append('file', file)
-  const res = await apiFetch(
-    `${API_BASE}/models/${encodeURIComponent(modelId)}/cpmd`,
-    {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY },
-      body: formData,
-      signal,
-    },
-    10 * 60 * 1000 // 10 minutos — es una operación lenta
-  )
-  if (res.status === 502) {
-    throw new Error(
-      'El servidor cortó la conexión antes de terminar de procesar el CPMD. ' +
-        'Esto suele pasar en planes con timeout corto. Reintentá más tarde o contactá al admin.'
-    )
-  }
-  return handleResponse<IngestReport>(res)
-}
 
 export async function getErrorSolution(
-  modelId: string,
+  modelFamily: string,
   code: string,
   signal?: AbortSignal
 ): Promise<ErrorSolution | null> {
   const res = await apiFetch(
-    `${API_BASE}/models/${encodeURIComponent(modelId)}/error-solutions/${encodeURIComponent(code)}`,
+    `${API_BASE}/models/${encodeURIComponent(modelFamily)}/error-solutions/${encodeURIComponent(code)}`,
     { method: 'GET', headers: apiHeaders(), signal }
   )
   if (res.status === 404) return null
@@ -271,6 +234,8 @@ export async function aiDiagnose(
     consumables?: RealtimeConsumable[]
     alerts?: DeviceAlertsResponse | null
     meters?: InsightMeter[]
+    serialNumber?: string | null
+    modelName?: string | null
   },
   signal?: AbortSignal
 ): Promise<AIDiagnosisResponse> {
@@ -340,6 +305,8 @@ export async function aiDiagnose(
     consumables: extra?.consumables,
     alerts_history: alertsHistory.length > 0 ? alertsHistory : undefined,
     meters_pattern: metersPattern.length > 0 ? metersPattern : undefined,
+    serial_number: extra?.serialNumber,
+    model_name: extra?.modelName,
   }
 
   // NOTE: timeout de 60s — el modelo puede tardar 3-5s y queremos margen para cold starts
@@ -427,3 +394,22 @@ export async function extractSdsLogs(
   return handleResponse<ExtractSdsLogsResponse>(res)
 }
 
+
+export async function listFleetClients(): Promise<import('../types/api').FleetClientSummary[]> {
+  const res = await apiFetch(`${API_BASE}/fleet/clients`, { method: 'GET', headers: apiHeaders() }, 10_000)
+  return handleResponse(res)
+}
+
+export async function getFleetClient(clientId: string): Promise<import('../types/api').FleetClientDetail> {
+  const res = await apiFetch(`${API_BASE}/fleet/clients/${encodeURIComponent(clientId)}`, { method: 'GET', headers: apiHeaders() }, 10_000)
+  return handleResponse(res)
+}
+
+export async function scanFleet(clientId: string, models: string[] | null = null, days = 30): Promise<import('../types/api').FleetScanResult[]> {
+  const res = await apiFetch(
+    `${API_BASE}/fleet/scan`,
+    { method: 'POST', headers: apiHeaders(), body: JSON.stringify({ client_id: clientId, days, models }) },
+    120_000
+  )
+  return handleResponse(res)
+}

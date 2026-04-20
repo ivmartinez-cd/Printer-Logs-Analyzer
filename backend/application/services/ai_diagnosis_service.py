@@ -10,7 +10,7 @@ from anthropic import AsyncAnthropic
 
 _logger = logging.getLogger(__name__)
 
-MODEL = "claude-opus-4-6"
+MODEL = "claude-sonnet-4-6"
 
 # Precios por millón de tokens — Claude 4.6 Opus (Abril 2026)
 _PRICE_INPUT = 15.00
@@ -21,26 +21,27 @@ _PRICE_CACHE_READ = 1.50
 # NOTE: mismo system prompt que el script standalone en backend/scripts/ai_diagnose.py.
 # Si se modifica uno, actualizar el otro para mantener consistencia.
 SYSTEM_PROMPT = (
-    "Sos un experto técnico senior de HP LaserJet. Analizás datos y generás diagnósticos concisos.\n\n"
-    "Recibirás:\n"
-    "1. Incidentes del log (agrupados).\n"
-    "2. Estado de consumibles (real-time).\n"
-    "3. Historial de alertas del portal (último mes).\n"
-    "4. Patrón de contadores/metros.\n\n"
-    "CORRELACIONÁ los datos para identificar la causa raíz.\n\n"
-    "Responde UNICAMENTE con este JSON (sin texto adicional, sin markdown):\n"
+    "Eres el Arquitecto de Soporte Técnico Enterprise para impresoras HP LaserJet de alta gama.\n"
+    "Tu objetivo es proveer un diagnóstico de nivel INGENIERÍA correlacionando múltiples fuentes de datos.\n\n"
+    "DATOS DISPONIBLES:\n"
+    "1. Incidentes del Log: Incluyen el código, frecuencia y el texto de la 'technical_solution' oficial de HP extraída del portal.\n"
+    "2. Telemetría Insight (Metadata): Alertas activas del portal, estado de consumibles (tóner/tambor) y patrones de contadores.\n\n"
+    "INSTRUCCIONES DE ANÁLISIS:\n"
+    "- SINTETIZA el contenido técnico de las soluciones proporcionadas con la telemetría.\n"
+    "- Identifica el MÓDULO DE HARDWARE específico (ej. **Fuser Assembly**, **DC Controller PCA**, **LVPS**, **Scanner Bed**) o el fallo lógico (Firmware, Corrupción de datos).\n"
+    "- Si hay alertas de consumibles bajas y errores de suministro (10.xx), correlaciónalos.\n"
+    "- USA **negritas** para resaltar componentes o valores críticos y separa el análisis en párrafos cortos (con doble salto de línea) para mejorar la lectura.\n\n"
+    "Responde UNICAMENTE con este JSON estructurado:\n"
     "{\n"
-    "  \"diagnostico\": \"[MAX 60 palabras. Causa raíz técnica con código de error y correlación.]\",\n"
-    "  \"acciones\": [\"[Acción 1, max 20 palabras]\", \"[Acción 2, max 20 palabras]\", \"[Acción 3 opcional]\"],\n"
-    "  \"prioridad\": \"alta\",\n"
-    "  \"impacto\": \"[MAX 20 palabras. Consecuencia operativa concreta.]\"\n"
+    '  "diagnostico": "[MAX 120 palabras. Análisis técnico profundo con **negritas** y párrafos claros.]",\n'
+    '  "acciones": ["[Acción técnica 1]", "[Acción técnica 2]", "[Acción 3 opcional]"],\n'
+    '  "prioridad": "alta/media/baja",\n'
+    '  "impacto": "[Consecuencia técnica/operativa en el equipo.]"\n'
     "}\n\n"
-    "Reglas OBLIGATORIAS:\n"
-    "- diagnostico: máximo 60 palabras. Directo al punto.\n"
-    "- acciones: máximo 3 items, cada uno máximo 20 palabras.\n"
-    "- impacto: máximo 20 palabras.\n"
-    "- prioridad: solo 'alta', 'media' o 'baja'.\n"
-    "- Solo JSON. Sin bloques de código. Sin explicaciones fuera del JSON."
+    "REGLAS CRÍTICAS:\n"
+    "- diagnóstico: Máximo 120 PALABRAS. Vocabulario técnico y profesional. Estructura con párrafos.\n"
+    "- prioridad: Solo 'alta', 'media' o 'baja'.\n"
+    "- Sin explicaciones fuera del JSON. Sin markdown formatting externo al JSON."
 )
 
 
@@ -101,9 +102,7 @@ async def call_claude(payload: dict, api_key: str) -> tuple[str, dict]:
 
     # Advertir si la respuesta fue truncada por el límite de tokens
     if stop_reason == "max_tokens":
-        _logger.warning(
-            "Respuesta IA truncada por max_tokens. Texto parcial: %s", raw_text[:300]
-        )
+        _logger.warning("Respuesta IA truncada por max_tokens. Texto parcial: %s", raw_text[:300])
 
     # Parsear en el backend para devolver JSON limpio al frontend
     parsed = _extract_json(raw_text)

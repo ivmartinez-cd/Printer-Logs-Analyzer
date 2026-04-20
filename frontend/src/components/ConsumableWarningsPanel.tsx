@@ -1,17 +1,8 @@
 import { useState } from 'react'
-
-interface RealtimeConsumable {
-  description?: string
-  type?: string
-  sku?: string
-  percentLeft?: number
-  pagesLeft?: number
-  daysLeft?: number
-  colour?: string
-}
+import type { RealtimeConsumable } from '../types/api'
 
 interface ConsumableWarningsPanelProps {
-  warnings: any[] // we use any[] from frontend state, cast it locally
+  warnings: RealtimeConsumable[]
 }
 
 const CATEGORY_ICON: Record<string, string> = {
@@ -23,7 +14,7 @@ const CATEGORY_ICON: Record<string, string> = {
   UNKNOWN: '⚙️',
 }
 
-function formatPages(n?: number): string {
+function formatPages(n: number | null | undefined): string {
   if (n === undefined || n === null) return 'N/A'
   return n.toLocaleString('es-AR') + ' págs'
 }

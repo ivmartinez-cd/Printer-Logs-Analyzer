@@ -12,11 +12,6 @@ from .analysis import (
     ValidateLogsResponse,
 )
 from .error_code import ErrorCodeUpsertRequest
-from .printer import (
-    PrinterModelBase,
-    PrinterModelCreate,
-    PrinterModelResponse,
-)
 from .saved_analysis import (
     CompareLogsRequest,
     SavedAnalysisCreateRequest,

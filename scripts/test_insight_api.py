@@ -8,7 +8,6 @@ INSIGHT_API_KEY=tu_key_aqui
 INSIGHT_API_SECRET=tu_secret_aqui
 """
 
-import os
 import base64
 import requests
 from dotenv import load_dotenv
@@ -79,7 +78,7 @@ def get_device_alerts(token: str, device_id: int):
         "Accept": "application/json"
     }
 
-    print(f"\nBuscando alertas activas...")
+    print("\nBuscando alertas activas...")
     response_current = requests.get(url_current, headers=headers)
     if response_current.status_code == 200:
         alerts = response_current.json()
@@ -90,7 +89,7 @@ def get_device_alerts(token: str, device_id: int):
     else:
         print(f"Error ({response_current.status_code}): {response_current.text}")
         
-    print(f"\nBuscando historial de alertas...")
+    print("\nBuscando historial de alertas...")
     response_history = requests.get(url_history, headers=headers)
     if response_history.status_code == 200:
         history = response_history.json()

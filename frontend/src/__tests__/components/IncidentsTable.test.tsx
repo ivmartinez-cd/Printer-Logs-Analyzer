@@ -156,29 +156,6 @@ describe('IncidentsTable', () => {
     expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null)
   })
 
-  it('muestra indicador 📘 cuando hasCpmdModel=true', () => {
-    render(
-      <IncidentsTable
-        incidentRows={[row1]}
-        hasCpmdModel={true}
-        onEditCode={vi.fn()}
-        onViewSolution={vi.fn()}
-      />
-    )
-    expect(screen.getByLabelText('Solución CPMD disponible')).toBeInTheDocument()
-  })
-
-  it('no muestra indicador 📘 cuando hasCpmdModel=false', () => {
-    render(
-      <IncidentsTable
-        incidentRows={[row1]}
-        hasCpmdModel={false}
-        onEditCode={vi.fn()}
-        onViewSolution={vi.fn()}
-      />
-    )
-    expect(screen.queryByLabelText('Solución CPMD disponible')).not.toBeInTheDocument()
-  })
 
   it('expansión de fila muestra el detalle de eventos internos', async () => {
     const user = userEvent.setup()

@@ -1,24 +1,75 @@
-version: '3.8'
+
 
 services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=printerapp
+      - POSTGRES_PASSWORD=printer_secure_pass_2026
+      - POSTGRES_DB=printer_logs
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+    ports:
+      - "5432:5432"
+    # Essential for 2026 standards: avoid boot race conditions
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U printerapp -d printer_logs"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      # If DATABASE_URL is not set, the app will use its local fallback
-      - DATABASE_URL=${DATABASE_URL:-}
+      # Redirect to internal DB service by default
+      - DB_URL=postgresql://printerapp:printer_secure_pass_2026@db:5432/printer_logs
+      - API_KEY=${API_KEY:-dev}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SDS_WEB_USERNAME=${SDS_WEB_USERNAME}
+      - SDS_WEB_PASSWORD=${SDS_WEB_PASSWORD}
+      - INSIGHT_PORTAL_URL=${INSIGHT_PORTAL_URL}
+      - INSIGHT_API_KEY=${INSIGHT_API_KEY}
+      - INSIGHT_API_SECRET=${INSIGHT_API_SECRET}
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - ./data:/app/data
-      - ./migrations:/app/migrations
+    networks:
+      - backend-network
+      - frontend-network
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
     ports:
-      - "5173:80"
+      - "5173:8080" # Standard port for the dev team, mapping to rootless 8080
+    environment:
+      - VITE_API_BASE=http://localhost:8000
     depends_on:
       - backend
+    networks:
+      - frontend-network
+    env_file:
+      - .env
+
+networks:
+  backend-network:
+    name: printer_backend_isolated
+  frontend-network:
+    name: printer_frontend_isolated
+
+volumes:
+  db_data:

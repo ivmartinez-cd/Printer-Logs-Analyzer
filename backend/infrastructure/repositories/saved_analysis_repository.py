@@ -17,7 +17,7 @@ from uuid import UUID, uuid4
 
 from backend.infrastructure.database import Database, DatabaseUnavailableError
 
-_LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "saved_analyses_local.json"
+_LOCAL_PATH = Path(__file__).parent.parent.parent.parent / "data" / "saved_analyses_local.json"
 
 # Serializes concurrent writes to the local JSON fallback file.
 _local_write_lock = threading.Lock()
@@ -33,6 +33,7 @@ class SavedAnalysisSnapshot:
     incidents: List[dict]
     global_severity: str
     created_at: datetime
+    ai_diagnosis: str | None = None
 
 
 class SavedAnalysisRepository:
@@ -54,11 +55,16 @@ class SavedAnalysisRepository:
         incidents: List[dict],
         global_severity: str,
         equipment_identifier: str | None = None,
+        ai_diagnosis: str | None = None,
     ) -> SavedAnalysisSnapshot:
         try:
-            return self._create_db(name, incidents, global_severity, equipment_identifier)
+            return self._create_db(
+                name, incidents, global_severity, equipment_identifier, ai_diagnosis
+            )
         except DatabaseUnavailableError:
-            return self._create_local(name, incidents, global_severity, equipment_identifier)
+            return self._create_local(
+                name, incidents, global_severity, equipment_identifier, ai_diagnosis
+            )
 
     def get_by_id(self, id: UUID) -> SavedAnalysisSnapshot | None:
         try:
@@ -88,16 +94,23 @@ class SavedAnalysisRepository:
         incidents: List[dict],
         global_severity: str,
         equipment_identifier: str | None,
+        ai_diagnosis: str | None = None,
     ) -> SavedAnalysisSnapshot:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO saved_analyses (name, equipment_identifier, incidents, global_severity)
-                    VALUES (%s, %s, %s::jsonb, %s)
-                    RETURNING id, name, equipment_identifier, incidents, global_severity, created_at
+                    INSERT INTO saved_analyses (name, equipment_identifier, incidents, global_severity, ai_diagnosis)
+                    VALUES (%s, %s, %s::jsonb, %s, %s)
+                    RETURNING id, name, equipment_identifier, incidents, global_severity, created_at, ai_diagnosis
                     """,
-                    (name, equipment_identifier, json.dumps(incidents), global_severity),
+                    (
+                        name,
+                        equipment_identifier,
+                        json.dumps(incidents),
+                        global_severity,
+                        ai_diagnosis,
+                    ),
                 )
                 row = cur.fetchone()
             conn.commit()
@@ -108,7 +121,7 @@ class SavedAnalysisRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, name, equipment_identifier, incidents, global_severity, created_at
+                    SELECT id, name, equipment_identifier, incidents, global_severity, created_at, ai_diagnosis
                     FROM saved_analyses
                     WHERE id = %s
                     """,
@@ -122,7 +135,7 @@ class SavedAnalysisRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, name, equipment_identifier, incidents, global_severity, created_at
+                    SELECT id, name, equipment_identifier, incidents, global_severity, created_at, ai_diagnosis
                     FROM saved_analyses
                     ORDER BY created_at DESC
                     """
@@ -162,6 +175,7 @@ class SavedAnalysisRepository:
         incidents: List[dict],
         global_severity: str,
         equipment_identifier: str | None,
+        ai_diagnosis: str | None = None,
     ) -> SavedAnalysisSnapshot:
         with _local_write_lock:
             items = self._load_local()
@@ -173,6 +187,7 @@ class SavedAnalysisRepository:
                 "equipment_identifier": equipment_identifier,
                 "incidents": incidents,
                 "global_severity": global_severity,
+                "ai_diagnosis": ai_diagnosis,
                 "created_at": now.isoformat(),
             }
             items.insert(0, item)
@@ -184,6 +199,7 @@ class SavedAnalysisRepository:
             incidents=incidents,
             global_severity=global_severity,
             created_at=now,
+            ai_diagnosis=ai_diagnosis,
         )
 
     def _get_by_id_local(self, id: UUID) -> SavedAnalysisSnapshot | None:
@@ -220,6 +236,7 @@ class SavedAnalysisRepository:
             incidents=incidents,
             global_severity=row[4],
             created_at=row[5],
+            ai_diagnosis=row[6],
         )
 
     @staticmethod
@@ -234,4 +251,5 @@ class SavedAnalysisRepository:
             incidents=item.get("incidents", []),
             global_severity=item.get("global_severity", "INFO"),
             created_at=created_at,
+            ai_diagnosis=item.get("ai_diagnosis"),
         )

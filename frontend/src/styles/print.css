@@ -1,0 +1,267 @@
+/* ==========================================================================
+   Estilos específicos para Exportación PDF
+   ========================================================================== */
+
+
+/* ==========================================================================
+   Reporte Ejecutivo PDF (Light Mode Forzado)
+   ========================================================================== */
+
+.is-exporting {
+  width: 1024px !important;
+  min-width: 1024px !important;
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  box-shadow: none !important;
+}
+
+.is-exporting body {
+  background-color: #ffffff !important;
+}
+
+.is-exporting .dashboard {
+  padding: 30px !important;
+  max-width: none !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  gap: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Forzar expansion de paneles colapsables */
+.is-exporting .collapsible-panel__body--hidden,
+.is-exporting .collapsible-panel__body {
+  display: block !important;
+  max-height: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  padding: 15px 20px !important;
+  background-color: #ffffff !important;
+}
+
+.is-exporting .collapsible-panel {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  margin-bottom: 20px !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.is-exporting .collapsible-panel__header {
+  background-color: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #1a1a1a !important;
+}
+
+.is-exporting .collapsible-panel__title {
+  color: #1a1a1a !important;
+  font-weight: 600 !important;
+}
+
+.is-exporting .section {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.is-exporting .executive-summary {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 24px !important;
+}
+
+.is-exporting .exec-scorecard {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.is-exporting .exec-scorecard__label {
+  color: #6b7280 !important;
+}
+
+.is-exporting .exec-scorecard__value {
+  color: #111827 !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  display: block;
+  margin-top: 4px;
+}
+
+.is-exporting .exec-scorecard__value--critical {
+  color: #dc2626 !important;
+}
+
+.is-exporting .exec-scorecard__sub {
+  color: #4b5563 !important;
+}
+
+/* Ocultar KPIs viejos para evitar duplicación con el Executive Scorecard */
+.is-exporting .kpis {
+  display: none !important;
+}
+
+.is-exporting .executive-summary__block {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.is-exporting .executive-summary__block h3 {
+  color: #1f2937 !important;
+}
+
+.is-exporting .executive-summary__block ul {
+  color: #374151 !important;
+}
+
+.is-exporting .exec-next-steps li strong {
+  color: #111827 !important;
+}
+
+.is-exporting .executive-summary__context-value {
+  color: #111827 !important;
+}
+
+/* KPIs con contraste */
+.is-exporting .kpi-card {
+  background-color: #ffffff !important;
+  border: 2px solid #f3f4f6 !important;
+  box-shadow: none !important;
+  padding: 15px !important;
+}
+
+.is-exporting .kpi-card__label {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+}
+
+.is-exporting .kpi-card__value {
+  color: #111827 !important;
+  font-size: 24px !important;
+}
+
+/* Tablas */
+.is-exporting .table-wrap {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+.is-exporting .dashboard-table {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+.is-exporting .dashboard-table th {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 10px !important;
+  font-size: 12px !important;
+}
+
+.is-exporting .dashboard-table td {
+  background-color: #ffffff !important;
+  border: 1px solid #f3f4f6 !important;
+  color: #1a1a1a !important;
+  padding: 10px !important;
+  font-size: 12px !important;
+}
+
+/* Graficos */
+.is-exporting .dashboard__charts-row {
+  background-color: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 30px !important;
+}
+
+.is-exporting .dashboard__charts-row > div {
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #f3f4f6 !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+}
+
+.is-exporting .chart-wrap {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
+.is-exporting .recharts-cartesian-axis-tick-value {
+  fill: #374151 !important;
+  font-size: 11px !important;
+}
+
+.is-exporting .recharts-legend-item-text {
+  color: #374151 !important;
+}
+
+/* Ocultar elementos generales */
+.is-exporting .dashboard__btn,
+.is-exporting .dashboard__subheader,
+.is-exporting .collapsible-panel__chevron,
+.is-exporting .db-status-badge,
+.is-exporting .dashboard__header,
+.is-exporting .dashboard__actions,
+.is-exporting .insight-alerts-panel,
+.is-exporting .sds-incident-panel,
+.is-exporting .events-table {
+  display: none !important;
+}
+
+/* Ocultar elementos de la tabla de Incidencias en exportación */
+.is-exporting .table-toolbar,
+.is-exporting .dashboard-table__cell-expand,
+.is-exporting .dashboard-table__th-solution,
+.is-exporting .dashboard-table__cell-solution,
+.is-exporting .dashboard-table__cpmd-badge {
+  display: none !important;
+}
+
+.export-header {
+  display: none;
+}
+
+.is-exporting .export-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  margin-bottom: 40px !important;
+  border-bottom: 3px solid #1a1a1a !important;
+  padding-bottom: 15px !important;
+}
+
+.is-exporting .export-header .dashboard__title {
+  font-size: 28px !important;
+  color: #1a1a1a !important;
+  margin: 0 !important;
+}
+
+.is-exporting .export-header .dashboard__subheader {
+  display: block !important;
+  color: #4b5563 !important;
+  font-size: 14px !important;
+  text-align: right !important;
+}
+
+/* Nueva clase para ocultar con CSS */
+.collapsible-panel__body--hidden {
+  display: none;
+}
+
+/* Auxiliares para Reportes */
+.report-only-section {
+  display: none;
+}
+
+body.is-exporting .report-only-section {
+  display: block !important;
+  margin-bottom: 2rem;
+}
+

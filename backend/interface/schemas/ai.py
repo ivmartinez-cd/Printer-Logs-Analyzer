@@ -25,7 +25,7 @@ class AiDiagnoseIncidentItem(BaseModel):
                     "severity": "ERROR",
                     "occurrences": 3,
                     "start_time": "2026-04-16T08:00:00Z",
-                    "end_time": "2026-04-16T09:00:00Z"
+                    "end_time": "2026-04-16T09:00:00Z",
                 }
             ]
         }
@@ -42,6 +42,8 @@ class AiDiagnoseMetadata(BaseModel):
     consumables: Optional[List[Dict[str, Any]]] = None
     alerts_history: Optional[List[Dict[str, Any]]] = None
     meters_pattern: Optional[List[Dict[str, Any]]] = None
+    serial_number: Optional[str] = None
+    model_name: Optional[str] = None
 
 
 class AiDiagnoseRequest(BaseModel):

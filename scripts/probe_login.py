@@ -72,6 +72,6 @@ if device_ids:
     print(f"  Tiene CDATA: {'CDATA' in r4.text}")
     with open("_eventlogs_test.html", "w", encoding="utf-8") as f:
         f.write(r4.text)
-    print(f"  Guardado en _eventlogs_test.html")
+    print("  Guardado en _eventlogs_test.html")
 
 print("\n--- COMPLETADO ---")

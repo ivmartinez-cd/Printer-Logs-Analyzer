@@ -4,13 +4,18 @@ import sys
 
 from dotenv import load_dotenv
 
-load_dotenv('.env')
+load_dotenv(".env")
 
-sys.path.append(os.path.abspath('.'))
+sys.path.append(os.path.abspath("."))
 from backend.application.services.sds_web_service import SDSWebSession
 from backend.infrastructure.config import Settings
 
-settings = Settings(DB_URL='sqlite:///:memory:', API_KEY='dummy', SDS_WEB_USERNAME=os.environ.get('SDS_WEB_USERNAME'), SDS_WEB_PASSWORD=os.environ.get('SDS_WEB_PASSWORD'))
+settings = Settings(
+    DB_URL="sqlite:///:memory:",
+    API_KEY="dummy",
+    SDS_WEB_USERNAME=os.environ.get("SDS_WEB_USERNAME"),
+    SDS_WEB_PASSWORD=os.environ.get("SDS_WEB_PASSWORD"),
+)
 session = SDSWebSession(settings)
 session._ensure_session()
 
@@ -20,7 +25,7 @@ endpoints = [
     f"/api/device/{device_id}",
     f"/devices/{device_id}/details",
     f"/devices/{device_id}/summary",
-    f"/api/devices/{device_id}/summary"
+    f"/api/devices/{device_id}/summary",
 ]
 
 for ep in endpoints:
@@ -32,7 +37,7 @@ for ep in endpoints:
         try:
             data = resp.json()
             print("Found JSON! Keys:", data.keys())
-            if 'model' in str(data).lower():
+            if "model" in str(data).lower():
                 print("Model string exists in JSON!")
             break
         except Exception:

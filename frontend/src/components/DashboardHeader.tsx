@@ -37,6 +37,8 @@ interface DashboardHeaderProps {
   onAddSds: () => void
   onExportPdf: () => void
   onHelp: () => void
+  isAtTop?: boolean
+  showSavedListButton?: boolean
 }
 
 export function DashboardHeader({
@@ -49,10 +51,15 @@ export function DashboardHeader({
   onAddSds,
   onExportPdf,
   onHelp,
+  isAtTop = true,
+  showSavedListButton = true,
 }: DashboardHeaderProps) {
   return (
-    <header className="dashboard__header">
-      <div className="dashboard__title-group">
+    <header className={`dashboard__header ${isAtTop ? 'at-top' : ''}`}>
+      <div 
+        className="dashboard__title-group dashboard__title-group--interactive"
+        onClick={() => window.location.href = '/'}
+      >
         <svg
           className="dashboard__title-icon"
           viewBox="0 0 24 24"
@@ -70,20 +77,24 @@ export function DashboardHeader({
         <h1 className="dashboard__title">HP Logs Analyzer</h1>
       </div>
       <div className="dashboard__header-actions">
-        <button
-          type="button"
-          className="dashboard__btn dashboard__btn--secondary"
-          onClick={onOpenSavedList}
-        >
-          Incidentes guardados
-        </button>
-        <button
-          type="button"
-          className="dashboard__btn dashboard__btn--primary dashboard__btn--header-cta"
-          onClick={onAnalyzeNew}
-        >
-          Analizar otro log
-        </button>
+        {showSavedListButton && (
+          <button
+            type="button"
+            className="dashboard__btn dashboard__btn--secondary"
+            onClick={onOpenSavedList}
+          >
+            Incidentes guardados
+          </button>
+        )}
+        {hasResult && (
+          <button
+            type="button"
+            className="dashboard__btn dashboard__btn--primary dashboard__btn--header-cta"
+            onClick={onAnalyzeNew}
+          >
+            Analizar otro log
+          </button>
+        )}
         {hasResult && (
           <button
             type="button"

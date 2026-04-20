@@ -1,12 +1,17 @@
 import { forwardRef, useState, useEffect } from 'react'
 import { aiDiagnose } from '../services/api'
 import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter } from '../types/api'
+import { AIDiagnosticSkeleton } from './AIDiagnosticSkeleton'
 
 interface AIDiagnosticPanelProps {
   result: ParseLogsResponse | null
   consumables?: RealtimeConsumable[]
   alerts?: DeviceAlertsResponse | null
   meters?: InsightMeter[]
+  className?: string
+  isFeatured?: boolean
+  serialNumber?: string | null
+  modelName?: string | null
 }
 
 // Parsea el texto "DIAGNÓSTICO: ...\nACCIÓN: ...\nPRIORIDAD: ..." en secciones.
@@ -43,14 +48,14 @@ function parseDiagnosis(text: string): DiagnosisData | null {
     const content = match[2].trim()
     if (key === 'DIAGNÓSTICO') data.diagnostico = content
     if (key === 'ACCIÓN') data.acciones = content.split('. ').filter(s => s.length > 5)
-    if (key === 'PRIORIDAD') data.prioridad = content.toLowerCase() as any
+    if (key === 'PRIORIDAD') data.prioridad = content.toLowerCase() as DiagnosisData['prioridad']
   }
 
   return data.diagnostico ? (data as DiagnosisData) : null
 }
 
 export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelProps>(
-  function AIDiagnosticPanel({ result, consumables, alerts, meters }, ref) {
+  function AIDiagnosticPanel({ result, consumables, alerts, meters, className, isFeatured = false, serialNumber, modelName }, ref) {
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -70,7 +75,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       setLoading(true)
       setError(null)
       try {
-        const res = await aiDiagnose(result, { consumables, alerts, meters })
+        const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName })
         setDiagnosis(res.diagnosis)
         setCollapsed(false) // Expandir automáticamente cuando se genera
       } catch (err) {
@@ -82,8 +87,10 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
     const data = diagnosis ? parseDiagnosis(diagnosis) : null
 
+    const containerClass = `collapsible-panel collapsible-panel--ai ${isFeatured ? 'collapsible-panel--featured' : ''} ${className || ''}`
+
     return (
-      <div className="collapsible-panel collapsible-panel--ai" ref={ref}>
+      <div className={containerClass} ref={ref}>
         <button
           type="button"
           className="collapsible-panel__header"
@@ -92,7 +99,9 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           data-testid="ai-diagnostic-panel-toggle"
         >
           <div className="ai-diagnostic-panel__header-left">
-            <span className="collapsible-panel__title">🤖 Diagnóstico con IA</span>
+            <span className="collapsible-panel__title">
+              {isFeatured ? '✨ Diagnóstico con IA (Recomendado)' : '🤖 Diagnóstico con IA'}
+            </span>
             {data && !collapsed && (
               <span className={`ai-priority-badge ai-priority-badge--${data.prioridad}`}>
                 Prioridad {data.prioridad}
@@ -125,9 +134,12 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
           )}
 
           {loading && (
-            <div className="ai-diagnostic-panel__loading">
-              <span className="ai-diagnostic-panel__spinner" aria-hidden="true" />
-              <span>Generando diagnóstico…</span>
+            <div className="ai-diagnostic-panel__loading-container">
+              <div className="ai-diagnostic-panel__loading-spinner" />
+              <span className="ai-diagnostic-panel__loading-text">
+                Generando diagnóstico técnico, por favor aguarde...
+              </span>
+              <AIDiagnosticSkeleton />
             </div>
           )}
 
@@ -151,7 +163,18 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
                   <span className="ai-diagnostic-result__icon">🔍</span>
                   Hallazgos del Sistema
                 </h4>
-                <p className="ai-diagnostic-result__text">{data.diagnostico}</p>
+                <div className="ai-diagnostic-result__text-container">
+                  {data.diagnostico.split('\n\n').map((paragraph, pIdx) => (
+                    <p key={pIdx} className="ai-diagnostic-result__text">
+                      {paragraph.split(/(\*\*.*?\*\*)/).map((segment, sIdx) => {
+                        if (segment.startsWith('**') && segment.endsWith('**')) {
+                          return <strong key={sIdx}>{segment.slice(2, -2)}</strong>
+                        }
+                        return segment
+                      })}
+                    </p>
+                  ))}
+                </div>
                 {data.impacto && (
                   <div className="ai-diagnostic-result__impact">
                     <strong>Impacto estimado:</strong> {data.impacto}
@@ -183,6 +206,5 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
         </div>
       </div>
     )
-
   }
 )

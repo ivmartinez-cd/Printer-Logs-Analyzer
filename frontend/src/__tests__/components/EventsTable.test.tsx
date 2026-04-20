@@ -8,9 +8,9 @@ import { mockEvent, mockEvents } from '../fixtures/events'
 afterEach(cleanup)
 
 describe('EventsTable', () => {
-  it('renderiza el título "Eventos del período"', () => {
+  it('renderiza el título "📅 Eventos del período"', () => {
     render(<EventsTable events={[]} onViewSolution={vi.fn()} />)
-    expect(screen.getByText('Eventos del período')).toBeInTheDocument()
+    expect(screen.getByText('📅 Eventos del período')).toBeInTheDocument()
   })
 
   it('tabla arranca colapsada por defecto', () => {
@@ -28,7 +28,7 @@ describe('EventsTable', () => {
     expect(screen.queryByText('COD-UNICO')).not.toBeInTheDocument()
 
     // Click para expandir
-    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
+    const toggleBtn = screen.getByText('📅 Eventos del período').closest('button')!
     await user.click(toggleBtn)
     expect(screen.getByText('COD-UNICO')).toBeInTheDocument()
 
@@ -47,7 +47,7 @@ describe('EventsTable', () => {
     render(<EventsTable events={events} onViewSolution={vi.fn()} />)
 
     // Expandir primero
-    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
+    const toggleBtn = screen.getByText('📅 Eventos del período').closest('button')!
     await user.click(toggleBtn)
 
     const select = screen.getByLabelText('Filtrar por severidad')
@@ -67,7 +67,7 @@ describe('EventsTable', () => {
     render(<EventsTable events={events} onViewSolution={vi.fn()} />)
 
     // Expandir primero
-    const toggleBtn = screen.getByText('Eventos del período').closest('button')!
+    const toggleBtn = screen.getByText('📅 Eventos del período').closest('button')!
     await user.click(toggleBtn)
 
     // Default es desc — COD-A aparece primero (más reciente)

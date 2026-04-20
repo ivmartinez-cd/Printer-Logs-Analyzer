@@ -125,19 +125,6 @@ export interface CompareResponse {
   diff: CompareDiff
 }
 
-// --- Modelos de impresora ---
-
-export interface PrinterModel {
-  id: string
-  model_name: string
-  model_code: string
-  family: string | null
-  ampv: number | null
-  engine_life_pages: number | null
-  notes: string | null
-  has_cpmd: boolean
-}
-
 export interface ErrorSolutionFru {
   part_number: string
   description: string
@@ -156,21 +143,6 @@ export interface ErrorSolution {
   cpmd_hash: string | null
 }
 
-export interface IngestReport {
-  model_id: string
-  cpmd_hash: string
-  total_blocks: number | null
-  extracted: number | null
-  failed: number | null
-  skipped: boolean
-  reason: string | null
-}
-
-export interface UploadPdfResponse {
-  created: string[]
-  skipped: string[]
-  total_consumables: number
-}
 
 // --- Diagnóstico con IA ---
 
@@ -226,7 +198,6 @@ export interface ResolveDeviceResponse {
   firmware: string | null
   suggested_model_id: string | null
   suggested_model_name: string | null
-  has_cpmd: boolean
 }
 
 export interface ExtractSdsLogsResponse {
@@ -235,10 +206,62 @@ export interface ExtractSdsLogsResponse {
   model_name_sds: string
   firmware: string | null
   suggested_model_id: string | null
-  has_cpmd: boolean
   logs_text: string
   event_count: number
   realtime_consumables: RealtimeConsumable[]
 }
 
 
+
+export interface FleetClientSummary {
+  id: string
+  name: string
+  device_count: number
+}
+
+export interface FleetDeviceSummary {
+  serial: string
+  location: string
+  model?: string
+}
+
+export interface FleetClientDetail {
+  id: string
+  name: string
+  devices: FleetDeviceSummary[]
+}
+
+export interface RollerComponent {
+  label: string
+  percent: number
+}
+
+export interface FleetTopError {
+  code: string
+  count: number
+}
+
+export interface FleetTimelinePoint {
+  date: string
+  errors: number
+  warnings: number
+}
+
+export interface FleetScanResult {
+  serial: string
+  location: string
+  status: 'ok' | 'warning' | 'critical' | 'unreachable'
+  error_count: number
+  warning_count: number
+  model_name: string | null
+  firmware: string | null
+  last_event_date: string | null
+  fuser_life_percent?: number | null
+  black_toner_percent?: number | null
+  roller_components?: RollerComponent[]
+  active_alerts_count?: number
+  active_alerts_max_severity?: string | null
+  error_message?: string | null
+  top_errors?: FleetTopError[]
+  timeline_data?: FleetTimelinePoint[]
+}

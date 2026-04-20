@@ -11,25 +11,23 @@
 
 **Render (backend):**
 
-| Variable | Descripción | Requerida para |
-|----------|-------------|----------------|
-| `DB_URL` | Connection string de Neon PostgreSQL | Todo |
-| `API_KEY` | Clave compartida con el frontend | Todo |
-| `ENV` | Setear a `production` | Logs de advertencia |
-| `ANTHROPIC_API_KEY` | API key de Anthropic (Claude) | CPMD ingest (`POST /models/{id}/cpmd`) y diagnóstico AI |
-| `INSIGHT_PORTAL_URL` | URL base del portal Insight | Alertas SDS en tiempo real |
-| `INSIGHT_API_KEY` | Cliente API Key de Insight | Alertas SDS en tiempo real |
-| `INSIGHT_API_SECRET` | Cliente API Secret de Insight | Alertas SDS en tiempo real |
+| Variable | Requerida | Descripción | Ejemplo |
+|----------|-----------|-------------|---------|
+| `DB_URL` | ✅ **SÍ** | Connection string de Neon PostgreSQL | `postgresql://user:pass@host:5432/db?sslmode=require` |
+| `API_KEY` | ❌ No | Clave compartida con el frontend (default: "dev") | `dev` |
+| `ANTHROPIC_API_KEY` | ❌ No | API key de Anthropic (Claude) para diagnóstico IA | `sk-ant-api03-...` |
+| `SDS_WEB_USERNAME` | ❌ No | Usuario portal HP SDS (para extracción automática de logs) | `your-username` |
+| `SDS_WEB_PASSWORD` | ❌ No | Contraseña portal HP SDS | `your-password` |
+| `INSIGHT_PORTAL_URL` | ❌ No | URL base del portal Insight HP | `https://hp-sds-latam.insightportal.net` |
+| `INSIGHT_API_KEY` | ❌ No | Cliente API Key de Insight | `...` |
+| `INSIGHT_API_SECRET` | ❌ No | Cliente API Secret de Insight | `...` |
 
-Si `API_KEY` no está seteada, el backend usa `"dev"` como fallback. Con `ENV=production` loguea un WARNING al arrancar.
-
-Si `ANTHROPIC_API_KEY` no está seteada, los endpoints `/models/{id}/cpmd` y `/analysis/ai-diagnose` devuelven HTTP 503. El resto del backend funciona normalmente.
-
-### Límite de tiempo en Render (CPMD ingest)
-
-El endpoint `POST /models/{id}/cpmd` es bloqueante y puede tardar **5–10 minutos** por CPMD (~250 llamadas secuenciales a Haiku). El plan gratuito de Render tiene un timeout de request de 30 segundos. Para usar este endpoint en producción se requiere al menos el plan **Starter** de Render (sin timeout de request) o configurar un worker separado.
-
-> **Workaround actual:** usar el script CLI `ingest_cpmd` desde la máquina local (ver sección "Carga de CPMDs" más abajo).
+**Comportamiento por variable:**
+- `DB_URL`: **Crítica** — sin ella, el backend no inicia.
+- `API_KEY`: Si no está, usa default `"dev"`. Cambiar en producción por seguridad.
+- `ANTHROPIC_API_KEY`: Sin ella, `/analysis/ai-diagnose` devuelve HTTP 503. El resto del backend funciona.
+- `SDS_WEB_*`: Sin ellas, la extracción automática por serial no funciona. Log manual sigue disponible.
+- `INSIGHT_*`: Sin ellas, las alertas y consumibles en tiempo real no se cargan. El análisis base funciona.
 
 **Vercel (frontend):**
 
@@ -58,40 +56,61 @@ Sin `--reload` en producción.
 | Hot-reload | Sí (uvicorn `--reload`) | No |
 | DB fallback | Activo si sin red a Neon | Siempre conectado |
 
-## Carga de CPMDs
+## Quick Start: Deploy en Render + Vercel
 
-El endpoint `POST /models/{id}/cpmd` no funciona en Render free por timeout (5–10 min por CPMD). Para cargar CPMDs en producción, usar el script CLI desde la máquina local:
+### 1. Preparar PostgreSQL en Render
 
-```bash
-export DB_URL="<connection string de Neon producción>"
-export ANTHROPIC_API_KEY="<tu key>"
+1. Ir a [render.com](https://render.com)
+2. Dashboard → New PostgreSQL database
+3. Configurar:
+   - **Name:** `printer-logs-analyzer-db`
+   - **Region:** tu región (ej: Ohio)
+   - **PostgreSQL Version:** 15 (o latest)
+4. Copiar **External Database URL** → variable `DB_URL` en Render Web Service
 
-# Verificar primero (no llama a Haiku ni escribe en DB)
-python -m backend.scripts.ingest_cpmd --model-id <uuid> --pdf ./modelo.pdf --dry-run
+### 2. Deploy Backend en Render
 
-# Procesar
-python -m backend.scripts.ingest_cpmd --model-id <uuid> --pdf ./modelo.pdf
-```
+1. New Web Service → Connect GitHub repo
+2. Configurar:
+   - **Name:** `printer-logs-analyzer-backend`
+   - **Runtime:** Python 3.11
+   - **Build Command:** `pip install -r backend/requirements.txt && npm run typecheck && npm run test:backend`
+   - **Start Command:** `uvicorn backend.interface.api:get_app --factory --host 0.0.0.0 --port $PORT`
+3. Environment Variables → Agregar desde `.env.example`:
+   ```
+   DB_URL=postgresql://...
+   ANTHROPIC_API_KEY=sk-ant-api03-...
+   SDS_WEB_USERNAME=...
+   SDS_WEB_PASSWORD=...
+   INSIGHT_API_KEY=...
+   INSIGHT_API_SECRET=...
+   INSIGHT_PORTAL_URL=https://hp-sds-latam.insightportal.net
+   ```
+4. Deploy
 
-El script loguea progreso cada 25 bloques y al terminar imprime:
+### 3. Deploy Frontend en Vercel
 
-```
-✓ CPMD procesado para modelo <uuid>
+1. Ir a [vercel.com](https://vercel.com)
+2. New Project → Import GitHub repo
+3. Configurar:
+   - **Framework Preset:** Vite
+   - **Root Directory:** `./`
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `frontend/dist`
+4. Environment Variables:
+   ```
+   VITE_API_BASE=https://printer-logs-analyzer-backend.onrender.com
+   VITE_API_KEY=dev (o el mismo que en Render)
+   ```
+5. Deploy
 
-  Hash:        <sha256>
-  Bloques:     250
-  Extraídos:   247
-  Fallidos:    3
-  Tiempo:      342.5s
-  Costo aprox: $0.4446 USD
-```
+### 4. Verificar que todo funciona
 
-Tarda 5–10 minutos por CPMD. Costo aprox: **$0.45 USD por modelo**.
+- Frontend: https://your-frontend.vercel.app
+- Backend Swagger: https://your-backend.onrender.com/docs
+- Backend health: https://your-backend.onrender.com/health
 
-El UUID del modelo se obtiene del listado en la UI o con:
-```sql
-SELECT id, model_name FROM printer_models ORDER BY model_name;
-```
+---
 
 ## CI — GitHub Actions
 

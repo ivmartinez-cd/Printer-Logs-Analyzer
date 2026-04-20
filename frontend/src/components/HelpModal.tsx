@@ -37,9 +37,9 @@ export function HelpModal({ onClose }: HelpModalProps) {
                 → Extracción de logs → Análisis de forma completamente automatizada.
               </li>
               <li>
-                <strong>Opción 3 — Log manual:</strong> Seleccioná el modelo de impresora del
-                listado, pegá el log exportado desde el portal HP y hacé click en{' '}
-                <strong>"Analizar"</strong>. El modelo es opcional si hay serial (se resuelve solo).
+                <strong>Opción 3 — Log manual:</strong> Pegá el log exportado desde el portal HP. 
+                El modelo se detectará automáticamente si el log contiene información de identidad, 
+                o podés seleccionar uno de la lista si lo conocés.
               </li>
               <li>
                 El backend parsea cada línea, agrupa los eventos por código formando incidentes, y
@@ -283,26 +283,6 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </ul>
           </section>
 
-          {/* CARGA DE MODELOS Y CPMD */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Modelos de impresora y CPMD</h3>
-            <ul className="help-modal__list">
-              <li>
-                <strong>Nuevo modelo:</strong> Hacé click en{' '}
-                <strong>"+ Cargar nuevo modelo (PDF)"</strong> y subí el PDF del{' '}
-                <em>Service Cost Data</em> oficial de HP. Los modelos y consumables se extraen
-                automáticamente con IA (Claude).
-              </li>
-              <li>
-                <strong>Ingesta CPMD:</strong> Una vez creado el modelo, podés subir el PDF del{' '}
-                <em>Service Manual (CPMD)</em>. El pipeline híbrido extrae automáticamente todas las
-                soluciones técnicas (pasos + FRUs) por código de error.
-              </li>
-              <li>
-                Los modelos con CPMD cargado muestran el badge <em>"CPMD"</em> en el selector.
-              </li>
-            </ul>
-          </section>
 
           {/* INCIDENTES GUARDADOS */}
           <section className="help-modal__section">

@@ -4,7 +4,6 @@ import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
-from uuid import UUID
 
 from backend.domain.entities import ErrorSolution, ErrorSolutionFru
 from backend.infrastructure.repositories.error_solution_repository import (
@@ -15,8 +14,8 @@ from backend.infrastructure.repositories.error_solution_repository import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-MODEL_ID = UUID("00000000-0000-0000-0000-000000000001")
-MODEL_ID_2 = UUID("00000000-0000-0000-0000-000000000002")
+MODEL_FAMILY = "HP LaserJet E62655"
+MODEL_FAMILY_2 = "HP Color LaserJet E55040"
 
 
 _DEFAULT_STEPS = ["Check fuser", "Replace if needed"]
@@ -26,7 +25,7 @@ _SENTINEL = object()
 
 
 def _make_solution(
-    model_id: UUID = MODEL_ID,
+    model_family: str = MODEL_FAMILY,
     code: str = "50.3F.FF",
     title: str = "Fuser error",
     cause: str = "Fuser assembly failed",
@@ -37,7 +36,7 @@ def _make_solution(
     cpmd_hash: str = "abc123",
 ) -> ErrorSolution:
     return ErrorSolution(
-        model_id=model_id,
+        model_family=model_family,
         code=code,
         title=title,
         cause=cause,
@@ -76,11 +75,11 @@ def test_upsert_creates_new_entry():
         assert len(data) == 1
         assert data[0]["code"] == "50.3F.FF"
         assert result.code == "50.3F.FF"
-        assert result.model_id == MODEL_ID
+        assert result.model_family == MODEL_FAMILY
 
 
 # ---------------------------------------------------------------------------
-# Test: upsert on existing (model_id, code) updates, does not duplicate
+# Test: upsert on existing (model_family, code) updates, does not duplicate
 # ---------------------------------------------------------------------------
 
 
@@ -117,7 +116,7 @@ def test_get_by_model_and_code_returns_none_when_missing():
             local,
         ):
             repo = _make_repo(local)
-            result = repo._get_by_model_and_code_local(MODEL_ID, "99.ZZ.ZZ")
+            result = repo._get_by_model_and_code_local(MODEL_FAMILY, "99.ZZ.ZZ")
 
         assert result is None
 
@@ -139,7 +138,7 @@ def test_get_by_model_and_code_returns_matching_entry():
             repo = _make_repo(local)
             repo._upsert_local(_make_solution(code="50.3F.FF"))
             repo._upsert_local(_make_solution(code="13.00.00"))
-            result = repo._get_by_model_and_code_local(MODEL_ID, "50.3F.FF")
+            result = repo._get_by_model_and_code_local(MODEL_FAMILY, "50.3F.FF")
 
         assert result is not None
         assert result.code == "50.3F.FF"
@@ -160,16 +159,16 @@ def test_delete_by_model_removes_only_target_model():
             local,
         ):
             repo = _make_repo(local)
-            repo._upsert_local(_make_solution(model_id=MODEL_ID, code="50.3F.FF"))
-            repo._upsert_local(_make_solution(model_id=MODEL_ID, code="13.00.00"))
-            repo._upsert_local(_make_solution(model_id=MODEL_ID_2, code="50.3F.FF"))
+            repo._upsert_local(_make_solution(model_family=MODEL_FAMILY, code="50.3F.FF"))
+            repo._upsert_local(_make_solution(model_family=MODEL_FAMILY, code="13.00.00"))
+            repo._upsert_local(_make_solution(model_family=MODEL_FAMILY_2, code="50.3F.FF"))
 
-            count = repo._delete_by_model_local(MODEL_ID)
+            count = repo._delete_by_model_local(MODEL_FAMILY)
 
         data = json.loads(local.read_text(encoding="utf-8"))
         assert count == 2
         assert len(data) == 1
-        assert data[0]["model_id"] == str(MODEL_ID_2)
+        assert data[0]["model_family"] == MODEL_FAMILY_2
 
 
 # ---------------------------------------------------------------------------
@@ -187,11 +186,11 @@ def test_list_by_model_returns_only_target_model_sorted():
             local,
         ):
             repo = _make_repo(local)
-            repo._upsert_local(_make_solution(model_id=MODEL_ID, code="Z9.00.00"))
-            repo._upsert_local(_make_solution(model_id=MODEL_ID, code="13.00.00"))
-            repo._upsert_local(_make_solution(model_id=MODEL_ID_2, code="50.3F.FF"))
+            repo._upsert_local(_make_solution(model_family=MODEL_FAMILY, code="Z9.00.00"))
+            repo._upsert_local(_make_solution(model_family=MODEL_FAMILY, code="13.00.00"))
+            repo._upsert_local(_make_solution(model_family=MODEL_FAMILY_2, code="50.3F.FF"))
 
-            results = repo._list_by_model_local(MODEL_ID)
+            results = repo._list_by_model_local(MODEL_FAMILY)
 
         assert len(results) == 2
         assert results[0].code == "13.00.00"
@@ -215,7 +214,7 @@ def test_technician_steps_round_trip():
         ):
             repo = _make_repo(local)
             repo._upsert_local(_make_solution(technician_steps=steps))
-            result = repo._get_by_model_and_code_local(MODEL_ID, "50.3F.FF")
+            result = repo._get_by_model_and_code_local(MODEL_FAMILY, "50.3F.FF")
 
         assert result is not None
         assert result.technician_steps == steps
@@ -241,7 +240,7 @@ def test_frus_round_trip():
         ):
             repo = _make_repo(local)
             repo._upsert_local(_make_solution(frus=frus))
-            result = repo._get_by_model_and_code_local(MODEL_ID, "50.3F.FF")
+            result = repo._get_by_model_and_code_local(MODEL_FAMILY, "50.3F.FF")
 
         assert result is not None
         assert len(result.frus) == 2
@@ -266,7 +265,7 @@ def test_empty_technician_steps_and_frus_default_to_empty_lists():
         ):
             repo = _make_repo(local)
             repo._upsert_local(_make_solution(technician_steps=[], frus=[]))
-            result = repo._get_by_model_and_code_local(MODEL_ID, "50.3F.FF")
+            result = repo._get_by_model_and_code_local(MODEL_FAMILY, "50.3F.FF")
 
         assert result is not None
         assert result.technician_steps == []

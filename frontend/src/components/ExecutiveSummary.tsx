@@ -3,6 +3,7 @@ import type {
   ParseLogsResponse,
   Incident as ApiIncident,
   EnrichedEvent as ApiEvent,
+  RealtimeConsumable,
 } from '../types/api'
 import styles from './ExecutiveSummary.module.css'
 
@@ -10,7 +11,7 @@ interface ExecutiveSummaryProps {
   result: ParseLogsResponse
   filteredIncidents: ApiIncident[]
   filteredEvents: ApiEvent[]
-  consumableWarnings: any[]
+  consumableWarnings: RealtimeConsumable[]
   lastErrorLabel: string | null
   logFileName: string | null
   serialNumber: string | null

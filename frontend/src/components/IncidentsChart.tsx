@@ -1,7 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -11,6 +15,8 @@ import {
 } from 'recharts'
 import type { EnrichedEvent as ApiEvent } from '../types/api'
 import { formatWeekRange, getWindowForDate, type DateFilter } from '../hooks/useDateFilter'
+
+type ChartView = 'area' | 'bar' | 'line'
 
 interface EnrichedVolumeDataPoint {
   time: string
@@ -181,6 +187,13 @@ function CustomTooltip({
   )
 }
 
+// ─── View toggle button ────────────────────────────────────────────────────────
+const VIEW_OPTIONS: { key: ChartView; label: string; icon: string; title: string }[] = [
+  { key: 'area',  label: 'Área',   icon: '▲', title: 'Vista de área apilada' },
+  { key: 'bar',   label: 'Barras', icon: '▐', title: 'Vista de barras agrupadas' },
+  { key: 'line',  label: 'Líneas', icon: '〜', title: 'Vista de líneas' },
+]
+
 interface IncidentsChartProps {
   events: ApiEvent[]
   activeFilter: DateFilter
@@ -194,6 +207,8 @@ export function IncidentsChart({
   visibleSeverities,
   onSeverityToggle,
 }: IncidentsChartProps) {
+  const [chartView, setChartView] = useState<ChartView>('area')
+
   const volumeData = useMemo(
     () => bucketEventsByHourWithCodes(events, activeFilter),
     [events, activeFilter]
@@ -208,105 +223,174 @@ export function IncidentsChart({
         ? `Volumen de incidencias (${new Date(activeFilter + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})`
         : `Volumen de incidencias (${formatWeekRange(activeFilter)})`
 
-  return (
-    <section className="section dashboard__chart-left">
-      <h2 className="section__title">{title}</h2>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        {(
-          [
-            ['ERROR', '#ef4444'],
-            ['WARNING', '#f59e0b'],
-            ['INFO', '#3b82f6'],
-          ] as const
-        ).map(([sev, color]) => {
-          const active = visibleSeverities.has(sev)
-          return (
-            <button
+  const axisProps = {
+    xAxis: (
+      <XAxis
+        dataKey="time"
+        stroke="#9aa3b2"
+        tick={{ fontSize: 12 }}
+        interval={Math.max(0, Math.ceil(volumeData.length / 10) - 1)}
+        tickFormatter={(v: string) => {
+          const d = new Date(v)
+          return isMultiDay
+            ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+            : d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+        }}
+      />
+    ),
+    yAxis: <YAxis stroke="#9aa3b2" tick={{ fontSize: 12 }} />,
+    grid: <CartesianGrid strokeDasharray="3 3" stroke="#232734" />,
+    tooltip: (
+      <Tooltip
+        content={(props) => (
+          <CustomTooltip
+            {...props}
+            visibleSeverities={visibleSeverities}
+            isMultiDay={isMultiDay}
+          />
+        )}
+      />
+    ),
+    legend: <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />,
+  }
+
+  const severities = (['ERROR', 'WARNING', 'INFO'] as const).filter((s) =>
+    visibleSeverities.has(s)
+  )
+
+  function renderChart() {
+    const margin = { top: 8, right: 8, left: 0, bottom: 8 }
+
+    if (chartView === 'bar') {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={volumeData} margin={margin} barCategoryGap="20%">
+            {axisProps.grid}
+            {axisProps.xAxis}
+            {axisProps.yAxis}
+            {axisProps.tooltip}
+            {axisProps.legend}
+            {severities.map((sev) => (
+              <Bar
+                key={sev}
+                dataKey={sev}
+                stackId="a"
+                fill={SEV_COLORS[sev]}
+                fillOpacity={0.85}
+                radius={sev === severities[severities.length - 1] ? [3, 3, 0, 0] : [0, 0, 0, 0]}
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      )
+    }
+
+    if (chartView === 'line') {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={volumeData} margin={margin}>
+            {axisProps.grid}
+            {axisProps.xAxis}
+            {axisProps.yAxis}
+            {axisProps.tooltip}
+            {axisProps.legend}
+            {severities.map((sev) => (
+              <Line
+                key={sev}
+                type="monotone"
+                dataKey={sev}
+                stroke={SEV_COLORS[sev]}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      )
+    }
+
+    // default: area
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={volumeData} margin={margin}>
+          {axisProps.grid}
+          {axisProps.xAxis}
+          {axisProps.yAxis}
+          {axisProps.tooltip}
+          {axisProps.legend}
+          {severities.map((sev) => (
+            <Area
               key={sev}
-              onClick={() => onSeverityToggle(sev)}
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                padding: '2px 8px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                border: `1px solid ${color}`,
-                background: active ? color : 'transparent',
-                color: active ? '#fff' : color,
-                opacity: active ? 1 : 0.6,
-                transition: 'all 0.15s',
-              }}
-            >
-              {sev}
-            </button>
-          )
-        })}
+              type="monotone"
+              dataKey={sev}
+              stackId="a"
+              stroke={SEV_COLORS[sev]}
+              strokeWidth={2}
+              fill={SEV_COLORS[sev]}
+              fillOpacity={0.65}
+            />
+          ))}
+        </AreaChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  return (
+    <section className="section dashboard__chart-left chart-section">
+      <div className="section__header-row">
+        <h2 className="section__title">{title}</h2>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* View type toggle */}
+          <div className="chart-view-toggle">
+            {VIEW_OPTIONS.map(({ key, label, title: tip }) => (
+              <button
+                key={key}
+                className={`chart-view-toggle__btn${chartView === key ? ' chart-view-toggle__btn--active' : ''}`}
+                onClick={() => setChartView(key)}
+                title={tip}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Severity filters */}
+          <div className="chart-filters">
+            {(
+              [
+                ['ERROR', '#ef4444'],
+                ['WARNING', '#f59e0b'],
+                ['INFO', '#3b82f6'],
+              ] as const
+            ).map(([sev, color]) => {
+              const active = visibleSeverities.has(sev)
+              return (
+                <button
+                  key={sev}
+                  onClick={() => onSeverityToggle(sev)}
+                  className="chart-filters__btn"
+                  style={{
+                    border: `1px solid ${color}`,
+                    background: active ? color : 'transparent',
+                    color: active ? '#fff' : color,
+                    opacity: active ? 1 : 0.6,
+                  }}
+                >
+                  {sev}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
+
       <div className="chart-wrap">
         {volumeData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={volumeData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#232734" />
-              <XAxis
-                dataKey="time"
-                stroke="#9aa3b2"
-                tick={{ fontSize: 11 }}
-                interval={Math.max(0, Math.ceil(volumeData.length / 10) - 1)}
-                tickFormatter={(v) => {
-                  const d = new Date(v)
-                  return isMultiDay
-                    ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                    : d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-                }}
-              />
-              <YAxis stroke="#9aa3b2" tick={{ fontSize: 11 }} />
-              <Tooltip
-                content={(props) => (
-                  <CustomTooltip
-                    {...props}
-                    visibleSeverities={visibleSeverities}
-                    isMultiDay={isMultiDay}
-                  />
-                )}
-              />
-              <Legend wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
-              {visibleSeverities.has('ERROR') && (
-                <Area
-                  type="monotone"
-                  dataKey="ERROR"
-                  stackId="a"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  fill="#ef4444"
-                  fillOpacity={0.7}
-                />
-              )}
-              {visibleSeverities.has('WARNING') && (
-                <Area
-                  type="monotone"
-                  dataKey="WARNING"
-                  stackId="a"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  fill="#f59e0b"
-                  fillOpacity={0.7}
-                />
-              )}
-              {visibleSeverities.has('INFO') && (
-                <Area
-                  type="monotone"
-                  dataKey="INFO"
-                  stackId="a"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fill="#3b82f6"
-                  fillOpacity={0.7}
-                />
-              )}
-            </AreaChart>
-          </ResponsiveContainer>
+          renderChart()
         ) : (
-          <div className="chart-placeholder">Sin datos para el gráfico</div>
+          <div className="chart-placeholder">No hay datos que coincidan con los filtros seleccionados</div>
         )}
       </div>
     </section>

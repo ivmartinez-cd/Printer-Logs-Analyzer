@@ -1,0 +1,488 @@
+/* ─── Welcome View (2026 Redesign) ───────────────────────────────────── */
+.welcome-view {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically in the 100vh */
+  height: 100%;
+  padding: 20px 40px;
+  gap: 24px; /* Reduced from 64px */
+}
+
+/* ─── Hero Section ────────────────────────────────────────────────────── */
+.welcome-hero {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.welcome-hero__bg-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, var(--hp-blue-glow), transparent 70%);
+  filter: blur(80px);
+  z-index: -1;
+  opacity: 0.6;
+}
+
+.welcome-hero__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.welcome-hero__title {
+  font-size: clamp(2rem, 5vw, 3.5rem); /* Slightly smaller scale */
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.25; /* Increased to avoid cropping descenders */
+  margin: 0;
+  padding: 0.1em 0; /* Extra vertical space for background-clip */
+  background: var(--text-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-hero__tagline {
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  color: var(--text-muted);
+  max-width: 700px;
+  margin: 0 auto;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* ─── Search Box ──────────────────────────────────────────────────────── */
+.welcome-searchbox {
+  width: 100%;
+  max-width: 600px;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.welcome-searchbox__container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: var(--border-glass);
+  border-radius: 20px;
+  padding: 6px;
+  transition: var(--transition-premium);
+  box-shadow: var(--shadow-premium);
+}
+
+.welcome-searchbox__container:focus-within {
+  border-color: var(--hp-blue-vibrant);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.welcome-searchbox__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 16px 24px;
+  font-size: 1.1rem;
+  color: #fff;
+  font-family: inherit;
+  outline: none;
+}
+
+.welcome-searchbox__button {
+  background: var(--hp-blue-vibrant);
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.welcome-searchbox__button:hover:not(:disabled) {
+  background: #00b4ff;
+  transform: scale(1.02);
+}
+
+.welcome-searchbox__button:active {
+  transform: scale(0.98);
+}
+
+.welcome-searchbox__tip {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* ─── Bento Grid ──────────────────────────────────────────────────────── */
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: clamp(160px, 20vh, 220px); /* Increased for text safety */
+  gap: 16px;
+}
+
+.welcome-grid__item {
+  background: var(--bg-card);
+  border: var(--border-glass);
+  border-radius: 20px;
+  padding: 24px; /* Increased padding */
+  transition: var(--transition-premium);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backdrop-filter: var(--glass-blur);
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.welcome-grid__item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Modifier items */
+.welcome-grid__item--main {
+  grid-column: span 4;
+  grid-row: span 2;
+  background: linear-gradient(135deg, rgba(0, 150, 214, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border-color: rgba(0, 150, 214, 0.2);
+}
+
+.welcome-grid__item--monitor {
+  grid-column: span 4;
+  grid-row: span 2;
+  background: linear-gradient(135deg, rgba(13, 71, 161, 0.15) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border-color: rgba(13, 71, 161, 0.3);
+}
+
+.welcome-grid__icon--pulse {
+  position: relative;
+  overflow: visible;
+}
+
+.welcome-grid__icon--pulse::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: inherit;
+  border: 2px solid var(--hp-blue-vibrant);
+  animation: iconPulse 2s infinite;
+  opacity: 0;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.welcome-grid__item--activity {
+  grid-column: span 4;
+  grid-row: span 2;
+}
+
+.welcome-grid__item--wide {
+  grid-column: span 8;
+  grid-row: span 1;
+}
+
+.welcome-grid__item:not(.welcome-grid__item--main):not(.welcome-grid__item--activity):not(.welcome-grid__item--wide) {
+  grid-column: span 4;
+  grid-row: span 1;
+}
+
+/* Component Styles inside Bento */
+.welcome-grid__icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 161, 224, 0.1);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.welcome-grid__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: #fff;
+}
+
+.welcome-grid__desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.welcome-grid__footer {
+  font-weight: 700;
+  color: var(--hp-blue-vibrant);
+  font-size: 0.9rem;
+  margin-top: auto;
+}
+
+/* Activity List */
+.welcome-activity {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome-activity__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.welcome-activity__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.welcome-activity__link {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--hp-blue-vibrant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.welcome-activity__link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.welcome-activity__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.welcome-activity__item {
+  display: flex;
+  align-items: center;
+  background:  rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 12px 14px;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-activity__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.welcome-activity__item-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.welcome-activity__item-icon-wrapper--folder {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.15);
+}
+
+.welcome-activity__item-icon-wrapper--search {
+  background: rgba(0, 161, 255, 0.1);
+  color: #00a1ff;
+  border: 1px solid rgba(0, 161, 255, 0.15);
+}
+
+.welcome-activity__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0; /* Allow truncation */
+}
+
+.welcome-activity__item-serial {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.welcome-activity__item-model {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: -2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+.welcome-activity__item-date {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.welcome-activity__item-arrow {
+  color: var(--hp-blue-vibrant);
+  font-size: 1.1rem;
+  opacity: 0.4;
+  margin-left: 8px;
+  transition: all 0.3s ease;
+}
+
+.welcome-activity__item:hover .welcome-activity__item-arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+.welcome-activity__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Feature Row Icons */
+.welcome-grid__feature-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.welcome-grid__feature-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.welcome-grid__feature-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Wide Feature */
+.welcome-wide-feature {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.welcome-wide-feature__visual {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.welcome-visual-bar {
+  width: 4px;
+  height: 32px;
+  border-radius: 2px;
+  background: var(--hp-blue-vibrant);
+}
+
+.bar-1 { height: 24px; opacity: 0.4; }
+.bar-2 { height: 40px; }
+.bar-3 { height: 16px; opacity: 0.2; }
+
+/* ─── Footer ──────────────────────────────────────────────────────────── */
+.welcome-footer {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.welcome-footer__links {
+  display: flex;
+  gap: 24px;
+}
+
+.welcome-footer__link {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.welcome-footer__link:hover {
+  color: #fff;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .welcome-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .welcome-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .welcome-grid__item {
+    grid-column: span 12 !important;
+  }
+  .welcome-footer {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+}

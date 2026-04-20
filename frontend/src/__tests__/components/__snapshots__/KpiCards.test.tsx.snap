@@ -1,0 +1,120 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`KPICards > snapshot: estructura y clases de las 4 KPI cards 1`] = `
+<div
+  class="_kpi-grid_7fbcc5"
+>
+  <div
+    class="_kpi-card_7fbcc5 _kpi-card--hero_7fbcc5 _kpi-card--hero-alert_7fbcc5"
+    data-testid="kpi-last-error-hero"
+  >
+    <div
+      class="_kpi-card__label_7fbcc5"
+    >
+      Último error crítico
+    </div>
+    <div
+      class="_kpi-card__value_7fbcc5 _kpi-card__value--hero-code_7fbcc5"
+      data-testid="kpi-last-error-code"
+    >
+      53.B0.02
+    </div>
+    <div
+      class="_kpi-card__sub_7fbcc5"
+    >
+      Fuser error
+    </div>
+    <div
+      class="_kpi-card__timestamp_7fbcc5"
+    >
+      14/3/2024 10:00
+    </div>
+  </div>
+  <div
+    class="_kpi-card_7fbcc5 _kpi-card--variant-error_7fbcc5"
+  >
+    <div
+      class="_kpi-card__label_7fbcc5"
+    >
+      Errores críticos
+    </div>
+    <div
+      class="_kpi-card__value_7fbcc5 _kpi-card__value--error_7fbcc5"
+      data-testid="kpi-error-count"
+    >
+      1
+    </div>
+    <div
+      class="_kpi-card__sub_7fbcc5"
+      title="Eventos de menor severidad detectados en el período"
+    >
+      Alertas menores: 
+      1
+       advert. · 
+      1
+       info
+    </div>
+  </div>
+  <div
+    class="_kpi-card_7fbcc5 _kpi-card--variant-info_7fbcc5"
+  >
+    <div
+      class="_kpi-card__label_7fbcc5"
+    >
+      Incidencias activas
+    </div>
+    <div
+      class="_kpi-card__value_7fbcc5"
+      data-testid="kpi-active-incidents"
+    >
+      3
+    </div>
+    <div
+      class="_kpi-card__sub_7fbcc5"
+    >
+      en el período
+    </div>
+  </div>
+  <div
+    class="_kpi-card_7fbcc5 _kpi-card--variant-error_7fbcc5"
+  >
+    <div
+      class="_kpi-card__label_7fbcc5"
+    >
+      Tasa de errores
+    </div>
+    <div
+      class="_kpi-card__value_7fbcc5 _kpi-card__value--rate_7fbcc5"
+    >
+      1 c/100 pág.
+    </div>
+    <div
+      class="_kpi-card__sub_7fbcc5"
+    >
+      <div
+        style="margin-bottom: 4px;"
+      >
+        53.B0.02
+      </div>
+      <div
+        style="font-size: 0.8rem; opacity: 0.85;"
+      >
+        En periodo: 
+        <strong>
+          200
+        </strong>
+         págs.
+      </div>
+      <div
+        style="font-size: 0.8rem; opacity: 0.85;"
+      >
+        Contador total: 
+        <strong>
+          300
+        </strong>
+         págs.
+      </div>
+    </div>
+  </div>
+</div>
+`;
