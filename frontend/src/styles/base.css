@@ -62,19 +62,7 @@ body {
 
 
 /* ─── Subheader (Panel de errores row) ──────────────────────────────── */
-.dashboard__subheader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 14px 20px;
-  background: var(--bg-surface);
-  border: 1px solid #232734;
-  border-radius: 10px;
-  position: relative;
-  z-index: 30; /* Ensure popover stays above following sections */
-}
+/* .dashboard__subheader moved to dashboard.css for centralization and correct layering */
 
 .dashboard__subheader-title-group {
   display: flex;

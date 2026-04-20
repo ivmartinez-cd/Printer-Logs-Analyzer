@@ -120,6 +120,8 @@
   border: var(--border-glass);
   border-radius: 20px;
   animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  position: relative;
+  z-index: 100; /* Stacking context for children like the date range popover */
 }
 
 .dashboard__subheader-title-group {
@@ -156,7 +158,6 @@
   gap: 24px;
 }
 
-/* ─── Parse Errors & Modals Fallbacks ────────────────────────────────── */
 .dashboard__parse-errors-banner {
   padding: 12px 20px;
   background: rgba(245, 158, 11, 0.1);
