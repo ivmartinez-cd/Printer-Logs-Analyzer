@@ -72,6 +72,8 @@ body {
   background: var(--bg-surface);
   border: 1px solid #232734;
   border-radius: 10px;
+  position: relative;
+  z-index: 30; /* Ensure popover stays above following sections */
 }
 
 .dashboard__subheader-title-group {
