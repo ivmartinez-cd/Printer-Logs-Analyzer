@@ -127,6 +127,32 @@ def normalize_device_metadata(
     return metadata
 
 
+def merge_consumables_into_metadata(
+    metadata: Dict[str, Any],
+    consumables: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Update metadata with real-time values from the consumables endpoint.
+
+    Consumables list contains dicts with: type, percentLeft, pagesLeft, daysLeft, etc.
+    Types map to our canonical keys: TONER -> toner_life, FUSER -> fuser_life.
+    """
+    mapping = {
+        "TONER": "toner_life",
+        "FUSER": "fuser_life",
+        "MAINTENANCE_KIT": "rollers_life",
+    }
+
+    for item in consumables:
+        c_type = (item.get("type") or "").upper()
+        canonical_key = mapping.get(c_type)
+        if canonical_key:
+            pct = _coerce_percent(item.get("percentLeft"))
+            if pct is not None:
+                metadata[canonical_key] = pct
+
+    return metadata
+
+
 def _get_jwt(portal_url: str, api_key: str, api_secret: str) -> str:
     """Return a valid JWT, fetching a new one only when the cached one has expired."""
     cache_key = api_key  # keys are per-account; secret is not used as key for safety
