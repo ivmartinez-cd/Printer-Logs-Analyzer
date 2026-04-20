@@ -5,10 +5,10 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Center content vertically in the 100vh */
-  height: 100%;
-  padding: 20px 40px;
-  gap: 24px; /* Reduced from 64px */
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+  gap: 32px;
 }
 
 /* ─── Hero Section ────────────────────────────────────────────────────── */
@@ -130,8 +130,8 @@
 .welcome-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: clamp(160px, 20vh, 220px); /* Increased for text safety */
-  gap: 16px;
+  grid-auto-rows: minmax(180px, auto);
+  gap: 20px;
 }
 
 .welcome-grid__item {
