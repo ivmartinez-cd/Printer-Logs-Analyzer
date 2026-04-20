@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Calendar } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
 import { es } from 'date-fns/locale'
@@ -102,6 +103,30 @@ export function DateRangePicker({ activeFilter, minDate, maxDate, onChange }: Da
   const [tempRange, setTempRange] = useState<DayRange>({})
   const popoverRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const [coords, setCoords] = useState({ top: 0, right: 0 })
+
+  // Calculate position for the portal
+  const updateCoords = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setCoords({
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right
+      })
+    }
+  }
+
+  useLayoutEffect(() => {
+    if (open) {
+      updateCoords()
+      window.addEventListener('scroll', updateCoords, true)
+      window.addEventListener('resize', updateCoords)
+    }
+    return () => {
+      window.removeEventListener('scroll', updateCoords, true)
+      window.removeEventListener('resize', updateCoords)
+    }
+  }, [open])
 
   // Cerrar con Escape o click afuera sin aplicar cambios
   useEffect(() => {
@@ -181,8 +206,17 @@ export function DateRangePicker({ activeFilter, minDate, maxDate, onChange }: Da
         <span className="date-range-picker__button-label">{filterLabel(activeFilter)}</span>
       </button>
 
-      {open && (
-        <div ref={popoverRef} className="date-range-picker__popover" role="dialog" aria-modal="true">
+      {open && createPortal(
+        <div 
+          ref={popoverRef} 
+          className="date-range-picker__popover" 
+          role="dialog" 
+          aria-modal="true"
+          style={{ 
+            top: `${coords.top}px`, 
+            right: `${coords.right}px` 
+          }}
+        >
           <div className="date-range-picker__layout">
             {/* Columna izquierda: presets */}
             <div className="date-range-picker__presets">
@@ -227,7 +261,8 @@ export function DateRangePicker({ activeFilter, minDate, maxDate, onChange }: Da
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

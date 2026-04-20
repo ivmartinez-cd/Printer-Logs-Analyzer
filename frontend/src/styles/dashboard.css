@@ -19,7 +19,7 @@
 .dashboard__header {
   position: sticky;
   top: 16px;
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -121,7 +121,7 @@
   border-radius: 20px;
   animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   position: relative;
-  z-index: 100; /* Stacking context for children like the date range popover */
+  z-index: 900; /* High enough to be over siblings, but under global header (1000) */
 }
 
 .dashboard__subheader-title-group {
@@ -150,6 +150,8 @@
   max-width: 1600px;
   margin: 0 auto; /* Centered */
   padding: 24px 0 64px; /* Internal breathing room */
+  position: relative;
+  z-index: 1; /* Low base z-index to allow subheader (900) to overlap */
 }
 
 .dashboard__kpi-grid {
