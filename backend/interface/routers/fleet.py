@@ -10,11 +10,15 @@ from backend.application.parsers.log_parser import LogParser
 from backend.application.services.insight_service import (
     extract_roller_components,
     get_devices_by_customer,
+    merge_consumables_into_metadata,
     normalize_device_metadata,
     search_customers,
 )
 from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
+)
+from backend.application.services.insight_service import (
+    get_device_consumables as _insight_get_device_consumables,
 )
 from backend.application.services.insight_service import (
     get_device_info as _insight_get_device_info,
@@ -279,6 +283,32 @@ async def scan_fleet(
             raw_extended = info.get("raw_extended") or {}
             telemetry = _telemetry_payload(normalized_serial, info.get("metadata"))
             roller_components = extract_roller_components(raw_extended)
+
+            # --- NEW: Fetch real-time consumables to ensure accurate telemetry ---
+            try:
+                real_consumables = _insight_get_device_consumables(
+                    settings.insight_portal_url,
+                    settings.insight_api_key,
+                    settings.insight_api_secret,
+                    info["device_id"],
+                )
+                if real_consumables:
+                    # Update metadata with real-time values
+                    updated_metadata = merge_consumables_into_metadata(info.get("metadata") or {}, real_consumables)
+                    telemetry = _telemetry_payload(normalized_serial, updated_metadata)
+
+                    # Also update roller components if any real-time ones were found
+                    # (Note: Insight consumables API often includes Maintenance Kit)
+                    real_rollers = extract_roller_components({
+                        item.get("description") or item.get("type"): item.get("percentLeft")
+                        for item in real_consumables
+                    })
+                    if real_rollers:
+                        roller_components = real_rollers
+            except Exception as exc:
+                _logger.warning("Could not fetch real-time consumables for %s: %s", normalized_serial, exc)
+            # -------------------------------------------------------------------
+
             # Fall back to model-aware mock when Insight returns no roller fields
             if not roller_components:
                 roller_components = extract_roller_components(_mock_roller_fields(model, normalized_serial))
