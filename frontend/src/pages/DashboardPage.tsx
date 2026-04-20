@@ -781,31 +781,33 @@ export default function DashboardPage({
                       />
                     </section>
 
-                    {/* BLOQUE 2a: Gráfico de volumen */}
-                    <div ref={areaChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
-                      <IncidentsChart
-                        events={events}
-                        activeFilter={activeFilter}
-                        visibleSeverities={visibleSeverities}
-                        onSeverityToggle={(sev) =>
-                          setVisibleSeverities((prev) => {
-                            const next = new Set(prev)
-                            if (next.has(sev)) next.delete(sev)
-                            else next.add(sev)
-                            return next
-                          })
-                        }
-                      />
-                    </div>
+                    <div className="dashboard__above-fold__charts-row">
+                      {/* BLOQUE 2a: Gráfico de volumen */}
+                      <div ref={areaChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                        <IncidentsChart
+                          events={events}
+                          activeFilter={activeFilter}
+                          visibleSeverities={visibleSeverities}
+                          onSeverityToggle={(sev) =>
+                            setVisibleSeverities((prev) => {
+                              const next = new Set(prev)
+                              if (next.has(sev)) next.delete(sev)
+                              else next.add(sev)
+                              return next
+                            })
+                          }
+                        />
+                      </div>
 
-                    {/* BLOQUE 2b: Errores más frecuentes */}
-                    <div ref={barChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
-                      <TopErrorsChart 
-                        topCodes={topCodes} 
-                        onViewSolution={(code, sdsContent, sdsUrl) =>
-                          setSolutionModal({ code, sdsContent, sdsUrl })
-                        }
-                      />
+                      {/* BLOQUE 2b: Errores más frecuentes */}
+                      <div ref={barChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                        <TopErrorsChart 
+                          topCodes={topCodes} 
+                          onViewSolution={(code, sdsContent, sdsUrl) =>
+                            setSolutionModal({ code, sdsContent, sdsUrl })
+                          }
+                        />
+                      </div>
                     </div>
 
                   </div>

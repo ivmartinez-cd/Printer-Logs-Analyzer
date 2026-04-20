@@ -71,41 +71,54 @@
   margin-top: 4px;
 }
 
-/* ─── Above-fold container: KPIs + 2 gráficos siempre en 100vh ──────── */
-/*
-  Overhead calculado del DOM:
-  dashboard padding-top (20) + header (~64) + header margin-bottom (32) +
-  flex gap (24) + subheader (~58) + content-wrap gap (32) = ~230px
-  Se usa 240px para dejar 10px de margen de seguridad.
-*/
+/* ─── Above-fold container: KPIs + 2 gráficos responsivos ─────────── */
 .dashboard__above-fold {
-  display: grid;
-  grid-template-rows: auto 1fr 1fr;
-  gap: 16px;
-  height: calc(100vh - 240px);
-  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
-/* Las celdas de gráfico (2ª y 3ª filas) deben propagar su altura */
+.dashboard__above-fold__charts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  width: 100%;
+}
+
 .dashboard__above-fold__chart {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/* El section del gráfico llena la celda grid */
-.dashboard__above-fold .chart-section {
   flex: 1;
-  min-height: 0;
+  min-width: 600px; /* Se apilarán si el ancho es menor a ~1200px + gaps */
+  min-height: 420px; /* Altura garantizada para que no se vean comprimidos */
   display: flex;
   flex-direction: column;
 }
 
-/* El chart-wrap llena el espacio restante dentro del section */
-.dashboard__above-fold .chart-wrap {
+@media (max-width: 1300px) {
+  .dashboard__above-fold__chart {
+    min-width: 100%; /* Forzar apilado en pantallas medianas/pequeñas */
+    min-height: 400px;
+  }
+}
+
+/* El section del gráfico llena su contenedor */
+.chart-section {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: var(--border-glass);
+  border-radius: 20px;
+  padding: 24px;
   min-height: 0;
-  height: unset !important;
+}
+
+/* El chart-wrap debe tener una altura mínima para ser legible */
+.chart-wrap {
+  flex: 1;
+  min-height: 300px;
+  height: 100%;
 }
 
 /* ─── chart-section fuera del above-fold (fallback) ─────────────────── */
