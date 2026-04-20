@@ -51,44 +51,22 @@ _parser = LogParser()
 
 _SCAN_CONCURRENCY = 3
 
-# Model substring → roller extendedFields keys for fallback when Insight returns no data
-_MODEL_ROLLER_FIELDS: list[tuple[str, list[str]]] = [
-    (
-        "E62655",
-        ["pickupRollerTray1Life", "pickupRollerTray2Life", "adfPickupRollerLife", "separationRollerLife"],
-    ),
-    (
-        "E60175",
-        ["maintenanceKitPercent"],
-    ),
-]
-_DEFAULT_ROLLER_FIELDS = ["maintenanceKitPercent"]
+# Removed _MODEL_ROLLER_FIELDS and _DEFAULT_ROLLER_FIELDS (no fallback)
 
 
-def _mock_roller_fields(model: str | None, serial: str) -> dict[str, Any]:
-    """Return deterministic roller field values when Insight returns no extendedFields."""
-    import hashlib
-
-    seed = int(hashlib.md5(serial.encode()).hexdigest(), 16)
-
-    def _pct(offset: int) -> float:
-        return float(30 + (seed + offset) % 60)  # 30–89 %
-
-    fields_keys = _DEFAULT_ROLLER_FIELDS
-    if model:
-        for substr, keys in _MODEL_ROLLER_FIELDS:
-            if substr in model:
-                fields_keys = keys
-                break
-
-    return {key: _pct(i) for i, key in enumerate(fields_keys)}
+# Removed _mock_roller_fields
 
 
 def _telemetry_payload(serial: str, metadata: dict[str, Any] | None) -> dict[str, Any]:
+    if not metadata:
+        return {
+            "fuser_life_percent": None,
+            "black_toner_percent": None,
+        }
     normalized = normalize_device_metadata(serial, metadata)
     return {
-        "fuser_life_percent": float(normalized["fuser_life"]),
-        "black_toner_percent": float(normalized["toner_life"]),
+        "fuser_life_percent": normalized.get("fuser_life"),
+        "black_toner_percent": normalized.get("toner_life"),
     }
 
 
@@ -126,9 +104,9 @@ def _compute_health(
 
     min_consumable = min(consumable_values) if consumable_values else 100.0
 
-    if max_level == 2 or min_consumable < 15.0:
+    if max_level == 2 or (consumable_values and min_consumable < 15.0):
         status = "critical"
-    elif max_level == 1 or min_consumable < 30.0:
+    elif max_level == 1 or (consumable_values and min_consumable < 30.0):
         status = "warning"
     else:
         status = "ok"
@@ -309,9 +287,7 @@ async def scan_fleet(
                 _logger.warning("Could not fetch real-time consumables for %s: %s", normalized_serial, exc)
             # -------------------------------------------------------------------
 
-            # Fall back to model-aware mock when Insight returns no roller fields
-            if not roller_components:
-                roller_components = extract_roller_components(_mock_roller_fields(model, normalized_serial))
+            # Removed fallback to model-aware mock when Insight returns no roller fields
 
             if not info.get("device_id"):
                 return DeviceScanResult(

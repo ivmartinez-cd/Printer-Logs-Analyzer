@@ -136,7 +136,7 @@ def test_scan_fleet_maps_telemetry_from_metadata(
 @patch("backend.interface.routers.fleet.get_sds_session")
 @patch("backend.interface.routers.fleet.html_to_tsv")
 @patch("backend.interface.routers.fleet._insight_get_device_info")
-def test_scan_fleet_generates_deterministic_telemetry_when_metadata_missing(
+def test_scan_fleet_returns_null_telemetry_when_metadata_missing(
     mock_insight_info,
     mock_tsv,
     mock_sds_factory,
@@ -170,18 +170,13 @@ def test_scan_fleet_generates_deterministic_telemetry_when_metadata_missing(
     mock_sds.fetch_event_logs_html.return_value = "<html />"
     mock_tsv.return_value = _SAMPLE_TSV
 
-    first_response = client.post("/fleet/scan", json={"client_id": "demo"}, headers=_HEADERS)
-    second_response = client.post("/fleet/scan", json={"client_id": "demo"}, headers=_HEADERS)
+    response = client.post("/fleet/scan", json={"client_id": "demo"}, headers=_HEADERS)
 
-    first_payload = first_response.json()[0]
-    second_payload = second_response.json()[0]
+    payload = response.json()[0]
 
-    assert first_response.status_code == 200
-    assert second_response.status_code == 200
-    assert first_payload["fuser_life_percent"] > 0
-    assert first_payload["black_toner_percent"] > 0
-    assert first_payload["fuser_life_percent"] == second_payload["fuser_life_percent"]
-    assert first_payload["black_toner_percent"] == second_payload["black_toner_percent"]
+    assert response.status_code == 200
+    assert payload["fuser_life_percent"] is None
+    assert payload["black_toner_percent"] is None
 
 
 @patch("backend.interface.routers.fleet.get_sds_session")
