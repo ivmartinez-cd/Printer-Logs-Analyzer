@@ -87,27 +87,12 @@ def _coerce_percent(value: Any) -> float | None:
     return None
 
 
-def build_deterministic_telemetry(serial: str) -> Dict[str, float]:
-    normalized_serial = serial.strip().upper() or "UNKNOWN"
-    weighted_sum = sum((index + 1) * ord(char) for index, char in enumerate(normalized_serial))
-
-    def _metric(offset: int) -> float:
-        return float(8 + ((weighted_sum * (offset * 13 + 7) + offset * 17) % 88))
-
-    return {
-        "fuser_life": _metric(1),
-        "toner_life": _metric(2),
-        "rollers_life": _metric(3),
-    }
-
-
 def normalize_device_metadata(
     serial: str,
     extended_fields: Optional[Dict[str, Any]],
 ) -> Dict[str, Any]:
     metadata: Dict[str, Any] = dict(extended_fields or {})
     normalized_lookup = {_normalize_field_key(str(key)): value for key, value in metadata.items()}
-    fallback = build_deterministic_telemetry(serial)
 
     for canonical_key, aliases in _TELEMETRY_ALIASES.items():
         raw_value: Any | None = None
@@ -119,10 +104,7 @@ def normalize_device_metadata(
             if normalized_alias in normalized_lookup:
                 raw_value = normalized_lookup[normalized_alias]
                 break
-        coerced_value = _coerce_percent(raw_value)
-        metadata[canonical_key] = (
-            fallback[canonical_key] if coerced_value is None else coerced_value
-        )
+        metadata[canonical_key] = _coerce_percent(raw_value)
 
     return metadata
 
