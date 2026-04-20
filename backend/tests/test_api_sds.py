@@ -40,7 +40,7 @@ _HEADERS = {"x-api-key": "dev"}
 @patch("backend.interface.routers.sds.get_sds_session")
 @patch("backend.interface.routers.sds.html_to_tsv")
 def test_extract_logs_success(
-    mock_tsv, mock_sds_factory, mock_insight_info, mock_insight_consumables, client
+    mock_tsv, mock_sds_factory, mock_insight_info, mock_insight_consumables, client, mock_settings
 ):
     """Test successful log extraction via API."""
     mock_insight_info.return_value = {
@@ -56,26 +56,32 @@ def test_extract_logs_success(
     mock_sds.fetch_event_logs_html.return_value = "<html>...</html>"
     mock_tsv.return_value = "HeaderCol\nDataLine1\nDataLine2"
 
-    # Mock repositories to avoid DB dependency in these tests
-    with (
-        patch("backend.interface.routers.sds.PrinterModelRepository") as mock_repo_cls,
-        patch("backend.interface.routers.sds.ErrorSolutionRepository") as mock_sol_repo_cls,
-    ):
-        mock_repo = mock_repo_cls.return_value
-        mock_repo.find_best_match.return_value = None
-        mock_sol_repo = mock_sol_repo_cls.return_value
-        mock_sol_repo.get_model_ids_with_solutions.return_value = []
+    mock_sol_repo = MagicMock()
+    mock_sol_repo.get_model_ids_with_solutions.return_value = []
 
-    response = client.post("/sds/extract-logs", json={"serial": "MXSCS7Q00Q"}, headers=_HEADERS)
+    from backend.interface.deps import get_error_solution_repo
 
-    assert response.status_code == 200
-    data = response.json()
-    assert data["serial"] == "MXSCS7Q00Q"
-    assert data["event_count"] == 2
-    assert "DataLine1" in data["logs_text"]
+    app = client.app
+    app.dependency_overrides[get_error_solution_repo] = lambda: mock_sol_repo
 
-    mock_insight_info.assert_called_once_with("https://testportal", "key", "secret", "MXSCS7Q00Q")
-    mock_sds.fetch_event_logs_html.assert_called_once_with("12345", 30)
+    try:
+        response = client.post("/sds/extract-logs", json={"serial": "MXSCS7Q00Q"}, headers=_HEADERS)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["serial"] == "MXSCS7Q00Q"
+        assert data["event_count"] == 2
+        assert "DataLine1" in data["logs_text"]
+
+        mock_insight_info.assert_called_once_with(
+            mock_settings.insight_portal_url,
+            mock_settings.insight_api_key,
+            mock_settings.insight_api_secret,
+            "MXSCS7Q00Q",
+        )
+        mock_sds.fetch_event_logs_html.assert_called_once_with("12345", 30)
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_extract_logs_unauthorized(client):

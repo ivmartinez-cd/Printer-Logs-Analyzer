@@ -1,6 +1,10 @@
 # HP Logs Analyzer
 
 ![CI](https://github.com/ivmartinez-cd/Printer-Logs-Analyzer/actions/workflows/ci.yml/badge.svg)
+![Tests](https://img.shields.io/badge/tests-250%2F250%20passing-brightgreen)
+![TypeScript](https://img.shields.io/badge/typescript-strict-blue)
+![Docker](https://img.shields.io/badge/docker-ready-blue)
+![Deploy](https://img.shields.io/badge/deploy-ready-orange)
 
 Herramienta web interna para analizar logs de impresoras HP. Identificás un equipo por número de serie, la app resuelve el modelo, extrae los logs del portal HP SDS automáticamente, y genera un análisis completo: incidentes por código, KPIs, diagnóstico con IA, consumibles en tiempo real, gráficos y exportación a PDF ejecutivo.
 
@@ -66,8 +70,8 @@ Printer-Logs-Analyzer/
 │   │   ├── database.py       # psycopg2 con pool y fallback automático
 │   │   ├── content_fetcher.py
 │   │   ├── fallback/         # JSON seed para modo offline
-│   │   └── repositories/     # base, error_code, error_solution, printer_model, saved_analysis
-│   ├── migrations/           # SQL (001–007) + carga_cpmd_626xx.sql
+│   │   └── repositories/     # base, error_code, error_solution, saved_analysis
+│   ├── migrations/           # SQL 001–005
 │   └── tests/                # pytest — 19 suites de tests
 ├── frontend/
 │   ├── Dockerfile
@@ -93,10 +97,6 @@ Printer-Logs-Analyzer/
 | POST | `/parser/preview` | Parse + análisis + enriquecimiento de logs |
 | POST | `/parser/validate` | Detecta códigos nuevos sin analizar |
 | POST | `/error-codes/upsert` | Crea o actualiza un código en el catálogo |
-| GET | `/printer-models` | Lista modelos con flag `has_cpmd` |
-| POST | `/printer-models/upload-pdf` | Carga PDF Service Cost Data (extracción con IA) |
-| POST | `/models/{id}/cpmd` | Ingesta CPMD (Service Manual) para un modelo |
-| GET | `/models/{id}/error-solutions/{code}` | Solución técnica con pasos y FRUs |
 | GET | `/sds/resolve-device?serial=` | Resuelve modelo y device_id por número de serie |
 | POST | `/sds/extract-logs` | Extrae logs del portal SDS por serial |
 | POST | `/analysis/ai-diagnose` | Diagnóstico con Claude Opus 4.6 (rate limit: 5/min) |

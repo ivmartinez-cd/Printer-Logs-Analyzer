@@ -108,7 +108,7 @@ def search_by_serial(serial: str, cookie: str) -> dict | None:
     headers = get_base_headers(cookie, referer=f"{BASE_URL}/devices/239877")
     
     print(f"\n{'='*60}")
-    print(f"  PASO 1: Búsqueda por Número de Serie")
+    print("  PASO 1: Búsqueda por Número de Serie")
     print(f"{'='*60}")
     print(f"  [*] Serial buscado: {serial}")
     print(f"  [*] URL: {search_url}")
@@ -124,7 +124,7 @@ def search_by_serial(serial: str, cookie: str) -> dict | None:
     # --- Caso 1: El portal redirige directamente a la ficha del equipo ---
     #     Cuando el serial es único, HP SDS hace un redirect 302 a /devices/{ID}
     if response.history:
-        print(f"  [*] Detectada redirección (la búsqueda encontró resultado único)")
+        print("  [*] Detectada redirección (la búsqueda encontró resultado único)")
         for r in response.history:
             print(f"      → {r.status_code} → {r.headers.get('Location', 'N/A')}")
     
@@ -136,7 +136,7 @@ def search_by_serial(serial: str, cookie: str) -> dict | None:
     match = re.search(r'/devices/(\d+)', final_url)
     if match:
         device_id = match.group(1)
-        print(f"\n  [+] ¡EQUIPO ENCONTRADO POR REDIRECCIÓN DIRECTA!")
+        print("\n  [+] ¡EQUIPO ENCONTRADO POR REDIRECCIÓN DIRECTA!")
         print(f"  [+] Device ID: {device_id}")
         return {
             "device_id": device_id,
@@ -165,7 +165,7 @@ def search_by_serial(serial: str, cookie: str) -> dict | None:
             device_id = device_links[0]
             unique_ids = list(dict.fromkeys(device_links))  # Eliminar duplicados manteniendo orden
             
-            print(f"\n  [+] ¡EQUIPO(S) ENCONTRADO(S) EN RESULTADOS!")
+            print("\n  [+] ¡EQUIPO(S) ENCONTRADO(S) EN RESULTADOS!")
             print(f"  [+] Device IDs encontrados: {unique_ids}")
             print(f"  [+] Usando el primer resultado: {device_id}")
             
@@ -187,7 +187,7 @@ def search_by_serial(serial: str, cookie: str) -> dict | None:
             return None
         
         # Si llegamos aquí, la respuesta tiene un formato inesperado
-        print(f"\n  [?] Respuesta recibida pero no se detectaron links a dispositivos.")
+        print("\n  [?] Respuesta recibida pero no se detectaron links a dispositivos.")
         print(f"      Revisa el archivo '{debug_file}' para diagnosticar.")
         # Mostrar un preview del contenido para ayudar al debug
         preview = html[:500].replace('\n', ' ').replace('\r', '')
@@ -195,8 +195,8 @@ def search_by_serial(serial: str, cookie: str) -> dict | None:
         return None
     
     elif response.status_code == 302:
-        print(f"\n  [-] Cookie expirada. El portal redirige a la página de login.")
-        print(f"      Necesitas actualizar tu JSESSIONID.")
+        print("\n  [-] Cookie expirada. El portal redirige a la página de login.")
+        print("      Necesitas actualizar tu JSESSIONID.")
         return None
     
     else:
@@ -227,7 +227,7 @@ def fetch_event_logs(device_id: str, cookie: str, days: int = 30) -> str | None:
     headers = get_ajax_headers(cookie, referer=f"{BASE_URL}/devices/{device_id}/hpsmart")
     
     print(f"\n{'='*60}")
-    print(f"  PASO 2: Descarga de Event Logs")
+    print("  PASO 2: Descarga de Event Logs")
     print(f"{'='*60}")
     print(f"  [*] Device ID: {device_id}")
     print(f"  [*] Rango: últimos {days} días (desde {fecha_desde})")
@@ -248,21 +248,21 @@ def fetch_event_logs(device_id: str, cookie: str, days: int = 30) -> str | None:
         # Intentar parsear como JSON primero
         try:
             data = response.json()
-            print(f"  [+] Formato: JSON puro")
+            print("  [+] Formato: JSON puro")
             return content
         except ValueError:
             pass
         
         # Si no es JSON, verificar que sea el XML/HTML esperado
         if "<ekm-ajax-response" in content or "<content>" in content:
-            print(f"  [+] Formato: XML/HTML (EKM Ajax Response)")
+            print("  [+] Formato: XML/HTML (EKM Ajax Response)")
             return content
         else:
             print(f"  [?] Formato desconocido. Preview: {content[:200]}...")
             return content
     
     elif response.status_code == 302:
-        print(f"  [-] Cookie expirada. Redirigiendo a login.")
+        print("  [-] Cookie expirada. Redirigiendo a login.")
         return None
     else:
         print(f"  [-] Error HTTP {response.status_code}: {response.text[:500]}")
@@ -278,7 +278,7 @@ def parse_event_logs(raw_content: str, serial: str) -> pd.DataFrame | None:
     y la convierte a un DataFrame de pandas.
     """
     print(f"\n{'='*60}")
-    print(f"  PASO 3: Parseando Event Logs")
+    print("  PASO 3: Parseando Event Logs")
     print(f"{'='*60}")
     
     # La API de EKM/HP SDS envuelve el HTML en <content><![CDATA[ ... ]]></content>
@@ -286,7 +286,7 @@ def parse_event_logs(raw_content: str, serial: str) -> pd.DataFrame | None:
     
     if not match:
         # Intentar parsear directamente como HTML si no tiene wrapper CDATA
-        print(f"  [*] No se detectó wrapper CDATA, intentando parseo directo...")
+        print("  [*] No se detectó wrapper CDATA, intentando parseo directo...")
         html_content = raw_content
     else:
         html_content = match.group(1)
@@ -295,7 +295,7 @@ def parse_event_logs(raw_content: str, serial: str) -> pd.DataFrame | None:
     try:
         dfs = pd.read_html(html_content)
         if not dfs:
-            print(f"  [-] No se encontraron tablas en el HTML.")
+            print("  [-] No se encontraron tablas en el HTML.")
             return None
         
         df = dfs[0]
@@ -310,7 +310,7 @@ def parse_event_logs(raw_content: str, serial: str) -> pd.DataFrame | None:
         return df
         
     except ImportError:
-        print(f"  [-] Error: Falta 'lxml' o 'beautifulsoup4'. Ejecuta: pip install lxml")
+        print("  [-] Error: Falta 'lxml' o 'beautifulsoup4'. Ejecuta: pip install lxml")
         return None
     except Exception as e:
         print(f"  [-] Error parseando tabla HTML: {e}")
@@ -329,7 +329,7 @@ def export_to_csv(df: pd.DataFrame, serial: str, output_dir: str = ".") -> str:
     df.to_csv(filepath, index=False, encoding="utf-8-sig")
     
     print(f"\n{'='*60}")
-    print(f"  PASO 4: Exportación")
+    print("  PASO 4: Exportación")
     print(f"{'='*60}")
     print(f"  [+] Archivo CSV guardado: '{filepath}'")
     print(f"  [+] Total de eventos: {len(df)}")
@@ -345,7 +345,7 @@ def run_full_extraction(serial: str, cookie: str, days: int = 30):
     Pipeline completo: Serial → Search → Device ID → Event Logs → CSV
     """
     print(f"\n{'#'*60}")
-    print(f"  HP SDS Insight Portal - Extractor por Serie")
+    print("  HP SDS Insight Portal - Extractor por Serie")
     print(f"  Serial: {serial}")
     print(f"  Fecha:  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'#'*60}")
@@ -354,7 +354,7 @@ def run_full_extraction(serial: str, cookie: str, days: int = 30):
     result = search_by_serial(serial, cookie)
     if not result:
         print(f"\n[FALLO] No se pudo localizar el equipo con serial '{serial}'.")
-        print(f"        Verifica que el serial sea correcto y que tu cookie sea válida.")
+        print("        Verifica que el serial sea correcto y que tu cookie sea válida.")
         sys.exit(1)
     
     device_id = result["device_id"]
@@ -374,11 +374,11 @@ def run_full_extraction(serial: str, cookie: str, days: int = 30):
     # PASO 3: Parsear a DataFrame
     df = parse_event_logs(raw_content, serial)
     if df is None or df.empty:
-        print(f"\n[FALLO] No se pudieron parsear los Event Logs.")
+        print("\n[FALLO] No se pudieron parsear los Event Logs.")
         sys.exit(1)
     
     # Vista previa
-    print(f"\n  [Vista Previa - 5 eventos más recientes]")
+    print("\n  [Vista Previa - 5 eventos más recientes]")
     print(f"  {'-'*75}")
     print(df.head().to_string(index=False))
     print(f"  {'-'*75}")
@@ -387,7 +387,7 @@ def run_full_extraction(serial: str, cookie: str, days: int = 30):
     csv_path = export_to_csv(df, serial)
     
     print(f"\n{'#'*60}")
-    print(f"  ✅ EXTRACCIÓN COMPLETADA EXITOSAMENTE")
+    print("  ✅ EXTRACCIÓN COMPLETADA EXITOSAMENTE")
     print(f"  Serial:    {serial}")
     print(f"  Device ID: {device_id}")
     print(f"  Eventos:   {len(df)}")
@@ -421,7 +421,7 @@ Ejemplos de uso:
     parser.add_argument(
         "--cookie",
         default=DEFAULT_COOKIE,
-        help=f"Cookie JSESSIONID completa (default: usa la cookie guardada)"
+        help="Cookie JSESSIONID completa (default: usa la cookie guardada)"
     )
     parser.add_argument(
         "--days",
@@ -459,7 +459,7 @@ Ejemplos de uso:
         consolidated_file = f"eventos_consolidado_{timestamp}.csv"
         consolidated.to_csv(consolidated_file, index=False, encoding="utf-8-sig")
         print(f"\n{'='*60}")
-        print(f"  📊 ARCHIVO CONSOLIDADO:")
+        print("  📊 ARCHIVO CONSOLIDADO:")
         print(f"  [+] {consolidated_file}")
         print(f"  [+] {len(args.serials)} equipos procesados")
         print(f"  [+] {len(consolidated)} eventos totales")

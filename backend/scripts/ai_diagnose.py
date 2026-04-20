@@ -189,7 +189,7 @@ def call_claude(payload: dict) -> tuple[str, object]:
     client = anthropic.Anthropic(api_key=api_key)
 
     response = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-3-5-sonnet-20240620",
         max_tokens=400,
         system=[
             {

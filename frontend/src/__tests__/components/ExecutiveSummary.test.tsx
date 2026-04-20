@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ExecutiveSummary } from '../../components/ExecutiveSummary'
-import type { ParseLogsResponse, Incident, EnrichedEvent } from '../../types/api'
+import type { ParseLogsResponse, Incident, EnrichedEvent, RealtimeConsumable } from '../../types/api'
 
 const mockResult: ParseLogsResponse = {
   events: [],
@@ -52,7 +52,7 @@ describe('ExecutiveSummary', () => {
   })
 
   it('muestra alertas de consumibles para reemplazo', () => {
-    const warnings: any[] = [
+    const warnings: RealtimeConsumable[] = [
       {
         sku: 'W123',
         description: 'Toner Black',

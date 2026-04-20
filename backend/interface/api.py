@@ -8,7 +8,7 @@ from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.database import Database
 from backend.interface.exception_handlers import register_exception_handlers
 from backend.interface.rate_limiter import limiter
-from backend.interface.routers import ai, analysis, error_codes, printers, saved_analysis, sds
+from backend.interface.routers import ai, analysis, error_codes, fleet, saved_analysis, sds
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
@@ -43,8 +43,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             "http://localhost:5174",
         ],
         allow_credentials=True,
-        allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["Content-Type", "x-api-key"],
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # Global routes
@@ -63,8 +63,9 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(sds.router)
     app.include_router(ai.router)
     app.include_router(saved_analysis.router)
-    app.include_router(printers.router)
+
     app.include_router(error_codes.router)
+    app.include_router(fleet.router)
 
     return app
 

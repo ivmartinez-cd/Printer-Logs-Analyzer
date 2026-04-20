@@ -62,19 +62,29 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
   })
 
   return (
-    <section className="section dashboard__table-section dashboard__table-section--collapsible">
+    <section className="collapsible-panel collapsible-panel--events">
       <button
         type="button"
-        className="section__title section__title--toggle"
+        className="collapsible-panel__header"
         onClick={() => setIsCollapsed((c) => !c)}
+        aria-expanded={!isCollapsed}
       >
-        <span>Eventos del período</span>
-        <span className="section__toggle-icon" aria-hidden>
-          {isCollapsed ? '▶' : '▼'}
+        <span className="collapsible-panel__title">📅 Eventos del período</span>
+        {isCollapsed && events.length > 0 && (
+          <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
+            {events.length} evento{events.length !== 1 ? 's' : ''}
+          </span>
+        )}
+        <span
+          className={`collapsible-panel__chevron${!isCollapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
+          aria-hidden="true"
+        >
+          ▶
         </span>
       </button>
       {!isCollapsed && (
-        <>
+        <div className="collapsible-panel__body">
+          <>
           <div className={styles['table-toolbar']}>
             <label className={styles['table-toolbar__label']} htmlFor="events-severity-filter">
               Severidad:
@@ -144,13 +154,13 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                     <td>{formatDateTime(evt.timestamp)}</td>
                     <td>{evt.code}</td>
                     <td>
-                      <span className={`badge badge--${(evt.type || 'info').toLowerCase()}`}>
+                      <span className={'badge badge--' + (evt.type || 'info').toLowerCase()}>
                         {evt.type}
                       </span>
                     </td>
                     <td>{evt.code_description?.trim() || evt.code || '—'}</td>
                     <td className={styles['dashboard-table__cell-solution']}>
-                      {evt.code_solution_content?.trim() ? (
+                      {evt.code_solution_content?.trim() || evt.code_solution_url?.trim() ? (
                         <button
                           type="button"
                           className={styles['dashboard-table__solution-link']}
@@ -160,18 +170,8 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                         >
                           Ver solución
                         </button>
-                      ) : evt.code_solution_url?.trim() ? (
-                        <a
-                          href={evt.code_solution_url.trim()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles['dashboard-table__solution-link']}
-                          title="Este link puede haber vencido"
-                        >
-                          Ver solución ⚠
-                        </a>
                       ) : (
-                        '—'
+                        <span className="dashboard-table__cell-actions-placeholder">Sin solución SDS</span>
                       )}
                     </td>
                   </tr>
@@ -179,7 +179,8 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
               </tbody>
             </table>
           </div>
-        </>
+          </>
+        </div>
       )}
     </section>
   )

@@ -16,8 +16,8 @@ describe('KPICards', () => {
         lastErrorLabel="14/3/2024 10:00"
       />
     )
-    expect(screen.getByText('Estado de errores')).toBeInTheDocument()
-    expect(screen.getByText('Incidencias Activas')).toBeInTheDocument()
+    expect(screen.getByText('Errores críticos')).toBeInTheDocument()
+    expect(screen.getByText('Incidencias activas')).toBeInTheDocument()
     expect(screen.getByText('Último error crítico')).toBeInTheDocument()
     expect(screen.getByText('Tasa de errores')).toBeInTheDocument()
     // 1 ERROR, 1 WARNING, 1 INFO entre los mockIncidents
@@ -79,7 +79,19 @@ describe('KPICards', () => {
         lastErrorLabel={null}
       />
     )
-    expect(screen.getByText('Estado de errores')).toBeInTheDocument()
+    expect(screen.getByText('Errores críticos')).toBeInTheDocument()
     expect(screen.getByText('—')).toBeInTheDocument()
+  })
+
+  it('snapshot: estructura y clases de las 4 KPI cards', () => {
+    const { container } = render(
+      <KPICards
+        filteredIncidents={mockIncidents}
+        filteredEvents={mockEvents}
+        lastErrorEvent={mockEvents[0]}
+        lastErrorLabel="14/3/2024 10:00"
+      />
+    )
+    expect(container.firstChild).toMatchSnapshot()
   })
 })

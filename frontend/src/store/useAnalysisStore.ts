@@ -16,21 +16,25 @@ interface AnalysisState {
   savingIncident: boolean
   
   // UI State
-  viewMode: 'dashboard' | 'saved-list' | 'saved-detail'
+  viewMode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor'
   logFileName: string | null
-  currentModelId: string | null
+  currentModelFamily: string | null
   currentSerialNumber: string | null
-  
+  monitorClientId: string | null
+  monitorModels: string[]
+
   // Actions
   setResult: (result: ParseLogsResponse | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  setViewMode: (mode: 'dashboard' | 'saved-list' | 'saved-detail') => void
+  setViewMode: (mode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor') => void
   setLogFileName: (name: string | null) => void
   setCodesNew: (updater: (prev: string[]) => string[]) => void
+  setMonitorClientId: (id: string | null) => void
+  setMonitorModels: (models: string[]) => void
   
   // Handlers
-  handleAnalyze: (logText: string, fileName?: string, modelId?: string | null) => Promise<void>
+  handleAnalyze: (logText: string, fileName?: string, modelFamily?: string | null) => Promise<void>
   handleSaveCodeToCatalog: (body: ErrorCodeUpsertBody, isEdit?: boolean) => Promise<UpsertErrorCodeResult>
   handleSaveIncident: (name: string, equipmentIdentifier: string | null) => Promise<void>
 }
@@ -44,8 +48,10 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   error: null,
   viewMode: 'dashboard',
   logFileName: null,
-  currentModelId: null,
+  currentModelFamily: null,
   currentSerialNumber: null,
+  monitorClientId: null,
+  monitorModels: [],
 
   setResult: (result) => set({ result }),
   setLoading: (loading) => set({ loading }),
@@ -53,14 +59,16 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   setViewMode: (viewMode) => set({ viewMode }),
   setLogFileName: (logFileName) => set({ logFileName }),
   setCodesNew: (updater) => set((state) => ({ codesNew: updater(state.codesNew) })),
+  setMonitorClientId: (monitorClientId) => set({ monitorClientId }),
+  setMonitorModels: (monitorModels) => set({ monitorModels }),
 
-  handleAnalyze: async (logText, fileName, modelId) => {
+  handleAnalyze: async (logText, fileName, modelFamily) => {
     if (!logText.trim()) return
-    set({ loading: true, error: null, result: null, codesNew: [], logFileName: fileName ?? null })
+    set({ loading: true, error: null, result: null, codesNew: [], logFileName: fileName ?? null, currentModelFamily: modelFamily ?? null })
     
     try {
       const [data, validateRes] = await Promise.all([
-        previewLogs(logText, modelId),
+        previewLogs(logText, modelFamily),
         validateLogs(logText).catch(() => ({ codes_new: [] as string[] })),
       ])
       set({ 

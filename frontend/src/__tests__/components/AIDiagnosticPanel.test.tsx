@@ -48,11 +48,12 @@ describe('AIDiagnosticPanel', () => {
       cost_usd: 0
     })
 
-    render(<AIDiagnosticPanel result={mockResult} />)
+    const { container } = render(<AIDiagnosticPanel result={mockResult} />)
     fireEvent.click(screen.getByTestId('ai-diagnostic-panel-toggle'))
     fireEvent.click(screen.getByText('Generar análisis con IA'))
 
-    expect(screen.getByText('Generando diagnóstico…')).toBeInTheDocument()
+    const skeleton = container.querySelector('.ai-diagnostic-skeleton')
+    expect(skeleton).toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByText('Falla crítica en zona del fusor.')).toBeInTheDocument()

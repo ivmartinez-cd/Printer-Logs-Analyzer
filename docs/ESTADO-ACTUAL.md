@@ -73,7 +73,7 @@ Printer-Logs-Analyzer/
 │   │   ├── content_fetcher.py
 │   │   ├── fallback/         # error_codes_seed.json
 │   │   └── repositories/     # BaseRepository + 4 implementaciones
-│   ├── migrations/           # SQL 001–007 + carga_cpmd_626xx.sql
+│   ├── migrations/           # SQL 001–005
 │   └── tests/                # 19 suites pytest
 ├── frontend/
 │   ├── Dockerfile
@@ -100,7 +100,6 @@ Printer-Logs-Analyzer/
 | `sds.py` | — | `GET /sds/resolve-device`, `POST /sds/extract-logs`, `GET /insight/devices/{serial}/alerts`, `GET /insight/devices/{serial}/meters` |
 | `ai.py` | `/analysis` | `POST /ai-diagnose` (rate: 5/min) |
 | `saved_analysis.py` | `/saved-analyses` | CRUD + `POST /{id}/compare` |
-| `printers.py` | — | `GET /printer-models`, `POST /upload-pdf`, `POST /models/{id}/cpmd`, `GET /models/{id}/error-solutions/{code}` |
 | `error_codes.py` | `/error-codes` | `POST /upsert` y consultas |
 
 ### 3.2 Servicios críticos
@@ -108,7 +107,6 @@ Printer-Logs-Analyzer/
 - **SdsWebService**: Login automatizado al portal HP SDS, búsqueda por serial, extracción HTML→TSV. Timeout: 25 segundos.
 - **InsightService**: consulta APIs oficiales HP (`get_device_info`, `get_device_alerts`, `get_device_consumables`, `get_device_meters`). JWT + API Key/Secret.
 - **AiDiagnosisService**: Claude Opus 4.6 con prompt caching. Retorna JSON estructurado `{diagnostico, acciones[], prioridad, impacto}`. Fallback robusto si el modelo rompe el formato.
-- **CpmdIngest**: pipeline híbrido (regex → LLM). Upsert por hash CPMD para idempotencia.
 - **LogParser**: normaliza `\s{2,}` → `\t`, soporta meses en español.
 - **AnalysisService**: agrupa eventos por código, calcula severidades, extrae URLs del catálogo.
 
@@ -140,8 +138,7 @@ PostgreSQL via psycopg2 con pool de conexiones y pre-ping. Si la BD no responde,
 | `SavedAnalysisList` / `Detail` | Lista y detalle de snapshots guardados |
 | `SolutionContentModal` | Visor de solución técnica del catálogo |
 | `AddCodeToCatalogModal` | Agregar/editar código en el catálogo |
-| `AddPrinterModelModal` | Selector de modelo + carga PDF |
-| `UploadCpmdModal` | Subida de CPMD para un modelo |
+
 
 ### 4.2 Hooks
 

@@ -1,112 +1,66 @@
-# Deploy y CI
+# Despliegue de Producción (Render + Vercel)
 
-## URLs de producción
+Esta guía detalla los pasos para desplegar el Printer-Logs-Analyzer en entornos de producción y la configuración de variables necesaria.
 
-| Servicio | URL |
-|----------|-----|
-| Frontend (Vercel) | `https://printer-logs-analyzer.vercel.app` |
-| Backend (Render) | `https://printer-logs-analyzer.onrender.com` |
+## Variables de Entorno Requeridas
 
-## Variables de entorno en producción
+| Variable | Requerida | Descripción | Ejemplo |
+|----------|-----------|-------------|---------|
+| `DB_URL` | ✅ SÍ | String de conexión a PostgreSQL (Neon) | `postgresql://user:pass@host:5432/db` |
+| `ANTHROPIC_API_KEY` | ❌ No | API key de Anthropic para diagnóstico con IA | `sk-ant-api03-...` |
+| `SDS_WEB_USERNAME` | ❌ No | Usuario del portal HP SDS (para extracción automática) | `your-username` |
+| `SDS_WEB_PASSWORD` | ❌ No | Contraseña del portal HP SDS | `your-password` |
+| `INSIGHT_PORTAL_URL` | ❌ No | URL base de la API HP Insight | `https://hp-sds-latam.insightportal.net` |
+| `INSIGHT_API_KEY` | ❌ No | API key de HP Insight | `...` |
+| `INSIGHT_API_SECRET` | ❌ No | API secret de HP Insight | `...` |
+| `API_KEY` | ❌ No | API key interna de la aplicación (default: "dev") | `dev` |
 
-**Render (backend):**
+## Despliegue en Render (Backend + DB)
 
-| Variable | Descripción | Requerida para |
-|----------|-------------|----------------|
-| `DB_URL` | Connection string de Neon PostgreSQL | Todo |
-| `API_KEY` | Clave compartida con el frontend | Todo |
-| `ENV` | Setear a `production` | Logs de advertencia |
-| `ANTHROPIC_API_KEY` | API key de Anthropic (Claude) | CPMD ingest (`POST /models/{id}/cpmd`) y diagnóstico AI |
-| `INSIGHT_PORTAL_URL` | URL base del portal Insight | Alertas SDS en tiempo real |
-| `INSIGHT_API_KEY` | Cliente API Key de Insight | Alertas SDS en tiempo real |
-| `INSIGHT_API_SECRET` | Cliente API Secret de Insight | Alertas SDS en tiempo real |
+1. **Crear base de datos PostgreSQL:**
+   - Render Dashboard → Databases → **Create new database**.
+   - Nombre: `printer-logs-db`.
+   - Copiar la **External Database URL** para usarla como `DB_URL`.
 
-Si `API_KEY` no está seteada, el backend usa `"dev"` como fallback. Con `ENV=production` loguea un WARNING al arrancar.
+2. **Crear servicio Web Backend:**
+   - New Web Service → Conectar repositorio GitHub.
+   - **Build Command:** `pip install -r backend/requirements.txt && npm run lint && npm run typecheck && npm run test:backend`
+   - **Start Command:** `uvicorn backend.interface.api:app --host 0.0.0.0 --port $PORT`
+   - **Environment Variables:** Configurar todas las variables listadas en la tabla superior (puedes basarte en `.env.example`).
 
-Si `ANTHROPIC_API_KEY` no está seteada, los endpoints `/models/{id}/cpmd` y `/analysis/ai-diagnose` devuelven HTTP 503. El resto del backend funciona normalmente.
+## Despliegue en Vercel (Frontend)
 
-### Límite de tiempo en Render (CPMD ingest)
+1. **Crear nuevo proyecto:**
+   - Importar repositorio desde GitHub.
+   - **Framework Preset:** Vite.
+   - **Build Command:** `npm run build`.
+   - **Output Directory:** `frontend/dist`.
+2. **Environment Variables:**
+   - `VITE_API_BASE`: URL de tu servicio de Render (ej: `https://printer-logs-analyzer.onrender.com`).
+   - `VITE_API_KEY`: El mismo valor de `API_KEY` configurado en el backend.
 
-El endpoint `POST /models/{id}/cpmd` es bloqueante y puede tardar **5–10 minutos** por CPMD (~250 llamadas secuenciales a Haiku). El plan gratuito de Render tiene un timeout de request de 30 segundos. Para usar este endpoint en producción se requiere al menos el plan **Starter** de Render (sin timeout de request) o configurar un worker separado.
+## Ejecución con Docker (Local)
 
-> **Workaround actual:** usar el script CLI `ingest_cpmd` desde la máquina local (ver sección "Carga de CPMDs" más abajo).
-
-**Vercel (frontend):**
-
-| Variable | Valor |
-|----------|-------|
-| `VITE_API_BASE` | `https://printer-logs-analyzer.onrender.com` |
-| `VITE_API_KEY` | Mismo valor que `API_KEY` del backend |
-
-Las variables `VITE_*` se embeben en build-time; cambiarlas en Vercel requiere redeploy manual.
-
-## Start command en Render
-
-```
-uvicorn backend.interface.api:app --host 0.0.0.0 --port $PORT
-```
-
-Sin `--reload` en producción.
-
-## Diferencias local vs producción
-
-| Aspecto | Local | Producción |
-|---------|-------|-----------|
-| Backend URL | `http://localhost:8000` | `https://printer-logs-analyzer.onrender.com` |
-| Frontend URL | `http://localhost:5173` | `https://printer-logs-analyzer.vercel.app` |
-| Vars de entorno | `.env` en raíz / `frontend/.env` | Dashboard de Render / Vercel |
-| Hot-reload | Sí (uvicorn `--reload`) | No |
-| DB fallback | Activo si sin red a Neon | Siempre conectado |
-
-## Carga de CPMDs
-
-El endpoint `POST /models/{id}/cpmd` no funciona en Render free por timeout (5–10 min por CPMD). Para cargar CPMDs en producción, usar el script CLI desde la máquina local:
+Para probar el entorno de producción de forma local:
 
 ```bash
-export DB_URL="<connection string de Neon producción>"
-export ANTHROPIC_API_KEY="<tu key>"
+# 1. Copiar plantilla de variables
+cp .env.example .env
 
-# Verificar primero (no llama a Haiku ni escribe en DB)
-python -m backend.scripts.ingest_cpmd --model-id <uuid> --pdf ./modelo.pdf --dry-run
+# 2. Editar .env con tus credenciales reales
 
-# Procesar
-python -m backend.scripts.ingest_cpmd --model-id <uuid> --pdf ./modelo.pdf
+# 3. Compilar e iniciar contenedores
+docker compose up --build
+
+# Endpoints locales:
+# Backend:  http://localhost:8000
+# Frontend: http://localhost:5173
 ```
 
-El script loguea progreso cada 25 bloques y al terminar imprime:
+---
 
-```
-✓ CPMD procesado para modelo <uuid>
+## Verificaciones Post-Deploy
 
-  Hash:        <sha256>
-  Bloques:     250
-  Extraídos:   247
-  Fallidos:    3
-  Tiempo:      342.5s
-  Costo aprox: $0.4446 USD
-```
-
-Tarda 5–10 minutos por CPMD. Costo aprox: **$0.45 USD por modelo**.
-
-El UUID del modelo se obtiene del listado en la UI o con:
-```sql
-SELECT id, model_name FROM printer_models ORDER BY model_name;
-```
-
-## CI — GitHub Actions
-
-Workflow en `.github/workflows/ci.yml`. Push y PR a `main`/`master`.
-
-**Dos jobs paralelos en `ubuntu-latest`:**
-
-| Job | Pasos |
-|-----|-------|
-| `frontend` | checkout → Node 20 → `cd frontend && npm ci` → lint → typecheck → test → build |
-| `backend` | checkout → Python 3.11 → `pip install -r backend/requirements.txt` → pytest |
-
-Notas:
-- Actions en `@v6` (soporte Node 24).
-- Cache activo: `frontend/package-lock.json` para npm, `backend/requirements.txt` para pip.
-- Root `npm ci` omitido (scripts usan `--prefix frontend`).
-- Backend sin `DB_URL` — tests usan fallback JSON automáticamente.
-- No hay deploy automático en el workflow — Vercel y Render tienen sus propios auto-deploys.
+- **Healthcheck:** Acceder a `https://tu-backend.onrender.com/health`.
+- **Documentación API:** Acceder a `https://tu-backend.onrender.com/docs` (Swagger).
+- **Tests CI:** Verificar que todos los checks de GitHub Actions estén en verde.

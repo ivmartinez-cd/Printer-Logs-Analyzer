@@ -113,6 +113,71 @@ def test_search_device_list(mock_session_cls, sds_session):
     assert device_info["id"] == "998877"
 
 
+@patch("requests.Session")
+def test_fetch_kaas_content_direct_success(mock_session_cls, sds_session):
+    """Direct KaaS fetch succeeds (SSO cookies work cross-domain)."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    mock_sess = sds_session.session
+    mock_sess.get.return_value = MagicMock(
+        status_code=200,
+        url="https://kaas.hpcloud.hp.com/PROD/v2/render/TOKEN/ish_111-222-3",
+        text="<html><body>Solution content here</body></html>",
+    )
+
+    result = sds_session.fetch_kaas_content(
+        "https://kaas.hpcloud.hp.com/PROD/v2/render/TOKEN/ish_111-222-3"
+    )
+    assert result is not None
+    assert "Solution content" in result
+
+
+@patch("requests.Session")
+def test_fetch_kaas_content_no_article_id(mock_session_cls, sds_session):
+    """Returns None when URL has no ish_ article ID."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    result = sds_session.fetch_kaas_content("https://kaas.hpcloud.hp.com/PROD/v2/render/TOKEN/")
+    assert result is None
+
+
+@patch("requests.Session")
+def test_fetch_solution_content_bootstrapper(mock_session_cls, sds_session):
+    """Content Bootstrapper URL (JWT in path) fetched directly without extra auth."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    bootstrapper_url = (
+        "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGci.payload.sig"
+    )
+    html_content = "<html><body>Article content via bootstrapper</body></html>"
+
+    sds_session.session.get.return_value = MagicMock(
+        status_code=200, url=bootstrapper_url, text=html_content
+    )
+
+    result = sds_session.fetch_solution_content(bootstrapper_url)
+    assert result == html_content
+
+
+@patch("requests.Session")
+def test_fetch_kaas_content_expired_returns_none(mock_session_cls, sds_session):
+    """Expired KaaS URL (401) returns None — no portal fallback in new flow."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    sds_session.session.get.return_value = MagicMock(
+        status_code=401, url="https://kaas.hpcloud.hp.com/PROD/v2/render/EXPIRED/ish_111-222-3"
+    )
+
+    result = sds_session.fetch_kaas_content(
+        "https://kaas.hpcloud.hp.com/PROD/v2/render/EXPIRED/ish_111-222-3"
+    )
+    assert result is None
+
+
 def test_ensure_session_lazy_login(sds_session):
     """Test that ensure_session triggers login only when needed."""
     with patch.object(sds_session, "_login") as mock_login:

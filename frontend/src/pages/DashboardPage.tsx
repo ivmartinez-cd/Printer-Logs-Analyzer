@@ -15,6 +15,8 @@ import type {
   SavedAnalysisFull,
   CompareResponse,
   ErrorCodeUpsertBody,
+  RealtimeConsumable,
+  ParserError,
 } from '../types/api'
 import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -34,12 +36,16 @@ import { EventsTable } from '../components/EventsTable'
 import { IncidentsTable, type IncidentRow } from '../components/IncidentsTable'
 import { IncidentsChart } from '../components/IncidentsChart'
 import { TopErrorsChart } from '../components/TopErrorsChart'
-import { DashboardHeader } from '../components/DashboardHeader'
+import { Skeleton } from '../components/Skeleton'
 import { ExecutiveSummary } from '../components/ExecutiveSummary'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
 import { LogPasteModal } from '../components/LogPasteModal'
+import { WelcomeView } from '../components/WelcomeView'
+import { MonitorWizard } from '../components/MonitorWizard'
+import { MonitorDashboard } from '../components/MonitorDashboard'
+import { DashboardHeader } from '../components/DashboardHeader'
 import {
   useDateFilter,
   filterEventsByDate,
@@ -97,7 +103,7 @@ function getTopIncidentsForChart(
   events: ApiEvent[],
   selectedDate: DateFilter,
   n: number
-): { name: string; count: number; severity: string }[] {
+): { name: string; count: number; severity: string; sds_link?: string; sds_solution_content?: string | null }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -113,7 +119,13 @@ function getTopIncidentsForChart(
   return withCount
     .sort((a, b) => b.countInWindow - a.countInWindow)
     .slice(0, n)
-    .map((x) => ({ name: x.inc.code, count: x.countInWindow, severity: x.inc.severity }))
+    .map((x) => ({ 
+      name: x.inc.code, 
+      count: x.countInWindow, 
+      severity: x.inc.severity,
+      sds_link: x.inc.sds_link,
+      sds_solution_content: x.inc.sds_solution_content
+    }))
 }
 
 
@@ -130,36 +142,22 @@ function getEventInfoForCode(
 }
 
 
-function DbStatusBadge({ status }: { status: HealthStatus | null }) {
-  if (status === null) {
-    return (
-      <span className="db-status-badge db-status-badge--connecting">
-        <span className="db-status-badge__spinner" aria-hidden="true" />
-        Conectando al servidor...
-      </span>
-    )
-  }
-  const online = status.db_available
-  return (
-    <span
-      className={`db-status-badge ${online ? 'db-status-badge--ok' : 'db-status-badge--offline'}`}
-    >
-      <span className="db-status-badge__dot" aria-hidden="true" />
-      {online ? 'DB conectada' : 'DB offline · modo local'}
-    </span>
-  )
-}
+// DbStatusBadge moved to DashboardHeader
 
 export default function DashboardPage({
   serverWasCold,
   healthStatus,
   initialSerial,
   initialAnalysisId,
+  initialIsSavedList,
+  initialIsMonitor,
 }: {
   serverWasCold: boolean
   healthStatus: HealthStatus | null
   initialSerial?: string | null
   initialAnalysisId?: string | null
+  initialIsSavedList?: boolean
+  initialIsMonitor?: boolean
 }) {
   const dateFilter = useDateFilter()
   const {
@@ -183,6 +181,7 @@ export default function DashboardPage({
     setCodesNew,
     savingCode,
     savingIncident,
+    monitorClientId,
   } = useAnalysisStore()
 
   const toast = useToast()
@@ -207,7 +206,9 @@ export default function DashboardPage({
     solutionModal,
     setSolutionModal,
     helpModalOpen,
-    setHelpModalOpen
+    setHelpModalOpen,
+    monitorWizardOpen,
+    setMonitorWizardOpen,
   } = useUIStore()
 
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
@@ -220,31 +221,92 @@ export default function DashboardPage({
   const compareFileInputRef = useRef<HTMLInputElement>(null)
   const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
   const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
+  const [incidentsCollapsed, setIncidentsCollapsed] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [currentModelId, setCurrentModelId] = useState<string | null>(null)
-  const [currentModelHasCpmd, setCurrentModelHasCpmd] = useState(false)
+  const [isAtTop, setIsAtTop] = useState(true)
   const [currentSerialNumber, setCurrentSerialNumber] = useState<string | null>(null)
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
     new Set(['ERROR', 'WARNING', 'INFO'])
   )
   const [autoExtracting, setAutoExtracting] = useState(false)
-  const [realtimeConsumables, setRealtimeConsumables] = useState<any[]>([])
+  const [realtimeConsumables, setRealtimeConsumables] = useState<RealtimeConsumable[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+
+  const lastNavState = useRef({ viewMode, currentSerialNumber, selectedSavedId })
 
   // URL Sync Effect: Write state to URL
   useEffect(() => {
     let newPath = '/'
-    if (viewMode === 'dashboard' && currentSerialNumber) {
-      newPath = `/${currentSerialNumber}`
+    if (viewMode === 'dashboard') {
+      if (currentSerialNumber) {
+        newPath = `/${currentSerialNumber}`
+      }
     } else if (viewMode === 'saved-detail' && selectedSavedId) {
       newPath = `/analysis/${selectedSavedId}`
+    } else if (viewMode === 'saved-list') {
+      newPath = '/saved-analyses'
+    } else if (viewMode === 'monitor') {
+      newPath = '/monitor'
     }
 
     if (window.location.pathname !== newPath) {
-      // Use pushState to allow "Back" button navigation
-      window.history.pushState({ viewMode, currentSerialNumber, selectedSavedId }, '', newPath)
+      // Logic: If we are already in dashboard and just changing serial, REPLACE.
+      // If we are changing viewMode (e.g. Welcome -> Dashboard), PUSH.
+      const shouldReplace = 
+        viewMode === 'dashboard' && 
+        lastNavState.current.viewMode === 'dashboard' &&
+        lastNavState.current.currentSerialNumber !== null;
+
+      if (shouldReplace) {
+        window.history.replaceState({ viewMode, currentSerialNumber, selectedSavedId }, '', newPath)
+      } else {
+        window.history.pushState({ viewMode, currentSerialNumber, selectedSavedId }, '', newPath)
+      }
+      
+      // Notify parent about the navigation change
+      window.dispatchEvent(new CustomEvent('hp-navigation-change'))
     }
+    lastNavState.current = { viewMode, currentSerialNumber, selectedSavedId }
   }, [viewMode, currentSerialNumber, selectedSavedId])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsAtTop(window.scrollY < 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Auto-fetch saved list and history on mount
+  useEffect(() => {
+    // 1. Fetch saved analyses list
+    listSavedAnalyses()
+      .then(setSavedList)
+      .catch(() => setSavedList([]))
+
+    // 2. Load search history from localStorage
+    const history = localStorage.getItem('hp_search_history')
+    if (history) {
+      try {
+        setRecentSearches(JSON.parse(history).slice(0, 5))
+      } catch {
+        setRecentSearches([])
+      }
+    }
+  }, [])
+
+  const saveToSearchHistory = useCallback((serial: string) => {
+    const s = serial.trim().toUpperCase()
+    if (!s) return
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((item) => item !== s)
+      const next = [s, ...filtered].slice(0, 5)
+      localStorage.setItem('hp_search_history', JSON.stringify(next))
+      return next
+    })
+  }, [])
 
   const insightData = useInsightData(currentSerialNumber)
 
@@ -266,6 +328,9 @@ export default function DashboardPage({
     setError(null)
     setLogModalOpen(false)
     try {
+      // 0. Update search history
+      saveToSearchHistory(serial)
+
       // 1. Extract logs AND resolve device info in a single call
       const sdsRes = await extractSdsLogs(serial)
       setCurrentSerialNumber(serial)
@@ -273,9 +338,6 @@ export default function DashboardPage({
       
       if (sdsRes.suggested_model_id) {
         setCurrentModelId(sdsRes.suggested_model_id)
-        setCurrentModelHasCpmd(sdsRes.has_cpmd)
-      } else {
-        toast.showWarning(`Modelo detectado: ${sdsRes.model_name_sds}. No se encontró coincidencia exacta en el catálogo local.`)
       }
 
       setRealtimeConsumables(sdsRes.realtime_consumables || [])
@@ -295,11 +357,27 @@ export default function DashboardPage({
     } finally {
       setAutoExtracting(false)
     }
-  }, [handleAnalyze, setCurrentModelHasCpmd, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast])
+  }, [handleAnalyze, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast, saveToSearchHistory])
 
-  // Effect for Deep Linking: Auto-start if initialSerial is provided
+  // Effect for Deep Linking: Auto-start if initialSerial is provided.
+  // currentSerialNumber is read but intentionally NOT a dep: this effect must
+  // only react to URL changes (initialSerial / initialAnalysisId). Including it
+  // would re-run the effect after the user manually analyzes a serial from home,
+  // falling into the else-branch and resetting state back to the welcome screen.
   useEffect(() => {
-    if (initialSerial) {
+    if (initialIsSavedList) {
+      setViewMode('saved-list')
+      setSavedList(null)
+      setSavedListSearch('')
+      listSavedAnalyses().then(setSavedList).catch(() => setSavedList([]))
+    } else if (initialIsMonitor) {
+      setViewMode('monitor')
+      // If we are in monitor mode but no client is selected, open the wizard automatically
+      if (!monitorClientId) {
+        setMonitorWizardOpen(true)
+      }
+    } else if (initialSerial) {
+      setViewMode('dashboard')
       if (initialSerial !== currentSerialNumber) {
         autoResolveAndAnalyze(initialSerial)
       }
@@ -307,8 +385,12 @@ export default function DashboardPage({
       // Reset if we go back to root
       setCurrentSerialNumber(null)
       setResult(null)
+      setViewMode('dashboard')
+      setSelectedSavedId(null)
+      setSavedDetail(null)
     }
-  }, [initialSerial, initialAnalysisId, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
 
   // Effect for Deep Linking: Load saved analysis if analysisId is provided
   useEffect(() => {
@@ -370,15 +452,15 @@ export default function DashboardPage({
           : `Código ${body.code} agregado al catálogo`
         if (res.warning) {
           toast.showWarning(`${baseMsg}. ${res.warning}`)
-        } else if (body.solution_url && (res as any).solution_content_saved) {
+        } else if (body.solution_url && res.solution_content_saved) {
           toast.showSuccess(`${baseMsg} — contenido de solución guardado`)
         } else {
           toast.showSuccess(baseMsg)
         }
         setAddCodeModalCode(null)
         setEditCodeInitial(null)
-      } catch (e: Error | any) {
-        toast.showError(e.message)
+      } catch (e: unknown) {
+        toast.showError(e instanceof Error ? e.message : String(e))
       }
     },
     [storeSaveCode, toast, setAddCodeModalCode, setEditCodeInitial]
@@ -390,15 +472,18 @@ export default function DashboardPage({
         await handleSaveIncident(name, equipmentIdentifier)
         setSaveIncidentModalOpen(false)
         toast.showSuccess('Incidente guardado')
-      } catch (e: Error | any) {
-        toast.showError(e.message)
+      } catch (e: unknown) {
+        toast.showError(e instanceof Error ? e.message : String(e))
       }
     },
     [handleSaveIncident, toast, setSaveIncidentModalOpen]
   )
 
+  const isWelcome = !result && viewMode === 'dashboard';
+  const dashboardClass = `dashboard ${exportingPdf ? 'is-exporting' : ''} ${isWelcome ? 'dashboard--welcome' : ''}`;
+
   return (
-    <div className={`dashboard${exportingPdf ? ' is-exporting' : ''}`} ref={dashboardRef}>
+    <div className={dashboardClass} ref={dashboardRef}>
       <header className="export-header">
         <div className="export-header__left">
           <h1 className="dashboard__title">HP Logs Analyzer</h1>
@@ -416,121 +501,61 @@ export default function DashboardPage({
           <div className="export-header__date">Generado el {new Date().toLocaleString()}</div>
         </div>
       </header>
+
+      {/* Solo mostrar el Header Flotante si hay resultados o estamos en una vista secundaria */}
+      {/* Global Header (Always visible) */}
+      {!isWelcome && (
+        <DashboardHeader
+          healthStatus={healthStatus}
+          hasResult={!!result}
+          exportingPdf={exportingPdf}
+          onOpenSavedList={() => {
+            setViewMode('saved-list')
+            setSavedList(null)
+            setSavedListSearch('')
+            listSavedAnalyses()
+              .then(setSavedList)
+              .catch(() => setSavedList([]))
+          }}
+          onAnalyzeNew={() => setLogModalOpen(true)}
+          onSaveIncident={() => setSaveIncidentModalOpen(true)}
+          onAddSds={() => setSdsModalOpen(true)}
+          onExportPdf={() => handleExportPDF(!!result)}
+          onHelp={() => setHelpModalOpen(true)}
+          isAtTop={isAtTop}
+          showSavedListButton={viewMode !== 'monitor'}
+        />
+      )}
       {!result && viewMode === 'dashboard' ? (
-        /* Sin resultado y vista dashboard: marco de bienvenida */
-        <div className="dashboard__frame">
-          <header className="dashboard__header dashboard__header--inside-frame">
-            <div className="dashboard__title-group">
-              <svg
-                className="dashboard__title-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-              <h1 className="dashboard__title">HP Logs Analyzer</h1>
-            </div>
-            <DbStatusBadge status={healthStatus} />
-          </header>
-          <div className="dashboard__welcome-wrap">
-            <section className="dashboard__welcome">
-              <p className="dashboard__tagline">
-                Análisis técnico avanzado de logs HP con detección inteligente de errores y estado de hardware en tiempo real.
-              </p>
-              <div className="dashboard__welcome-actions">
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--executive"
-                  onClick={() => setLogModalOpen(true)}
-                >
-                  🚀 Iniciar Nuevo Análisis
-                </button>
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--executive-secondary"
-                  onClick={() => {
-                    setViewMode('saved-list')
-                    setSavedList(null)
-                    setSavedListSearch('')
-                    listSavedAnalyses()
-                      .then(setSavedList)
-                      .catch(() => setSavedList([]))
-                  }}
-                >
-                  📁 Ver Logs Guardados
-                </button>
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--executive-ghost"
-                  onClick={() => setHelpModalOpen(true)}
-                  title="¿Cómo funciona?"
-                >
-                  ❓ Guía de Uso
-                </button>
-              </div>
-              <div className="dashboard__features">
-                <span className="dashboard__features-title">Capacidades del Sistema</span>
-                <div className="dashboard__features-grid">
-                  <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">📊</span>
-                    <div className="dashboard__feature-text">
-                      <strong>KPIs de Severidad</strong>
-                      Categorización precisa de Errores, Warnings e Información.
-                    </div>
-                  </div>
-                  <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">⚡</span>
-                    <div className="dashboard__feature-text">
-                      <strong>Hardware Real-Time</strong>
-                      Estado de consumibles, fusores y kits vía HP Insight API.
-                    </div>
-                  </div>
-                  <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">🧠</span>
-                    <div className="dashboard__feature-text">
-                      <strong>Diagnóstico con IA</strong>
-                      Análisis semántico y recomendaciones de reparación automáticas.
-                    </div>
-                  </div>
-                  <div className="dashboard__feature-item">
-                    <span className="dashboard__feature-icon">📁</span>
-                    <div className="dashboard__feature-text">
-                      <strong>Base de Conocimiento</strong>
-                      Acceso directo a manuales (CPMD) y soluciones históricas.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
+        <WelcomeView 
+          onAnalyzeNew={() => setLogModalOpen(true)}
+          onViewSaved={() => {
+            setViewMode('saved-list')
+            setSavedList(null)
+            setSavedListSearch('')
+            listSavedAnalyses()
+              .then(setSavedList)
+              .catch(() => setSavedList([]))
+          }}
+          onHelp={() => setHelpModalOpen(true)}
+          savedList={savedList || []}
+          recentSearches={recentSearches}
+          onQuickSearch={autoResolveAndAnalyze}
+          onOpenSaved={(id) => {
+            setViewMode('saved-detail')
+            setSavedDetail(null)
+            getSavedAnalysis(id)
+              .then(setSavedDetail)
+              .catch(() => setSavedDetail(null))
+          }}
+          onOpenMonitor={() => setMonitorWizardOpen(true)}
+        />
+      ) : viewMode === 'monitor' ? (
+        <MonitorDashboard />
       ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
-          <DashboardHeader
-            healthStatus={healthStatus}
-            hasResult={!!result}
-            exportingPdf={exportingPdf}
-            onOpenSavedList={() => {
-              setViewMode('saved-list')
-              setSavedList(null)
-              setSavedListSearch('')
-              listSavedAnalyses()
-                .then(setSavedList)
-                .catch(() => setSavedList([]))
-            }}
-            onAnalyzeNew={() => setLogModalOpen(true)}
-            onSaveIncident={() => setSaveIncidentModalOpen(true)}
-            onAddSds={() => setSdsModalOpen(true)}
-            onExportPdf={() => handleExportPDF(!!result)}
-            onHelp={() => setHelpModalOpen(true)}
-          />
+          {/* El botón de Asociar SDS ahora está en el Header para mayor limpieza */}
+          <div className="dashboard__content-wrap">
 
           {viewMode === 'saved-list' && (
             <SavedAnalysisList
@@ -596,7 +621,7 @@ export default function DashboardPage({
                         </tr>
                       </thead>
                       <tbody>
-                        {(result?.errors ?? []).map((e: any) => (
+                        {(result?.errors ?? []).map((e: ParserError) => (
                           <tr key={e.line_number}>
                             <td>{e.line_number}</td>
                             <td>
@@ -679,7 +704,26 @@ export default function DashboardPage({
 
               {codesNew.length === 0 && (
                 <>
-                  {result && (
+                  {/* Fallback visual mientras carga el primer análisis */}
+              {loading && !result && (
+                <div className="dashboard__content-main animate-in">
+                  <section className="dashboard__subheader">
+                    <Skeleton className="skeleton--title" width="300px" />
+                    <Skeleton className="skeleton--text" width="120px" height="32px" />
+                  </section>
+                  <section className="dashboard__kpi-grid">
+                    <Skeleton className="skeleton--card" />
+                    <Skeleton className="skeleton--card" />
+                    <Skeleton className="skeleton--card" />
+                    <Skeleton className="skeleton--card" />
+                  </section>
+                  <section style={{ marginTop: '24px' }}>
+                    <Skeleton height="300px" />
+                  </section>
+                </div>
+              )}
+
+              {result && (
                     <div className="report-only-section" ref={executiveSummaryRef}>
                       <ExecutiveSummary
                         result={result}
@@ -694,12 +738,16 @@ export default function DashboardPage({
                   )}
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
-                    <span className="dashboard__subheader-title">
-                      Panel de errores
-                      {currentModelName && ` · ${currentModelName}`}
-                      {currentSerialNumber && ` · ${currentSerialNumber}`}
-                      {!currentSerialNumber && logFileName && ` · ${logFileName}`}
-                    </span>
+                    <div className="dashboard__subheader-title-group">
+                      <span className="dashboard__subheader-title">Panel de errores</span>
+                      {(currentModelName || currentSerialNumber || logFileName) && (
+                        <span className="dashboard__subheader-meta">
+                          {currentModelName && currentModelName}
+                          {currentSerialNumber && ` · ${currentSerialNumber}`}
+                          {!currentSerialNumber && logFileName && logFileName}
+                        </span>
+                      )}
+                    </div>
                     <div className="dashboard__subheader-actions">
                       <DateRangePicker
                         activeFilter={activeFilter}
@@ -720,60 +768,21 @@ export default function DashboardPage({
                     </div>
                   </div>
 
-                  {/* Fila 1 — KPIs (4 cards, mismo tamaño) */}
-                  <section ref={kpisRef}>
-                    <KPICards
-                      filteredIncidents={filteredIncidents}
-                      filteredEvents={filteredEvents}
-                      lastErrorEvent={lastErrorEvent}
-                      lastErrorLabel={lastErrorLabel}
-                    />
-                  </section>
+                  {/* ── ABOVE FOLD: KPIs + 2 gráficos siempre visibles ── */}
+                  <div className="dashboard__above-fold">
 
-                  {/* Diagnóstico con IA — llama a /analysis/ai-diagnose on demand */}
-                  <AIDiagnosticPanel
-                    ref={aiDiagnosticRef}
-                    result={result}
-                    consumables={realtimeConsumables}
-                    alerts={insightData.data}
-                    meters={insightData.meters}
-                  />
+                    {/* BLOQUE 1: KPIs ejecutivos */}
+                    <section ref={kpisRef} className="animate-in delay-1">
+                      <KPICards
+                        filteredIncidents={filteredIncidents}
+                        filteredEvents={filteredEvents}
+                        lastErrorEvent={lastErrorEvent}
+                        lastErrorLabel={lastErrorLabel}
+                      />
+                    </section>
 
-                  {/* SDS Engineering Incident — colapsado por defecto */}
-                  {sdsIncident && (
-                    <SDSIncidentPanel
-                      sdsIncident={sdsIncident}
-                      incidentRows={incidentRows.map((r) => ({
-                        code: r.code,
-                        classification: r.classification || r.code,
-                      }))}
-                      incidentsFull={
-                        result?.incidents?.map((inc: any) => ({
-                          code: inc.code,
-                          classification: inc.classification,
-                          end_time: inc.end_time,
-                          occurrences: inc.occurrences,
-                        })) ?? []
-                      }
-                    />
-                  )}
-
-                  {/* Consumable warnings — colapsado por defecto */}
-                  <div ref={consumableRef}>
-                    <ConsumableWarningsPanel warnings={realtimeConsumables} />
-                  </div>
-
-                  {/* Insight SDS alerts — se oculta si no hay serial o si la integración no está configurada */}
-                  <InsightAlertsPanel
-                    serial={currentSerialNumber}
-                    data={insightData.data}
-                    loading={insightData.loading}
-                    error={insightData.error}
-                  />
-
-                  {/* Fila 2 — Grid 70% / 30%: Issue Volume | Top Errors */}
-                  <div className="dashboard__charts-row">
-                    <div ref={areaChartRef}>
+                    {/* BLOQUE 2a: Gráfico de volumen */}
+                    <div ref={areaChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
                       <IncidentsChart
                         events={events}
                         activeFilter={activeFilter}
@@ -788,43 +797,126 @@ export default function DashboardPage({
                         }
                       />
                     </div>
-                    <div ref={barChartRef}>
-                      <TopErrorsChart topCodes={topCodes} />
+
+                    {/* BLOQUE 2b: Errores más frecuentes */}
+                    <div ref={barChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                      <TopErrorsChart 
+                        topCodes={topCodes} 
+                        onViewSolution={(code, sdsContent, sdsUrl) =>
+                          setSolutionModal({ code, sdsContent, sdsUrl })
+                        }
+                      />
                     </div>
+
                   </div>
 
-                  {/* Fila 3 — Tabla de incidencias */}
-                  <section ref={incidentsTableRef}>
-                    <IncidentsTable
-                      incidentRows={incidentRows}
-                      hasCpmdModel={currentModelHasCpmd}
-                      onEditCode={(code, classification, severity, solutionUrl) =>
-                        setEditCodeInitial({
-                          code,
-                          description: classification,
-                          severity,
-                          solutionUrl,
-                        })
-                      }
+
+                  {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}
+                  <AIDiagnosticPanel
+                    ref={aiDiagnosticRef}
+                    className="animate-in delay-3"
+                    result={result}
+                    consumables={realtimeConsumables}
+                    alerts={insightData.data}
+                    meters={insightData.meters}
+                    isFeatured={true}
+                    serialNumber={currentSerialNumber}
+                    modelName={currentModelName}
+                  />
+
+
+                  {/* ── BLOQUE 5: Paneles de diagnóstico (drill-down) ── */}
+                  <div className="dashboard__drilldown-panels">
+                    {/* Incidencias detectadas */}
+                    <section ref={incidentsTableRef} className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
+                      <button
+                        type="button"
+                        className="collapsible-panel__header"
+                        onClick={() => setIncidentsCollapsed((v) => !v)}
+                        aria-expanded={!incidentsCollapsed}
+                      >
+                        <span className="collapsible-panel__title">
+                          📋 Incidencias detectadas
+                        </span>
+                        {incidentsCollapsed && incidentRows.length > 0 && (
+                          <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
+                            {incidentRows.length} incidencia{incidentRows.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        <span
+                          className={`collapsible-panel__chevron${!incidentsCollapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
+                          aria-hidden="true"
+                        >
+                          ▶
+                        </span>
+                      </button>
+                      {!incidentsCollapsed && (
+                        <div className="collapsible-panel__body">
+                          <IncidentsTable
+                            incidentRows={incidentRows}
+                            onEditCode={(code, classification, severity, solutionUrl) =>
+                              setEditCodeInitial({
+                                code,
+                                description: classification,
+                                severity,
+                                solutionUrl,
+                              })
+                            }
+                            onViewSolution={(code, sdsContent, sdsUrl) =>
+                              setSolutionModal({ code, sdsContent, sdsUrl })
+                            }
+                          />
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Eventos del periodo */}
+                    <EventsTable
+                      events={filteredEvents}
                       onViewSolution={(code, sdsContent, sdsUrl) =>
                         setSolutionModal({ code, sdsContent, sdsUrl })
                       }
                     />
-                  </section>
 
-                  {/* Fila 4 — Tabla de eventos recientes (colapsable) */}
-                  <EventsTable
-                    events={filteredEvents}
-                    onViewSolution={(code, sdsContent, sdsUrl) =>
-                      setSolutionModal({ code, sdsContent, sdsUrl })
-                    }
-                  />
+                    {/* Consumibles en tiempo real */}
+                    <div ref={consumableRef}>
+                      <ConsumableWarningsPanel warnings={realtimeConsumables} />
+                    </div>
+
+                    {/* Alertas del portal SDS */}
+                    <InsightAlertsPanel
+                      serial={currentSerialNumber}
+                      data={insightData.data}
+                      loading={insightData.loading}
+                      error={insightData.error}
+                    />
+
+                    {/* SDS Engineering Incident */}
+                    {sdsIncident && (
+                      <SDSIncidentPanel
+                        sdsIncident={sdsIncident}
+                        incidentRows={incidentRows.map((r) => ({
+                          code: r.code,
+                          classification: r.classification || r.code,
+                        }))}
+                        incidentsFull={
+                          result?.incidents?.map((inc: ApiIncident) => ({
+                            code: inc.code,
+                            classification: inc.classification,
+                            end_time: inc.end_time,
+                            occurrences: inc.occurrences,
+                          })) ?? []
+                        }
+                      />
+                    )}
+                  </div>
                 </>
               )}
             </>
           )}
-        </>
-      ) : null}
+        </div> {/* close dashboard__content-wrap */}
+      </>
+    ) : null}
 
       {sdsModalOpen && (
         <SDSIncidentModal
@@ -844,20 +936,19 @@ export default function DashboardPage({
           loading={loading}
           error={error}
           serverWasCold={serverWasCold}
-          onAnalyze={(logText, fileName, modelId, hasCpmd, serial, isAutomated) => {
+          onAnalyze={(logText, fileName, modelId, serial, isAutomated) => {
             if (isAutomated && serial) {
               autoResolveAndAnalyze(serial)
               return
             }
             setCurrentModelId(modelId ?? null)
-            setCurrentModelHasCpmd(hasCpmd ?? false)
             setCurrentSerialNumber(serial ?? null)
             handleAnalyze(logText, fileName, modelId).then(() => {
               setLogModalOpen(false)
               dateFilter.reset()
               toast.showSuccess('Análisis completado')
-            }).catch((err: any) => {
-              toast.showError(err.message)
+            }).catch((err: unknown) => {
+              toast.showError(err instanceof Error ? err.message : String(err))
             })
           }}
           onClose={() => {
@@ -872,6 +963,12 @@ export default function DashboardPage({
           onSave={onSaveIncident}
           onClose={() => !savingIncident && setSaveIncidentModalOpen(false)}
           saving={savingIncident}
+          initialEquipment={
+            currentModelName && currentSerialNumber 
+              ? `${currentModelName} (${currentSerialNumber})` 
+              : currentSerialNumber || currentModelName || ''
+          }
+          initialName={`Análisis - ${currentSerialNumber || 'Sin Serial'} - ${new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}`}
         />
       )}
 
@@ -913,6 +1010,14 @@ export default function DashboardPage({
           sdsUrl={solutionModal.sdsUrl}
           onClose={() => setSolutionModal(null)}
         />
+      )}
+
+      {helpModalOpen && (
+        <HelpModal onClose={() => setHelpModalOpen(false)} />
+      )}
+
+      {monitorWizardOpen && (
+        <MonitorWizard />
       )}
 
       {autoExtracting && (
@@ -961,7 +1066,7 @@ export default function DashboardPage({
                   if (!file) return
                   const reader = new FileReader()
                   reader.onload = (ev) => {
-                    setCompareLogText(ev.target?.result as string)
+                    setCompareLogText((ev.target?.result as string) ?? '')
                     setCompareFileName(file.name)
                   }
                   reader.readAsText(file)
@@ -969,57 +1074,55 @@ export default function DashboardPage({
               />
               <button
                 type="button"
-                className="log-modal__btn-secondary"
+                className="dashboard__btn"
                 onClick={() => compareFileInputRef.current?.click()}
                 disabled={comparing}
               >
-                Cargar archivo…
+                {compareFileName ? `📄 ${compareFileName}` : '📂 Seleccionar archivo…'}
               </button>
-              {compareFileName && <span className="log-modal__file-name">{compareFileName}</span>}
             </div>
             <textarea
               className="log-modal__textarea"
-              placeholder="Pegar logs HP aquí..."
+              placeholder="O pegar el log aquí…"
               value={compareLogText}
               onChange={(e) => setCompareLogText(e.target.value)}
+              rows={10}
               disabled={comparing}
             />
-            <div className="log-modal__actions">
+            <div className="log-modal__footer">
+              <button
+                type="button"
+                className="dashboard__btn"
+                onClick={() => setCompareModalOpen(false)}
+                disabled={comparing}
+              >
+                Cancelar
+              </button>
               <button
                 type="button"
                 className="dashboard__btn dashboard__btn--primary"
+                disabled={!compareLogText.trim() || comparing}
                 onClick={async () => {
-                  if (!compareLogText.trim() || !selectedSavedId) return
+                  if (!selectedSavedId || !compareLogText.trim()) return
                   setComparing(true)
                   try {
                     const res = await compareSavedAnalysis(selectedSavedId, compareLogText)
                     setCompareResult(res)
                     setCompareModalOpen(false)
-                    toast.showSuccess('Comparación completada')
+                    setViewMode('saved-detail')
                   } catch (e) {
                     toast.showError(e instanceof Error ? e.message : 'Error al comparar')
                   } finally {
                     setComparing(false)
                   }
                 }}
-                disabled={comparing || !compareLogText.trim()}
               >
                 {comparing ? 'Comparando…' : 'Comparar'}
-              </button>
-              <button
-                type="button"
-                className="log-modal__btn-secondary"
-                onClick={() => !comparing && setCompareModalOpen(false)}
-                disabled={comparing}
-              >
-                Cerrar
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {helpModalOpen && <HelpModal onClose={() => setHelpModalOpen(false)} />}
     </div>
   )
 }

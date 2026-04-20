@@ -21,6 +21,7 @@ interface UIState {
     sdsUrl?: string | null
   } | null
   helpModalOpen: boolean
+  monitorWizardOpen: boolean
 
   // Actions
   setLogModalOpen: (open: boolean) => void
@@ -33,6 +34,7 @@ interface UIState {
   setDeleteConfirm: (data: { id: string; name: string } | null) => void
   setSolutionModal: (data: { code: string; sdsContent?: string | null; sdsUrl?: string | null } | null) => void
   setHelpModalOpen: (open: boolean) => void
+  setMonitorWizardOpen: (open: boolean) => void
   closeAllModals: () => void
 }
 
@@ -47,6 +49,7 @@ export const useUIStore = create<UIState>((set) => ({
   deleteConfirm: null,
   solutionModal: null,
   helpModalOpen: false,
+  monitorWizardOpen: false,
 
   setLogModalOpen: (logModalOpen) => set({ logModalOpen }),
   setSdsModalOpen: (sdsModalOpen, sdsIncident = null) => set({ sdsModalOpen, sdsIncident }),
@@ -58,6 +61,7 @@ export const useUIStore = create<UIState>((set) => ({
   setDeleteConfirm: (deleteConfirm) => set({ deleteConfirm }),
   setSolutionModal: (solutionModal) => set({ solutionModal }),
   setHelpModalOpen: (helpModalOpen) => set({ helpModalOpen }),
+  setMonitorWizardOpen: (monitorWizardOpen) => set({ monitorWizardOpen }),
   closeAllModals: () => set({
     logModalOpen: false,
     sdsModalOpen: false,
@@ -66,6 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
     deleteConfirm: null,
     solutionModal: null,
     helpModalOpen: false,
+    monitorWizardOpen: false,
     addCodeModalCode: null,
     editCodeInitial: null
   })

@@ -1,8 +1,5 @@
 import os
 import sys
-import logging
-import re
-from dotenv import load_dotenv
 
 # Add backend to path
 sys.path.append(os.path.join(os.getcwd(), 'backend'))

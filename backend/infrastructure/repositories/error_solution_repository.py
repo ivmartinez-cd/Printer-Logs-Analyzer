@@ -11,13 +11,12 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
-from uuid import UUID
 
 from backend.domain.entities import ErrorSolution, ErrorSolutionFru
 from backend.infrastructure.database import Database, DatabaseUnavailableError
 from backend.infrastructure.repositories.base_repository import BaseRepository
 
-_LOCAL_PATH = Path(__file__).parent.parent.parent / "data" / "error_solutions.json"
+_LOCAL_PATH = Path(__file__).parent.parent.parent.parent / "data" / "error_solutions.json"
 
 _EPOCH = datetime(2000, 1, 1, tzinfo=timezone.utc)
 
@@ -35,12 +34,14 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
     # Public interface
     # ------------------------------------------------------------------
 
-    def get_by_model_and_code(self, model_id: UUID, code: str) -> Optional[ErrorSolution]:
-        """Return a solution by (model_id, code), or None if not found."""
-        return self._execute_with_fallback(self._get_by_model_and_code_db, self._get_by_model_and_code_local, model_id, code)
+    def get_by_model_and_code(self, model_family: str, code: str) -> Optional[ErrorSolution]:
+        """Return a solution by (model_family, code), or None if not found."""
+        return self._execute_with_fallback(
+            self._get_by_model_and_code_db, self._get_by_model_and_code_local, model_family, code
+        )
 
     def upsert(self, solution: ErrorSolution) -> ErrorSolution:
-        """Insert or update a solution. Uses (model_id, code) as the unique key."""
+        """Insert or update a solution. Uses (model_family, code) as the unique key."""
         return self._execute_with_fallback(self._upsert_db, self._upsert_local, solution)
 
     def upsert_batch(self, solutions: List[ErrorSolution]) -> int:
@@ -58,33 +59,40 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
                 self._upsert_local(s)
             return len(solutions)
 
-    def delete_by_model(self, model_id: UUID) -> int:
-        """Delete all solutions for a model. Returns the number of rows deleted."""
-        return self._execute_with_fallback(self._delete_by_model_db, self._delete_by_model_local, model_id)
+    def delete_by_model(self, model_family: str) -> int:
+        """Delete all solutions for a model family. Returns the number of rows deleted."""
+        return self._execute_with_fallback(
+            self._delete_by_model_db, self._delete_by_model_local, model_family
+        )
 
-    def list_by_model(self, model_id: UUID) -> List[ErrorSolution]:
-        """Return all solutions for a model, ordered by code."""
-        return self._execute_with_fallback(self._list_by_model_db, self._list_by_model_local, model_id)
+    def list_by_model(self, model_family: str) -> List[ErrorSolution]:
+        """Return all solutions for a model family, ordered by code."""
+        return self._execute_with_fallback(
+            self._list_by_model_db, self._list_by_model_local, model_family
+        )
 
-    def get_model_ids_with_solutions(self) -> set:
-        """Return the set of model_id strings that have at least one solution."""
-        return self._execute_with_fallback(self._get_model_ids_with_solutions_db, self._get_model_ids_with_solutions_local)
+    def get_model_families_with_solutions(self) -> set:
+        """Return the set of model_family strings that have at least one solution."""
+        return self._execute_with_fallback(
+            self._get_model_families_with_solutions_db,
+            self._get_model_families_with_solutions_local,
+        )
 
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
 
-    def _get_by_model_and_code_db(self, model_id: UUID, code: str) -> Optional[ErrorSolution]:
+    def _get_by_model_and_code_db(self, model_family: str, code: str) -> Optional[ErrorSolution]:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, model_id, code, title, cause, technician_steps, frus,
+                    SELECT id, model_family, code, title, cause, technician_steps, frus,
                            source_audience, source_page, cpmd_hash, created_at
                     FROM error_solutions
-                    WHERE model_id = %s AND code = %s
+                    WHERE model_family = %s AND code = %s
                     """,
-                    (str(model_id), code),
+                    (model_family, code),
                 )
                 row = cur.fetchone()
         return _row_to_solution(row) if row else None
@@ -95,10 +103,10 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
                 cur.execute(
                     """
                     INSERT INTO error_solutions
-                        (model_id, code, title, cause, technician_steps, frus,
+                        (model_family, code, title, cause, technician_steps, frus,
                          source_audience, source_page, cpmd_hash)
                     VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s, %s)
-                    ON CONFLICT (model_id, code) DO UPDATE SET
+                    ON CONFLICT (model_family, code) DO UPDATE SET
                         title             = EXCLUDED.title,
                         cause             = EXCLUDED.cause,
                         technician_steps  = EXCLUDED.technician_steps,
@@ -106,11 +114,11 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
                         source_audience   = EXCLUDED.source_audience,
                         source_page       = EXCLUDED.source_page,
                         cpmd_hash         = EXCLUDED.cpmd_hash
-                    RETURNING id, model_id, code, title, cause, technician_steps, frus,
-                              source_audience, source_page, cpmd_hash, created_at
+                    RETURNING id, model_family, code, title, cause, technician_steps, frus,
+                               source_audience, source_page, cpmd_hash, created_at
                     """,
                     (
-                        str(solution.model_id),
+                        solution.model_family,
                         solution.code,
                         solution.title,
                         solution.cause,
@@ -129,7 +137,7 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
         """Batch upsert using executemany — one round-trip per call."""
         params = [
             (
-                str(s.model_id),
+                s.model_family,
                 s.code,
                 s.title,
                 s.cause,
@@ -146,10 +154,10 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
                 cur.executemany(
                     """
                     INSERT INTO error_solutions
-                        (model_id, code, title, cause, technician_steps, frus,
+                        (model_family, code, title, cause, technician_steps, frus,
                          source_audience, source_page, cpmd_hash)
                     VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s, %s)
-                    ON CONFLICT (model_id, code) DO UPDATE SET
+                    ON CONFLICT (model_family, code) DO UPDATE SET
                         title             = EXCLUDED.title,
                         cause             = EXCLUDED.cause,
                         technician_steps  = EXCLUDED.technician_steps,
@@ -164,40 +172,40 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
             conn.commit()
         return count
 
-    def _delete_by_model_db(self, model_id: UUID) -> int:
+    def _delete_by_model_db(self, model_family: str) -> int:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "DELETE FROM error_solutions WHERE model_id = %s",
-                    (str(model_id),),
+                    "DELETE FROM error_solutions WHERE model_family = %s",
+                    (model_family,),
                 )
                 count = cur.rowcount
             conn.commit()
         return count
 
-    def _get_model_ids_with_solutions_db(self) -> set:
+    def _get_model_families_with_solutions_db(self) -> set:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT DISTINCT model_id FROM error_solutions")
+                cur.execute("SELECT DISTINCT model_family FROM error_solutions")
                 rows = cur.fetchall()
         return {str(r[0]) for r in rows}
 
-    def _get_model_ids_with_solutions_local(self) -> set:
+    def _get_model_families_with_solutions_local(self) -> set:
         items = self._load_local()
-        return {i["model_id"] for i in items if "model_id" in i}
+        return {i["model_family"] for i in items if "model_family" in i}
 
-    def _list_by_model_db(self, model_id: UUID) -> List[ErrorSolution]:
+    def _list_by_model_db(self, model_family: str) -> List[ErrorSolution]:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, model_id, code, title, cause, technician_steps, frus,
+                    SELECT id, model_family, code, title, cause, technician_steps, frus,
                            source_audience, source_page, cpmd_hash, created_at
                     FROM error_solutions
-                    WHERE model_id = %s
+                    WHERE model_family = %s
                     ORDER BY code
                     """,
-                    (str(model_id),),
+                    (model_family,),
                 )
                 rows = cur.fetchall()
         return [_row_to_solution(r) for r in rows]
@@ -220,11 +228,10 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
         with open(_LOCAL_PATH, "w", encoding="utf-8") as f:
             json.dump(items, f, ensure_ascii=False, indent=2)
 
-    def _get_by_model_and_code_local(self, model_id: UUID, code: str) -> Optional[ErrorSolution]:
+    def _get_by_model_and_code_local(self, model_family: str, code: str) -> Optional[ErrorSolution]:
         items = self._load_local()
-        model_id_str = str(model_id)
         item = next(
-            (i for i in items if i["model_id"] == model_id_str and i["code"] == code),
+            (i for i in items if i["model_family"] == model_family and i["code"] == code),
             None,
         )
         return _dict_to_solution(item) if item else None
@@ -235,15 +242,18 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
 
     def _upsert_local_locked(self, solution: ErrorSolution) -> ErrorSolution:
         items = self._load_local()
-        model_id_str = str(solution.model_id)
         existing = next(
-            (i for i in items if i["model_id"] == model_id_str and i["code"] == solution.code),
+            (
+                i
+                for i in items
+                if i["model_family"] == solution.model_family and i["code"] == solution.code
+            ),
             None,
         )
         now = datetime.now(timezone.utc).isoformat()
 
         data = {
-            "model_id": model_id_str,
+            "model_family": solution.model_family,
             "code": solution.code,
             "title": solution.title,
             "cause": solution.cause,
@@ -266,22 +276,20 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
         self._save_local(items)
         return _dict_to_solution(data)
 
-    def _delete_by_model_local(self, model_id: UUID) -> int:
+    def _delete_by_model_local(self, model_family: str) -> int:
         with _local_write_lock:
             items = self._load_local()
-            model_id_str = str(model_id)
             before = len(items)
-            items = [i for i in items if i["model_id"] != model_id_str]
+            items = [i for i in items if i["model_family"] != model_family]
             self._save_local(items)
             return before - len(items)
 
-    def _list_by_model_local(self, model_id: UUID) -> List[ErrorSolution]:
+    def _list_by_model_local(self, model_family: str) -> List[ErrorSolution]:
         items = self._load_local()
-        model_id_str = str(model_id)
         return [
             _dict_to_solution(i)
             for i in sorted(
-                (i for i in items if i["model_id"] == model_id_str),
+                (i for i in items if i["model_family"] == model_family),
                 key=lambda x: x["code"],
             )
         ]
@@ -307,7 +315,7 @@ def _row_to_solution(row: tuple) -> ErrorSolution:
 
     return ErrorSolution(
         id=row[0],
-        model_id=UUID(str(row[1])),
+        model_family=row[1],
         code=row[2],
         title=row[3],
         cause=row[4],
@@ -328,7 +336,7 @@ def _dict_to_solution(d: dict) -> ErrorSolution:
     created_at = datetime.fromisoformat(created_at_raw) if created_at_raw else _EPOCH
     return ErrorSolution(
         id=d.get("id"),
-        model_id=UUID(str(d["model_id"])),
+        model_family=d["model_family"],
         code=d["code"],
         title=d.get("title"),
         cause=d.get("cause"),

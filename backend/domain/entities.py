@@ -58,54 +58,6 @@ class Incident(BaseModel):
     model_config = {"frozen": True}
 
 
-class PrinterModel(BaseModel):
-    """A specific printer submodel (e.g. HP LaserJet Managed E60055)."""
-
-    id: UUID
-    model_name: str
-    model_code: str
-    family: Optional[str] = None
-    ampv: Optional[int] = None
-    engine_life_pages: Optional[int] = None
-    notes: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"frozen": True}
-
-
-class PrinterConsumable(BaseModel):
-    """A consumable or maintenance part associated with a printer model."""
-
-    id: UUID
-    model_id: UUID
-    part_number: str
-    sku: Optional[str] = None
-    description: str
-    category: Literal["roller", "fuser", "toner", "transfer", "maintenance_kit", "other"]
-    life_pages: Optional[int] = None
-    mttr_minutes: Optional[int] = None
-    voltage: Optional[str] = None
-    related_codes: List[str] = Field(default_factory=list)
-
-    model_config = {"frozen": True}
-
-
-class ConsumableWarning(BaseModel):
-    """Warning about a consumable part based on log counter vs its rated life pages."""
-
-    part_number: str
-    description: str
-    category: str
-    life_pages: int
-    current_counter: int
-    usage_pct: float
-    status: str  # "ok" | "warning" | "replace"
-    matched_codes: List[str]
-
-    model_config = {"frozen": True}
-
-
 class ErrorSolutionFru(BaseModel):
     """A Field Replaceable Unit referenced in an error solution."""
 
@@ -119,7 +71,7 @@ class ErrorSolution(BaseModel):
     """Technical solution for an error code extracted from a CPMD document."""
 
     id: Optional[int] = None
-    model_id: UUID
+    model_family: str
     code: str
     title: Optional[str] = None
     cause: Optional[str] = None

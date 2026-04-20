@@ -1,0 +1,29 @@
+[
+  {
+    "id": "dia-central",
+    "name": "Supermercados DIA - Central",
+    "is_dynamic": true,
+    "devices": [
+      {"serial": "CNNCQ520HG", "location": "Caja 1 - Sucursal 01", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "MXBC179G55", "location": "Caja 2 - Sucursal 01", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNB1P9Y06C", "location": "Depósito - Sucursal 01", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520LC", "location": "Caja 1 - Sucursal 02", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520X1", "location": "Caja 3 - Sucursal 01", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X2", "location": "Caja 4 - Sucursal 01", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X3", "location": "Caja 5 - Sucursal 01", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X4", "location": "Caja 1 - Sucursal 03", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X5", "location": "Caja 2 - Sucursal 03", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X6", "location": "Caja 1 - Sucursal 04", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X7", "location": "Caja 2 - Sucursal 04", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520X8", "location": "Caja 3 - Sucursal 04", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNNCQ520Y1", "location": "Caja 3 - Sucursal 02", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y2", "location": "Caja 4 - Sucursal 02", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y3", "location": "Caja 1 - Sucursal 05", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y4", "location": "Caja 2 - Sucursal 05", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y5", "location": "Oficina - Sucursal 05", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y6", "location": "Caja 1 - Sucursal 06", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y7", "location": "Caja 2 - Sucursal 06", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520Y8", "location": "Depósito - Sucursal 06", "model": "LaserJet Managed E60175dn"}
+    ]
+  }
+]

@@ -12,16 +12,7 @@ class ExtractSdsLogsRequest(BaseModel):
     serial: str
     days: int = 30
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "serial": "CND1234567",
-                    "days": 15
-                }
-            ]
-        }
-    }
+    model_config = {"json_schema_extra": {"examples": [{"serial": "CND1234567", "days": 15}]}}
 
 
 class ResolveDeviceResponse(BaseModel):
@@ -33,7 +24,6 @@ class ResolveDeviceResponse(BaseModel):
     firmware: Optional[str] = None
     suggested_model_id: Optional[UUID] = None
     suggested_model_name: Optional[str] = None
-    has_cpmd: bool = False
 
 
 class ExtractSdsLogsResponse(BaseModel):
@@ -44,7 +34,6 @@ class ExtractSdsLogsResponse(BaseModel):
     model_name_sds: str
     firmware: Optional[str] = None
     suggested_model_id: Optional[UUID] = None
-    has_cpmd: bool = False
     logs_text: str
     event_count: int
     realtime_consumables: List[Dict[str, Any]] = Field(default_factory=list)

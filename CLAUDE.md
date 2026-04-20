@@ -6,6 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 ## Estilo de Comunicación
 - **Brevedad Extrema:** Respuestas cortas. Prioriza código o pasos de acción. Solo leo la parte donde pides algo (para ahorrar tokens).
+- **Mínimo de tokens:** Usar la menor cantidad de tokens posible. Evitar texto innecesario.
 - **Calidad ante todo (OBLIGATORIO):** Ejecutar `npm run typecheck` y los tests pertinentes (`test:frontend` / `test:backend`) después de **CADA** cambio y antes de cada commit. No subir código con errores.
 - **Sin Resúmenes:** No volver a resumir contenido de artefactos generados.
 
@@ -49,10 +50,13 @@ uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
 ### Docker
 
 ```bash
-# Desde la raíz del repo
-docker compose up --build
+# Servidores (desde la raíz)
+docker compose up -d           # Arrancar en background
+docker compose up -d --build   # Re-build total (recomendado tras cambios en Dockerfile)
+docker compose down            # Apagar todo
+docker compose logs -f         # Ver logs en tiempo real
 
-# Backend:  http://localhost:8000
+# Backend:  http://localhost:8000 (Health: /health)
 # Frontend: http://localhost:5173
 ```
 
@@ -107,7 +111,6 @@ Printer-Logs-Analyzer/
 │   │   │   ├── sds.py            # GET /sds/resolve-device, POST /sds/extract-logs, GET /insight/*
 │   │   │   ├── ai.py             # POST /analysis/ai-diagnose (rate: 5/min)
 │   │   │   ├── saved_analysis.py # CRUD /saved-analyses + /compare
-│   │   │   ├── printers.py       # /printer-models, /upload-pdf, /models/{id}/cpmd
 │   │   │   └── error_codes.py    # /error-codes/upsert y consultas
 │   │   └── schemas/              # Pydantic I/O schemas por dominio
 │   ├── domain/entities.py        # Modelos Pydantic (Event, EnrichedEvent, Incident, …)
@@ -118,12 +121,7 @@ Printer-Logs-Analyzer/
 │   │       ├── insight_service.py          # API Insight HP (alertas, consumibles, contadores)
 │   │       ├── ai_diagnosis_service.py     # Claude Opus 4.6 — JSON estructurado + prompt caching
 │   │       ├── analysis_service.py         # Agrupación por código, severidades, URLs catálogo
-│   │       ├── compare_service.py          # Tendencia mejoró/estable/empeoró
-│   │       ├── cpmd_extractor.py           # Extractor regex de bloques CPMD
-│   │       ├── cpmd_ingest.py              # Pipeline híbrido: regex + LLM fallback
-│   │       ├── cpmd_parser.py              # Parser de secciones CPMD
-│   │       ├── cpmd_structured_extractor.py
-│   │       └── pdf_extraction_service.py   # Extracción Service Cost Data desde PDF
+│   │       └── compare_service.py          # Tendencia mejoró/estable/empeoró
 │   ├── infrastructure/
 │   │   ├── config.py             # Settings (SDS_WEB_*, DB_URL, ANTHROPIC_API_KEY, etc.)
 │   │   ├── content_fetcher.py    # validate_ssrf_url + fetch_solution_content
@@ -133,9 +131,8 @@ Printer-Logs-Analyzer/
 │   │       ├── base_repository.py          # BaseRepository genérico
 │   │       ├── error_code_repository.py
 │   │       ├── error_solution_repository.py
-│   │       ├── printer_model_repository.py
 │   │       └── saved_analysis_repository.py
-│   ├── migrations/               # SQL 001–007 + carga_cpmd_626xx.sql + printer_models.json
+│   ├── migrations/               # SQL 001–005
 │   └── tests/                    # 19 suites pytest (análisis, parsers, endpoints, repos)
 └── frontend/
     ├── Dockerfile

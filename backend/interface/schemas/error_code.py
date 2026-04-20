@@ -20,7 +20,7 @@ class ErrorCodeUpsertRequest(BaseModel):
                     "code": "42.01.01",
                     "severity": "ERROR",
                     "description": "Fuser failure",
-                    "solution_url": "https://support.hp.com/example"
+                    "solution_url": "https://support.hp.com/example",
                 }
             ]
         }

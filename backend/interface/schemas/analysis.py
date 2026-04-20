@@ -17,11 +17,7 @@ class ParserErrorModel(BaseModel):
     model_config = {
         "json_schema_extra": {
             "examples": [
-                {
-                    "line_number": 42,
-                    "raw_line": "Some bad line",
-                    "reason": "Missing timestamp"
-                }
+                {"line_number": 42, "raw_line": "Some bad line", "reason": "Missing timestamp"}
             ]
         }
     }
@@ -31,14 +27,14 @@ class ParseLogsRequest(BaseModel):
     """Request body containing the raw log payload."""
 
     logs: str
-    model_id: Optional[UUID] = None
+    model_family: Optional[str] = None
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "logs": "2026-04-16 08:00:00 ERROR 42.01.01 ...",
-                    "model_id": "123e4567-e89b-12d3-a456-426614174000"
+                    "model_family": "HP LaserJet Managed E62655",
                 }
             ]
         }

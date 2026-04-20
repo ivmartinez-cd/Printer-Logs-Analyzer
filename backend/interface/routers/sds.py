@@ -15,16 +15,17 @@ from backend.application.services.insight_service import (
     get_device_meters as _insight_get_device_meters,
 )
 from backend.application.services.sds_web_service import (
-    get_session as get_sds_session,
-)
-from backend.application.services.sds_web_service import (
+    extract_help_urls,
     html_to_tsv,
 )
+from backend.application.services.sds_web_service import (
+    get_session as get_sds_session,
+)
 from backend.infrastructure.config import Settings
+from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
-from backend.infrastructure.repositories.printer_model_repository import PrinterModelRepository
 from backend.interface.auth import authenticate
-from backend.interface.deps import get_error_solution_repo, get_printer_model_repo, get_settings
+from backend.interface.deps import get_error_code_repo, get_error_solution_repo, get_settings
 from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.sds import (
     ExtractSdsLogsRequest,
@@ -48,7 +49,6 @@ async def resolve_device_endpoint(
     request: Request,
     serial: str,
     settings: Settings = Depends(get_settings),
-    printer_model_repository: PrinterModelRepository = Depends(get_printer_model_repo),
     error_solution_repository: ErrorSolutionRepository = Depends(get_error_solution_repo),
 ) -> ResolveDeviceResponse:
     if not (
@@ -70,28 +70,13 @@ async def resolve_device_endpoint(
     if not info["device_id"]:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado en el Portal")
 
-    model_match = await asyncio.to_thread(
-        printer_model_repository.find_best_match, info["model_name"] or "Unknown"
-    )
-
-    suggested_model_id = None
-    suggested_model_name = None
-    has_cpmd = False
-
-    if model_match:
-        suggested_model_id = model_match.id
-        suggested_model_name = model_match.model_name
-        cpmd_models = error_solution_repository.get_model_ids_with_solutions()
-        has_cpmd = str(model_match.id) in cpmd_models
-
     return ResolveDeviceResponse(
         serial=serial,
         device_id=str(info["device_id"]),
         model_name_sds=info["model_name"] or "Unknown",
         firmware=info["firmware"],
-        suggested_model_id=suggested_model_id,
-        suggested_model_name=suggested_model_name,
-        has_cpmd=has_cpmd,
+        suggested_model_id=None,
+        suggested_model_name=info["model_name"] or "Unknown",
     )
 
 
@@ -106,8 +91,8 @@ async def extract_sds_logs(
     request: Request,
     body: ExtractSdsLogsRequest,
     settings: Settings = Depends(get_settings),
-    printer_model_repository: PrinterModelRepository = Depends(get_printer_model_repo),
     error_solution_repository: ErrorSolutionRepository = Depends(get_error_solution_repo),
+    error_code_repo: ErrorCodeRepository = Depends(get_error_code_repo),
 ) -> ExtractSdsLogsResponse:
     if not (settings.sds_web_username and settings.sds_web_password):
         raise HTTPException(status_code=503, detail="Integración SDS Web no configurada")
@@ -135,12 +120,15 @@ async def extract_sds_logs(
         raw_html = sds.fetch_event_logs_html(device_id, body.days)
         tsv_text = html_to_tsv(raw_html)
 
-        model_match = printer_model_repository.find_best_match(info["model_name"] or "Unknown")
-        suggested_model_id = model_match.id if model_match else None
-        has_cpmd = False
-        if suggested_model_id:
-            cpmd_models = error_solution_repository.get_model_ids_with_solutions()
-            has_cpmd = str(suggested_model_id) in cpmd_models
+        # Update error code catalog with fresh Content Bootstrapper URLs and descriptions from this fetch
+        help_data = extract_help_urls(raw_html)
+        for code, data in help_data.items():
+            try:
+                error_code_repo.upsert(
+                    code=code, solution_url=data["url"], description=data.get("description")
+                )
+            except Exception as exc:
+                _logger.warning("Failed to update catalog for %s: %s", code, exc)
 
         realtime_consumables = _insight_get_device_consumables(
             settings.insight_portal_url,
@@ -154,8 +142,7 @@ async def extract_sds_logs(
             device_id=device_id,
             model_name_sds=info["model_name"] or "Unknown",
             firmware=info["firmware"],
-            suggested_model_id=suggested_model_id,
-            has_cpmd=has_cpmd,
+            suggested_model_id=None,
             logs_text=tsv_text,
             event_count=len(tsv_text.strip().splitlines()) - 1 if tsv_text else 0,
             realtime_consumables=realtime_consumables,
