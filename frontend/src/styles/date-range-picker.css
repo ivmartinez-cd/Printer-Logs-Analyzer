@@ -43,7 +43,7 @@
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  z-index: 1000;
+  z-index: 2000;
   background: #1a1d27;
   border: 1px solid #3d4452;
   border-radius: 12px;
