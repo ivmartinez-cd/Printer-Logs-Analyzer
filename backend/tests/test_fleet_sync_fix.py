@@ -1,11 +1,12 @@
 
 from unittest.mock import MagicMock, patch
+
 import pytest
-from fastapi.testclient import TestClient
+from backend.infrastructure.config import Settings
 from backend.interface.api import get_app
 from backend.interface.deps import get_error_code_repo
 from backend.interface.routers import fleet as fleet_router
-from backend.infrastructure.config import Settings
+from fastapi.testclient import TestClient
 
 _HEADERS = {"x-api-key": "dev"}
 _SAMPLE_TSV = "Type\tCode\tDate\tCounter\tFirmware\tHelp\nInfo\t00.00.00\t10-mar-2026 10:00:00\t100\tFW\tOK\n"
@@ -42,7 +43,7 @@ def test_scan_fleet_syncs_realtime_consumables(
 ) -> None:
     # Setup: serial that would trigger 20%/57% in seed data
     serial = "PHNCS470HF"
-    
+
     monkeypatch.setattr(
         fleet_router._fleet_repo,
         "get_client",
@@ -53,7 +54,7 @@ def test_scan_fleet_syncs_realtime_consumables(
             "devices": [{"serial": serial, "location": "Lab", "model": "HP LaserJet Managed MFP"}],
         },
     )
-    
+
     # Mock search info returning empty metadata (triggers fallback)
     mock_insight_info.return_value = {
         "device_id": 12345,
@@ -62,14 +63,14 @@ def test_scan_fleet_syncs_realtime_consumables(
         "metadata": {}, # This currently triggers fallback to 20/57
         "raw_extended": {}
     }
-    
+
     # Mock real-time consumables (what we want to see)
     mock_consumables.return_value = [
         {"type": "TONER", "percentLeft": 68.0, "sku": "W9004MC"},
         {"type": "FUSER", "percentLeft": 82.0, "sku": "L0H24A"},
         {"type": "MAINTENANCE_KIT", "percentLeft": 77.0, "sku": "MK"}
     ]
-    
+
     mock_sds = MagicMock()
     mock_sds_factory.return_value = mock_sds
     mock_sds.fetch_event_logs_html.return_value = "<html />"
@@ -79,11 +80,11 @@ def test_scan_fleet_syncs_realtime_consumables(
 
     assert response.status_code == 200
     payload = response.json()[0]
-    
+
     # These should match the consumables mock, NOT the seed data (20/57)
     assert payload["black_toner_percent"] == 68.0
     assert payload["fuser_life_percent"] == 82.0
-    
+
     # Check roller components too
     rollers = payload["roller_components"]
     assert any(r["label"] == "Mantenimiento Kit" and r["percent"] == 77.0 for r in rollers)

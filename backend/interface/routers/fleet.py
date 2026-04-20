@@ -10,6 +10,7 @@ from backend.application.parsers.log_parser import LogParser
 from backend.application.services.insight_service import (
     extract_roller_components,
     get_devices_by_customer,
+    merge_consumables_into_metadata,
     normalize_device_metadata,
     search_customers,
 )
@@ -17,9 +18,10 @@ from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
 )
 from backend.application.services.insight_service import (
-    get_device_info as _insight_get_device_info,
     get_device_consumables as _insight_get_device_consumables,
-    merge_consumables_into_metadata,
+)
+from backend.application.services.insight_service import (
+    get_device_info as _insight_get_device_info,
 )
 from backend.application.services.sds_web_service import (
     extract_help_urls,
@@ -294,7 +296,7 @@ async def scan_fleet(
                     # Update metadata with real-time values
                     updated_metadata = merge_consumables_into_metadata(info.get("metadata") or {}, real_consumables)
                     telemetry = _telemetry_payload(normalized_serial, updated_metadata)
-                    
+
                     # Also update roller components if any real-time ones were found
                     # (Note: Insight consumables API often includes Maintenance Kit)
                     real_rollers = extract_roller_components({
