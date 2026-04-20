@@ -4,6 +4,7 @@
 ![Tests](https://img.shields.io/badge/tests-250%2F250%20passing-brightgreen)
 ![TypeScript](https://img.shields.io/badge/typescript-strict-blue)
 ![Docker](https://img.shields.io/badge/docker-ready-blue)
+![Deploy](https://img.shields.io/badge/deploy-ready-orange)
 
 Herramienta web interna para analizar logs de impresoras HP. Identificás un equipo por número de serie, la app resuelve el modelo, extrae los logs del portal HP SDS automáticamente, y genera un análisis completo: incidentes por código, KPIs, diagnóstico con IA, consumibles en tiempo real, gráficos y exportación a PDF ejecutivo.
 

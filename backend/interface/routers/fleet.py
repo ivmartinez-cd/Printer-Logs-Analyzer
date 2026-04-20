@@ -21,11 +21,13 @@ from backend.application.services.insight_service import (
 )
 from backend.application.services.sds_web_service import (
     extract_help_urls,
-    get_session as get_sds_session,
     html_to_tsv,
 )
-from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
+from backend.application.services.sds_web_service import (
+    get_session as get_sds_session,
+)
 from backend.infrastructure.config import Settings
+from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.fleet_repository import DeviceEntry, FleetRepository
 from backend.interface.auth import authenticate
 from backend.interface.deps import get_error_code_repo, get_settings
@@ -335,7 +337,7 @@ async def scan_fleet(
                 for evt in events:
                     if evt.type == "ERROR":
                         error_groups[evt.code] = error_groups.get(evt.code, 0) + 1
-                
+
                 sorted_errors = sorted(error_groups.items(), key=lambda x: x[1], reverse=True)
                 top_errors = [{"code": code, "count": count} for code, count in sorted_errors[:3]]
 
@@ -348,7 +350,7 @@ async def scan_fleet(
                     timeline_map[d_str]["errors"] += 1
                 elif event.type == "WARNING":
                     timeline_map[d_str]["warnings"] += 1
-            
+
             timeline_data = sorted(timeline_map.values(), key=lambda x: x["date"])
 
             last_date: str | None = None

@@ -8,10 +8,11 @@ from fastapi.testclient import TestClient
 
 os.environ.setdefault("DB_URL", "postgresql://test")
 
+from unittest.mock import MagicMock
+
 from backend.infrastructure.config import Settings  # noqa: E402
 from backend.interface.api import get_app  # noqa: E402
 from backend.interface.deps import get_error_code_repo  # noqa: E402
-from unittest.mock import MagicMock
 
 
 def _make_settings() -> Settings:
