@@ -58,6 +58,13 @@ docker compose logs -f         # Ver logs en tiempo real
 
 # Backend:  http://localhost:8000 (Health: /health)
 # Frontend: http://localhost:5173
+
+### Base de Datos (Mantenimiento)
+
+```bash
+# Inicializar esquema (tablas) dentro del contenedor backend
+docker exec printer-logs-analyzer-backend-1 python backend/scripts/run_migrations.py
+```
 ```
 
 ### Lint, tests y typecheck

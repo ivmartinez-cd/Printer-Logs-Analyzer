@@ -2,7 +2,7 @@
 
 Documento que describe qué hace la app hoy y cómo está implementado.
 
-Última actualización: 2026-04-16 (Diagnóstico IA ejecutivo · Docker · Modularización API · Pipeline CPMD híbrido)
+Última actualización: 2026-04-21 (Sincronización repo · Docker operativo · Migraciones automatizadas · Diagnóstico IA ejecutivo)
 
 ---
 
@@ -112,7 +112,7 @@ Printer-Logs-Analyzer/
 
 ### 3.3 Persistencia y fallback
 
-PostgreSQL via psycopg2 con pool de conexiones y pre-ping. Si la BD no responde, todos los repositories cambian automáticamente a **Modo Fallback** usando archivos JSON en `backend/data/`. `threading.Lock()` previene race conditions.
+PostgreSQL via psycopg2 con pool de conexiones y pre-ping. Si la BD no responde, todos los repositories cambian automáticamente a **Modo Fallback** usando archivos JSON en `backend/data/`. `threading.Lock()` previene race conditions. La inicialización del esquema en Docker se realiza mediante el script `backend/scripts/run_migrations.py`.
 
 **BaseRepository**: patrón genérico en `infrastructure/repositories/base_repository.py`. Todos los repos lo extienden.
 

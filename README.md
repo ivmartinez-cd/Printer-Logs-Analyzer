@@ -115,10 +115,15 @@ Printer-Logs-Analyzer/
 Consultar [CLAUDE.md](./CLAUDE.md) para los comandos de instalación y arranque.
 Consultar [docs/ESTADO-ACTUAL.md](./docs/ESTADO-ACTUAL.md) para el flujo técnico detallado.
 
-### Docker (alternativa)
+### Docker (Recomendado)
 
 ```bash
-docker compose up --build
-# Backend: http://localhost:8000
+# Levantar servicios en background
+docker compose up -d --build
+
+# Inicializar base de datos (solo la primera vez o tras reset)
+docker exec printer-logs-analyzer-backend-1 python backend/scripts/run_migrations.py
+
 # Frontend: http://localhost:5173
+# Backend:  http://localhost:8000
 ```

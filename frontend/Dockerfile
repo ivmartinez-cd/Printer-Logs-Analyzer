@@ -9,6 +9,8 @@ RUN npm ci --legacy-peer-deps
 
 # Copy source and build
 COPY frontend/ ./
+ARG VITE_API_KEY
+ENV VITE_API_KEY=$VITE_API_KEY
 RUN npm run build
 
 # Production stage - Nginx
