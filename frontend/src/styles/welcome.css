@@ -7,7 +7,7 @@
   flex-direction: column;
   justify-content: center;
   min-height: 100vh;
-  padding: 40px;
+  padding: clamp(16px, 4vw, 40px); /* Fluid padding for 4k down to 390px */
   gap: 32px;
 }
 

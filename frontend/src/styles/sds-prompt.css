@@ -402,3 +402,70 @@
   background: rgba(52, 211, 153, 0.2);
   color: #34d399;
 }
+
+/* ─── Mobile Card View for Tables (Executive 2026) ───────────────────── */
+@media (max-width: 768px) {
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .table-toolbar .table-toolbar__label {
+    margin-bottom: -6px; /* Pull label closer to input */
+  }
+  .dashboard-table, .dashboard-table tbody, .dashboard-table tr, .dashboard-table td, .dashboard-table th {
+    display: block;
+    width: 100%;
+  }
+  .dashboard-table thead, .dashboard-table__row-detail-header {
+    display: none !important;
+  }
+  .dashboard-table tr {
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  .dashboard-table td {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    word-break: break-word;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .dashboard-table td > * {
+    max-width: 100%;
+  }
+  .dashboard-table__cell-classification {
+    white-space: normal !important;
+    max-width: 100% !important;
+  }
+  .dashboard-table td:last-child {
+    border-bottom: 0;
+  }
+  .dashboard-table td::before {
+    content: attr(data-label);
+    color: #9aa3b2;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  
+  .dashboard-table__cell-expand {
+    padding-left: 0 !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  
+  .dashboard-table__cell-expand::before {
+    display: none;
+  }
+}

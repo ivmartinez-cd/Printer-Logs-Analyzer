@@ -166,7 +166,7 @@ export function IncidentsTable({
               return (
                 <React.Fragment key={inc.id}>
                   <tr className="dashboard-table__row-main">
-                    <td className="dashboard-table__cell-expand">
+                    <td className="dashboard-table__cell-expand" data-label="Detalle">
                       <button
                         type="button"
                         className="dashboard-table__expand-btn"
@@ -178,7 +178,7 @@ export function IncidentsTable({
                         {isExpanded ? '▼' : '▶'}
                       </button>
                     </td>
-                    <td>
+                    <td data-label="Código">
                       <button
                         type="button"
                         className="dashboard-table__code-link"
@@ -193,18 +193,19 @@ export function IncidentsTable({
                     <td
                       className="dashboard-table__cell-classification"
                       title={inc.classification || inc.code}
+                      data-label="Clasificación"
                     >
                       {inc.classification || inc.code}
                     </td>
-                    <td>
+                    <td data-label="Severidad">
                       <span className={'badge badge--' + (inc.severity || 'info').toLowerCase()}>
                         {inc.severity}
                       </span>
                     </td>
-                    <td>{inc.occurrences}</td>
-                    <td>{formatDateTime(inc.start_time)}</td>
-                    <td>{formatDateTime(inc.end_time)}</td>
-                    <td className="dashboard-table__cell-solution">
+                    <td data-label="Ocurrencias">{inc.occurrences}</td>
+                    <td data-label="Primera vez">{formatDateTime(inc.start_time)}</td>
+                    <td data-label="Última vez">{formatDateTime(inc.end_time)}</td>
+                    <td className="dashboard-table__cell-solution" data-label="Solución">
                       <span className="dashboard-table__cell-actions">
                         <span className="dashboard-table__cell-actions-left">
                           {inc.sds_solution_content || inc.sds_link ? (
@@ -262,18 +263,19 @@ export function IncidentsTable({
                       return (
                         <tr key={`${inc.id}-${idx}`} className="dashboard-table__row-detail">
                           <td className="dashboard-table__cell-expand" />
-                          <td className="dashboard-table__cell-detail-label">
+                          <td className="dashboard-table__cell-detail-label" data-label="Fecha y hora">
                             {formatDateTime(evt.timestamp)}
                           </td>
-                          <td className="dashboard-table__cell-detail-num">{evt.counter}</td>
+                          <td className="dashboard-table__cell-detail-num" data-label="Contador">{evt.counter}</td>
                           <td
                             className="dashboard-table__cell-detail-delta"
                             title="Diferencia de contador desde la ocurrencia anterior"
+                            data-label="Δ"
                           >
                             {delta !== null ? (delta >= 0 ? `+${delta}` : delta) : '—'}
                           </td>
-                          <td>{evt.firmware ?? '—'}</td>
-                          <td colSpan={3} className="dashboard-table__cell-detail-msg">
+                          <td data-label="Firmware">{evt.firmware ?? '—'}</td>
+                          <td colSpan={3} className="dashboard-table__cell-detail-msg" data-label="Mensaje / Ayuda">
                             {msg.length > 80 ? (
                               expandedMsgs.has(msgKey) ? (
                                 <span>

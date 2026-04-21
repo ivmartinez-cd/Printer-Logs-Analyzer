@@ -84,7 +84,7 @@
 }
 
 /* ─── Responsive Header ──────────────────────────────────────────────── */
-@media (max-width: 1280px) {
+@media (max-width: var(--bp-desktop, 1280px)) {
   .dashboard__header {
     padding: 10px 16px;
     gap: 12px;
@@ -98,7 +98,7 @@
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: var(--bp-tablet, 1024px)) {
   .dashboard__datetime {
     display: none; /* Ocultar reloj en tablets para ganar espacio */
   }
@@ -110,36 +110,51 @@
 @media (max-width: 850px) {
   .dashboard__header {
     flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-    border-radius: 24px;
+    align-items: flex-start;
+    gap: 12px;
+    border-radius: 20px;
     top: 8px;
+    width: 95%;
+    padding: 14px 16px 10px;
   }
   
   .dashboard__title-group {
-    justify-content: center;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    justify-content: flex-start;
   }
 
+  /* Horizontal swipeable action bar for 2026 Executive standard */
   .dashboard__header-actions {
-    justify-content: center;
-    flex-wrap: wrap;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
     gap: 8px;
+    padding-bottom: 2px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Hide scrollbar */
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .dashboard__header-actions::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 
   .dashboard__btn {
-    flex: 1 1 auto;
-    justify-content: center;
-    white-space: nowrap;
-    font-size: 0.8rem;
-    padding: 8px 10px;
+    flex: 0 0 auto; /* Prevent shrinking */
+    font-size: 0.85rem;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 99px; /* More pill-like for swipe bars */
   }
 
   .db-status-badge {
-    width: 100%;
-    justify-content: center;
-    order: -1; /* Poner el estado arriba de los botones en móvil */
+    flex: 0 0 auto;
+    order: 0; /* Keep it normal flow */
   }
 }
 
