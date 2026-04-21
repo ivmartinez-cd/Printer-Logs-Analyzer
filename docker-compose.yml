@@ -29,7 +29,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Redirect to internal DB service by default
       - DB_URL=postgresql://printerapp:printer_secure_pass_2026@db:5432/printer_logs
       - API_KEY=${API_KEY:-dev}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -45,6 +44,9 @@ services:
         condition: service_healthy
     volumes:
       - ./data:/app/data
+      - ./backend:/app/backend # Sincronización de código backend
+    # Usar --reload para desarrollo (Ruta correcta de la app)
+    command: uvicorn backend.interface.api:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - backend-network
       - frontend-network
@@ -53,19 +55,28 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      target: build # Usamos la etapa que tiene Node.js para desarrollo
       args:
         - VITE_API_KEY=${API_KEY:-dev}
     restart: unless-stopped
     ports:
-      - "5173:8080" # Standard port for the dev team, mapping to rootless 8080
+      - "5173:5173" # Cambiamos al puerto de desarrollo de Vite
     environment:
       - VITE_API_BASE=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - VITE_WATCH_USE_POLLING=true
     depends_on:
       - backend
     networks:
       - frontend-network
     env_file:
       - .env
+    volumes:
+      - ./frontend:/app # Sincronización de código frontend
+      - /app/node_modules # Evitar que los node_modules locales pisen los del contenedor
+    # En desarrollo usamos npm run dev en lugar de Nginx
+    command: npm run dev -- --host 0.0.0.0 --port 5173
 
 networks:
   backend-network:

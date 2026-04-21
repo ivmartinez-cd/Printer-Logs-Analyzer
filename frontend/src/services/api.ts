@@ -413,3 +413,93 @@ export async function scanFleet(clientId: string, models: string[] | null = null
   )
   return handleResponse(res)
 }
+
+// --- Maintenance / Avisos ---
+
+export async function getMaintenanceDevices(): Promise<any[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse(res)
+}
+
+export async function getMaintenanceModelRules(modelFamily: string): Promise<any[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/rules`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse(res)
+}
+
+export async function upsertMaintenanceModelRule(rule: any): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/rules`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(rule),
+  })
+  return handleResponse(res)
+}
+
+export async function getMaintenanceDeviceState(serial: string): Promise<any[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/state`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse(res)
+}
+
+export async function updateDeviceState(serial: string, componentType: string, lastChangeCounter: number): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/state`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ serial, component_type: componentType, last_change_counter: lastChangeCounter })
+  })
+  return handleResponse(res)
+}
+
+export async function discoverFamily(modelFamily: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/discover`, { 
+    method: 'POST', 
+    headers: apiHeaders() 
+  })
+  return handleResponse(res)
+}
+
+export async function triggerMaintenanceCheck(): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/check-now`, {
+    method: 'POST',
+    headers: apiHeaders(),
+  })
+  return handleResponse(res)
+}
+
+export async function getMaintenanceHistory(serial: string): Promise<any[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/history/${encodeURIComponent(serial)}`, {
+    method: 'GET',
+    headers: apiHeaders(),
+  })
+  return handleResponse(res)
+}
+
+export async function recordMaintenanceChange(data: {
+  serial: string
+  component_type: string
+  incident_number?: string
+  notes?: string
+}): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/record-change`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
+export async function renameFamily(oldName: string, newName: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/rename`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ old_name: oldName, new_name: newName })
+  })
+  return handleResponse(res)
+}
+
+export async function clearFamilyDevices(modelFamily: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/devices`, {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  return handleResponse(res)
+}

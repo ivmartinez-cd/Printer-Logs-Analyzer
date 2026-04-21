@@ -10,6 +10,7 @@ interface WelcomeViewProps {
   onQuickSearch: (serial: string) => void
   onOpenSaved: (id: string) => void
   onOpenMonitor: () => void
+  onOpenAvisos: () => void
   loadingQuickSearch?: boolean
 }
 
@@ -22,6 +23,7 @@ export function WelcomeView({
   onQuickSearch,
   onOpenSaved,
   onOpenMonitor,
+  onOpenAvisos,
   loadingQuickSearch = false
 }: WelcomeViewProps) {
   const [serial, setSerial] = useState('')
@@ -102,6 +104,18 @@ export function WelcomeView({
           </div>
           <div className="welcome-grid__footer">
             Gestionar flotas →
+          </div>
+        </div>
+
+        {/* NEW: Maintenance Alerts Card */}
+        <div className="welcome-grid__item welcome-grid__item--alerts" onClick={onOpenAvisos}>
+          <div className="welcome-grid__content">
+            <div className="welcome-grid__icon welcome-grid__icon--warning">🔔</div>
+            <h3 className="welcome-grid__title">Avisos de Mantenimiento</h3>
+            <p className="welcome-grid__desc">Alertas automáticas por contador para equipos sin medición por chip.</p>
+          </div>
+          <div className="welcome-grid__footer">
+            Ver alertas activas →
           </div>
         </div>
 

@@ -16,7 +16,7 @@ interface AnalysisState {
   savingIncident: boolean
   
   // UI State
-  viewMode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor'
+  viewMode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos'
   logFileName: string | null
   currentModelFamily: string | null
   currentSerialNumber: string | null
@@ -27,7 +27,7 @@ interface AnalysisState {
   setResult: (result: ParseLogsResponse | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  setViewMode: (mode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor') => void
+  setViewMode: (mode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos') => void
   setLogFileName: (name: string | null) => void
   setCodesNew: (updater: (prev: string[]) => string[]) => void
   setMonitorClientId: (id: string | null) => void

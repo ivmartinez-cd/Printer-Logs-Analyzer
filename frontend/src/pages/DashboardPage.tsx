@@ -46,6 +46,7 @@ import { WelcomeView } from '../components/WelcomeView'
 import { MonitorWizard } from '../components/MonitorWizard'
 import { MonitorDashboard } from '../components/MonitorDashboard'
 import { DashboardHeader } from '../components/DashboardHeader'
+import { AvisosPage } from './AvisosPage'
 import {
   useDateFilter,
   filterEventsByDate,
@@ -151,6 +152,7 @@ export default function DashboardPage({
   initialAnalysisId,
   initialIsSavedList,
   initialIsMonitor,
+  initialIsAvisos,
 }: {
   serverWasCold: boolean
   healthStatus: HealthStatus | null
@@ -158,6 +160,7 @@ export default function DashboardPage({
   initialAnalysisId?: string | null
   initialIsSavedList?: boolean
   initialIsMonitor?: boolean
+  initialIsAvisos?: boolean
 }) {
   const dateFilter = useDateFilter()
   const {
@@ -249,6 +252,8 @@ export default function DashboardPage({
       newPath = '/saved-analyses'
     } else if (viewMode === 'monitor') {
       newPath = '/monitor'
+    } else if (viewMode === 'avisos') {
+      newPath = '/avisos'
     }
 
     if (window.location.pathname !== newPath) {
@@ -376,6 +381,8 @@ export default function DashboardPage({
       if (!monitorClientId) {
         setMonitorWizardOpen(true)
       }
+    } else if (initialIsAvisos) {
+      setViewMode('avisos' as any) // Cast as any if 'avisos' is not in viewMode type yet
     } else if (initialSerial) {
       setViewMode('dashboard')
       if (initialSerial !== currentSerialNumber) {
@@ -390,7 +397,7 @@ export default function DashboardPage({
       setSavedDetail(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
+  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, initialIsAvisos, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
 
   // Effect for Deep Linking: Load saved analysis if analysisId is provided
   useEffect(() => {
@@ -549,9 +556,12 @@ export default function DashboardPage({
               .catch(() => setSavedDetail(null))
           }}
           onOpenMonitor={() => setMonitorWizardOpen(true)}
+          onOpenAvisos={() => setViewMode('avisos')}
         />
       ) : viewMode === 'monitor' ? (
         <MonitorDashboard />
+      ) : viewMode === 'avisos' ? (
+        <AvisosPage onBack={() => setViewMode('dashboard')} />
       ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
           {/* El botón de Asociar SDS ahora está en el Header para mayor limpieza */}

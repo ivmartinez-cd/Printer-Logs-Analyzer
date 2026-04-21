@@ -63,6 +63,7 @@ interface LocationInfo {
   analysisId: string | null
   isSavedList: boolean
   isMonitor: boolean
+  isAvisos: boolean
 }
 
 function parseLocation(): LocationInfo {
@@ -71,25 +72,30 @@ function parseLocation(): LocationInfo {
   // 1. Saved analysis detail: /analysis/[ID]
   if (path.startsWith('analysis/')) {
     const id = path.split('/')[1]
-    return { serial: null, analysisId: id || null, isSavedList: false, isMonitor: false }
+    return { serial: null, analysisId: id || null, isSavedList: false, isMonitor: false, isAvisos: false }
   }
 
   // 2. Saved list: /saved-analyses
   if (path === 'saved-analyses') {
-    return { serial: null, analysisId: null, isSavedList: true, isMonitor: false }
+    return { serial: null, analysisId: null, isSavedList: true, isMonitor: false, isAvisos: false }
   }
 
   // 3. Monitor: /monitor
   if (path === 'monitor') {
-    return { serial: null, analysisId: null, isSavedList: false, isMonitor: true }
+    return { serial: null, analysisId: null, isSavedList: false, isMonitor: true, isAvisos: false }
   }
 
-  // 4. Serial: /[SERIAL]
+  // 4. Avisos: /avisos
+  if (path === 'avisos') {
+    return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: true }
+  }
+
+  // 5. Serial: /[SERIAL]
   if (path && /^[A-Z0-9]{5,20}$/i.test(path)) {
-    return { serial: path.toUpperCase(), analysisId: null, isSavedList: false, isMonitor: false }
+    return { serial: path.toUpperCase(), analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false }
   }
 
-  return { serial: null, analysisId: null, isSavedList: false, isMonitor: false }
+  return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false }
 }
 
 function App() {
@@ -131,6 +137,7 @@ function App() {
           initialAnalysisId={locationInfo.analysisId}
           initialIsSavedList={locationInfo.isSavedList}
           initialIsMonitor={locationInfo.isMonitor}
+          initialIsAvisos={locationInfo.isAvisos}
         />
 
         <ToastContainer />

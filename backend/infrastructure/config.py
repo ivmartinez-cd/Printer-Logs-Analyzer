@@ -33,10 +33,22 @@ class Settings(BaseModel):
     sds_web_username: Optional[str] = Field(None, alias="SDS_WEB_USERNAME")
     sds_web_password: Optional[str] = Field(None, alias="SDS_WEB_PASSWORD")
 
+    # SMTP Settings for notifications
+    smtp_host: Optional[str] = Field(None, alias="SMTP_HOST")
+    smtp_port: int = Field(587, alias="SMTP_PORT")
+    smtp_user: Optional[str] = Field(None, alias="SMTP_USER")
+    smtp_password: Optional[str] = Field(None, alias="SMTP_PASSWORD")
+    smtp_from: str = Field("noreply@hplogsanalyzer.com", alias="SMTP_FROM")
+    maintenance_emails_enabled: bool = Field(True, alias="MAINTENANCE_EMAILS_ENABLED")
+
     @classmethod
     def from_env(cls) -> "Settings":
         """Load configuration and raise informative errors when missing."""
-        values = {field.alias: os.getenv(field.alias) for field in cls.model_fields.values()}
+        values = {
+            field.alias: os.getenv(field.alias)
+            for field in cls.model_fields.values()
+            if os.getenv(field.alias) is not None
+        }
         try:
             instance = cls(**values)
         except ValidationError as exc:
