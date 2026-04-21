@@ -53,6 +53,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_KEY=${API_KEY:-dev}
     restart: unless-stopped
     ports:
       - "5173:8080" # Standard port for the dev team, mapping to rootless 8080

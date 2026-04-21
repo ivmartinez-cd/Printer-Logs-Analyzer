@@ -2,6 +2,16 @@
 
 Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
+**Mantenimiento y DevOps: Sincronización y Dockerización (2026-04-21)**
+- **Sincronización Local**: Actualización masiva de `main` (13 commits tras SSD recovery) e integración de todas las ramas de feature activas (`fix/fleet-telemetry-sync`, `fix/layout-overflow-welcome`).
+- **Limpieza de Ramas**: Eliminación de ramas locales y remotas fusionadas para mantener el repositorio limpio y enfocado.
+- **Dockerización Local**: Configuración de `docker-compose.yml` para despliegue local simplificado (Frontend: 5173, Backend: 8000, DB: 5432).
+- **Inyección de VITE_API_KEY**: Refactor del `Dockerfile` de frontend y `docker-compose` para inyectar la clave API en tiempo de build, resolviendo errores 401 en entorno Docker.
+- **Script de Migraciones**: Nuevo utilitario `backend/scripts/run_migrations.py` para inicializar el esquema de PostgreSQL dentro de contenedores.
+- **Git Hygiene**: Adición de archivos `.env` específicos a `.gitignore`.
+
+---
+
 **Fase: Extracción Automática HP SDS (2026-04-15)**
 - **Extracción Directa**: Implementación de `SDSWebSession` en el backend para realizar login automatizado, búsqueda de equipos y fetch de logs sin intervención manual.
 - **Conversión HTML a TSV**: Nuevo parser para transformar la respuesta dinámica del portal HP SDS en el formato TSV esperado por el sistema de análisis.
