@@ -151,15 +151,15 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
               <tbody>
                 {tableRows.map((evt) => (
                   <tr key={`${evt.code}-${evt.timestamp}`}>
-                    <td>{formatDateTime(evt.timestamp)}</td>
-                    <td>{evt.code}</td>
-                    <td>
+                    <td data-label="Fecha/hora">{formatDateTime(evt.timestamp)}</td>
+                    <td data-label="Código">{evt.code}</td>
+                    <td data-label="Severidad">
                       <span className={'badge badge--' + (evt.type || 'info').toLowerCase()}>
                         {evt.type}
                       </span>
                     </td>
-                    <td>{evt.code_description?.trim() || evt.code || '—'}</td>
-                    <td className={styles['dashboard-table__cell-solution']}>
+                    <td data-label="Mensaje">{evt.code_description?.trim() || evt.code || '—'}</td>
+                    <td data-label="Solución" className={styles['dashboard-table__cell-solution']}>
                       {evt.code_solution_content?.trim() || evt.code_solution_url?.trim() ? (
                         <button
                           type="button"

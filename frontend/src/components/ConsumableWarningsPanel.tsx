@@ -68,19 +68,19 @@ export function ConsumableWarningsPanel({ warnings }: ConsumableWarningsPanelPro
                 
                 return (
                   <tr key={`${idx}-${w.sku}`} data-status={status}>
-                    <td>
+                    <td data-label="Tipo">
                       <span className="consumable-warnings-panel__cat-icon" aria-hidden>
                         {CATEGORY_ICON[typeKey] ?? '⚙️'}
                       </span>{' '}
                       {typeKey}
                     </td>
-                    <td>{w.description || 'Desconocido'}</td>
-                    <td>
+                    <td data-label="Descripción">{w.description || 'Desconocido'}</td>
+                    <td data-label="SKU / Parte">
                       <code className="consumable-warnings-panel__part">{w.sku || 'N/A'}</code>
                     </td>
-                    <td className="consumable-warnings-panel__num">{formatPages(w.pagesLeft)}</td>
-                    <td className="consumable-warnings-panel__num">{w.daysLeft !== undefined && w.daysLeft !== null ? `${w.daysLeft} días` : 'N/A'}</td>
-                    <td className="consumable-warnings-panel__bar-cell">
+                    <td className="consumable-warnings-panel__num" data-label="Págs Est. Restantes">{formatPages(w.pagesLeft)}</td>
+                    <td className="consumable-warnings-panel__num" data-label="Días Est. Restantes">{w.daysLeft !== undefined && w.daysLeft !== null ? `${w.daysLeft} días` : 'N/A'}</td>
+                    <td className="consumable-warnings-panel__bar-cell" data-label="Nivel Real">
                       <div className="consumable-warnings-panel__bar-wrap" title={`${pct.toFixed(1)}%`}>
                         <div
                           className={`consumable-warnings-panel__bar consumable-warnings-panel__bar--${status}`}
