@@ -43,6 +43,31 @@
   border: 1px solid #e5e7eb !important;
 }
 
+/* AI Diagnostic PDF Overrides */
+.is-exporting .ai-diagnostic-result__diagnosis-card,
+.is-exporting .ai-diagnostic-result__actions-card {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.is-exporting .ai-diagnostic-result__section-title {
+  color: #111827 !important;
+  font-weight: 700 !important;
+}
+
+.is-exporting .ai-diagnostic-result__text,
+.is-exporting .ai-diagnostic-result__action-text,
+.is-exporting .ai-diagnostic-result__impact {
+  color: #374151 !important;
+}
+
+.is-exporting .ai-diagnostic-result__action-number {
+  background: #dcfce7 !important;
+  border: 1px solid #166534 !important;
+  color: #166534 !important;
+}
+
 /* Consumibles */
 .is-exporting .consumable-warnings-panel__intro,
 .is-exporting .consumable-warnings-panel__part,
@@ -73,6 +98,19 @@
 
 .is-exporting .collapsible-panel__header {
   border-left: 4px solid #0096d6 !important;
+}
+
+body.is-exporting .report-only-section {
+  display: block !important;
+  margin-bottom: 2rem;
+}
+
+/* Page Break Controls */
+.is-exporting .page-break {
+  page-break-before: always;
+  height: 0;
+  margin: 0;
+  border: none;
 }
 
 .is-exporting .executive-summary {
