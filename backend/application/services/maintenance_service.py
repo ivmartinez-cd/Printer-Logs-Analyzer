@@ -2,9 +2,19 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from backend.application.services.insight_service import get_device_info, get_device_meters, search_devices_by_model
 from backend.application.services.email_service import EmailService
-from backend.domain.entities import MaintenanceDevice, MaintenanceModelRule, MaintenanceDeviceState, MaintenanceAlert, MaintenanceHistory
+from backend.application.services.insight_service import (
+    get_device_info,
+    get_device_meters,
+    search_devices_by_model,
+)
+from backend.domain.entities import (
+    MaintenanceAlert,
+    MaintenanceDevice,
+    MaintenanceDeviceState,
+    MaintenanceHistory,
+    MaintenanceModelRule,
+)
 from backend.infrastructure.config import get_settings
 from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
 
@@ -16,23 +26,32 @@ class MaintenanceService:
         self.email = email_service or EmailService()
         self.settings = get_settings()
 
-    def sync_and_check_all(self):
+    def sync_and_check_all(self, discover: bool = False, model_family: Optional[str] = None):
         """Main entry point for the scheduler and manual sync."""
-        _logger.info("Starting maintenance discovery, sync and check process...")
-        
-        # 1. Discover new devices for configured families
-        self.discover_new_devices()
-        
+        _logger.info("Starting maintenance sync and check process (discover=%s, family=%s)...", discover, model_family)
+
+        # 1. Discover new devices for configured families (only if requested)
+        if discover:
+            self.discover_new_devices()
+
         # 2. Sync and check all active devices
         devices = self.repo.get_all_devices()
         active_devices = [d for d in devices if d.is_active]
-        
-        for device in active_devices:
+
+        if model_family:
+            active_devices = [d for d in active_devices if d.model_family == model_family]
+
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _safe_process(device):
             try:
                 self.process_device(device)
             except Exception as e:
                 _logger.error("Error processing maintenance for device %s: %s", device.serial, e)
-        
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            executor.map(_safe_process, active_devices)
+
         _logger.info("Maintenance sync and check completed.")
 
     def process_device(self, device: MaintenanceDevice):
@@ -49,23 +68,52 @@ class MaintenanceService:
             self.settings.insight_api_secret,
             device_id
         )
-        
+
         current_counter = 0
         if meters:
-            # Try to find engineCycles or equivalent
-            for m in meters:
+            # Sort meters by date descending to get the most recent reading first
+            sorted_meters = sorted(meters, key=lambda x: x.get("readingDateTime") or x.get("readingDate") or x.get("date") or "", reverse=True)
+
+            for m in sorted_meters:
+                # 1. Check for nested structure: {"date": "...", "meters": [{"name": "...", "value": ...}]}
+                nested_meters = m.get("meters", [])
+                if nested_meters:
+                    # Look for specific names
+                    names_to_find = ["Ciclos de trabajo", "Engine Cycles", "Total Impressions", "Total Value", "Páginas monocromáticas"]
+                    found_value = None
+                    for name in names_to_find:
+                        for nm in nested_meters:
+                            if nm.get("name") == name:
+                                found_value = int(nm.get("value") or 0)
+                                break
+                        if found_value:
+                            break
+
+                    if found_value:
+                        current_counter = found_value
+                        break
+
+                # 2. Check for flat structure
                 if m.get("engineCycles"):
-                    current_counter = m["engineCycles"]
+                    current_counter = int(m["engineCycles"])
                     break
-                elif m.get("totalValue"):
-                    current_counter = m["totalValue"]
+                if m.get("totalValue"):
+                    current_counter = int(m["totalValue"])
                     break
-        
-        # Fallback: check device_info metadata if meters are empty
+
+        # Fallback: check device_info metadata if meters are empty or didn't yield a value
         if current_counter == 0:
             metadata = device_info.get("extendedFields", {})
             # Common fields for total counters in Insight
-            current_counter = int(metadata.get("totalCounter") or metadata.get("total_counter") or metadata.get("engineCycles") or 0)
+            current_counter = int(
+                metadata.get("engineCycles") or
+                metadata.get("workCycles") or
+                metadata.get("ciclos_motor") or
+                metadata.get("totalCounter") or
+                metadata.get("total_counter") or
+                metadata.get("total_value") or
+                0
+            )
 
         if current_counter == 0:
             _logger.warning("No meters found for device %s", device.serial)
@@ -93,16 +141,16 @@ class MaintenanceService:
     def _evaluate_rule(self, device: MaintenanceDevice, rule: MaintenanceModelRule, last_change_counter: int, current_counter: int):
         next_change = last_change_counter + rule.expected_life
         remaining = next_change - current_counter
-        
+
         if remaining <= rule.alert_margin:
             last_alert = self.repo.get_last_alert(device.serial, rule.component_type)
             COOLDOWN_PAGES = 500
             if not last_alert or (current_counter - last_alert.counter_at_alert >= COOLDOWN_PAGES):
                 _logger.info("ALERT TRIGGERED for %s - %s (Remaining: %s)", device.serial, rule.component_type, remaining)
-                
+
                 recipients = [r.strip() for r in (rule.email_recipients or "").split(",") if r.strip()]
                 email_sent = False
-                
+
                 if recipients and self.settings.maintenance_emails_enabled:
                     self.email.send_maintenance_alert(
                         serial=device.serial,
@@ -115,7 +163,7 @@ class MaintenanceService:
                     email_sent = True
                 elif recipients:
                     _logger.info("Emails are globally disabled. Skipping email for %s", device.serial)
-                
+
                 self.repo.create_alert(MaintenanceAlert(
                     device_serial=device.serial,
                     component_type=rule.component_type,
@@ -123,22 +171,32 @@ class MaintenanceService:
                     status="SENT" if email_sent else "SKIPPED"
                 ))
 
-    def record_change(self, serial: str, component_type: str, incident_number: Optional[str] = None, notes: Optional[str] = None):
-        """Records a component change, resets the rule counter and clears alerts."""
-        _logger.info("Recording maintenance change for %s - %s", serial, component_type)
-        
+    def sync_single_device(self, serial: str) -> MaintenanceDevice:
+        """Syncs a single device and returns the updated MaintenanceDevice."""
         devices = self.repo.get_all_devices()
         device = next((d for d in devices if d.serial == serial), None)
         if not device:
             raise ValueError(f"Device {serial} not found")
-        
+        self.process_device(device)
+        updated_devices = self.repo.get_all_devices()
+        return next((d for d in updated_devices if d.serial == serial), device)
+
+    def record_change(self, serial: str, component_type: str, incident_number: Optional[str] = None, notes: Optional[str] = None):
+        """Records a component change, resets the rule counter and clears alerts."""
+        _logger.info("Recording maintenance change for %s - %s", serial, component_type)
+
+        devices = self.repo.get_all_devices()
+        device = next((d for d in devices if d.serial == serial), None)
+        if not device:
+            raise ValueError(f"Device {serial} not found")
+
         current_counter = device.last_sync_counter
 
         model_rules = self.repo.get_model_rules(device.model_family)
         rule = next((r for r in model_rules if r.component_type == component_type), None)
         if not rule:
             raise ValueError(f"Rule for {component_type} not found on model {device.model_family}")
-        
+
         new_state = MaintenanceDeviceState(
             device_serial=serial,
             component_type=component_type,
@@ -155,7 +213,7 @@ class MaintenanceService:
         )
         self.repo.create_history_record(history)
         self.repo.delete_alerts_for_component(serial, component_type)
-        
+
         return history
 
     def get_history(self, serial: str) -> List[MaintenanceHistory]:
@@ -189,18 +247,18 @@ class MaintenanceService:
                 self.settings.insight_api_secret,
                 family
             )
-            
+
             _logger.info("Found %s devices for family %s", len(found_devices), family)
             for d in found_devices:
                 serial = d.get("serialNumber")
                 if not serial:
                     continue
-                
+
                 # Strict local filter: ensure the family name is actually in the model string
                 extended = d.get("extendedFields", {})
                 model_name = (extended.get("model") or d.get("modelName") or "").lower()
                 family_lower = family.lower()
-                
+
                 if family_lower not in model_name:
                     _logger.debug("Skipping device %s: model '%s' does not match family '%s'", serial, model_name, family)
                     continue

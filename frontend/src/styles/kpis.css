@@ -77,15 +77,18 @@
 
 .dashboard__above-fold__chart {
   flex: 1;
-  min-width: 600px; /* Se apilarán si el ancho es menor a ~1200px + gaps */
-  min-height: 420px; /* Altura garantizada para que no se vean comprimidos */
+  min-width: 600px;
+  /* Se apilarán si el ancho es menor a ~1200px + gaps */
+  min-height: 420px;
+  /* Altura garantizada para que no se vean comprimidos */
   display: flex;
   flex-direction: column;
 }
 
 @media (max-width: 1300px) {
   .dashboard__above-fold__chart {
-    min-width: 100%; /* Forzar apilado en pantallas medianas/pequeñas */
+    min-width: 100%;
+    /* Forzar apilado en pantallas medianas/pequeñas */
     min-height: 400px;
   }
 }
@@ -125,6 +128,7 @@
     height: auto;
     min-height: unset;
   }
+
   .dashboard__above-fold .chart-wrap {
     height: 180px !important;
   }
@@ -414,4 +418,3 @@
   border-color: #4c8bf5;
   color: #8fb4f5;
 }
-

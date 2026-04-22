@@ -530,7 +530,7 @@ export default function DashboardPage({
           onExportPdf={() => handleExportPDF(!!result)}
           onHelp={() => setHelpModalOpen(true)}
           isAtTop={isAtTop}
-          showSavedListButton={viewMode !== 'monitor'}
+          showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
         />
       )}
       {!result && viewMode === 'dashboard' ? (
@@ -561,7 +561,9 @@ export default function DashboardPage({
       ) : viewMode === 'monitor' ? (
         <MonitorDashboard />
       ) : viewMode === 'avisos' ? (
-        <AvisosPage onBack={() => setViewMode('dashboard')} />
+        <div className="dashboard__content-wrap">
+          <AvisosPage onBack={() => setViewMode('dashboard')} />
+        </div>
       ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
           {/* El botón de Asociar SDS ahora está en el Header para mayor limpieza */}

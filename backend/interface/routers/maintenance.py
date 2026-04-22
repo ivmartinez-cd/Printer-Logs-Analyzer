@@ -1,9 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from typing import List, Optional
-from pydantic import BaseModel
-from backend.domain.entities import MaintenanceDevice, MaintenanceModelRule, MaintenanceDeviceState, MaintenanceHistory
+
 from backend.application.services.maintenance_service import MaintenanceService
+from backend.domain.entities import (
+    MaintenanceDevice,
+    MaintenanceDeviceState,
+    MaintenanceHistory,
+    MaintenanceModelRule,
+)
 from backend.interface.auth import authenticate
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"], dependencies=[Depends(authenticate)])
 
@@ -21,6 +27,9 @@ class UpdateStateRequest(BaseModel):
 class RenameFamilyRequest(BaseModel):
     old_name: str
     new_name: str
+
+class CheckNowRequest(BaseModel):
+    model_family: Optional[str] = None
 
 def get_maintenance_service():
     return MaintenanceService()
@@ -68,10 +77,19 @@ def get_device_state(serial: str, service: MaintenanceService = Depends(get_main
     return service.repo.get_device_state(serial)
 
 @router.post("/check-now")
-def check_now(background_tasks: BackgroundTasks, service: MaintenanceService = Depends(get_maintenance_service)):
-    """Force an immediate maintenance sync and check (runs in background)."""
-    background_tasks.add_task(service.sync_and_check_all)
-    return {"status": "triggered"}
+def check_now(req: CheckNowRequest, service: MaintenanceService = Depends(get_maintenance_service)):
+    """Force an immediate maintenance sync and check."""
+    model_family = req.model_family
+    service.sync_and_check_all(discover=False, model_family=model_family)
+    return {"status": "completed"}
+
+@router.post("/devices/{serial}/sync", response_model=MaintenanceDevice)
+def sync_device(serial: str, service: MaintenanceService = Depends(get_maintenance_service)):
+    """Sync a single device and return the updated state."""
+    try:
+        return service.sync_single_device(serial)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 @router.get("/history/{serial}", response_model=List[MaintenanceHistory])
 def get_history(serial: str, service: MaintenanceService = Depends(get_maintenance_service)):
@@ -83,6 +101,6 @@ def record_change(req: RecordChangeRequest, service: MaintenanceService = Depend
         history = service.record_change(req.serial, req.component_type, req.incident_number, req.notes)
         return {"status": "ok", "history_id": history.id}
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import logging
 
+from backend.application.scheduler import start_scheduler, stop_scheduler
 from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.database import Database
 from backend.interface.exception_handlers import register_exception_handlers
 from backend.interface.rate_limiter import limiter
-from backend.interface.routers import ai, analysis, error_codes, fleet, saved_analysis, sds, maintenance
-from backend.application.scheduler import start_scheduler, stop_scheduler
+from backend.interface.routers import (
+    ai,
+    analysis,
+    error_codes,
+    fleet,
+    maintenance,
+    saved_analysis,
+    sds,
+)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler

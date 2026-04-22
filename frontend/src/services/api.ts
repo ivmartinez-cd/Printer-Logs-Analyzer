@@ -457,11 +457,21 @@ export async function discoverFamily(modelFamily: string): Promise<void> {
   return handleResponse(res)
 }
 
-export async function triggerMaintenanceCheck(): Promise<void> {
+export async function triggerMaintenanceCheck(modelFamily?: string): Promise<void> {
+  const body = modelFamily ? JSON.stringify({ model_family: modelFamily }) : JSON.stringify({});
   const res = await apiFetch(`${API_BASE}/maintenance/check-now`, {
     method: 'POST',
     headers: apiHeaders(),
-  })
+    body
+  }, 90_000)
+  return handleResponse(res)
+}
+
+export async function syncMaintenanceDevice(serial: string): Promise<any> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/sync`, {
+    method: 'POST',
+    headers: apiHeaders(),
+  }, 30_000)
   return handleResponse(res)
 }
 

@@ -1,6 +1,13 @@
 import logging
 from typing import List, Optional
-from backend.domain.entities import MaintenanceDevice, MaintenanceModelRule, MaintenanceDeviceState, MaintenanceAlert, MaintenanceHistory
+
+from backend.domain.entities import (
+    MaintenanceAlert,
+    MaintenanceDevice,
+    MaintenanceDeviceState,
+    MaintenanceHistory,
+    MaintenanceModelRule,
+)
 from backend.infrastructure.repositories.base_repository import BaseRepository
 
 _logger = logging.getLogger(__name__)
@@ -48,7 +55,7 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT id, model_family, component_type, expected_life, alert_margin, email_recipients 
+                    SELECT id, model_family, component_type, expected_life, alert_margin, email_recipients
                     FROM maintenance_model_rules WHERE model_family = %s
                 """, (model_family,))
                 return [MaintenanceModelRule(id=r[0], model_family=r[1], component_type=r[2],
@@ -87,7 +94,7 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT id, device_serial, component_type, last_change_counter 
+                    SELECT id, device_serial, component_type, last_change_counter
                     FROM maintenance_device_state WHERE device_serial = %s
                 """, (serial,))
                 return [MaintenanceDeviceState(id=r[0], device_serial=r[1], component_type=r[2], last_change_counter=r[3]) for r in cur.fetchall()]
@@ -114,9 +121,9 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT id, device_serial, component_type, triggered_at, counter_at_alert, status 
-                    FROM maintenance_alerts 
-                    WHERE device_serial = %s AND component_type = %s 
+                    SELECT id, device_serial, component_type, triggered_at, counter_at_alert, status
+                    FROM maintenance_alerts
+                    WHERE device_serial = %s AND component_type = %s
                     ORDER BY triggered_at DESC LIMIT 1
                 """, (serial, component_type))
                 r = cur.fetchone()
@@ -158,8 +165,8 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
                     ORDER BY changed_at DESC
                 """, (serial,))
                 return [MaintenanceHistory(
-                    id=r[0], device_serial=r[1], component_type=r[2], 
-                    change_counter=r[3], incident_number=r[4], 
+                    id=r[0], device_serial=r[1], component_type=r[2],
+                    change_counter=r[3], incident_number=r[4],
                     technician_notes=r[5], changed_at=r[6]
                 ) for r in cur.fetchall()]
 

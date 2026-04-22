@@ -244,7 +244,7 @@ def search_devices_by_model(
     model_family: str,
 ) -> List[Dict[str, Any]]:
     """Search for all devices of a specific model family.
-    
+
     Endpoint: GET /PortalAPI/api/devices/search?q=model:~{model_family}&includeExtendedFields=true
     """
     # Discovery Mock for local development
@@ -269,7 +269,7 @@ def search_devices_by_model(
     base = portal_url.rstrip("/")
     quoted_query = urllib.parse.quote(f"~{model_family}")
     search_url = f"{base}/PortalAPI/api/devices/search?q={quoted_query}&includeExtendedFields=true"
-    
+
     return _insight_get(search_url, token)
 
 

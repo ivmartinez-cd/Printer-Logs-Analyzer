@@ -1,8 +1,9 @@
-import smtplib
 import logging
-from email.mime.text import MIMEText
+import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import List, Optional
+
 from backend.infrastructure.config import get_settings
 
 _logger = logging.getLogger(__name__)
@@ -36,13 +37,13 @@ class EmailService:
 
     def send_maintenance_alert(self, serial: str, component: str, current_counter: int, next_change: int, remaining: int, recipients: List[str]):
         subject = f"⚠️ ALERTA: Mantenimiento Preventivo - {serial} - {component}"
-        
+
         body = f"""
         <html>
         <body style="font-family: sans-serif; line-height: 1.6; color: #333;">
             <h2 style="color: #d32f2f;">Alerta de Mantenimiento Preventivo</h2>
             <p>El equipo con serie <strong>{serial}</strong> requiere atención en el componente <strong>{component}</strong>.</p>
-            
+
             <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
                 <ul style="list-style: none; padding: 0;">
                     <li>📉 <strong>Contador Actual:</strong> {current_counter:,} págs.</li>
@@ -50,7 +51,7 @@ class EmailService:
                     <li>⏳ <strong>Páginas Restantes:</strong> <span style="color: #d32f2f; font-weight: bold;">{remaining:,}</span></li>
                 </ul>
             </div>
-            
+
             <p>Por favor, coordine el reemplazo del componente para evitar interrupciones en el servicio.</p>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
             <p style="font-size: 0.8em; color: #777;">Este es un aviso automático generado por HP Logs Analyzer.</p>

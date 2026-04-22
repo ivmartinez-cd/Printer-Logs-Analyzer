@@ -1,13 +1,19 @@
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-from backend.domain.entities import MaintenanceDevice, MaintenanceModelRule, MaintenanceAlert, MaintenanceDeviceState
-from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
+import pytest
 from backend.application.services.maintenance_service import MaintenanceService
-from fastapi.testclient import TestClient
-from backend.interface.api import get_app
+from backend.domain.entities import (
+    MaintenanceAlert,
+    MaintenanceDevice,
+    MaintenanceDeviceState,
+    MaintenanceModelRule,
+)
 from backend.infrastructure.config import Settings
+from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
+from backend.interface.api import get_app
+from fastapi.testclient import TestClient
+
 
 @pytest.fixture(autouse=True)
 def mock_scheduler():
@@ -34,11 +40,11 @@ def maintenance_service(maintenance_repo):
 def test_maintenance_repository_upsert_device(maintenance_repo):
     with patch.object(maintenance_repo, "upsert_device") as mock_upsert, \
          patch.object(maintenance_repo, "get_all_devices") as mock_get:
-        
+
         device = MaintenanceDevice(serial="TEST_SERIAL_123", model_family="Test Model")
         maintenance_repo.upsert_device(device)
         mock_upsert.assert_called_once_with(device)
-        
+
         mock_get.return_value = [device]
         devices = maintenance_repo.get_all_devices()
         found = next((d for d in devices if d.serial == "TEST_SERIAL_123"), None)
@@ -49,7 +55,7 @@ def test_maintenance_repository_model_rules(maintenance_repo):
     family = "Test Family"
     with patch.object(maintenance_repo, "upsert_model_rule") as mock_upsert, \
          patch.object(maintenance_repo, "get_model_rules") as mock_get:
-        
+
         rule = MaintenanceModelRule(
             model_family=family,
             component_type="Fuser",
@@ -58,7 +64,7 @@ def test_maintenance_repository_model_rules(maintenance_repo):
         )
         maintenance_repo.upsert_model_rule(rule)
         mock_upsert.assert_called_once_with(rule)
-        
+
         mock_get.return_value = [rule]
         rules = maintenance_repo.get_model_rules(family)
         assert len(rules) == 1
@@ -70,14 +76,14 @@ def test_maintenance_service_alert_trigger(mock_meters, mock_info, maintenance_s
     serial = "ALERT_TEST"
     family = "Test Family"
     device = MaintenanceDevice(serial=serial, model_family=family)
-    
+
     # Mock repo calls
     with patch.object(maintenance_repo, "get_model_rules") as mock_get_rules, \
          patch.object(maintenance_repo, "get_device_state") as mock_get_state, \
          patch.object(maintenance_repo, "get_last_alert") as mock_get_last_alert, \
          patch.object(maintenance_repo, "create_alert") as mock_create_alert, \
-         patch.object(maintenance_repo, "upsert_device") as mock_upsert_device:
-        
+         patch.object(maintenance_repo, "upsert_device"):
+
         mock_get_rules.return_value = [MaintenanceModelRule(
             model_family=family,
             component_type="Kit",
@@ -87,16 +93,16 @@ def test_maintenance_service_alert_trigger(mock_meters, mock_info, maintenance_s
         )]
         mock_get_state.return_value = [] # No previous changes
         mock_get_last_alert.return_value = None
-        
+
         # Mock device info and meters
         mock_info.return_value = {"deviceId": 123, "extendedFields": {}}
         mock_meters.return_value = [{"engineCycles": 9500}] # Trigger alert (remaining 500 < 1000)
-        
+
         # Mock email service
         maintenance_service.email.send_maintenance_alert = MagicMock()
-        
+
         maintenance_service.process_device(device)
-        
+
         # Check if alert was created
         mock_create_alert.assert_called_once()
         # Check if email was "sent"
@@ -107,8 +113,8 @@ def test_maintenance_api_endpoints(client):
     # Test listing devices
     response = client.get("/maintenance/devices", headers=headers)
     assert response.status_code == 200
-    
+
     # Test forcing check
-    response = client.post("/maintenance/check-now", headers=headers)
+    response = client.post("/maintenance/check-now", headers=headers, json={})
     assert response.status_code == 200
-    assert response.json()["status"] == "triggered"
+    assert response.json()["status"] == "completed"

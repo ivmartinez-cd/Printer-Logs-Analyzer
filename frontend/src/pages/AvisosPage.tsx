@@ -1,18 +1,22 @@
 import { useState, useEffect, useMemo } from 'react'
 import { 
-  getMaintenanceDevices, 
-  getMaintenanceModelRules, 
+  getMaintenanceDevices,
+  getMaintenanceModelRules,
   getMaintenanceDeviceState,
-  triggerMaintenanceCheck, 
+  triggerMaintenanceCheck,
   upsertMaintenanceModelRule,
   getMaintenanceHistory,
   recordMaintenanceChange,
   discoverFamily,
   updateDeviceState,
   renameFamily,
-  clearFamilyDevices
+  clearFamilyDevices,
+  syncMaintenanceDevice
 } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
+import { AvisosSidebar } from '../components/Maintenance/AvisosSidebar'
+import { RuleCard } from '../components/Maintenance/RuleCard'
+import { RuleModal, RecordChangeModal, StateModal, NewFamilyModal } from '../components/Maintenance/MaintenanceModals'
 
 export function AvisosPage({ onBack }: { onBack: () => void }) {
   const [devices, setDevices] = useState<any[]>([])
@@ -43,6 +47,9 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   const [stateEditingData, setStateEditingData] = useState<any | null>(null)
   const [updatingState, setUpdatingState] = useState(false)
   
+  // New Family Modal State
+  const [isNewFamilyModalOpen, setIsNewFamilyModalOpen] = useState(false)
+  
   const toast = useToast()
 
   // Agrupar equipos por familia
@@ -71,19 +78,20 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const handleCheckNow = async () => {
+  const handleSyncFamily = async () => {
+    if (!selectedFamily) return
     setChecking(true)
     try {
-      await triggerMaintenanceCheck()
-      toast.showSuccess('Sincronización disparada correctamente')
+      await triggerMaintenanceCheck(selectedFamily)
+      toast.showSuccess(`Sincronización de ${selectedFamily} completada`)
       await loadDevices()
       if (selectedDevice) {
         loadDeviceData(selectedDevice)
-      } else if (selectedFamily) {
+      } else {
         loadFamilyRules(selectedFamily)
       }
     } catch (e) {
-      toast.showError('Error al sincronizar')
+      toast.showError('Error al sincronizar familia')
     } finally {
       setChecking(false)
     }
@@ -127,10 +135,16 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     loadFamilyRules(family)
   }
 
-  const handleSelectDevice = (device: any) => {
+  const handleSelectDevice = async (device: any) => {
     setSelectedDevice(device)
     setSelectedFamily(device.model_family)
     loadDeviceData(device)
+    try {
+      const updated = await syncMaintenanceDevice(device.serial)
+      setSelectedDevice(updated)
+    } catch {
+      // silent fail — usamos datos cacheados
+    }
   }
 
   const handleOpenModal = (rule?: any) => {
@@ -271,78 +285,46 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
+  const handleCreateNewFamily = (family: string) => {
+    const trimmed = family.trim()
+    if (!trimmed) return
+    setSelectedFamily(trimmed)
+    setSelectedDevice(null)
+    setRules([])
+    setDeviceStates([])
+    setHistory([])
+    setIsNewFamilyModalOpen(false)
+    toast.showSuccess(`Familia ${trimmed} lista para configurar`)
+  }
+
   return (
     <div className="avisos-page animate-in">
       <div className="dashboard__subheader">
         <div className="avisos-subheader-header">
           <button onClick={onBack} className="dashboard__btn dashboard__btn--secondary dashboard__btn--small">
-            ← Volver
+            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>‹</span> Volver
           </button>
-          <h1 className="dashboard__subheader-title">Avisos de Mantenimiento</h1>
+          <div className="dashboard__subheader-title-group">
+            <h1 className="dashboard__subheader-title">Avisos de Mantenimiento</h1>
+            <p className="dashboard__subheader-meta">Gestión preventiva de componentes y suministros</p>
+          </div>
         </div>
         <div className="dashboard__subheader-actions">
-          <button 
-            onClick={handleCheckNow} 
-            disabled={checking}
-            className="dashboard__btn dashboard__btn--primary"
-          >
-            {checking ? 'Sincronizando...' : '🔄 Sincronizar Ahora'}
-          </button>
+          {/* Sincronización global movida a cada familia */}
         </div>
       </div>
 
+
       <div className="avisos-grid">
-        <aside className="avisos-sidebar">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 className="avisos-section-title" style={{ marginBottom: 0 }}>Equipos por Familia</h3>
-            <button 
-              onClick={() => handleOpenModal()} 
-              className="dashboard__btn--icon"
-              title="Nueva Familia"
-            >
-              ➕
-            </button>
-          </div>
-          <div className="avisos-device-list">
-            {loading ? (
-              <p>Cargando...</p>
-            ) : Object.keys(groupedDevices).length > 0 ? (
-              Object.keys(groupedDevices).map((family) => (
-                <div key={family} className="avisos-family-group">
-                  <div 
-                    className={`avisos-family-header ${selectedFamily === family && !selectedDevice ? 'is-selected' : ''}`}
-                    onClick={() => handleSelectFamily(family)}
-                  >
-                    <span className="family-icon">📂</span>
-                    <span className="family-name">{family}</span>
-                    <span className="family-count">{groupedDevices[family].length}</span>
-                  </div>
-                  {selectedFamily === family && (
-                    <div className="avisos-family-devices">
-                      {groupedDevices[family].map((d: any) => (
-                        <div 
-                          key={d.serial} 
-                          className={`avisos-device-item ${selectedDevice?.serial === d.serial ? 'is-selected' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleSelectDevice(d)
-                          }}
-                        >
-                          <div className="avisos-device-serial">{d.serial}</div>
-                          <div className="avisos-device-counter">
-                            {d.last_sync_counter?.toLocaleString()} págs.
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p>No hay equipos configurados.</p>
-            )}
-          </div>
-        </aside>
+        <AvisosSidebar 
+          groupedDevices={groupedDevices}
+          selectedFamily={selectedFamily}
+          selectedDevice={selectedDevice}
+          loading={loading}
+          onSelectFamily={handleSelectFamily}
+          onSelectDevice={handleSelectDevice}
+          onNewFamily={() => setIsNewFamilyModalOpen(true)}
+        />
 
         <main className="avisos-main">
           {selectedFamily ? (
@@ -353,20 +335,29 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                     <h2>Equipo: {selectedDevice.serial}</h2>
                     <p className="detail-subtitle">Modelo: {selectedDevice.model_family}</p>
                   </>
-                ) : selectedFamily ? (
+                ) : (
                   <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <h2>Familia: {selectedFamily}</h2>
-                      <button 
-                        onClick={handleRenameFamily}
-                        className="dashboard__btn--icon"
-                        title="Renombrar Familia"
-                      >
-                        ✏️
-                      </button>
+                    <div className="family-title-group">
+                      <div className="family-title-main">
+                        <h2>Familia: {selectedFamily}</h2>
+                        <button 
+                          onClick={handleRenameFamily}
+                          className="dashboard__btn--icon-edit"
+                          title="Renombrar Familia"
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                      <p className="detail-subtitle">Configuración maestra para todos los equipos de este modelo.</p>
                     </div>
-                    <p className="detail-subtitle">Configuración maestra para todos los equipos de este modelo.</p>
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                    <div className="avisos-detail-actions">
+                      <button 
+                        onClick={handleSyncFamily} 
+                        disabled={checking}
+                        className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--primary'} dashboard__btn--small`}
+                      >
+                        {checking ? 'Sincronizando...' : '🔄 Sincronizar Familia'}
+                      </button>
                       <button 
                         onClick={handleDiscoverFamily} 
                         disabled={discovering}
@@ -382,8 +373,6 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                       </button>
                     </div>
                   </>
-                ) : (
-                  <h2>Selecciona un equipo o familia</h2>
                 )}
               </div>
 
@@ -395,71 +384,18 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                   <p>Cargando reglas...</p>
                 ) : (
                   <div className="avisos-rules-list">
-                    {rules.map((r) => {
-                      const state = deviceStates.find(s => s.component_type === r.component_type)
-                      const lastCounter = state ? state.last_change_counter : 0
-                      const nextChange = lastCounter + r.expected_life
-                      const remaining = selectedDevice ? (nextChange - selectedDevice.last_sync_counter) : null
-                      const percent = selectedDevice ? Math.max(0, Math.min(100, (remaining! / r.expected_life) * 100)) : null
-
-                      return (
-                      <div key={r.id} className="avisos-rule-card">
-                        <div className="avisos-rule-header">
-                          <h4>{r.component_type}</h4>
-                          <div className="avisos-rule-header-actions">
-                            {!selectedDevice && (
-                              <div className="edit-indicator-compact" onClick={() => handleOpenModal(r)} title="Editar Regla Maestra">✏️ Editar</div>
-                            )}
-                            {selectedDevice && (
-                              <>
-                                <div className="edit-indicator-compact" onClick={() => handleOpenStateModal(r, state)} title="Ajustar Contador de Último Cambio">⚙️ Ajustar</div>
-                                <span className={`avisos-rule-badge ${remaining! <= r.alert_margin ? 'is-warning' : ''}`}>
-                                  {remaining! <= r.alert_margin ? 'Atención' : 'OK'}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="avisos-rule-body">
-                          {selectedDevice && (
-                             <div className="avisos-rule-progress">
-                               <div className="progress-bar">
-                                 <div className="progress-fill" style={{ width: `${percent}%`, backgroundColor: percent! < 20 ? '#ef4444' : '#10b981' }}></div>
-                               </div>
-                               <div className="progress-text">
-                                 {remaining?.toLocaleString()} páginas restantes
-                               </div>
-                             </div>
-                          )}
-                          <div className="avisos-rule-metric">
-                            <span className="label">Vida Útil:</span>
-                            <span className="value">{r.expected_life?.toLocaleString()} págs.</span>
-                          </div>
-                          <div className="avisos-rule-metric">
-                            <span className="label">Margen Alerta:</span>
-                            <span className="value">{r.alert_margin?.toLocaleString()} págs.</span>
-                          </div>
-                          {selectedDevice && (
-                            <div className="avisos-rule-metric">
-                              <span className="label">Último Cambio:</span>
-                              <span className="value">{lastCounter.toLocaleString()}</span>
-                            </div>
-                          )}
-                        </div>
-                        {selectedDevice && (
-                          <div className="avisos-rule-actions">
-                            <button 
-                              className="dashboard__btn dashboard__btn--primary"
-                              style={{ width: '100%', height: '44px' }}
-                              onClick={() => handleOpenRecordModal(r)}
-                            >
-                              🛠️ Registrar Cambio
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )})}
-                    {(!selectedDevice && rules.length < 8) && (
+                    {rules.map((r) => (
+                      <RuleCard 
+                        key={r.id}
+                        rule={r}
+                        state={deviceStates.find(s => s.component_type === r.component_type)}
+                        selectedDevice={selectedDevice}
+                        onEditRule={handleOpenModal}
+                        onAdjustState={handleOpenStateModal}
+                        onRecordChange={handleOpenRecordModal}
+                      />
+                    ))}
+                    {!selectedDevice && rules.length < 8 && (
                       <button className="avisos-add-rule-btn" onClick={() => handleOpenModal()}>
                         <span>+ Agregar Regla al Modelo</span>
                       </button>
@@ -506,169 +442,42 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
         </main>
       </div>
 
-      {/* Modal: Editar Regla */}
       {isModalOpen && editingRule && (
-        <div className="maintenance-modal-overlay">
-          <div className="maintenance-modal">
-            <h3>{editingRule.id ? 'Editar Regla Maestra' : 'Nueva Regla Maestra'}</h3>
-            <form onSubmit={handleSaveRule} className="maintenance-form" style={{ marginTop: '20px' }}>
-              <div className="form-group">
-                <label>Familia de Modelo (ej: 50145)</label>
-                <input 
-                  type="text" 
-                  className="form-input"
-                  placeholder="Ej: 50145"
-                  value={editingRule.model_family}
-                  onChange={e => setEditingRule({...editingRule, model_family: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Componente</label>
-                <input 
-                  type="text" 
-                  className="form-input"
-                  placeholder="Ej: Fuser Kit, Roller..."
-                  value={editingRule.component_type}
-                  onChange={e => setEditingRule({...editingRule, component_type: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Vida Útil Esperada (págs)</label>
-                <input 
-                  type="number" 
-                  className="form-input"
-                  value={editingRule.expected_life}
-                  onChange={e => setEditingRule({...editingRule, expected_life: parseInt(e.target.value)})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Margen de Alerta (págs antes)</label>
-                <input 
-                  type="number" 
-                  className="form-input"
-                  value={editingRule.alert_margin}
-                  onChange={e => setEditingRule({...editingRule, alert_margin: parseInt(e.target.value)})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Emails (separados por coma)</label>
-                <input 
-                  type="text" 
-                  className="form-input"
-                  placeholder="ejemplo@correo.com"
-                  value={editingRule.email_recipients}
-                  onChange={e => setEditingRule({...editingRule, email_recipients: e.target.value})}
-                />
-              </div>
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="dashboard__btn dashboard__btn--secondary"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="dashboard__btn dashboard__btn--primary"
-                  disabled={saving}
-                >
-                  {saving ? 'Guardando...' : 'Guardar Regla'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <RuleModal 
+          editingRule={editingRule}
+          setEditingRule={setEditingRule}
+          onSave={handleSaveRule}
+          onClose={() => setIsModalOpen(false)}
+          saving={saving}
+        />
       )}
 
-      {/* Modal: Registrar Cambio */}
       {isRecordModalOpen && recordingData && (
-        <div className="maintenance-modal-overlay">
-          <div className="maintenance-modal">
-            <h3>🛠️ Registrar Cambio de Componente</h3>
-            <p style={{ marginBottom: '20px', opacity: 0.7 }}>
-              Se registrará el cambio de <strong>{recordingData.component_type}</strong> para el equipo {recordingData.serial} con el contador actual de <strong>{selectedDevice.last_sync_counter.toLocaleString()}</strong> págs.
-            </p>
-            <form onSubmit={handleRecordChange} className="maintenance-form">
-              <div className="form-group">
-                <label>Nº de Incidente (Opcional)</label>
-                <input 
-                  type="text" 
-                  className="form-input"
-                  placeholder="Ej: INC-12345"
-                  value={recordingData.incident_number}
-                  onChange={e => setRecordingData({...recordingData, incident_number: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Notas del Técnico</label>
-                <textarea 
-                  className="form-input"
-                  rows={3}
-                  placeholder="Detalles del cambio..."
-                  value={recordingData.notes}
-                  onChange={e => setRecordingData({...recordingData, notes: e.target.value})}
-                />
-              </div>
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="dashboard__btn dashboard__btn--secondary"
-                  onClick={() => setIsRecordModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="dashboard__btn dashboard__btn--primary"
-                  disabled={recording}
-                >
-                  {recording ? 'Registrando...' : 'Confirmar Cambio'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <RecordChangeModal 
+          recordingData={recordingData}
+          setRecordingData={setRecordingData}
+          currentCounter={selectedDevice.last_sync_counter}
+          onSave={handleRecordChange}
+          onClose={() => setIsRecordModalOpen(false)}
+          recording={recording}
+        />
       )}
-      {/* Manual State Update Modal */}
+
       {isStateModalOpen && stateEditingData && (
-        <div className="maintenance-modal-overlay">
-          <div className="maintenance-modal">
-            <h3>⚙️ Ajustar Último Cambio</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem' }}>
-              Ajusta manualmente el contador en el que se realizó el último cambio para este equipo.
-            </p>
-            <form onSubmit={handleSaveManualState} className="maintenance-form">
-              <div className="form-group">
-                <label>Componente</label>
-                <input className="form-input" value={stateEditingData.component_type} disabled />
-              </div>
-              <div className="form-group">
-                <label>Contador del Último Cambio (Páginas)</label>
-                <input 
-                  className="form-input"
-                  type="number" 
-                  value={stateEditingData.last_change_counter}
-                  onChange={e => setStateEditingData({...stateEditingData, last_change_counter: parseInt(e.target.value)})}
-                  required
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '4px' }}>
-                  Contador actual del equipo: {selectedDevice.last_sync_counter.toLocaleString()}
-                </span>
-              </div>
-              <div className="form-actions">
-                <button type="button" onClick={() => setIsStateModalOpen(false)} className="dashboard__btn dashboard__btn--secondary">Cancelar</button>
-                <button type="submit" disabled={updatingState} className="dashboard__btn dashboard__btn--primary">
-                  {updatingState ? 'Guardando...' : 'Guardar Ajuste'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <StateModal 
+          stateEditingData={stateEditingData}
+          setStateEditingData={setStateEditingData}
+          currentCounter={selectedDevice.last_sync_counter}
+          onSave={handleSaveManualState}
+          onClose={() => setIsStateModalOpen(false)}
+          updating={updatingState}
+        />
+      )}
+      {isNewFamilyModalOpen && (
+        <NewFamilyModal 
+          onSave={handleCreateNewFamily}
+          onClose={() => setIsNewFamilyModalOpen(false)}
+        />
       )}
     </div>
   )
