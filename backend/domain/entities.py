@@ -149,6 +149,19 @@ class MaintenanceHistory(BaseModel):
     model_config = {"frozen": True}
 
 
+class MaintenanceIncident(BaseModel):
+    id: Optional[str] = None
+    device_serial: str
+    component_type: str
+    incident_number: str
+    notes: Optional[str] = None
+    status: str = "open"
+    opened_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
+
+    model_config = {"frozen": True}
+
+
 class RealtimeConsumable(BaseModel):
     """Real-time consumable info from Insight API."""
 

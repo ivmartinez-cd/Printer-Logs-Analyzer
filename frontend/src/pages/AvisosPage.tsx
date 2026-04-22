@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
-import { 
+import { useState, useEffect, useMemo, useRef } from 'react'
+import {
   getMaintenanceDevices,
   getMaintenanceModelRules,
   getMaintenanceDeviceState,
   triggerMaintenanceCheck,
+  getMaintenanceSyncStatus,
   upsertMaintenanceModelRule,
   getMaintenanceHistory,
   recordMaintenanceChange,
@@ -11,18 +12,23 @@ import {
   updateDeviceState,
   renameFamily,
   clearFamilyDevices,
-  syncMaintenanceDevice
+  syncMaintenanceDevice,
+  openMaintenanceIncident,
+  closeMaintenanceIncident,
+  getDeviceIncidents,
 } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
 import { AvisosSidebar } from '../components/Maintenance/AvisosSidebar'
 import { RuleCard } from '../components/Maintenance/RuleCard'
-import { RuleModal, RecordChangeModal, StateModal, NewFamilyModal } from '../components/Maintenance/MaintenanceModals'
+import { RuleModal, RecordChangeModal, StateModal, NewFamilyModal, OpenIncidentModal, CloseIncidentModal, HowItWorksModal } from '../components/Maintenance/MaintenanceModals'
 
 export function AvisosPage({ onBack }: { onBack: () => void }) {
   const [devices, setDevices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
   const [discovering, setDiscovering] = useState(false)
+  const [syncJob, setSyncJob] = useState<{ jobId: string; processed: number; total: number; errors: number } | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null)
@@ -30,6 +36,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   const [rules, setRules] = useState<any[]>([])
   const [deviceStates, setDeviceStates] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
+  const [incidents, setIncidents] = useState<any[]>([])
   const [loadingRules, setLoadingRules] = useState(false)
   
   // Rule Modal State
@@ -49,6 +56,17 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   
   // New Family Modal State
   const [isNewFamilyModalOpen, setIsNewFamilyModalOpen] = useState(false)
+
+  // Incident Modal State
+  const [isOpenIncidentModalOpen, setIsOpenIncidentModalOpen] = useState(false)
+  const [openIncidentData, setOpenIncidentData] = useState<any | null>(null)
+  const [openingIncident, setOpeningIncident] = useState(false)
+  const [isCloseIncidentModalOpen, setIsCloseIncidentModalOpen] = useState(false)
+  const [closingIncidentData, setClosingIncidentData] = useState<any | null>(null)
+  const [closingIncident, setClosingIncident] = useState(false)
+  
+  // How it works modal
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false)
   
   const toast = useToast()
 
@@ -64,6 +82,9 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     loadDevices()
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
   }, [])
 
   const loadDevices = async () => {
@@ -78,22 +99,47 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const handleSyncFamily = async () => {
+  const handleSyncFamily = async (sendEmails: boolean = true) => {
     if (!selectedFamily) return
     setChecking(true)
+    setSyncJob(null)
     try {
-      await triggerMaintenanceCheck(selectedFamily)
-      toast.showSuccess(`Sincronización de ${selectedFamily} completada`)
-      await loadDevices()
-      if (selectedDevice) {
-        loadDeviceData(selectedDevice)
-      } else {
-        loadFamilyRules(selectedFamily)
-      }
+      const job = await triggerMaintenanceCheck(selectedFamily, sendEmails)
+      setSyncJob({ jobId: job.job_id, processed: 0, total: job.total, errors: 0 })
+
+      if (pollRef.current) clearInterval(pollRef.current)
+      pollRef.current = setInterval(async () => {
+        try {
+          const status = await getMaintenanceSyncStatus(job.job_id)
+          setSyncJob({ jobId: job.job_id, processed: status.processed, total: status.total, errors: status.errors })
+
+          if (status.status === 'completed' || status.status === 'failed') {
+            clearInterval(pollRef.current!)
+            pollRef.current = null
+            setChecking(false)
+            setSyncJob(null)
+            if (status.status === 'completed') {
+              const label = sendEmails ? 'Sincronización' : 'Sincronización silenciosa'
+              toast.showSuccess(`${label} de ${selectedFamily} completada (${status.processed}/${status.total})`)
+              await loadDevices()
+              if (selectedDevice) loadDeviceData(selectedDevice)
+              else loadFamilyRules(selectedFamily)
+            } else {
+              toast.showError('Error durante la sincronización')
+            }
+          }
+        } catch {
+          clearInterval(pollRef.current!)
+          pollRef.current = null
+          setChecking(false)
+          setSyncJob(null)
+          toast.showError('Error al monitorear la sincronización')
+        }
+      }, 2000)
     } catch (e) {
-      toast.showError('Error al sincronizar familia')
-    } finally {
       setChecking(false)
+      setSyncJob(null)
+      toast.showError('Error al iniciar sincronización')
     }
   }
 
@@ -114,14 +160,16 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   const loadDeviceData = async (device: any) => {
     setLoadingRules(true)
     try {
-      const [rulesData, statesData, historyData] = await Promise.all([
+      const [rulesData, statesData, historyData, incidentsData] = await Promise.all([
         getMaintenanceModelRules(device.model_family),
         getMaintenanceDeviceState(device.serial),
-        getMaintenanceHistory(device.serial)
+        getMaintenanceHistory(device.serial),
+        getDeviceIncidents(device.serial),
       ])
       setRules(rulesData)
       setDeviceStates(statesData)
       setHistory(historyData)
+      setIncidents(incidentsData)
     } catch (e) {
       toast.showError('Error al cargar datos del equipo')
     } finally {
@@ -285,6 +333,48 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
+  const handleOpenIncident = (rule: any) => {
+    if (!selectedDevice) return
+    setOpenIncidentData({ serial: selectedDevice.serial, component_type: rule.component_type, incident_number: '', notes: '' })
+    setIsOpenIncidentModalOpen(true)
+  }
+
+  const handleSaveOpenIncident = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setOpeningIncident(true)
+    try {
+      await openMaintenanceIncident(openIncidentData)
+      toast.showSuccess(`Incidente ${openIncidentData.incident_number} registrado — alertas suspendidas`)
+      setIsOpenIncidentModalOpen(false)
+      loadDeviceData(selectedDevice)
+    } catch {
+      toast.showError('Error al abrir el incidente')
+    } finally {
+      setOpeningIncident(false)
+    }
+  }
+
+  const handleOpenCloseIncident = (rule: any, incident: any) => {
+    setClosingIncidentData({ incident_id: incident.id, incident_number: incident.incident_number, component_type: rule.component_type, notes: '' })
+    setIsCloseIncidentModalOpen(true)
+  }
+
+  const handleSaveCloseIncident = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setClosingIncident(true)
+    try {
+      await closeMaintenanceIncident(closingIncidentData.incident_id, closingIncidentData.notes)
+      toast.showSuccess('Incidente cerrado y contador reiniciado')
+      setIsCloseIncidentModalOpen(false)
+      await loadDevices()
+      loadDeviceData(selectedDevice)
+    } catch {
+      toast.showError('Error al cerrar el incidente')
+    } finally {
+      setClosingIncident(false)
+    }
+  }
+
   const handleCreateNewFamily = (family: string) => {
     const trimmed = family.trim()
     if (!trimmed) return
@@ -305,7 +395,16 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
             <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>‹</span> Volver
           </button>
           <div className="dashboard__subheader-title-group">
-            <h1 className="dashboard__subheader-title">Avisos de Mantenimiento</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h1 className="dashboard__subheader-title">Avisos de Mantenimiento</h1>
+              <button 
+                className="hiw-trigger-btn"
+                onClick={() => setIsHowItWorksOpen(true)}
+                title="¿Cómo funciona este módulo?"
+              >
+                ❓
+              </button>
+            </div>
             <p className="dashboard__subheader-meta">Gestión preventiva de componentes y suministros</p>
           </div>
         </div>
@@ -351,27 +450,57 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                       <p className="detail-subtitle">Configuración maestra para todos los equipos de este modelo.</p>
                     </div>
                     <div className="avisos-detail-actions">
-                      <button 
-                        onClick={handleSyncFamily} 
+                      <button
+                        onClick={() => handleSyncFamily(false)}
+                        disabled={checking}
+                        title="Sincroniza contadores pero NO envía correos de alerta"
+                        className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'} dashboard__btn--small`}
+                      >
+                        {checking
+                          ? syncJob
+                            ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
+                            : 'Iniciando...'
+                          : '🔇 Sincronización Silenciosa (Primera vez)'}
+                      </button>
+                      <button
+                        onClick={() => handleSyncFamily(true)}
                         disabled={checking}
                         className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--primary'} dashboard__btn--small`}
                       >
-                        {checking ? 'Sincronizando...' : '🔄 Sincronizar Familia'}
+                        {checking
+                          ? syncJob
+                            ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
+                            : 'Iniciando...'
+                          : '🔄 Sincronizar Familia'}
                       </button>
-                      <button 
-                        onClick={handleDiscoverFamily} 
+                      <button
+                        onClick={handleDiscoverFamily}
                         disabled={discovering}
                         className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
                       >
                         {discovering ? 'Buscando...' : '🔍 Buscar Equipos en SDS'}
                       </button>
-                      <button 
+                      <button
                         onClick={handleClearDevices}
                         className="dashboard__btn dashboard__btn--danger-outline dashboard__btn--small"
                       >
                         🗑️ Limpiar Equipos
                       </button>
                     </div>
+                    {checking && syncJob && syncJob.total > 0 && (
+                      <div className="sync-inline-progress">
+                        <div className="sync-inline-bar">
+                          <div
+                            className="sync-inline-fill"
+                            style={{ width: `${Math.round((syncJob.processed / syncJob.total) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="sync-inline-text">
+                          {syncJob.processed} / {syncJob.total} equipos
+                          {syncJob.errors > 0 && <span className="sync-inline-errors"> · {syncJob.errors} errores</span>}
+                        </span>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -385,14 +514,17 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                 ) : (
                   <div className="avisos-rules-list">
                     {rules.map((r) => (
-                      <RuleCard 
+                      <RuleCard
                         key={r.id}
                         rule={r}
                         state={deviceStates.find(s => s.component_type === r.component_type)}
                         selectedDevice={selectedDevice}
+                        incident={incidents.find(i => i.component_type === r.component_type && i.status === 'open')}
                         onEditRule={handleOpenModal}
                         onAdjustState={handleOpenStateModal}
                         onRecordChange={handleOpenRecordModal}
+                        onOpenIncident={handleOpenIncident}
+                        onCloseIncident={handleOpenCloseIncident}
                       />
                     ))}
                     {!selectedDevice && rules.length < 8 && (
@@ -474,10 +606,31 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
         />
       )}
       {isNewFamilyModalOpen && (
-        <NewFamilyModal 
+        <NewFamilyModal
           onSave={handleCreateNewFamily}
           onClose={() => setIsNewFamilyModalOpen(false)}
         />
+      )}
+      {isOpenIncidentModalOpen && openIncidentData && (
+        <OpenIncidentModal
+          data={openIncidentData}
+          setData={setOpenIncidentData}
+          onSave={handleSaveOpenIncident}
+          onClose={() => setIsOpenIncidentModalOpen(false)}
+          saving={openingIncident}
+        />
+      )}
+      {isCloseIncidentModalOpen && closingIncidentData && (
+        <CloseIncidentModal
+          data={closingIncidentData}
+          setData={setClosingIncidentData}
+          onSave={handleSaveCloseIncident}
+          onClose={() => setIsCloseIncidentModalOpen(false)}
+          saving={closingIncident}
+        />
+      )}
+      {isHowItWorksOpen && (
+        <HowItWorksModal onClose={() => setIsHowItWorksOpen(false)} />
       )}
     </div>
   )

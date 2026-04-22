@@ -2,50 +2,50 @@
 
 exports[`KPICards > snapshot: estructura y clases de las 4 KPI cards 1`] = `
 <div
-  class="_kpi-grid_7fbcc5"
+  class="_kpi-grid_461f73"
 >
   <div
-    class="_kpi-card_7fbcc5 _kpi-card--hero_7fbcc5 _kpi-card--hero-alert_7fbcc5"
+    class="_kpi-card_461f73 _kpi-card--hero_461f73 _kpi-card--hero-alert_461f73"
     data-testid="kpi-last-error-hero"
   >
     <div
-      class="_kpi-card__label_7fbcc5"
+      class="_kpi-card__label_461f73"
     >
       Último error crítico
     </div>
     <div
-      class="_kpi-card__value_7fbcc5 _kpi-card__value--hero-code_7fbcc5"
+      class="_kpi-card__value_461f73 _kpi-card__value--hero-code_461f73"
       data-testid="kpi-last-error-code"
     >
       53.B0.02
     </div>
     <div
-      class="_kpi-card__sub_7fbcc5"
+      class="_kpi-card__sub_461f73"
     >
       Fuser error
     </div>
     <div
-      class="_kpi-card__timestamp_7fbcc5"
+      class="_kpi-card__timestamp_461f73"
     >
       14/3/2024 10:00
     </div>
   </div>
   <div
-    class="_kpi-card_7fbcc5 _kpi-card--variant-error_7fbcc5"
+    class="_kpi-card_461f73 _kpi-card--variant-error_461f73"
   >
     <div
-      class="_kpi-card__label_7fbcc5"
+      class="_kpi-card__label_461f73"
     >
       Errores críticos
     </div>
     <div
-      class="_kpi-card__value_7fbcc5 _kpi-card__value--error_7fbcc5"
+      class="_kpi-card__value_461f73 _kpi-card__value--error_461f73"
       data-testid="kpi-error-count"
     >
       1
     </div>
     <div
-      class="_kpi-card__sub_7fbcc5"
+      class="_kpi-card__sub_461f73"
       title="Eventos de menor severidad detectados en el período"
     >
       Alertas menores: 
@@ -56,40 +56,40 @@ exports[`KPICards > snapshot: estructura y clases de las 4 KPI cards 1`] = `
     </div>
   </div>
   <div
-    class="_kpi-card_7fbcc5 _kpi-card--variant-info_7fbcc5"
+    class="_kpi-card_461f73 _kpi-card--variant-info_461f73"
   >
     <div
-      class="_kpi-card__label_7fbcc5"
+      class="_kpi-card__label_461f73"
     >
       Incidencias activas
     </div>
     <div
-      class="_kpi-card__value_7fbcc5"
+      class="_kpi-card__value_461f73"
       data-testid="kpi-active-incidents"
     >
       3
     </div>
     <div
-      class="_kpi-card__sub_7fbcc5"
+      class="_kpi-card__sub_461f73"
     >
       en el período
     </div>
   </div>
   <div
-    class="_kpi-card_7fbcc5 _kpi-card--variant-error_7fbcc5"
+    class="_kpi-card_461f73 _kpi-card--variant-error_461f73"
   >
     <div
-      class="_kpi-card__label_7fbcc5"
+      class="_kpi-card__label_461f73"
     >
       Tasa de errores
     </div>
     <div
-      class="_kpi-card__value_7fbcc5 _kpi-card__value--rate_7fbcc5"
+      class="_kpi-card__value_461f73 _kpi-card__value--rate_461f73"
     >
       1 c/100 pág.
     </div>
     <div
-      class="_kpi-card__sub_7fbcc5"
+      class="_kpi-card__sub_461f73"
     >
       <div
         style="margin-bottom: 4px;"

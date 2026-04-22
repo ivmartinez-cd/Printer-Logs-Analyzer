@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { SdsIncidentData } from '../components/SDSIncidentModal'
+import type { SdsIncidentData } from '../components/Monitor/SDSIncidentModal'
 
 export function useModals() {
   const [logModalOpen, setLogModalOpen] = useState(false)

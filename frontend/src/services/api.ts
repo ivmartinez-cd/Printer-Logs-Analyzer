@@ -13,6 +13,7 @@ import type {
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
+  FleetScanResult
 } from '../types/api'
 
 const API_BASE =
@@ -405,10 +406,43 @@ export async function getFleetClient(clientId: string): Promise<import('../types
   return handleResponse(res)
 }
 
-export async function scanFleet(clientId: string, models: string[] | null = null, days = 30): Promise<import('../types/api').FleetScanResult[]> {
+export async function triggerFleetScan(
+  clientId: string,
+  models: string[] | null,
+  signal?: AbortSignal
+): Promise<{ job_id: string; total: number; status: string }> {
+  const res = await apiFetch(`${API_BASE}/fleet/scan-now`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ client_id: clientId, models, days: 30 }),
+    signal,
+  })
+  return handleResponse(res)
+}
+
+export async function getFleetScanStatus(jobId: string, signal?: AbortSignal): Promise<any> {
+  const res = await apiFetch(`${API_BASE}/fleet/scan-status/${jobId}`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse(res)
+}
+
+export async function scanFleet(
+  clientId: string,
+  models: string[] | null = null,
+  days = 30,
+  signal?: AbortSignal
+): Promise<FleetScanResult[]> {
   const res = await apiFetch(
     `${API_BASE}/fleet/scan`,
-    { method: 'POST', headers: apiHeaders(), body: JSON.stringify({ client_id: clientId, days, models }) },
+    {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({ client_id: clientId, days, models }),
+      signal,
+    },
     120_000
   )
   return handleResponse(res)
@@ -457,18 +491,32 @@ export async function discoverFamily(modelFamily: string): Promise<void> {
   return handleResponse(res)
 }
 
-export async function triggerMaintenanceCheck(modelFamily?: string): Promise<void> {
-  const body = modelFamily ? JSON.stringify({ model_family: modelFamily }) : JSON.stringify({});
+export async function triggerMaintenanceCheck(
+  modelFamily?: string,
+  sendEmails: boolean = true
+): Promise<{ job_id: string; total: number; status: string }> {
+  const body = JSON.stringify({ model_family: modelFamily ?? null, send_emails: sendEmails })
   const res = await apiFetch(`${API_BASE}/maintenance/check-now`, {
     method: 'POST',
     headers: apiHeaders(),
-    body
-  }, 90_000)
+    body,
+  })
   return handleResponse(res)
 }
 
-export async function syncMaintenanceDevice(serial: string): Promise<any> {
-  const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/sync`, {
+export async function getMaintenanceSyncStatus(
+  jobId: string
+): Promise<{ status: string; processed: number; total: number; errors: number }> {
+  const res = await apiFetch(
+    `${API_BASE}/maintenance/sync-status/${encodeURIComponent(jobId)}`,
+    { method: 'GET', headers: apiHeaders() }
+  )
+  return handleResponse(res)
+}
+
+export async function syncMaintenanceDevice(serial: string, sendEmails: boolean = true): Promise<any> {
+  const url = `${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/sync?send_emails=${sendEmails}`;
+  const res = await apiFetch(url, {
     method: 'POST',
     headers: apiHeaders(),
   }, 30_000)
@@ -493,6 +541,37 @@ export async function recordMaintenanceChange(data: {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
+export async function openMaintenanceIncident(data: {
+  serial: string
+  component_type: string
+  incident_number: string
+  notes?: string
+}): Promise<any> {
+  const res = await apiFetch(`${API_BASE}/maintenance/incidents`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
+export async function closeMaintenanceIncident(incidentId: string, notes?: string): Promise<any> {
+  const res = await apiFetch(`${API_BASE}/maintenance/incidents/${encodeURIComponent(incidentId)}/close`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ notes }),
+  })
+  return handleResponse(res)
+}
+
+export async function getDeviceIncidents(serial: string): Promise<any[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/incidents`, {
+    method: 'GET',
+    headers: apiHeaders(),
   })
   return handleResponse(res)
 }

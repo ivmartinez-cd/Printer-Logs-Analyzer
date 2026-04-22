@@ -18,34 +18,35 @@ import type {
   RealtimeConsumable,
   ParserError,
 } from '../types/api'
-import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
-import { ConfirmModal } from '../components/ConfirmModal'
-import { SaveIncidentModal } from '../components/SaveIncidentModal'
-import { SDSIncidentModal } from '../components/SDSIncidentModal'
-import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
-import { ConsumableWarningsPanel } from '../components/ConsumableWarningsPanel'
-import { SolutionContentModal } from '../components/SolutionContentModal'
-import { HelpModal } from '../components/HelpModal'
-import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
-import { InsightAlertsPanel } from '../components/InsightAlertsPanel'
-import { DateRangePicker } from '../components/DateRangePicker'
-import { SavedAnalysisList } from '../components/SavedAnalysisList'
-import { SavedAnalysisDetail } from '../components/SavedAnalysisDetail'
-import { KPICards } from '../components/KPICards'
-import { EventsTable } from '../components/EventsTable'
-import { IncidentsTable, type IncidentRow } from '../components/IncidentsTable'
-import { IncidentsChart } from '../components/IncidentsChart'
-import { TopErrorsChart } from '../components/TopErrorsChart'
-import { Skeleton } from '../components/Skeleton'
-import { ExecutiveSummary } from '../components/ExecutiveSummary'
+import { AddCodeToCatalogModal } from '../components/Parser/AddCodeToCatalogModal'
+import { ConfirmModal } from '../components/ui/ConfirmModal'
+import { SaveIncidentModal } from '../components/Analysis/SaveIncidentModal'
+import { SDSIncidentModal } from '../components/Monitor/SDSIncidentModal'
+import { SDSIncidentPanel } from '../components/Monitor/SDSIncidentPanel'
+import { ConsumableWarningsPanel } from '../components/Monitor/ConsumableWarningsPanel'
+import { SolutionContentModal } from '../components/Parser/SolutionContentModal'
+import { HelpModal } from '../components/ui/HelpModal'
+import { AIDiagnosticPanel } from '../components/Analysis/AIDiagnosticPanel'
+import { InsightAlertsPanel } from '../components/Monitor/InsightAlertsPanel'
+import { DateRangePicker } from '../components/ui/DateRangePicker'
+import { SavedAnalysisList } from '../components/Analysis/SavedAnalysisList'
+import { SavedAnalysisDetail } from '../components/Analysis/SavedAnalysisDetail'
+import { KPICards } from '../components/Monitor/KPICards'
+import { EventsTable } from '../components/Parser/EventsTable'
+import { IncidentsTable, type IncidentRow } from '../components/Parser/IncidentsTable'
+import { IncidentsChart } from '../components/Monitor/IncidentsChart'
+import { TopErrorsChart } from '../components/Monitor/TopErrorsChart'
+import { Skeleton } from '../components/ui/Skeleton'
+import { ExecutiveSummary } from '../components/Analysis/ExecutiveSummary'
+import { ReportCover } from '../components/Analysis/ReportCover'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
-import { LogPasteModal } from '../components/LogPasteModal'
-import { WelcomeView } from '../components/WelcomeView'
-import { MonitorWizard } from '../components/MonitorWizard'
-import { MonitorDashboard } from '../components/MonitorDashboard'
-import { DashboardHeader } from '../components/DashboardHeader'
+import { LogPasteModal } from '../components/Analysis/LogPasteModal'
+import { WelcomeView } from '../components/ui/WelcomeView'
+import { MonitorWizard } from '../components/Monitor/MonitorWizard'
+import { MonitorDashboard } from '../components/Monitor/MonitorDashboard'
+import { DashboardHeader } from '../components/ui/DashboardHeader'
 import { AvisosPage } from './AvisosPage'
 import {
   useDateFilter,
@@ -319,6 +320,7 @@ export default function DashboardPage({
     exportingPdf,
     handleExportPDF,
     dashboardRef,
+    reportCoverRef,
     executiveSummaryRef,
     aiDiagnosticRef,
     kpisRef,
@@ -486,11 +488,21 @@ export default function DashboardPage({
     [handleSaveIncident, toast, setSaveIncidentModalOpen]
   )
 
-  const isWelcome = !result && viewMode === 'dashboard';
+  const isWelcome = !result && !loading && viewMode === 'dashboard';
   const dashboardClass = `dashboard ${exportingPdf ? 'is-exporting' : ''} ${isWelcome ? 'dashboard--welcome' : ''}`;
 
   return (
     <div className={dashboardClass} ref={dashboardRef}>
+      <div ref={reportCoverRef}>
+        <ReportCover
+          serialNumber={currentSerialNumber}
+          modelName={currentModelName}
+          logFileName={logFileName}
+          startDate={result?.log_start_date}
+          endDate={result?.log_end_date}
+          totalEvents={(result?.incidents?.length || 0) + (result?.events?.length || 0)}
+        />
+      </div>
       <header className="export-header">
         <div className="export-header__left">
           <h1 className="dashboard__title">HP Logs Analyzer</h1>
@@ -533,7 +545,7 @@ export default function DashboardPage({
           showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
         />
       )}
-      {!result && viewMode === 'dashboard' ? (
+      {!result && !loading && viewMode === 'dashboard' ? (
         <WelcomeView 
           onAnalyzeNew={() => setLogModalOpen(true)}
           onViewSaved={() => {
@@ -548,6 +560,7 @@ export default function DashboardPage({
           savedList={savedList || []}
           recentSearches={recentSearches}
           onQuickSearch={autoResolveAndAnalyze}
+          loadingQuickSearch={autoExtracting || loading}
           onOpenSaved={(id) => {
             setViewMode('saved-detail')
             setSavedDetail(null)
@@ -564,7 +577,7 @@ export default function DashboardPage({
         <div className="dashboard__content-wrap">
           <AvisosPage onBack={() => setViewMode('dashboard')} />
         </div>
-      ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
+      ) : result || loading || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
           {/* El botón de Asociar SDS ahora está en el Header para mayor limpieza */}
           <div className="dashboard__content-wrap">
@@ -784,7 +797,7 @@ export default function DashboardPage({
                   <div className="dashboard__above-fold">
 
                     {/* BLOQUE 1: KPIs ejecutivos */}
-                    <section ref={kpisRef} className="animate-in delay-1">
+                    <section ref={kpisRef} className="animate-in delay-1 kpis">
                       <KPICards
                         filteredIncidents={filteredIncidents}
                         filteredEvents={filteredEvents}
@@ -1140,3 +1153,4 @@ export default function DashboardPage({
     </div>
   )
 }
+

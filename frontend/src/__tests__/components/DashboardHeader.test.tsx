@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { DashboardHeader } from '../../components/DashboardHeader'
+import { DashboardHeader } from '../../components/ui/DashboardHeader'
 
 afterEach(cleanup)
 
@@ -78,3 +78,4 @@ describe('DashboardHeader', () => {
     expect(onHelp).toHaveBeenCalledOnce()
   })
 })
+

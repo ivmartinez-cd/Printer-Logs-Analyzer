@@ -32,3 +32,10 @@ frontend/dist/
 # Backend local data (fallback JSON, debug)
 backend/data/
 backend/debug_payload.json
+
+# Scratch & Temporary
+scratch/
+scripts/internal/
+scripts/poc/
+*.pyc
+__pycache__/

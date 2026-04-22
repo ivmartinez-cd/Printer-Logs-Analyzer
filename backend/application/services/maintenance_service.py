@@ -1,5 +1,7 @@
 import logging
-from datetime import datetime
+import threading
+import uuid
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from backend.application.services.email_service import EmailService
@@ -13,6 +15,7 @@ from backend.domain.entities import (
     MaintenanceDevice,
     MaintenanceDeviceState,
     MaintenanceHistory,
+    MaintenanceIncident,
     MaintenanceModelRule,
 )
 from backend.infrastructure.config import get_settings
@@ -20,41 +23,57 @@ from backend.infrastructure.repositories.maintenance_repository import Maintenan
 
 _logger = logging.getLogger(__name__)
 
+from backend.application.services.job_tracker import (
+    create_job as create_sync_job,
+    get_job as get_sync_job,
+    update_job as _update_sync_job,
+)
+
 class MaintenanceService:
     def __init__(self, repository: Optional[MaintenanceRepository] = None, email_service: Optional[EmailService] = None):
         self.repo = repository or MaintenanceRepository()
         self.email = email_service or EmailService()
         self.settings = get_settings()
 
-    def sync_and_check_all(self, discover: bool = False, model_family: Optional[str] = None):
+    def sync_and_check_all(self, discover: bool = False, model_family: Optional[str] = None, send_emails: bool = True, job_id: Optional[str] = None):
         """Main entry point for the scheduler and manual sync."""
-        _logger.info("Starting maintenance sync and check process (discover=%s, family=%s)...", discover, model_family)
+        _logger.info("Starting maintenance sync and check process (discover=%s, family=%s, send_emails=%s)...", discover, model_family, send_emails)
 
-        # 1. Discover new devices for configured families (only if requested)
         if discover:
             self.discover_new_devices()
 
-        # 2. Sync and check all active devices
         devices = self.repo.get_all_devices()
         active_devices = [d for d in devices if d.is_active]
-
         if model_family:
             active_devices = [d for d in active_devices if d.model_family == model_family]
 
         from concurrent.futures import ThreadPoolExecutor
 
+        processed = [0]
+        errors_count = [0]
+        counter_lock = threading.Lock()
+
         def _safe_process(device):
             try:
-                self.process_device(device)
+                self.process_device(device, send_emails=send_emails)
             except Exception as e:
                 _logger.error("Error processing maintenance for device %s: %s", device.serial, e)
+                with counter_lock:
+                    errors_count[0] += 1
+            finally:
+                with counter_lock:
+                    processed[0] += 1
+                if job_id:
+                    _update_sync_job(job_id, processed[0], errors_count[0])
 
         with ThreadPoolExecutor(max_workers=5) as executor:
             executor.map(_safe_process, active_devices)
 
+        if job_id:
+            _update_sync_job(job_id, processed[0], errors_count[0], status="completed")
         _logger.info("Maintenance sync and check completed.")
 
-    def process_device(self, device: MaintenanceDevice):
+    def process_device(self, device: MaintenanceDevice, send_emails: bool = True):
         device_id = self._resolve_device_id(device.serial)
         device_info = get_device_info(
             self.settings.insight_portal_url,
@@ -135,14 +154,31 @@ class MaintenanceService:
 
         for rule in model_rules:
             state = state_map.get(rule.component_type)
-            last_change = state.last_change_counter if state else 0
-            self._evaluate_rule(device, rule, last_change, current_counter)
+            if not state:
+                # FIRST TIME we see this component: initialize baseline to current counter
+                # This prevents old devices from triggering alerts on their first sync
+                _logger.info("Initializing baseline for %s - %s at %s pages", device.serial, rule.component_type, current_counter)
+                state = MaintenanceDeviceState(
+                    device_serial=device.serial,
+                    component_type=rule.component_type,
+                    last_change_counter=current_counter
+                )
+                self.repo.upsert_device_state(state)
 
-    def _evaluate_rule(self, device: MaintenanceDevice, rule: MaintenanceModelRule, last_change_counter: int, current_counter: int):
+            last_change = state.last_change_counter
+            self._evaluate_rule(device, rule, last_change, current_counter, send_emails=send_emails)
+
+    def _evaluate_rule(self, device: MaintenanceDevice, rule: MaintenanceModelRule, last_change_counter: int, current_counter: int, send_emails: bool = True):
         next_change = last_change_counter + rule.expected_life
         remaining = next_change - current_counter
 
         if remaining <= rule.alert_margin:
+            # Open incident suppresses all further alerts
+            open_incident = self.repo.get_open_incident(device.serial, rule.component_type)
+            if open_incident:
+                _logger.info("Alert suppressed for %s - %s: open incident %s", device.serial, rule.component_type, open_incident.incident_number)
+                return
+
             last_alert = self.repo.get_last_alert(device.serial, rule.component_type)
             COOLDOWN_PAGES = 500
             if not last_alert or (current_counter - last_alert.counter_at_alert >= COOLDOWN_PAGES):
@@ -151,7 +187,7 @@ class MaintenanceService:
                 recipients = [r.strip() for r in (rule.email_recipients or "").split(",") if r.strip()]
                 email_sent = False
 
-                if recipients and self.settings.maintenance_emails_enabled:
+                if recipients and self.settings.maintenance_emails_enabled and send_emails:
                     self.email.send_maintenance_alert(
                         serial=device.serial,
                         component=rule.component_type,
@@ -171,13 +207,13 @@ class MaintenanceService:
                     status="SENT" if email_sent else "SKIPPED"
                 ))
 
-    def sync_single_device(self, serial: str) -> MaintenanceDevice:
+    def sync_single_device(self, serial: str, send_emails: bool = True) -> MaintenanceDevice:
         """Syncs a single device and returns the updated MaintenanceDevice."""
         devices = self.repo.get_all_devices()
         device = next((d for d in devices if d.serial == serial), None)
         if not device:
             raise ValueError(f"Device {serial} not found")
-        self.process_device(device)
+        self.process_device(device, send_emails=send_emails)
         updated_devices = self.repo.get_all_devices()
         return next((d for d in updated_devices if d.serial == serial), device)
 
@@ -218,6 +254,28 @@ class MaintenanceService:
 
     def get_history(self, serial: str) -> List[MaintenanceHistory]:
         return self.repo.get_history(serial)
+
+    def open_incident(self, serial: str, component_type: str, incident_number: str, notes: Optional[str] = None) -> MaintenanceIncident:
+        incident = MaintenanceIncident(
+            device_serial=serial,
+            component_type=component_type,
+            incident_number=incident_number,
+            notes=notes,
+        )
+        return self.repo.create_incident(incident)
+
+    def close_incident(self, incident_id: str, notes: Optional[str] = None) -> MaintenanceHistory:
+        incident = self.repo.get_incident_by_id(incident_id)
+        if not incident:
+            raise ValueError(f"Incident {incident_id} not found")
+        if incident.status != "open":
+            raise ValueError(f"Incident {incident_id} is already closed")
+        history = self.record_change(incident.device_serial, incident.component_type, incident.incident_number, notes)
+        self.repo.close_incident(incident_id)
+        return history
+
+    def get_incidents(self, serial: str) -> List[MaintenanceIncident]:
+        return self.repo.get_incidents(serial)
 
     def _resolve_device_id(self, serial: str) -> int:
         info = get_device_info(

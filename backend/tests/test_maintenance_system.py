@@ -91,14 +91,19 @@ def test_maintenance_service_alert_trigger(mock_meters, mock_info, maintenance_s
             alert_margin=1000,
             email_recipients="test@test.com"
         )]
-        mock_get_state.return_value = [] # No previous changes
+        mock_get_state.return_value = [MaintenanceDeviceState(
+            device_serial=serial,
+            component_type="Kit",
+            last_change_counter=0
+        )]
         mock_get_last_alert.return_value = None
 
         # Mock device info and meters
         mock_info.return_value = {"deviceId": 123, "extendedFields": {}}
         mock_meters.return_value = [{"engineCycles": 9500}] # Trigger alert (remaining 500 < 1000)
 
-        # Mock email service
+        # Mock email service and ensure emails are enabled for the test
+        maintenance_service.settings.maintenance_emails_enabled = True
         maintenance_service.email.send_maintenance_alert = MagicMock()
 
         maintenance_service.process_device(device)
@@ -108,13 +113,67 @@ def test_maintenance_service_alert_trigger(mock_meters, mock_info, maintenance_s
         # Check if email was "sent"
         maintenance_service.email.send_maintenance_alert.assert_called_once()
 
+@patch("backend.application.services.maintenance_service.get_device_info")
+@patch("backend.application.services.maintenance_service.get_device_meters")
+def test_maintenance_service_quiet_sync(mock_meters, mock_info, maintenance_service, maintenance_repo):
+    serial = "QUIET_TEST"
+    family = "Test Family"
+    device = MaintenanceDevice(serial=serial, model_family=family)
+
+    # Mock repo calls
+    with patch.object(maintenance_repo, "get_model_rules") as mock_get_rules, \
+         patch.object(maintenance_repo, "get_device_state") as mock_get_state, \
+         patch.object(maintenance_repo, "get_last_alert") as mock_get_last_alert, \
+         patch.object(maintenance_repo, "create_alert") as mock_create_alert, \
+         patch.object(maintenance_repo, "upsert_device"):
+
+        mock_get_rules.return_value = [MaintenanceModelRule(
+            model_family=family,
+            component_type="Kit",
+            expected_life=10000,
+            alert_margin=1000,
+            email_recipients="test@test.com"
+        )]
+        mock_get_state.return_value = [MaintenanceDeviceState(
+            device_serial=serial,
+            component_type="Kit",
+            last_change_counter=0
+        )]
+        mock_get_last_alert.return_value = None
+
+        mock_info.return_value = {"deviceId": 123, "extendedFields": {}}
+        mock_meters.return_value = [{"engineCycles": 9500}] # Would trigger alert
+
+        maintenance_service.settings.maintenance_emails_enabled = True
+        maintenance_service.email.send_maintenance_alert = MagicMock()
+
+        # EXECUTE WITH send_emails=False
+        maintenance_service.process_device(device, send_emails=False)
+
+        # Alert should still be created in DB (as SKIPPED)
+        mock_create_alert.assert_called_once()
+        alert = mock_create_alert.call_args[0][0]
+        assert alert.status == "SKIPPED"
+
+        # BUT email should NOT be sent
+        maintenance_service.email.send_maintenance_alert.assert_not_called()
+
 def test_maintenance_api_endpoints(client):
     headers = {"x-api-key": "dev"}
     # Test listing devices
     response = client.get("/maintenance/devices", headers=headers)
     assert response.status_code == 200
 
-    # Test forcing check
+    # Test forcing check — now returns immediately with job_id
     response = client.post("/maintenance/check-now", headers=headers, json={})
     assert response.status_code == 200
-    assert response.json()["status"] == "completed"
+    data = response.json()
+    assert data["status"] == "running"
+    assert "job_id" in data
+    assert "total" in data
+
+    # Test polling status endpoint
+    job_id = data["job_id"]
+    status_response = client.get(f"/maintenance/sync-status/{job_id}", headers=headers)
+    assert status_response.status_code == 200
+    assert status_response.json()["status"] in ("running", "completed")

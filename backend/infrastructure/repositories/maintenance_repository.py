@@ -6,6 +6,7 @@ from backend.domain.entities import (
     MaintenanceDevice,
     MaintenanceDeviceState,
     MaintenanceHistory,
+    MaintenanceIncident,
     MaintenanceModelRule,
 )
 from backend.infrastructure.repositories.base_repository import BaseRepository
@@ -181,6 +182,96 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
                     VALUES (%s, %s, %s, %s, %s, %s)
                 """, (record.device_serial, record.component_type, record.change_counter, record.incident_number, record.technician_notes, record.changed_at))
             conn.commit()
+
+    # --- Incidents ---
+    def get_open_incident(self, serial: str, component_type: str) -> Optional[MaintenanceIncident]:
+        return self._execute_with_fallback(self._get_open_incident_db, lambda s, c: None, serial, component_type)
+
+    def _get_open_incident_db(self, serial: str, component_type: str) -> Optional[MaintenanceIncident]:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, device_serial, component_type, incident_number, notes, status, opened_at, closed_at
+                    FROM maintenance_incidents
+                    WHERE device_serial = %s AND component_type = %s AND status = 'open'
+                    ORDER BY opened_at DESC LIMIT 1
+                """, (serial, component_type))
+                r = cur.fetchone()
+                if r:
+                    return MaintenanceIncident(id=str(r[0]), device_serial=r[1], component_type=r[2],
+                                              incident_number=r[3], notes=r[4], status=r[5],
+                                              opened_at=r[6], closed_at=r[7])
+                return None
+
+    def get_incident_by_id(self, incident_id: str) -> Optional[MaintenanceIncident]:
+        return self._execute_with_fallback(self._get_incident_by_id_db, lambda i: None, incident_id)
+
+    def _get_incident_by_id_db(self, incident_id: str) -> Optional[MaintenanceIncident]:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, device_serial, component_type, incident_number, notes, status, opened_at, closed_at
+                    FROM maintenance_incidents WHERE id = %s
+                """, (incident_id,))
+                r = cur.fetchone()
+                if r:
+                    return MaintenanceIncident(id=str(r[0]), device_serial=r[1], component_type=r[2],
+                                              incident_number=r[3], notes=r[4], status=r[5],
+                                              opened_at=r[6], closed_at=r[7])
+                return None
+
+    def create_incident(self, incident: MaintenanceIncident) -> MaintenanceIncident:
+        return self._execute_with_fallback(self._create_incident_db, lambda i: i, incident)
+
+    def _create_incident_db(self, incident: MaintenanceIncident) -> MaintenanceIncident:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO maintenance_incidents (device_serial, component_type, incident_number, notes, status)
+                    VALUES (%s, %s, %s, %s, 'open')
+                    RETURNING id, opened_at
+                """, (incident.device_serial, incident.component_type, incident.incident_number, incident.notes))
+                row = cur.fetchone()
+            conn.commit()
+        return MaintenanceIncident(
+            id=str(row[0]),
+            device_serial=incident.device_serial,
+            component_type=incident.component_type,
+            incident_number=incident.incident_number,
+            notes=incident.notes,
+            status="open",
+            opened_at=row[1],
+        )
+
+    def close_incident(self, incident_id: str) -> None:
+        self._execute_with_fallback(self._close_incident_db, lambda i: None, incident_id)
+
+    def _close_incident_db(self, incident_id: str) -> None:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE maintenance_incidents
+                    SET status = 'closed', closed_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                """, (incident_id,))
+            conn.commit()
+
+    def get_incidents(self, serial: str) -> List[MaintenanceIncident]:
+        return self._execute_with_fallback(self._get_incidents_db, lambda s: [], serial)
+
+    def _get_incidents_db(self, serial: str) -> List[MaintenanceIncident]:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, device_serial, component_type, incident_number, notes, status, opened_at, closed_at
+                    FROM maintenance_incidents WHERE device_serial = %s
+                    ORDER BY opened_at DESC
+                """, (serial,))
+                return [MaintenanceIncident(
+                    id=str(r[0]), device_serial=r[1], component_type=r[2],
+                    incident_number=r[3], notes=r[4], status=r[5],
+                    opened_at=r[6], closed_at=r[7],
+                ) for r in cur.fetchall()]
 
     def rename_model_family(self, old_family: str, new_family: str):
         self._execute_with_fallback(self._rename_model_family_db, lambda o, n: None, old_family, new_family)

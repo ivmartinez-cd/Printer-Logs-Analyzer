@@ -1,7 +1,7 @@
 import { useEffect, useState, Component, ReactNode } from 'react'
 import { Analytics } from '@vercel/analytics/react'
 import { ToastProvider } from './contexts/ToastContext'
-import { ToastContainer } from './components/Toast'
+import { ToastContainer } from './components/ui/Toast'
 import DashboardPage from './pages/DashboardPage'
 import { getHealth, type HealthStatus } from './services/api'
 
@@ -148,3 +148,4 @@ function App() {
 }
 
 export default App
+

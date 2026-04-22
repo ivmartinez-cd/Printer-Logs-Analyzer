@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
-import { LogPasteModal } from '../../components/LogPasteModal'
+import { LogPasteModal } from '../../components/Analysis/LogPasteModal'
 
 describe('LogPasteModal', () => {
   const mockOnAnalyze = vi.fn()

@@ -11,8 +11,36 @@
 
 /* Próximos pasos y etiquetas de metadatos */
 .is-exporting .exec-next-steps li,
-.is-exporting .executive-summary__context-label {
+.is-exporting .executive-summary__context-label,
+.is-exporting .executive-summary__block-list li {
   color: #374151 !important;
+}
+
+.is-exporting .executive-summary__block-title {
+  color: #111827 !important;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+}
+
+.is-exporting .exec-scorecard {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.is-exporting .exec-scorecard__label,
+.is-exporting .executive-summary__context-label {
+  color: #6b7280 !important;
+}
+
+.is-exporting .exec-scorecard__value,
+.is-exporting .executive-summary__context-value,
+.is-exporting .exec-next-steps li strong {
+  color: #111827 !important;
+}
+
+.is-exporting .executive-summary__block {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
 }
 
 /* Consumibles */
@@ -28,4 +56,54 @@
   background-color: #dcfce7 !important;
   color: #166534 !important;
   border: 1px solid #166534 !important;
+}
+
+/* ==========================================================================
+   Executive Report refinements
+   ========================================================================== */
+
+.is-exporting {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.is-exporting .dashboard__title {
+  color: #0096d6 !important; /* HP Blue */
+  font-weight: 800 !important;
+}
+
+.is-exporting .collapsible-panel__header {
+  border-left: 4px solid #0096d6 !important;
+}
+
+.is-exporting .executive-summary {
+  border: none !important;
+  border-left: 4px solid #0096d6 !important;
+  background: #f8fafc !important;
+}
+
+.is-exporting .exec-scorecard {
+  border-radius: 4px !important;
+}
+
+/* Ensure charts have a clean white background */
+.is-exporting .recharts-surface {
+  background-color: #ffffff !important;
+}
+
+/* Tables look more formal */
+.is-exporting .dashboard-table th {
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 700 !important;
+  color: #374151 !important;
+  border-bottom: 2px solid #e5e7eb !important;
+}
+
+.is-exporting .dashboard-table td {
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+/* Better spacing between sections */
+.is-exporting .collapsible-panel {
+  margin-bottom: 40px !important;
 }

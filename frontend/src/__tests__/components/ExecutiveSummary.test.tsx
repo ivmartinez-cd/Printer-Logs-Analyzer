@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { ExecutiveSummary } from '../../components/ExecutiveSummary'
+import { ExecutiveSummary } from '../../components/Analysis/ExecutiveSummary'
 import type { ParseLogsResponse, Incident, EnrichedEvent, RealtimeConsumable } from '../../types/api'
 
 const mockResult: ParseLogsResponse = {

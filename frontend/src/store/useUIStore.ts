@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { SdsIncidentData } from '../components/SDSIncidentModal'
+import type { SdsIncidentData } from '../components/Monitor/SDSIncidentModal'
 
 interface UIState {
   logModalOpen: boolean
