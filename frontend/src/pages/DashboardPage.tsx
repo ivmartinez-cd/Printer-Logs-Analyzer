@@ -71,7 +71,6 @@ export default function DashboardPage({
     result,
     setResult,
     loading,
-    error,
     setError,
     viewMode,
     setViewMode,
@@ -638,6 +637,8 @@ export default function DashboardPage({
         isGeneratingAiPdf={isGeneratingAiPdf}
         handleExportPDF={handleExportPDF}
         onDateFilterReset={() => dateFilter.reset()}
+        deletingId={deletingId}
+        setDeletingId={setDeletingId}
       />
     </div>
   )

@@ -20,7 +20,7 @@ interface AnalysisDashboardViewProps {
   events: ApiEvent[]
   lastErrorEvent: ApiEvent | null
   lastErrorLabel: string
-  activeFilter: string | null
+  activeFilter: DateFilter
   topCodes: { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[]
   realtimeConsumables: RealtimeConsumable[]
   insightData: any

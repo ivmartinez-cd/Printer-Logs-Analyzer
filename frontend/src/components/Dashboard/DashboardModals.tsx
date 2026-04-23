@@ -33,6 +33,8 @@ interface DashboardModalsProps {
   isGeneratingAiPdf: boolean
   handleExportPDF: (val: boolean) => void
   onDateFilterReset: () => void
+  deletingId: string | null
+  setDeletingId: (val: string | null) => void
 }
 
 export function DashboardModals({
@@ -53,7 +55,9 @@ export function DashboardModals({
   setIsAiPdfReady,
   isGeneratingAiPdf,
   handleExportPDF,
-  onDateFilterReset
+  onDateFilterReset,
+  deletingId,
+  setDeletingId
 }: DashboardModalsProps) {
   const {
     loading,
@@ -90,8 +94,6 @@ export function DashboardModals({
   const [compareLogText, setCompareLogText] = useState('')
   const [compareFileName, setCompareFileName] = useState<string | undefined>(undefined)
   const compareFileInputRef = useRef<HTMLInputElement>(null)
-  
-  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   return (
     <>
