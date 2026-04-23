@@ -1,6 +1,6 @@
 # Estado actual de la aplicación — HP Logs Analyzer
 
-Última actualización: 2026-04-22 (Reorganización Profesional · Gestión de Flota · Migraciones Robustas)
+Última actualización: 2026-04-23 (Modularización de Dashboard · Limpieza de Deuda Técnica UI)
 
 ---
 
@@ -23,7 +23,7 @@
     *   Pipeline híbrido de ingesta de manuales de servicio.
 
 ### Verificación de Calidad
-*   **Total Tests**: 358 tests pasando (172 Frontend, 186 Backend).
+*   **Total Tests**: 373 tests pasando (187 Frontend, 186 Backend).
 *   **Cobertura**: Alta cobertura en servicios críticos (SDS, IA, Parsers, Repositories).
 *   **UI/UX**: Diseño Premium con Glassmorphism, Responsive y modo de exportación PDF optimizado.
 
@@ -78,3 +78,7 @@ Se ha eliminado el desorden en `src/components`. Los componentes están agrupado
 
 ### Gestión de Estado
 Se utiliza **Zustand** para separar la lógica de la vista, permitiendo una navegación fluida entre el Dashboard de análisis y la página de Avisos de flota sin perder contexto.
+
+### Modularización del Dashboard
+Se ha completado la descomposición del componente "God" `DashboardPage.tsx` en sub-componentes especializados dentro de `src/components/Dashboard/`. Esto mejora la mantenibilidad, reduce la complejidad ciclomática y facilita el testing unitario de las vistas de análisis.
+

@@ -2,50 +2,29 @@ import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
-  compareSavedAnalysis,
-  deleteSavedAnalysis,
   extractSdsLogs,
   generatePdfSummary,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
   ParseLogsResponse,
-  EnrichedEvent as ApiEvent,
-  Incident as ApiIncident,
   SavedAnalysisSummary,
   SavedAnalysisFull,
   CompareResponse,
   ErrorCodeUpsertBody,
   RealtimeConsumable,
-  ParserError,
   AIPdfSummaryResponse,
 } from '../types/api'
 import { AddCodeToCatalogModal } from '../components/Parser/AddCodeToCatalogModal'
-import { ConfirmModal } from '../components/ui/ConfirmModal'
-import { SaveIncidentModal } from '../components/Analysis/SaveIncidentModal'
-import { SDSIncidentModal } from '../components/Monitor/SDSIncidentModal'
-import { SDSIncidentPanel } from '../components/Monitor/SDSIncidentPanel'
-import { ConsumableWarningsPanel } from '../components/Monitor/ConsumableWarningsPanel'
-import { SolutionContentModal } from '../components/Parser/SolutionContentModal'
-import { HelpModal } from '../components/ui/HelpModal'
-import { AIDiagnosticPanel } from '../components/Analysis/AIDiagnosticPanel'
-import { InsightAlertsPanel } from '../components/Monitor/InsightAlertsPanel'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { SavedAnalysisList } from '../components/Analysis/SavedAnalysisList'
 import { SavedAnalysisDetail } from '../components/Analysis/SavedAnalysisDetail'
-import { KPICards } from '../components/Monitor/KPICards'
-import { EventsTable } from '../components/Parser/EventsTable'
-import { IncidentsTable, type IncidentRow } from '../components/Parser/IncidentsTable'
-import { IncidentsChart } from '../components/Monitor/IncidentsChart'
-import { TopErrorsChart } from '../components/Monitor/TopErrorsChart'
 import { Skeleton } from '../components/ui/Skeleton'
 import { ExecutivePrintReport } from '../components/Analysis/ExecutivePrintReport'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
-import { LogPasteModal } from '../components/Analysis/LogPasteModal'
 import { WelcomeView } from '../components/ui/WelcomeView'
-import { MonitorWizard } from '../components/Monitor/MonitorWizard'
 import { MonitorDashboard } from '../components/Monitor/MonitorDashboard'
 import { DashboardHeader } from '../components/ui/DashboardHeader'
 import { AvisosPage } from './AvisosPage'
@@ -54,98 +33,16 @@ import {
   filterEventsByDate,
   filterIncidentsByDate,
   getDateRangeFromEvents,
-  getWindowForDate,
-  type DateFilter,
 } from '../hooks/useDateFilter'
 import { useAnalysisStore } from '../store/useAnalysisStore'
 import { useUIStore } from '../store/useUIStore'
 
-
-function getIncidentTableRows(
-  incidents: ApiIncident[],
-  events: ApiEvent[],
-  selectedDate: DateFilter
-): IncidentRow[] {
-  const filtered = filterIncidentsByDate(incidents, events, selectedDate)
-  const window = getWindowForDate(events, selectedDate)
-  if (!window) return []
-  const { minTs, maxTs } = window
-  return filtered
-    .map((inc) => {
-      const inWindow = inc.events
-        .filter((e) => {
-          const t = new Date(e.timestamp).getTime()
-          return !Number.isNaN(t) && t >= minTs && t <= maxTs
-        })
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      if (inWindow.length === 0) return null
-      const times = inWindow.map((e) => new Date(e.timestamp).getTime())
-      return {
-        id: inc.id,
-        code: inc.code,
-        classification: inc.classification || inc.code,
-        severity: inc.severity,
-        severity_weight: inc.severity_weight,
-        occurrences: inWindow.length,
-        start_time: new Date(Math.min(...times)).toISOString(),
-        end_time: new Date(Math.max(...times)).toISOString(),
-        sds_link: inc.sds_link ?? null,
-        sds_solution_content: inc.sds_solution_content ?? null,
-        eventsInWindow: inWindow,
-      }
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null)
-    .sort((a, b) => {
-      if (b.severity_weight !== a.severity_weight) return b.severity_weight - a.severity_weight
-      return new Date(b.end_time).getTime() - new Date(a.end_time).getTime()
-    })
-}
-
-function getTopIncidentsForChart(
-  incidents: ApiIncident[],
-  events: ApiEvent[],
-  selectedDate: DateFilter,
-  n: number
-): { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[] {
-  const window = getWindowForDate(events, selectedDate)
-  if (!window) return []
-  const { minTs, maxTs } = window
-  const withCount = incidents
-    .map((inc) => {
-      const countInWindow = inc.events.filter((e) => {
-        const t = new Date(e.timestamp).getTime()
-        return !Number.isNaN(t) && t >= minTs && t <= maxTs
-      }).length
-      return { inc, countInWindow }
-    })
-    .filter((x) => x.countInWindow > 0)
-  return withCount
-    .sort((a, b) => b.countInWindow - a.countInWindow)
-    .slice(0, n)
-    .map((x) => ({ 
-      name: x.inc.code, 
-      count: x.countInWindow, 
-      severity: x.inc.severity,
-      sds_link: x.inc.sds_link,
-      sds_solution_content: x.inc.sds_solution_content
-    }))
-}
-
-
-function getEventInfoForCode(
-  result: ParseLogsResponse | null,
-  code: string
-): { description: string; severity: string } {
-  if (!result?.events?.length) return { description: '', severity: 'INFO' }
-  const ev = result.events.find((e) => e.code === code)
-  return {
-    description: ev?.help_reference?.trim() ?? ev?.code_description?.trim() ?? '',
-    severity: (ev?.type?.toUpperCase() ?? 'INFO') as string,
-  }
-}
-
-
-// DbStatusBadge moved to DashboardHeader
+// Nuevos componentes refactorizados
+import { ParseErrorsBanner } from '../components/Dashboard/ParseErrorsBanner'
+import { NewCodesSection } from '../components/Dashboard/NewCodesSection'
+import { DashboardModals } from '../components/Dashboard/DashboardModals'
+import { AnalysisDashboardView } from '../components/Dashboard/AnalysisDashboardView'
+import { getIncidentTableRows, getTopIncidentsForChart, getEventInfoForCode } from '../components/Dashboard/utils'
 
 export default function DashboardPage({
   serverWasCold,
@@ -174,66 +71,45 @@ export default function DashboardPage({
     result,
     setResult,
     loading,
-    error,
     setError,
     viewMode,
     setViewMode,
     logFileName,
     handleAnalyze,
     handleSaveCodeToCatalog: storeSaveCode,
-    handleSaveIncident,
     codesNew,
     setCodesNew,
     savingCode,
-    savingIncident,
     monitorClientId,
   } = useAnalysisStore()
 
   const toast = useToast()
 
   const {
-    logModalOpen,
     setLogModalOpen,
-    sdsModalOpen,
-    setSdsModalOpen,
     sdsIncident,
-    setSdsIncident,
     addCodeModalCode,
     setAddCodeModalCode,
     editCodeInitial,
     setEditCodeInitial,
-    saveIncidentModalOpen,
     setSaveIncidentModalOpen,
-    compareModalOpen,
     setCompareModalOpen,
-    deleteConfirm,
     setDeleteConfirm,
-    solutionModal,
     setSolutionModal,
-    helpModalOpen,
     setHelpModalOpen,
-    monitorWizardOpen,
     setMonitorWizardOpen,
+    setSdsModalOpen
   } = useUIStore()
 
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
   const [savedListSearch, setSavedListSearch] = useState('')
   const [savedDetail, setSavedDetail] = useState<SavedAnalysisFull | null>(null)
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
-  const [compareLogText, setCompareLogText] = useState('')
-  const [compareFileName, setCompareFileName] = useState<string | undefined>(undefined)
-  const [comparing, setComparing] = useState(false)
-  const compareFileInputRef = useRef<HTMLInputElement>(null)
   const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
-  const [parseErrorsExpanded, setParseErrorsExpanded] = useState(false)
-  const [incidentsCollapsed, setIncidentsCollapsed] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [currentModelId, setCurrentModelId] = useState<string | null>(null)
   const [isAtTop, setIsAtTop] = useState(true)
   const [currentSerialNumber, setCurrentSerialNumber] = useState<string | null>(null)
-  const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(
-    new Set(['ERROR', 'WARNING', 'INFO'])
-  )
   const [autoExtracting, setAutoExtracting] = useState(false)
   const [realtimeConsumables, setRealtimeConsumables] = useState<RealtimeConsumable[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
@@ -244,7 +120,6 @@ export default function DashboardPage({
 
   const lastNavState = useRef({ viewMode, currentSerialNumber, selectedSavedId })
 
-  // URL Sync Effect: Write state to URL
   useEffect(() => {
     let newPath = '/'
     if (viewMode === 'dashboard') {
@@ -262,8 +137,6 @@ export default function DashboardPage({
     }
 
     if (window.location.pathname !== newPath) {
-      // Logic: If we are already in dashboard and just changing serial, REPLACE.
-      // If we are changing viewMode (e.g. Welcome -> Dashboard), PUSH.
       const shouldReplace = 
         viewMode === 'dashboard' && 
         lastNavState.current.viewMode === 'dashboard' &&
@@ -275,7 +148,6 @@ export default function DashboardPage({
         window.history.pushState({ viewMode, currentSerialNumber, selectedSavedId }, '', newPath)
       }
       
-      // Notify parent about the navigation change
       window.dispatchEvent(new CustomEvent('hp-navigation-change'))
     }
     lastNavState.current = { viewMode, currentSerialNumber, selectedSavedId }
@@ -289,14 +161,11 @@ export default function DashboardPage({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Auto-fetch saved list and history on mount
   useEffect(() => {
-    // 1. Fetch saved analyses list
     listSavedAnalyses()
       .then(setSavedList)
       .catch(() => setSavedList([]))
 
-    // 2. Load search history from localStorage
     const history = localStorage.getItem('hp_search_history')
     if (history) {
       try {
@@ -332,10 +201,7 @@ export default function DashboardPage({
     setError(null)
     setLogModalOpen(false)
     try {
-      // 0. Update search history
       saveToSearchHistory(serial)
-
-      // 1. Extract logs AND resolve device info in a single call
       const sdsRes = await extractSdsLogs(serial)
       setCurrentSerialNumber(serial)
       setCurrentModelName(sdsRes.model_name_sds)
@@ -350,7 +216,6 @@ export default function DashboardPage({
         throw new Error('No se encontraron logs para este número de serie.')
       }
 
-      // 3. Analyze
       const fileName = `Portal_SDS_${serial}.tsv`
       await handleAnalyze(sdsRes.logs_text, fileName, sdsRes.suggested_model_id)
       
@@ -363,11 +228,6 @@ export default function DashboardPage({
     }
   }, [handleAnalyze, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast, saveToSearchHistory])
 
-  // Effect for Deep Linking: Auto-start if initialSerial is provided.
-  // currentSerialNumber is read but intentionally NOT a dep: this effect must
-  // only react to URL changes (initialSerial / initialAnalysisId). Including it
-  // would re-run the effect after the user manually analyzes a serial from home,
-  // falling into the else-branch and resetting state back to the welcome screen.
   useEffect(() => {
     if (initialIsSavedList) {
       setViewMode('saved-list')
@@ -376,7 +236,6 @@ export default function DashboardPage({
       listSavedAnalyses().then(setSavedList).catch(() => setSavedList([]))
     } else if (initialIsMonitor) {
       setViewMode('monitor')
-      // If we are in monitor mode but no client is selected, open the wizard automatically
       if (!monitorClientId) {
         setMonitorWizardOpen(true)
       }
@@ -388,7 +247,6 @@ export default function DashboardPage({
         autoResolveAndAnalyze(initialSerial)
       }
     } else if (!initialAnalysisId) {
-      // Reset if we go back to root
       setCurrentSerialNumber(null)
       setResult(null)
       setViewMode('dashboard')
@@ -398,7 +256,6 @@ export default function DashboardPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, initialIsAvisos, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
 
-  // Effect for Deep Linking: Load saved analysis if analysisId is provided
   useEffect(() => {
     if (initialAnalysisId && initialAnalysisId !== selectedSavedId) {
       setViewMode('saved-detail')
@@ -412,7 +269,6 @@ export default function DashboardPage({
 
   const events = useMemo(() => result?.events ?? [], [result])
   const incidents = useMemo(() => result?.incidents ?? [], [result])
-  const parseErrorsCount = result?.errors?.length ?? 0
 
   const filteredEvents = useMemo(
     () => filterEventsByDate(events, activeFilter),
@@ -473,19 +329,6 @@ export default function DashboardPage({
     [storeSaveCode, toast, setAddCodeModalCode, setEditCodeInitial]
   )
 
-  const onSaveIncident = useCallback(
-    async (name: string, equipmentIdentifier: string | null) => {
-      try {
-        await handleSaveIncident(name, equipmentIdentifier)
-        setSaveIncidentModalOpen(false)
-        toast.showSuccess('Incidente guardado')
-      } catch (e: unknown) {
-        toast.showError(e instanceof Error ? e.message : String(e))
-      }
-    },
-    [handleSaveIncident, toast, setSaveIncidentModalOpen]
-  )
-
   const isWelcome = !result && !loading && viewMode === 'dashboard'
   const dashboardClass = `dashboard ${isWelcome ? 'dashboard--welcome' : ''}`
 
@@ -509,8 +352,6 @@ export default function DashboardPage({
         </div>
       </header>
 
-      {/* Solo mostrar el Header Flotante si hay resultados o estamos en una vista secundaria */}
-      {/* Global Header (Always visible) */}
       {!isWelcome && (
         <DashboardHeader
           healthStatus={healthStatus}
@@ -565,6 +406,7 @@ export default function DashboardPage({
           showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
         />
       )}
+
       {viewMode === 'dashboard' && result && (
         <div className="report-only-section" aria-hidden="true">
           <div ref={printReportRef}>
@@ -585,6 +427,7 @@ export default function DashboardPage({
           </div>
         </div>
       )}
+
       {!result && !loading && viewMode === 'dashboard' ? (
         <WelcomeView 
           onAnalyzeNew={() => setLogModalOpen(true)}
@@ -619,7 +462,6 @@ export default function DashboardPage({
         </div>
       ) : result || loading || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
-          {/* El botón de Asociar SDS ahora está en el Header para mayor limpieza */}
           <div className="dashboard__content-wrap">
 
           {viewMode === 'saved-list' && (
@@ -655,8 +497,6 @@ export default function DashboardPage({
               }}
               onDelete={setDeleteConfirm}
               onCompare={() => {
-                setCompareLogText('')
-                setCompareFileName(undefined)
                 setCompareModalOpen(true)
               }}
             />
@@ -664,83 +504,15 @@ export default function DashboardPage({
 
           {viewMode === 'dashboard' && (
             <>
-              {parseErrorsCount > 0 && (
-                <div className="dashboard__parse-errors-banner" role="alert">
-                  <button
-                    className="dashboard__parse-errors-toggle"
-                    onClick={() => setParseErrorsExpanded((v) => !v)}
-                    aria-expanded={parseErrorsExpanded}
-                  >
-                    <span>Se omitieron {parseErrorsCount} líneas por formato inválido</span>
-                    <span className="dashboard__parse-errors-chevron">
-                      {parseErrorsExpanded ? '▲' : '▼'}
-                    </span>
-                  </button>
-                  {parseErrorsExpanded && (
-                    <table className="dashboard__parse-errors-table">
-                      <thead>
-                        <tr>
-                          <th>Línea</th>
-                          <th>Texto crudo</th>
-                          <th>Motivo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(result?.errors ?? []).map((e: ParserError) => (
-                          <tr key={e.line_number}>
-                            <td>{e.line_number}</td>
-                            <td>
-                              <code>{e.raw_line}</code>
-                            </td>
-                            <td>{e.reason}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
-
-              {result && codesNew.length > 0 && (
-                <div className="dashboard__codes-new-section" role="status">
-                  <p className="dashboard__codes-new-intro">
-                    Se detectaron {codesNew.length} código{codesNew.length !== 1 ? 's' : ''} nuevo
-                    {codesNew.length !== 1 ? 's' : ''} que no están en el catálogo. Agrega cada uno
-                    con su URL de solución si la tienes.
-                  </p>
-                  <ul className="dashboard__codes-new-list">
-                    {codesNew.map((code: string) => {
-                      const { description } = getEventInfoForCode(result, code)
-                      return (
-                        <li key={code} className="dashboard__codes-new-item">
-                          <span className="dashboard__codes-new-code">{code}</span>
-                          {description && (
-                            <span className="dashboard__codes-new-desc" title={description}>
-                              {description.slice(0, 60)}
-                              {description.length > 60 ? '…' : ''}
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
-                            onClick={() => setAddCodeModalCode(code)}
-                            disabled={savingCode}
-                          >
-                            Agregar al catálogo
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  <button
-                    type="button"
-                    className="dashboard__btn dashboard__btn--secondary"
-                    onClick={() => setCodesNew(() => [])}
-                  >
-                    Ignorar y ver resultados
-                  </button>
-                </div>
-              )}
+              <ParseErrorsBanner errors={result?.errors || []} />
+              
+              <NewCodesSection 
+                result={result}
+                codesNew={codesNew}
+                savingCode={savingCode}
+                onAddCode={setAddCodeModalCode}
+                onIgnore={() => setCodesNew(() => [])}
+              />
 
               {addCodeModalCode && result && (
                 <AddCodeToCatalogModal
@@ -769,26 +541,24 @@ export default function DashboardPage({
 
               {codesNew.length === 0 && (
                 <>
-                  {/* Fallback visual mientras carga el primer análisis */}
-              {loading && !result && (
-                <div className="dashboard__content-main animate-in">
-                  <section className="dashboard__subheader">
-                    <Skeleton className="skeleton--title" width="300px" />
-                    <Skeleton className="skeleton--text" width="120px" height="32px" />
-                  </section>
-                  <section className="dashboard__kpi-grid">
-                    <Skeleton className="skeleton--card" />
-                    <Skeleton className="skeleton--card" />
-                    <Skeleton className="skeleton--card" />
-                    <Skeleton className="skeleton--card" />
-                  </section>
-                  <section style={{ marginTop: '24px' }}>
-                    <Skeleton height="300px" />
-                  </section>
-                </div>
-              )}
+                  {loading && !result && (
+                    <div className="dashboard__content-main animate-in">
+                      <section className="dashboard__subheader">
+                        <Skeleton className="skeleton--title" width="300px" />
+                        <Skeleton className="skeleton--text" width="120px" height="32px" />
+                      </section>
+                      <section className="dashboard__kpi-grid">
+                        <Skeleton className="skeleton--card" />
+                        <Skeleton className="skeleton--card" />
+                        <Skeleton className="skeleton--card" />
+                        <Skeleton className="skeleton--card" />
+                      </section>
+                      <section style={{ marginTop: '24px' }}>
+                        <Skeleton height="300px" />
+                      </section>
+                    </div>
+                  )}
 
-                  {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
                     <div className="dashboard__subheader-title-group">
                       <span className="dashboard__subheader-title">Panel de errores</span>
@@ -820,467 +590,56 @@ export default function DashboardPage({
                     </div>
                   </div>
 
-                  {/* ── ABOVE FOLD: KPIs + 2 gráficos siempre visibles ── */}
-                  <div className="dashboard__above-fold">
-
-                    {/* BLOQUE 1: KPIs ejecutivos */}
-                    <section className="animate-in delay-1 kpis">
-                      <KPICards
-                        filteredIncidents={filteredIncidents}
-                        filteredEvents={filteredEvents}
-                        lastErrorEvent={lastErrorEvent}
-                        lastErrorLabel={lastErrorLabel}
-                      />
-                    </section>
-
-                    <div className="dashboard__above-fold__charts-row">
-                      {/* BLOQUE 2a: Gráfico de volumen */}
-                      <div className="animate-in delay-2 dashboard__above-fold__chart">
-                        <IncidentsChart
-                          events={events}
-                          activeFilter={activeFilter}
-                          visibleSeverities={visibleSeverities}
-                          onSeverityToggle={(sev) =>
-                            setVisibleSeverities((prev) => {
-                              const next = new Set(prev)
-                              if (next.has(sev)) next.delete(sev)
-                              else next.add(sev)
-                              return next
-                            })
-                          }
-                        />
-                      </div>
-
-                      {/* BLOQUE 2b: Errores más frecuentes */}
-                      <div className="animate-in delay-2 dashboard__above-fold__chart">
-                        <TopErrorsChart 
-                          topCodes={topCodes} 
-                          onViewSolution={(code, sdsContent, sdsUrl) =>
-                            setSolutionModal({ code, sdsContent, sdsUrl })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                  </div>
-
-
-                  {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}
-                  <AIDiagnosticPanel
-                    className="animate-in delay-3"
-                    result={result}
-                    consumables={realtimeConsumables}
-                    alerts={insightData.data}
-                    meters={insightData.meters}
-                    isFeatured={true}
-                    serialNumber={currentSerialNumber}
-                    modelName={currentModelName}
-                  />
-
-
-                  {/* ── BLOQUE 5: Paneles de diagnóstico (drill-down) ── */}
-                  <div className="dashboard__drilldown-panels">
-                    {/* Incidencias detectadas */}
-                    <section className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
-                      <button
-                        type="button"
-                        className="collapsible-panel__header"
-                        onClick={() => setIncidentsCollapsed((v) => !v)}
-                        aria-expanded={!incidentsCollapsed}
-                      >
-                        <span className="collapsible-panel__title">
-                          📋 Incidencias detectadas
-                        </span>
-                        {incidentsCollapsed && incidentRows.length > 0 && (
-                          <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
-                            {incidentRows.length} incidencia{incidentRows.length !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                        <span
-                          className={`collapsible-panel__chevron${!incidentsCollapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
-                          aria-hidden="true"
-                        >
-                          ▶
-                        </span>
-                      </button>
-                      {!incidentsCollapsed && (
-                        <div className="collapsible-panel__body">
-                          <IncidentsTable
-                            incidentRows={incidentRows}
-                            onEditCode={(code, classification, severity, solutionUrl) =>
-                              setEditCodeInitial({
-                                code,
-                                description: classification,
-                                severity,
-                                solutionUrl,
-                              })
-                            }
-                            onViewSolution={(code, sdsContent, sdsUrl) =>
-                              setSolutionModal({ code, sdsContent, sdsUrl })
-                            }
-                          />
-                        </div>
-                      )}
-                    </section>
-
-                    {/* Eventos del periodo */}
-                    <EventsTable
-                      events={filteredEvents}
-                      onViewSolution={(code, sdsContent, sdsUrl) =>
-                        setSolutionModal({ code, sdsContent, sdsUrl })
-                      }
+                  {result && (
+                    <AnalysisDashboardView
+                      result={result as ParseLogsResponse}
+                      filteredIncidents={filteredIncidents}
+                      filteredEvents={filteredEvents}
+                      events={events}
+                      lastErrorEvent={lastErrorEvent}
+                      lastErrorLabel={lastErrorLabel || ''}
+                      activeFilter={activeFilter}
+                      topCodes={topCodes}
+                      realtimeConsumables={realtimeConsumables}
+                      insightData={insightData}
+                      currentSerialNumber={currentSerialNumber}
+                      currentModelName={currentModelName}
+                      incidentRows={incidentRows}
+                      sdsIncident={sdsIncident}
+                      onSetEditCodeInitial={setEditCodeInitial}
+                      onSetSolutionModal={setSolutionModal}
                     />
-
-                    {/* Consumibles en tiempo real */}
-                    <div>
-                      <ConsumableWarningsPanel warnings={realtimeConsumables} />
-                    </div>
-
-                    {/* Alertas del portal SDS */}
-                    <InsightAlertsPanel
-                      serial={currentSerialNumber}
-                      data={insightData.data}
-                      loading={insightData.loading}
-                      error={insightData.error}
-                    />
-
-                    {/* SDS Engineering Incident */}
-                    {sdsIncident && (
-                      <SDSIncidentPanel
-                        sdsIncident={sdsIncident}
-                        incidentRows={incidentRows.map((r) => ({
-                          code: r.code,
-                          classification: r.classification || r.code,
-                        }))}
-                        incidentsFull={
-                          result?.incidents?.map((inc: ApiIncident) => ({
-                            code: inc.code,
-                            classification: inc.classification,
-                            end_time: inc.end_time,
-                            occurrences: inc.occurrences,
-                          })) ?? []
-                        }
-                      />
-                    )}
-                  </div>
+                  )}
                 </>
               )}
             </>
           )}
-        </div> {/* close dashboard__content-wrap */}
-      </>
-    ) : null}
-
-      {sdsModalOpen && (
-        <SDSIncidentModal
-          onContinue={(data) => {
-            setSdsIncident(data)
-            setSdsModalOpen(false)
-          }}
-          onClose={() => {
-            setSdsModalOpen(false)
-          }}
-        />
-      )}
-
-      {/* Modal: siempre encima cuando está abierto (desde bienvenida o desde dashboard) */}
-      {logModalOpen && (
-        <LogPasteModal
-          loading={loading}
-          error={error}
-          serverWasCold={serverWasCold}
-          onAnalyze={(logText, fileName, modelId, serial, isAutomated) => {
-            if (isAutomated && serial) {
-              autoResolveAndAnalyze(serial)
-              return
-            }
-            setCurrentModelId(modelId ?? null)
-            setCurrentSerialNumber(serial ?? null)
-            handleAnalyze(logText, fileName, modelId).then(() => {
-              setLogModalOpen(false)
-              dateFilter.reset()
-              toast.showSuccess('Análisis completado')
-            }).catch((err: unknown) => {
-              toast.showError(err instanceof Error ? err.message : String(err))
-            })
-          }}
-          onClose={() => {
-            setError(null)
-            setLogModalOpen(false)
-          }}
-        />
-      )}
-
-      {saveIncidentModalOpen && result && (
-        <SaveIncidentModal
-          onSave={onSaveIncident}
-          onClose={() => !savingIncident && setSaveIncidentModalOpen(false)}
-          saving={savingIncident}
-          initialEquipment={
-            currentModelName && currentSerialNumber 
-              ? `${currentModelName} (${currentSerialNumber})` 
-              : currentSerialNumber || currentModelName || ''
-          }
-          initialName={`Análisis - ${currentSerialNumber || 'Sin Serial'} - ${new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}`}
-        />
-      )}
-
-      {deleteConfirm && (
-        <ConfirmModal
-          title="Borrar incidente"
-          message={`¿Borrar el incidente "${deleteConfirm.name}"? Esta acción no se puede deshacer.`}
-          confirmLabel="Borrar"
-          cancelLabel="Cancelar"
-          loading={deletingId === deleteConfirm.id}
-          onConfirm={async () => {
-            setDeletingId(deleteConfirm.id)
-            try {
-              await deleteSavedAnalysis(deleteConfirm.id)
-              setSavedList((prev) => (prev ? prev.filter((x) => x.id !== deleteConfirm.id) : []))
-              if (selectedSavedId === deleteConfirm.id) {
-                setViewMode('saved-list')
-                setSavedDetail(null)
-                setSelectedSavedId(null)
-                setCompareResult(null)
-              }
-              toast.showSuccess('Incidente borrado')
-            } catch (e) {
-              toast.showError(e instanceof Error ? e.message : 'Error al borrar')
-            } finally {
-              setDeletingId(null)
-              setDeleteConfirm(null)
-            }
-          }}
-          onCancel={() => !deletingId && setDeleteConfirm(null)}
-        />
-      )}
-
-      {solutionModal && (
-        <SolutionContentModal
-          code={solutionModal.code}
-          modelId={currentModelId}
-          sdsContent={solutionModal.sdsContent}
-          sdsUrl={solutionModal.sdsUrl}
-          onClose={() => setSolutionModal(null)}
-        />
-      )}
-
-      {helpModalOpen && (
-        <HelpModal onClose={() => setHelpModalOpen(false)} />
-      )}
-
-      {monitorWizardOpen && (
-        <MonitorWizard />
-      )}
-
-      {autoExtracting && (
-        <div className="log-modal-overlay" style={{ zIndex: 3000 }}>
-          <div className="log-modal" style={{ textAlign: 'center', padding: '40px' }}>
-            <div className="log-modal__spinner" style={{ margin: '0 auto 20px', width: '40px', height: '40px' }} />
-            <h2 className="log-modal__title">Extrayendo logs automáticamente…</h2>
-            <p style={{ marginTop: '10px', color: 'var(--text-secondary)' }}>
-              Estamos conectando con el portal SDS para el equipo <strong>{currentSerialNumber}</strong>.
-              Esto puede tardar hasta 30 segundos.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {compareModalOpen && selectedSavedId && (
-        <div
-          className="log-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="compare-modal-title"
-        >
-          <div className="log-modal">
-            <div className="log-modal__header">
-              <h2 id="compare-modal-title" className="log-modal__title">
-                Comparar con log nuevo
-              </h2>
-              <button
-                type="button"
-                className="log-modal__close"
-                onClick={() => !comparing && setCompareModalOpen(false)}
-                aria-label="Cerrar"
-                disabled={comparing}
-              >
-                ×
-              </button>
-            </div>
-            <div className="log-modal__file-row">
-              <input
-                ref={compareFileInputRef}
-                type="file"
-                accept=".log,.txt,.tsv,text/plain"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  const reader = new FileReader()
-                  reader.onload = (ev) => {
-                    setCompareLogText((ev.target?.result as string) ?? '')
-                    setCompareFileName(file.name)
-                  }
-                  reader.readAsText(file)
-                }}
-              />
-              <button
-                type="button"
-                className="dashboard__btn"
-                onClick={() => compareFileInputRef.current?.click()}
-                disabled={comparing}
-              >
-                {compareFileName ? `📄 ${compareFileName}` : '📂 Seleccionar archivo…'}
-              </button>
-            </div>
-            <textarea
-              className="log-modal__textarea"
-              placeholder="O pegar el log aquí…"
-              value={compareLogText}
-              onChange={(e) => setCompareLogText(e.target.value)}
-              rows={10}
-              disabled={comparing}
-            />
-            <div className="log-modal__footer">
-              <button
-                type="button"
-                className="dashboard__btn"
-                onClick={() => setCompareModalOpen(false)}
-                disabled={comparing}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--primary"
-                disabled={!compareLogText.trim() || comparing}
-                onClick={async () => {
-                  if (!selectedSavedId || !compareLogText.trim()) return
-                  setComparing(true)
-                  try {
-                    const res = await compareSavedAnalysis(selectedSavedId, compareLogText)
-                    setCompareResult(res)
-                    setCompareModalOpen(false)
-                    setViewMode('saved-detail')
-                  } catch (e) {
-                    toast.showError(e instanceof Error ? e.message : 'Error al comparar')
-                  } finally {
-                    setComparing(false)
-                  }
-                }}
-              >
-                {comparing ? 'Comparando…' : 'Comparar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* ===== Modal de Exportación PDF (auto-contenido) ===== */}
-      {(exportingPdf || isAiPdfReady || isGeneratingAiPdf) && (
-        <>
-          {/* Keyframes del spinner embebidos directamente */}
-          <style>{`
-            @keyframes pdf-spin { to { transform: rotate(360deg); } }
-            .pdf-export-spinner {
-              width: 52px;
-              height: 52px;
-              border: 5px solid rgba(255,255,255,0.12);
-              border-top-color: #38bdf8;
-              border-radius: 50%;
-              animation: pdf-spin 0.9s linear infinite;
-              margin-bottom: 28px;
-            }
-          `}</style>
-
-          {/* Overlay */}
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(8, 12, 22, 0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            zIndex: 100000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            {/* Cuadro del modal */}
-            <div style={{
-              background: '#111827',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '20px',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
-              width: '380px',
-              padding: '52px 40px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-            }}>
-              {!isAiPdfReady ? (
-                <>
-                  <div className="pdf-export-spinner" />
-                  <p style={{
-                    margin: '0 0 8px 0',
-                    fontSize: '1.35rem',
-                    fontWeight: 700,
-                    color: '#f1f5f9',
-                    letterSpacing: '-0.02em'
-                  }}>
-                    Generando reporte
-                  </p>
-                  <p style={{
-                    margin: 0,
-                    fontSize: '13px',
-                    color: '#64748b',
-                    lineHeight: 1.5
-                  }}>
-                    Redactando resumen ejecutivo con IA...
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div style={{ fontSize: '52px', lineHeight: 1, marginBottom: '24px' }}>✅</div>
-                  <p style={{
-                    margin: '0 0 10px 0',
-                    fontSize: '1.35rem',
-                    fontWeight: 700,
-                    color: '#f1f5f9',
-                    letterSpacing: '-0.02em'
-                  }}>
-                    ¡Reporte Listo!
-                  </p>
-                  <p style={{
-                    margin: '0 0 32px 0',
-                    fontSize: '13px',
-                    color: '#64748b',
-                    lineHeight: 1.5
-                  }}>
-                    La IA ha finalizado el resumen ejecutivo.
-                  </p>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <button
-                      className="dashboard__btn"
-                      onClick={() => setIsAiPdfReady(false)}
-                    >
-                      Cerrar
-                    </button>
-                    <button
-                      className="dashboard__btn dashboard__btn--primary"
-                      onClick={() => { setIsAiPdfReady(false); handleExportPDF(true) }}
-                    >
-                      Abrir Impresión
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
           </div>
         </>
-      )}
+      ) : null}
+
+      <DashboardModals
+        serverWasCold={serverWasCold}
+        autoExtracting={autoExtracting}
+        currentSerialNumber={currentSerialNumber}
+        currentModelId={currentModelId}
+        currentModelName={currentModelName}
+        selectedSavedId={selectedSavedId}
+        autoResolveAndAnalyze={autoResolveAndAnalyze}
+        setSavedList={setSavedList}
+        setViewMode={setViewMode}
+        setSavedDetail={setSavedDetail}
+        setSelectedSavedId={setSelectedSavedId}
+        setCompareResult={setCompareResult}
+        exportingPdf={exportingPdf}
+        isAiPdfReady={isAiPdfReady}
+        setIsAiPdfReady={setIsAiPdfReady}
+        isGeneratingAiPdf={isGeneratingAiPdf}
+        handleExportPDF={handleExportPDF}
+        onDateFilterReset={() => dateFilter.reset()}
+        deletingId={deletingId}
+        setDeletingId={setDeletingId}
+      />
     </div>
   )
 }
-

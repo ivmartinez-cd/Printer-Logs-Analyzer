@@ -1,7 +1,7 @@
 # HP Logs Analyzer
 
 ![CI](https://github.com/ivmartinez-cd/Printer-Logs-Analyzer/actions/workflows/ci.yml/badge.svg)
-![Tests](https://img.shields.io/badge/tests-358%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-373%20passing-brightgreen)
 ![TypeScript](https://img.shields.io/badge/typescript-strict-blue)
 ![Docker](https://img.shields.io/badge/docker-ready-blue)
 
@@ -74,7 +74,7 @@ python backend/scripts/run_migrations.py
 ## Calidad y Estabilidad
 El proyecto mantiene una política de **Zero-Failure**.
 
-- **Frontend Tests**: 172 tests pasados (Vitest + Happy DOM).
+- **Frontend Tests**: 187 tests pasados (Vitest + Happy DOM).
 - **Backend Tests**: 186 tests pasados (Pytest).
 - **Type Checking**: Strict TypeScript en todo el frontend.
 - **Linting**: Ruff (Python) y ESLint (React).

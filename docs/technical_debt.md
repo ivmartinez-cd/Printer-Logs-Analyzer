@@ -12,18 +12,16 @@ Se implementó la lógica de auto-guardado en el endpoint `/analysis/ai-diagnose
 - **Posibles Causas:** Es probable que el frontend necesite un refresco total de caché para cargar los nuevos servicios de API que incluyen los metadatos, o que el flujo de extracción desde SDS no esté inyectando el serial correctamente en el estado del componente antes de llamar a la IA.
 - **Acción requerida:** Realizar una sesión de debugging "end-to-end" verificando el payload exacto que llega al backend en el Network Tab del navegador.
 
-## 2. Acumulación de Historial de Navegación
+## 2. Acumulación de Historial de Navegación [RESUELTO]
 
-**Estado:** Comportamiento de "pushState" genera una pila de historial profunda.
+**Estado:** Corregido mediante el uso de `replaceState`.
 
 **Contexto:**
-Actualmente, cada vez que se realiza una búsqueda de número de serie, el sistema utiliza `pushState` para actualizar la URL sin recargar la página. Esto facilita el deep-linking pero genera un efecto secundario en la navegación:
-- Si un usuario busca 5 seriales seguidos, el historial del navegador guarda 5 entradas (`/SN1`, `/SN2`, etc.).
-- Al intentar volver "atrás" desde una vista secundaria (como la lista de incidentes guardados), el usuario debe retroceder por cada una de las búsquedas realizadas individualmente antes de llegar a la pantalla de bienvenida limpia.
+Anteriormente, cada búsqueda de número de serie usaba `pushState`, lo que generaba una pila de historial excesiva.
 
-**Pendientes / Riesgos:**
-- **UX Frustrante:** Obliga a múltiples clicks para salir de un flujo de análisis.
-- **Acción requerida:** Evaluar el uso de `replaceState` en lugar de `pushState` para navegaciones consecutivas del mismo tipo (ej: si ya estoy en un dashboard de serial, reemplazar la entrada actual en lugar de empujar una nueva).
+**Solución aplicada:**
+Se implementó una lógica en `DashboardPage.tsx` que utiliza `window.history.replaceState` cuando el usuario ya se encuentra en la vista de Dashboard y simplemente cambia de equipo. Esto mantiene la URL actualizada para deep-linking pero evita contaminar el historial del navegador con múltiples búsquedas consecutivas.
+
 
 **Archivos involucrados:**
 - `backend/interface/routers/ai.py` (Lógica de auto-save)
