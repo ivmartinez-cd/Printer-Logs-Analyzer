@@ -128,19 +128,38 @@ export function WelcomeView({
           </div>
         </div>
 
-        {/* Primary CTA: New Manual Analysis */}
-        <div className="welcome-grid__item welcome-grid__item--main" onClick={onAnalyzeNew}>
-          <div className="welcome-grid__content">
-            <div className="welcome-grid__icon">✨</div>
-            <h3 className="welcome-grid__title">Análisis Manual</h3>
-            <p className="welcome-grid__desc">Sube o pega logs históricos para un diagnóstico profundo fuera de línea.</p>
-          </div>
-          <div className="welcome-grid__footer">
-            Comenzar ahora →
+        {/* Primary CTA: New Manual Analysis - Slot 3 */}
+        <div className="welcome-grid__item welcome-grid__item--main">
+          <div className="welcome-activity">
+            <div className="welcome-activity__header">
+              <h3 className="welcome-activity__title">🔍 Búsquedas Recientes</h3>
+            </div>
+            <div className="welcome-activity__list">
+              {displaySearches.length > 0 ? displaySearches.map((s) => (
+                <button 
+                  key={`search-${s}`}
+                  onClick={() => onQuickSearch(s)}
+                  className="welcome-activity__item welcome-activity__item--search"
+                >
+                  <div className="welcome-activity__item-icon-wrapper welcome-activity__item-icon-wrapper--search">
+                    🔍
+                  </div>
+                  <div className="welcome-activity__item-info">
+                    <span className="welcome-activity__item-serial">{s}</span>
+                    <span className="welcome-activity__item-date">Consulta rápida</span>
+                  </div>
+                  <div className="welcome-activity__item-arrow">→</div>
+                </button>
+              )) : (
+                <div className="welcome-activity__empty">
+                  <p>No hay búsquedas recientes</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* CARD 1: Saved Incidents */}
+        {/* CARD 1: Saved Incidents - Slot 4 */}
         <div className="welcome-grid__item welcome-grid__item--history">
           <div className="welcome-activity">
             <div className="welcome-activity__header">
@@ -197,34 +216,15 @@ export function WelcomeView({
           </div>
         </div>
 
-        {/* CARD 2: Recent Search History */}
-        <div className="welcome-grid__item welcome-grid__item--history">
-          <div className="welcome-activity">
-            <div className="welcome-activity__header">
-              <h3 className="welcome-activity__title">🔍 Búsquedas Recientes</h3>
-            </div>
-            <div className="welcome-activity__list">
-              {displaySearches.length > 0 ? displaySearches.map((s) => (
-                <button 
-                  key={`search-${s}`}
-                  onClick={() => onQuickSearch(s)}
-                  className="welcome-activity__item welcome-activity__item--search"
-                >
-                  <div className="welcome-activity__item-icon-wrapper welcome-activity__item-icon-wrapper--search">
-                    🔍
-                  </div>
-                  <div className="welcome-activity__item-info">
-                    <span className="welcome-activity__item-serial">{s}</span>
-                    <span className="welcome-activity__item-date">Consulta rápida</span>
-                  </div>
-                  <div className="welcome-activity__item-arrow">→</div>
-                </button>
-              )) : (
-                <div className="welcome-activity__empty">
-                  <p>No hay búsquedas recientes</p>
-                </div>
-              )}
-            </div>
+        {/* CARD 2: Recent Search History - Slot 5 (Now containing Manual Analysis) */}
+        <div className="welcome-grid__item welcome-grid__item--history" onClick={onAnalyzeNew}>
+          <div className="welcome-grid__content">
+            <div className="welcome-grid__icon">✨</div>
+            <h3 className="welcome-grid__title">Análisis Manual</h3>
+            <p className="welcome-grid__desc">Sube o pega logs históricos para un diagnóstico profundo fuera de línea.</p>
+          </div>
+          <div className="welcome-grid__footer">
+            Comenzar ahora →
           </div>
         </div>
       </div>
