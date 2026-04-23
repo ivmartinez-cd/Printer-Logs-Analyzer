@@ -37,6 +37,8 @@ def register_exception_handlers(app: FastAPI):
             status_code = 502
             code = "EXTERNAL_SERVICE_ERROR"
 
+        _logger.warning("Handled Error (%s): %s", code, detail)
+
         return JSONResponse(
             status_code=status_code, content={"error": True, "code": code, "detail": detail}
         )

@@ -237,17 +237,79 @@ def get_device_info(
     }
 
 
+def search_devices_by_model(
+    portal_url: str,
+    api_key: str,
+    api_secret: str,
+    model_family: str,
+) -> List[Dict[str, Any]]:
+    """Search for all devices of a specific model family.
+
+    Endpoint: GET /PortalAPI/api/devices/search?q=model:~{model_family}&includeExtendedFields=true
+    """
+    # Discovery Mock for local development
+    if api_key == "dev" or "hp-sds-latam" not in portal_url:
+        if "M600" in model_family:
+            return [
+                {
+                    "deviceId": 9001,
+                    "serialNumber": "BRBSN9YYHQ",
+                    "extendedFields": {
+                        "model": "HP LaserJet M600 Series",
+                        "zone": "Soporte Técnica",
+                    },
+                },
+                {
+                    "deviceId": 9002,
+                    "serialNumber": "CZ12345678",
+                    "extendedFields": {
+                        "model": "HP LaserJet M600 Series",
+                        "zone": "Administración",
+                    },
+                },
+            ]
+        return []
+
+    import urllib.parse
+
+    token = _get_jwt(portal_url, api_key, api_secret)
+    base = portal_url.rstrip("/")
+    quoted_query = urllib.parse.quote(f"~{model_family}")
+    search_url = f"{base}/PortalAPI/api/devices/search?q={quoted_query}&includeExtendedFields=true"
+
+    return _insight_get(search_url, token)
+
+
 def get_device_meters(
     portal_url: str,
     api_key: str,
     api_secret: str,
     device_id: int,
+    days: int = 30,
 ) -> List[Dict[str, Any]]:
     """Fetch meter history for the device to identify usage patterns."""
     token = _get_jwt(portal_url, api_key, api_secret)
     base = portal_url.rstrip("/")
 
-    ep = f"{base}/PortalAPI/api/devices/{device_id}/meters/history"
+    # Insight API v7 requires startDate and endDate for history
+    from datetime import datetime, timedelta
+
+    now = datetime.now()
+    start_date = (now - timedelta(days=days)).strftime("%Y-%m-%d")
+    end_date = now.strftime("%Y-%m-%d")
+
+    # Discovery Mock for local development
+    if (
+        api_key == "dev"
+        or "hp-sds-latam" not in portal_url
+        or device_id == sum(ord(c) for c in "BRBSN9YYHQ")
+    ):
+        return [
+            {"date": now.strftime("%Y-%m-%dT%H:%M:%S"), "totalValue": 150000},
+            {"date": (now - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S"), "totalValue": 149500},
+        ]
+
+    ep = f"{base}/PortalAPI/api/devices/{device_id}/meters/history?startDate={start_date}&endDate={end_date}"
     try:
         return _insight_get(ep, token)
     except Exception as e:

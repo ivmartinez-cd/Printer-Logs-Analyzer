@@ -13,6 +13,17 @@ import type {
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
+  FleetScanResult,
+  FleetScanStatusResponse,
+  MaintenanceCheckJob,
+  MaintenanceDevice,
+  MaintenanceDeviceState,
+  MaintenanceHistory,
+  MaintenanceIncident,
+  MaintenanceModelRule,
+  MaintenanceMutationResponse,
+  MaintenanceSyncStatus,
+  AIPdfSummaryResponse,
 } from '../types/api'
 
 const API_BASE =
@@ -323,6 +334,29 @@ export async function aiDiagnose(
   return handleResponse<AIDiagnosisResponse>(res)
 }
 
+export async function generatePdfSummary(
+  payload: {
+    incidents: any[]
+    consumables?: any[]
+    top_codes?: any[]
+    model_name?: string | null
+    serial_number?: string | null
+  },
+  signal?: AbortSignal
+): Promise<AIPdfSummaryResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/analysis/pdf-summary`,
+    {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify(payload),
+      signal,
+    },
+    40_000
+  )
+  return handleResponse<AIPdfSummaryResponse>(res)
+}
+
 export interface HealthStatus {
   db_available: boolean
   db_mode: 'postgres' | 'local_fallback'
@@ -405,11 +439,222 @@ export async function getFleetClient(clientId: string): Promise<import('../types
   return handleResponse(res)
 }
 
-export async function scanFleet(clientId: string, models: string[] | null = null, days = 30): Promise<import('../types/api').FleetScanResult[]> {
+export async function triggerFleetScan(
+  clientId: string,
+  models: string[] | null,
+  signal?: AbortSignal
+): Promise<{ job_id: string; total: number; status: string }> {
+  const res = await apiFetch(`${API_BASE}/fleet/scan-now`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ client_id: clientId, models, days: 30 }),
+    signal,
+  })
+  return handleResponse(res)
+}
+
+export async function getFleetScanStatus(
+  jobId: string,
+  signal?: AbortSignal
+): Promise<FleetScanStatusResponse> {
+  const res = await apiFetch(`${API_BASE}/fleet/scan-status/${jobId}`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<FleetScanStatusResponse>(res)
+}
+
+export async function scanFleet(
+  clientId: string,
+  models: string[] | null = null,
+  days = 30,
+  signal?: AbortSignal
+): Promise<FleetScanResult[]> {
   const res = await apiFetch(
     `${API_BASE}/fleet/scan`,
-    { method: 'POST', headers: apiHeaders(), body: JSON.stringify({ client_id: clientId, days, models }) },
+    {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({ client_id: clientId, days, models }),
+      signal,
+    },
     120_000
   )
+  return handleResponse(res)
+}
+
+// --- Maintenance / Avisos ---
+
+export async function getMaintenanceDevices(): Promise<MaintenanceDevice[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse<MaintenanceDevice[]>(res)
+}
+
+export async function getMaintenanceModelRules(
+  modelFamily: string
+): Promise<MaintenanceModelRule[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/rules`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse<MaintenanceModelRule[]>(res)
+}
+
+export async function getMaintenanceFamilies(): Promise<string[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/families`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse<string[]>(res)
+}
+
+export async function upsertMaintenanceModelRule(rule: MaintenanceModelRule): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/rules`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(rule),
+  })
+  return handleResponse(res)
+}
+
+export async function getMaintenanceDeviceState(
+  serial: string
+): Promise<MaintenanceDeviceState[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/state`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse<MaintenanceDeviceState[]>(res)
+}
+
+export async function updateDeviceState(serial: string, componentType: string, lastChangeCounter: number): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/state`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ serial, component_type: componentType, last_change_counter: lastChangeCounter })
+  })
+  return handleResponse(res)
+}
+
+export async function discoverFamily(modelFamily: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/discover`, { 
+    method: 'POST', 
+    headers: apiHeaders() 
+  })
+  return handleResponse(res)
+}
+
+export async function triggerMaintenanceCheck(
+  modelFamily?: string,
+  sendEmails: boolean = true
+): Promise<MaintenanceCheckJob> {
+  const body = JSON.stringify({ model_family: modelFamily ?? null, send_emails: sendEmails })
+  const res = await apiFetch(`${API_BASE}/maintenance/check-now`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body,
+  })
+  return handleResponse<MaintenanceCheckJob>(res)
+}
+
+export async function getMaintenanceSyncStatus(jobId: string): Promise<MaintenanceSyncStatus> {
+  const res = await apiFetch(
+    `${API_BASE}/maintenance/sync-status/${encodeURIComponent(jobId)}`,
+    { method: 'GET', headers: apiHeaders() }
+  )
+  return handleResponse<MaintenanceSyncStatus>(res)
+}
+
+export async function syncMaintenanceDevice(
+  serial: string,
+  sendEmails: boolean = true
+): Promise<MaintenanceDevice> {
+  const url = `${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/sync?send_emails=${sendEmails}`
+  const res = await apiFetch(url, {
+    method: 'POST',
+    headers: apiHeaders(),
+  }, 30_000)
+  return handleResponse<MaintenanceDevice>(res)
+}
+
+export async function getMaintenanceHistory(serial: string): Promise<MaintenanceHistory[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/history/${encodeURIComponent(serial)}`, {
+    method: 'GET',
+    headers: apiHeaders(),
+  })
+  return handleResponse<MaintenanceHistory[]>(res)
+}
+
+export async function recordMaintenanceChange(data: {
+  serial: string
+  component_type: string
+  incident_number?: string
+  notes?: string
+}): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/record-change`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
+export async function openMaintenanceIncident(data: {
+  serial: string
+  component_type: string
+  incident_number: string
+  notes?: string
+}): Promise<MaintenanceIncident> {
+  const res = await apiFetch(`${API_BASE}/maintenance/incidents`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(data),
+  })
+  return handleResponse<MaintenanceIncident>(res)
+}
+
+export async function closeMaintenanceIncident(
+  incidentId: string,
+  notes?: string
+): Promise<MaintenanceMutationResponse> {
+  const res = await apiFetch(`${API_BASE}/maintenance/incidents/${encodeURIComponent(incidentId)}/close`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ notes }),
+  })
+  return handleResponse<MaintenanceMutationResponse>(res)
+}
+
+export async function getDeviceIncidents(serial: string): Promise<MaintenanceIncident[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/incidents`, {
+    method: 'GET',
+    headers: apiHeaders(),
+  })
+  return handleResponse<MaintenanceIncident[]>(res)
+}
+
+export async function renameFamily(oldName: string, newName: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/rename`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ old_name: oldName, new_name: newName })
+  })
+  return handleResponse(res)
+}
+
+export async function clearFamilyDevices(modelFamily: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/devices`, {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  return handleResponse(res)
+}
+
+export async function deleteFamily(modelFamily: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}`, {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  return handleResponse(res)
+}
+
+export async function sendMaintenanceAlert(serial: string, componentType: string): Promise<{ status: string; recipients: string[] }> {
+  const res = await apiFetch(`${API_BASE}/maintenance/send-alert`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ serial, component_type: componentType }),
+  })
   return handleResponse(res)
 }

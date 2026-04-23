@@ -5,6 +5,7 @@ import {
   compareSavedAnalysis,
   deleteSavedAnalysis,
   extractSdsLogs,
+  generatePdfSummary,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -17,35 +18,37 @@ import type {
   ErrorCodeUpsertBody,
   RealtimeConsumable,
   ParserError,
+  AIPdfSummaryResponse,
 } from '../types/api'
-import { AddCodeToCatalogModal } from '../components/AddCodeToCatalogModal'
-import { ConfirmModal } from '../components/ConfirmModal'
-import { SaveIncidentModal } from '../components/SaveIncidentModal'
-import { SDSIncidentModal } from '../components/SDSIncidentModal'
-import { SDSIncidentPanel } from '../components/SDSIncidentPanel'
-import { ConsumableWarningsPanel } from '../components/ConsumableWarningsPanel'
-import { SolutionContentModal } from '../components/SolutionContentModal'
-import { HelpModal } from '../components/HelpModal'
-import { AIDiagnosticPanel } from '../components/AIDiagnosticPanel'
-import { InsightAlertsPanel } from '../components/InsightAlertsPanel'
-import { DateRangePicker } from '../components/DateRangePicker'
-import { SavedAnalysisList } from '../components/SavedAnalysisList'
-import { SavedAnalysisDetail } from '../components/SavedAnalysisDetail'
-import { KPICards } from '../components/KPICards'
-import { EventsTable } from '../components/EventsTable'
-import { IncidentsTable, type IncidentRow } from '../components/IncidentsTable'
-import { IncidentsChart } from '../components/IncidentsChart'
-import { TopErrorsChart } from '../components/TopErrorsChart'
-import { Skeleton } from '../components/Skeleton'
-import { ExecutiveSummary } from '../components/ExecutiveSummary'
+import { AddCodeToCatalogModal } from '../components/Parser/AddCodeToCatalogModal'
+import { ConfirmModal } from '../components/ui/ConfirmModal'
+import { SaveIncidentModal } from '../components/Analysis/SaveIncidentModal'
+import { SDSIncidentModal } from '../components/Monitor/SDSIncidentModal'
+import { SDSIncidentPanel } from '../components/Monitor/SDSIncidentPanel'
+import { ConsumableWarningsPanel } from '../components/Monitor/ConsumableWarningsPanel'
+import { SolutionContentModal } from '../components/Parser/SolutionContentModal'
+import { HelpModal } from '../components/ui/HelpModal'
+import { AIDiagnosticPanel } from '../components/Analysis/AIDiagnosticPanel'
+import { InsightAlertsPanel } from '../components/Monitor/InsightAlertsPanel'
+import { DateRangePicker } from '../components/ui/DateRangePicker'
+import { SavedAnalysisList } from '../components/Analysis/SavedAnalysisList'
+import { SavedAnalysisDetail } from '../components/Analysis/SavedAnalysisDetail'
+import { KPICards } from '../components/Monitor/KPICards'
+import { EventsTable } from '../components/Parser/EventsTable'
+import { IncidentsTable, type IncidentRow } from '../components/Parser/IncidentsTable'
+import { IncidentsChart } from '../components/Monitor/IncidentsChart'
+import { TopErrorsChart } from '../components/Monitor/TopErrorsChart'
+import { Skeleton } from '../components/ui/Skeleton'
+import { ExecutivePrintReport } from '../components/Analysis/ExecutivePrintReport'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
-import { LogPasteModal } from '../components/LogPasteModal'
-import { WelcomeView } from '../components/WelcomeView'
-import { MonitorWizard } from '../components/MonitorWizard'
-import { MonitorDashboard } from '../components/MonitorDashboard'
-import { DashboardHeader } from '../components/DashboardHeader'
+import { LogPasteModal } from '../components/Analysis/LogPasteModal'
+import { WelcomeView } from '../components/ui/WelcomeView'
+import { MonitorWizard } from '../components/Monitor/MonitorWizard'
+import { MonitorDashboard } from '../components/Monitor/MonitorDashboard'
+import { DashboardHeader } from '../components/ui/DashboardHeader'
+import { AvisosPage } from './AvisosPage'
 import {
   useDateFilter,
   filterEventsByDate,
@@ -103,7 +106,7 @@ function getTopIncidentsForChart(
   events: ApiEvent[],
   selectedDate: DateFilter,
   n: number
-): { name: string; count: number; severity: string; sds_link?: string; sds_solution_content?: string | null }[] {
+): { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -151,6 +154,7 @@ export default function DashboardPage({
   initialAnalysisId,
   initialIsSavedList,
   initialIsMonitor,
+  initialIsAvisos,
 }: {
   serverWasCold: boolean
   healthStatus: HealthStatus | null
@@ -158,6 +162,7 @@ export default function DashboardPage({
   initialAnalysisId?: string | null
   initialIsSavedList?: boolean
   initialIsMonitor?: boolean
+  initialIsAvisos?: boolean
 }) {
   const dateFilter = useDateFilter()
   const {
@@ -233,6 +238,9 @@ export default function DashboardPage({
   const [realtimeConsumables, setRealtimeConsumables] = useState<RealtimeConsumable[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [pdfAiSummary, setPdfAiSummary] = useState<AIPdfSummaryResponse | null>(null)
+  const [isAiPdfReady, setIsAiPdfReady] = useState(false)
+  const [isGeneratingAiPdf, setIsGeneratingAiPdf] = useState(false)
 
   const lastNavState = useRef({ viewMode, currentSerialNumber, selectedSavedId })
 
@@ -249,6 +257,8 @@ export default function DashboardPage({
       newPath = '/saved-analyses'
     } else if (viewMode === 'monitor') {
       newPath = '/monitor'
+    } else if (viewMode === 'avisos') {
+      newPath = '/avisos'
     }
 
     if (window.location.pathname !== newPath) {
@@ -314,13 +324,7 @@ export default function DashboardPage({
     exportingPdf,
     handleExportPDF,
     dashboardRef,
-    executiveSummaryRef,
-    aiDiagnosticRef,
-    kpisRef,
-    consumableRef,
-    areaChartRef,
-    barChartRef,
-    incidentsTableRef,
+    printReportRef,
   } = useExportPdf(logFileName)
 
   const autoResolveAndAnalyze = useCallback(async (serial: string) => {
@@ -376,6 +380,8 @@ export default function DashboardPage({
       if (!monitorClientId) {
         setMonitorWizardOpen(true)
       }
+    } else if (initialIsAvisos) {
+      setViewMode('avisos')
     } else if (initialSerial) {
       setViewMode('dashboard')
       if (initialSerial !== currentSerialNumber) {
@@ -390,7 +396,7 @@ export default function DashboardPage({
       setSavedDetail(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
+  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, initialIsAvisos, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
 
   // Effect for Deep Linking: Load saved analysis if analysisId is provided
   useEffect(() => {
@@ -442,6 +448,7 @@ export default function DashboardPage({
     () => getIncidentTableRows(incidents, events, activeFilter),
     [incidents, events, activeFilter]
   )
+  const reportGeneratedAtIso = new Date().toISOString()
 
   const handleSaveCodeToCatalog = useCallback(
     async (body: ErrorCodeUpsertBody, isEdit = false) => {
@@ -479,8 +486,8 @@ export default function DashboardPage({
     [handleSaveIncident, toast, setSaveIncidentModalOpen]
   )
 
-  const isWelcome = !result && viewMode === 'dashboard';
-  const dashboardClass = `dashboard ${exportingPdf ? 'is-exporting' : ''} ${isWelcome ? 'dashboard--welcome' : ''}`;
+  const isWelcome = !result && !loading && viewMode === 'dashboard'
+  const dashboardClass = `dashboard ${isWelcome ? 'dashboard--welcome' : ''}`
 
   return (
     <div className={dashboardClass} ref={dashboardRef}>
@@ -520,13 +527,65 @@ export default function DashboardPage({
           onAnalyzeNew={() => setLogModalOpen(true)}
           onSaveIncident={() => setSaveIncidentModalOpen(true)}
           onAddSds={() => setSdsModalOpen(true)}
-          onExportPdf={() => handleExportPDF(!!result)}
+          onExportPdf={async () => {
+            if (!result) return
+            setPdfAiSummary(null)
+            setIsAiPdfReady(false)
+            setIsGeneratingAiPdf(true)
+            
+            try {
+              const summary = await generatePdfSummary({
+                incidents: filteredIncidents.map(i => ({
+                  code: i.code,
+                  severity: i.severity,
+                  occurrences: i.occurrences,
+                  description: i.classification,
+                  start_time: i.start_time,
+                  end_time: i.end_time
+                })),
+                consumables: realtimeConsumables,
+                top_codes: topCodes,
+                model_name: currentModelName,
+                serial_number: currentSerialNumber
+              }, AbortSignal.timeout(30000))
+              
+              setPdfAiSummary(summary)
+              setIsAiPdfReady(true)
+            } catch (err) {
+              console.error('Error generating AI PDF Summary:', err)
+              toast.showError('Error al contactar con la IA, se generara reporte estandar.')
+              setPdfAiSummary(null)
+              handleExportPDF(true)
+            } finally {
+              setIsGeneratingAiPdf(false)
+            }
+          }}
           onHelp={() => setHelpModalOpen(true)}
           isAtTop={isAtTop}
-          showSavedListButton={viewMode !== 'monitor'}
+          showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
         />
       )}
-      {!result && viewMode === 'dashboard' ? (
+      {viewMode === 'dashboard' && result && (
+        <div className="report-only-section" aria-hidden="true">
+          <div ref={printReportRef}>
+            <ExecutivePrintReport
+              result={result}
+              filteredIncidents={filteredIncidents}
+              filteredEvents={filteredEvents}
+              consumableWarnings={realtimeConsumables}
+              lastErrorLabel={lastErrorLabel}
+              logFileName={logFileName}
+              serialNumber={currentSerialNumber}
+              modelName={currentModelName}
+              topCodes={topCodes}
+              incidentRows={incidentRows}
+              generatedAtIso={reportGeneratedAtIso}
+              aiSummary={pdfAiSummary}
+            />
+          </div>
+        </div>
+      )}
+      {!result && !loading && viewMode === 'dashboard' ? (
         <WelcomeView 
           onAnalyzeNew={() => setLogModalOpen(true)}
           onViewSaved={() => {
@@ -541,6 +600,7 @@ export default function DashboardPage({
           savedList={savedList || []}
           recentSearches={recentSearches}
           onQuickSearch={autoResolveAndAnalyze}
+          loadingQuickSearch={autoExtracting || loading}
           onOpenSaved={(id) => {
             setViewMode('saved-detail')
             setSavedDetail(null)
@@ -549,10 +609,15 @@ export default function DashboardPage({
               .catch(() => setSavedDetail(null))
           }}
           onOpenMonitor={() => setMonitorWizardOpen(true)}
+          onOpenAvisos={() => setViewMode('avisos')}
         />
       ) : viewMode === 'monitor' ? (
         <MonitorDashboard />
-      ) : result || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
+      ) : viewMode === 'avisos' ? (
+        <div className="dashboard__content-wrap">
+          <AvisosPage onBack={() => setViewMode('dashboard')} />
+        </div>
+      ) : result || loading || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
         <>
           {/* El botón de Asociar SDS ahora está en el Header para mayor limpieza */}
           <div className="dashboard__content-wrap">
@@ -723,19 +788,6 @@ export default function DashboardPage({
                 </div>
               )}
 
-              {result && (
-                    <div className="report-only-section" ref={executiveSummaryRef}>
-                      <ExecutiveSummary
-                        result={result}
-                        filteredIncidents={filteredIncidents}
-                        filteredEvents={filteredEvents}
-                        consumableWarnings={realtimeConsumables}
-                        lastErrorLabel={lastErrorLabel}
-                        logFileName={logFileName}
-                        serialNumber={currentSerialNumber}
-                      />
-                    </div>
-                  )}
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
                     <div className="dashboard__subheader-title-group">
@@ -772,7 +824,7 @@ export default function DashboardPage({
                   <div className="dashboard__above-fold">
 
                     {/* BLOQUE 1: KPIs ejecutivos */}
-                    <section ref={kpisRef} className="animate-in delay-1">
+                    <section className="animate-in delay-1 kpis">
                       <KPICards
                         filteredIncidents={filteredIncidents}
                         filteredEvents={filteredEvents}
@@ -783,7 +835,7 @@ export default function DashboardPage({
 
                     <div className="dashboard__above-fold__charts-row">
                       {/* BLOQUE 2a: Gráfico de volumen */}
-                      <div ref={areaChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                      <div className="animate-in delay-2 dashboard__above-fold__chart">
                         <IncidentsChart
                           events={events}
                           activeFilter={activeFilter}
@@ -800,7 +852,7 @@ export default function DashboardPage({
                       </div>
 
                       {/* BLOQUE 2b: Errores más frecuentes */}
-                      <div ref={barChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                      <div className="animate-in delay-2 dashboard__above-fold__chart">
                         <TopErrorsChart 
                           topCodes={topCodes} 
                           onViewSolution={(code, sdsContent, sdsUrl) =>
@@ -815,7 +867,6 @@ export default function DashboardPage({
 
                   {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}
                   <AIDiagnosticPanel
-                    ref={aiDiagnosticRef}
                     className="animate-in delay-3"
                     result={result}
                     consumables={realtimeConsumables}
@@ -830,7 +881,7 @@ export default function DashboardPage({
                   {/* ── BLOQUE 5: Paneles de diagnóstico (drill-down) ── */}
                   <div className="dashboard__drilldown-panels">
                     {/* Incidencias detectadas */}
-                    <section ref={incidentsTableRef} className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
+                    <section className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
                       <button
                         type="button"
                         className="collapsible-panel__header"
@@ -881,7 +932,7 @@ export default function DashboardPage({
                     />
 
                     {/* Consumibles en tiempo real */}
-                    <div ref={consumableRef}>
+                    <div>
                       <ConsumableWarningsPanel warnings={realtimeConsumables} />
                     </div>
 
@@ -1125,6 +1176,111 @@ export default function DashboardPage({
           </div>
         </div>
       )}
+      {/* ===== Modal de Exportación PDF (auto-contenido) ===== */}
+      {(exportingPdf || isAiPdfReady || isGeneratingAiPdf) && (
+        <>
+          {/* Keyframes del spinner embebidos directamente */}
+          <style>{`
+            @keyframes pdf-spin { to { transform: rotate(360deg); } }
+            .pdf-export-spinner {
+              width: 52px;
+              height: 52px;
+              border: 5px solid rgba(255,255,255,0.12);
+              border-top-color: #38bdf8;
+              border-radius: 50%;
+              animation: pdf-spin 0.9s linear infinite;
+              margin-bottom: 28px;
+            }
+          `}</style>
+
+          {/* Overlay */}
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(8, 12, 22, 0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            zIndex: 100000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {/* Cuadro del modal */}
+            <div style={{
+              background: '#111827',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '20px',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              width: '380px',
+              padding: '52px 40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+            }}>
+              {!isAiPdfReady ? (
+                <>
+                  <div className="pdf-export-spinner" />
+                  <p style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '1.35rem',
+                    fontWeight: 700,
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    Generando reporte
+                  </p>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '13px',
+                    color: '#64748b',
+                    lineHeight: 1.5
+                  }}>
+                    Redactando resumen ejecutivo con IA...
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: '52px', lineHeight: 1, marginBottom: '24px' }}>✅</div>
+                  <p style={{
+                    margin: '0 0 10px 0',
+                    fontSize: '1.35rem',
+                    fontWeight: 700,
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    ¡Reporte Listo!
+                  </p>
+                  <p style={{
+                    margin: '0 0 32px 0',
+                    fontSize: '13px',
+                    color: '#64748b',
+                    lineHeight: 1.5
+                  }}>
+                    La IA ha finalizado el resumen ejecutivo.
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button
+                      className="dashboard__btn"
+                      onClick={() => setIsAiPdfReady(false)}
+                    >
+                      Cerrar
+                    </button>
+                    <button
+                      className="dashboard__btn dashboard__btn--primary"
+                      onClick={() => { setIsAiPdfReady(false); handleExportPDF(true) }}
+                    >
+                      Abrir Impresión
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
+

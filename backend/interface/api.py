@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import logging
 
+from backend.application.scheduler import start_scheduler, stop_scheduler
 from backend.infrastructure.config import Settings, get_settings
 from backend.infrastructure.database import Database
 from backend.interface.exception_handlers import register_exception_handlers
 from backend.interface.rate_limiter import limiter
-from backend.interface.routers import ai, analysis, error_codes, fleet, saved_analysis, sds
+from backend.interface.routers import (
+    ai,
+    analysis,
+    error_codes,
+    fleet,
+    maintenance,
+    saved_analysis,
+    sds,
+)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
@@ -26,6 +35,14 @@ def get_app(settings: Settings | None = None) -> FastAPI:
         version="0.2.0",
         description="Modularized API for HP printer log analysis.",
     )
+
+    @app.on_event("startup")
+    def startup_event():
+        start_scheduler()
+
+    @app.on_event("shutdown")
+    def shutdown_event():
+        stop_scheduler()
 
     # Dependency overrides for testing
     if settings:
@@ -66,6 +83,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(error_codes.router)
     app.include_router(fleet.router)
+    app.include_router(maintenance.router)
 
     return app
 

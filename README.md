@@ -1,129 +1,96 @@
 # HP Logs Analyzer
 
 ![CI](https://github.com/ivmartinez-cd/Printer-Logs-Analyzer/actions/workflows/ci.yml/badge.svg)
-![Tests](https://img.shields.io/badge/tests-250%2F250%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-358%20passing-brightgreen)
 ![TypeScript](https://img.shields.io/badge/typescript-strict-blue)
 ![Docker](https://img.shields.io/badge/docker-ready-blue)
-![Deploy](https://img.shields.io/badge/deploy-ready-orange)
 
-Herramienta web interna para analizar logs de impresoras HP. Identificás un equipo por número de serie, la app resuelve el modelo, extrae los logs del portal HP SDS automáticamente, y genera un análisis completo: incidentes por código, KPIs, diagnóstico con IA, consumibles en tiempo real, gráficos y exportación a PDF ejecutivo.
-
-**Producción:** frontend en [Vercel](https://printer-logs-analyzer.vercel.app) · backend en [Render](https://printer-logs-analyzer.onrender.com)
-
----
+Herramienta web profesional para el análisis de logs de impresoras HP. Identificación por número de serie, resolución automática de modelo, extracción SDS, diagnóstico con IA y gestión de flota para mantenimiento preventivo.
 
 ## Características principales
 
-- **Parser de logs HP** — acepta formato TSV o texto copiado del portal (espacios múltiples). Soporta fechas en español (`ene`, `feb`, `mar`…).
-- **Extracción automática SDS** — extrae logs directamente desde el portal HP SDS mediante el número de serie. El backend gestiona login, búsqueda y conversión de HTML a TSV.
-- **Deep Linking** — acceso directo vía `https://.../SERIALNUMBER`. La app detecta el serial en la URL, resuelve el modelo y extrae los logs automáticamente.
-- **Resolución automática de modelo** — al extraer por serial, el backend detecta el nombre del modelo desde SDS y busca la mejor coincidencia en el catálogo local.
-- **Integración Insight API HP** — alertas del dispositivo en tiempo real (consumibles, contadores, historial del último mes) directamente en el dashboard.
-- **Diagnóstico con IA** — panel ejecutivo que llama a **Claude Opus 4.6** on demand; devuelve JSON estructurado: diagnóstico, acciones priorizadas e impacto operativo.
-- **Catálogo de modelos y consumibles** — carga de nuevos modelos subiendo el PDF Service Cost Data oficial (extracción automática con Claude).
-- **Ingesta CPMD (Service Manual)** — pipeline híbrido: regex de alta confianza + LLM como fallback para extraer soluciones técnicas con pasos y FRUs.
-- **Estado de consumibles** — tabla con categoría, part number, vida útil y contador. Excluye tóners y ADFs. Alerta roja en estado crítico (>100%).
-- **SDS Engineering Incident** — match automático contra incidentes del log mediante tokens y keywords. Soporta comodín `z` hex.
-- **Resumen Ejecutivo** — panel inteligente con KPIs, severidad global y análisis listo para reportes.
-- **Exportación a PDF** — reporte A4 de alta fidelidad en modo Light, incluyendo todos los paneles generados.
-- **Incidentes guardados** — snapshots del análisis con comparación temporal y gráfico de tendencia.
-- **Modo offline** — fallback automático a JSON local si PostgreSQL no está disponible.
+- **Análisis Profundo con IA** — Diagnósticos estructurados mediante Claude, con pasos de acción priorizados e impacto operativo.
+- **Gestión de Flota (Avisos)** — Sistema de monitoreo de flota completa con sincronización en segundo plano y detección de alertas críticas.
+- **Parser de Logs HP** — Soporte multiformato (TSV, portales) y normalización inteligente de logs.
+- **Extracción Automática SDS** — Extracción directa desde el portal HP SDS sin intervención manual.
+- **Integración Insight API** — Datos de consumibles, contadores y alertas en tiempo real.
+- **Reportes Ejecutivos PDF** — Exportación de reportes A4 de alta fidelidad para clientes.
+- **Catálogo de Soluciones CPMD** — Integración de manuales de servicio para obtener soluciones técnicas directas por código de error.
 
 ---
 
 ## Arquitectura
 
-Monorepo con frontend React/TypeScript y backend Python/FastAPI conectados por REST.
+Monorepo organizado bajo estándares profesionales de mantenibilidad.
 
 ```
 Printer-Logs-Analyzer/
-├── package.json              # Scripts raíz (dev, lint, typecheck, test:*)
-├── dev.cmd                   # Script de arranque rápido (Windows)
-├── docker-compose.yml        # Contenedores backend + frontend
 ├── backend/
-│   ├── main.py               # Entrypoint uvicorn local
-│   ├── requirements.txt
-│   ├── ruff.toml             # Configuración linting Python
-│   ├── Dockerfile
-│   ├── interface/
-│   │   ├── api.py            # FastAPI factory — orquesta todos los routers
-│   │   ├── auth.py           # Autenticación x-api-key
-│   │   ├── routers/          # analysis, sds, ai, saved_analysis, printers, error_codes
-│   │   └── schemas/          # Pydantic I/O schemas por router
-│   ├── domain/entities.py    # Modelos Pydantic (Event, Incident, EnrichedEvent, …)
 │   ├── application/
-│   │   ├── parsers/log_parser.py
-│   │   └── services/
-│   │       ├── sds_web_service.py        # Extracción automatizada SDS
-│   │       ├── insight_service.py        # API Insight HP (alertas + consumibles)
-│   │       ├── ai_diagnosis_service.py   # Claude Opus 4.6 (JSON estructurado)
-│   │       ├── analysis_service.py
-│   │       ├── compare_service.py
-│   │       ├── cpmd_extractor.py         # Extractor regex de CPMD
-│   │       ├── cpmd_ingest.py            # Pipeline híbrido (regex + LLM)
-│   │       ├── cpmd_parser.py
-│   │       ├── cpmd_structured_extractor.py
-│   │       ├── insight_service.py
-│   │       └── pdf_extraction_service.py
-│   ├── infrastructure/
-│   │   ├── config.py         # Settings (env vars)
-│   │   ├── database.py       # psycopg2 con pool y fallback automático
-│   │   ├── content_fetcher.py
-│   │   ├── fallback/         # JSON seed para modo offline
-│   │   └── repositories/     # base, error_code, error_solution, saved_analysis
-│   ├── migrations/           # SQL 001–005
-│   └── tests/                # pytest — 19 suites de tests
+│   │   └── services/       # sds, insight, maintenance, ai_diagnosis
+│   ├── domain/             # Entities y modelos Pydantic
+│   ├── infrastructure/     # database, repositories, config
+│   ├── interface/          # FastAPI, routers, schemas
+│   ├── migrations/         # Esquemas SQL versionados
+│   ├── scripts/            # run_migrations.py robusto
+│   └── tests/              # 186 tests pytest
 ├── frontend/
-│   ├── Dockerfile
 │   ├── src/
-│   │   ├── pages/DashboardPage.tsx       # Orquestador principal
-│   │   ├── components/                   # 28 componentes
-│   │   ├── hooks/                        # useAnalysis, useDateFilter, useExportPdf, …
-│   │   ├── services/api.ts               # Cliente HTTP tipado
-│   │   └── contexts/ToastContext.tsx
-│   └── src/__tests__/                    # vitest — happy-dom
-├── docs/                     # Documentación técnica, CHANGELOG, ESTADO-ACTUAL
-├── scripts/                  # POCs, utilitarios y batch files de extracción
-└── samples/                  # Logs de muestra (TSV), HTML portales, CSVs
+│   │   ├── components/     # Agrupados por: Analysis, Monitor, Parser, UI, Maintenance
+│   │   ├── pages/          # DashboardPage, AvisosPage
+│   │   ├── hooks/          # useAnalysis, useExportPdf, useDateFilter
+│   │   ├── store/          # Zustand global state
+│   │   └── services/       # Cliente API tipado
+│   └── src/__tests__/      # 172 tests vitest
+├── scripts/                # internal/ y poc/ utilidades
+├── samples/                # Archivos de muestra y logs
+└── docs/                   # Documentación técnica y visión
 ```
 
 ---
 
-## API — endpoints principales
+## Instalación y Uso
+
+### Requisitos
+- Node.js 18+
+- Python 3.10+
+- Docker (opcional para entorno completo)
+
+### Inicio Rápido (Windows)
+```bash
+# Instalar dependencias y arrancar dev mode
+npm install
+npm run dev
+```
+
+### Base de Datos
+Para inicializar o actualizar las tablas:
+```bash
+python backend/scripts/run_migrations.py
+```
+
+---
+
+## Calidad y Estabilidad
+El proyecto mantiene una política de **Zero-Failure**.
+
+- **Frontend Tests**: 172 tests pasados (Vitest + Happy DOM).
+- **Backend Tests**: 186 tests pasados (Pytest).
+- **Type Checking**: Strict TypeScript en todo el frontend.
+- **Linting**: Ruff (Python) y ESLint (React).
+
+---
+
+## API — Endpoints principales
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/health` | Estado del servidor y modo de BD |
-| POST | `/parser/preview` | Parse + análisis + enriquecimiento de logs |
-| POST | `/parser/validate` | Detecta códigos nuevos sin analizar |
-| POST | `/error-codes/upsert` | Crea o actualiza un código en el catálogo |
-| GET | `/sds/resolve-device?serial=` | Resuelve modelo y device_id por número de serie |
-| POST | `/sds/extract-logs` | Extrae logs del portal SDS por serial |
-| POST | `/analysis/ai-diagnose` | Diagnóstico con Claude Opus 4.6 (rate limit: 5/min) |
-| POST | `/saved-analyses` | Guarda un snapshot de análisis |
-| GET | `/saved-analyses` | Lista snapshots guardados |
-| GET | `/saved-analyses/{id}` | Detalle de un snapshot |
-| DELETE | `/saved-analyses/{id}` | Elimina un snapshot |
-| POST | `/saved-analyses/{id}/compare` | Compara snapshot con nuevo log |
-| GET | `/insight/devices/{serial}/alerts` | Alertas vivas e historial del portal SDS |
-| GET | `/insight/devices/{serial}/meters` | Contadores/metros del dispositivo |
+| POST | `/parser/preview` | Análisis y enriquecimiento de logs |
+| GET | `/sds/resolve-device` | Resolución de modelo por serial |
+| POST | `/maintenance/check-now` | Inicia sync de flota en background |
+| GET | `/maintenance/sync-status/{id}` | Polling de estado de sincronización |
+| POST | `/analysis/ai-diagnose` | Diagnóstico ejecutivo con IA |
 
 ---
 
-## Setup local
-
-Consultar [CLAUDE.md](./CLAUDE.md) para los comandos de instalación y arranque.
-Consultar [docs/ESTADO-ACTUAL.md](./docs/ESTADO-ACTUAL.md) para el flujo técnico detallado.
-
-### Docker (Recomendado)
-
-```bash
-# Levantar servicios en background
-docker compose up -d --build
-
-# Inicializar base de datos (solo la primera vez o tras reset)
-docker exec printer-logs-analyzer-backend-1 python backend/scripts/run_migrations.py
-
-# Frontend: http://localhost:5173
-# Backend:  http://localhost:8000
-```
+**Producción:** [Vercel (Frontend)](https://printer-logs-analyzer.vercel.app) · [Render (Backend)](https://printer-logs-analyzer.onrender.com)

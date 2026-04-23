@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { DashboardHeader } from '../../components/DashboardHeader'
+import { DashboardHeader } from '../../components/ui/DashboardHeader'
 
 afterEach(cleanup)
 
@@ -31,10 +31,10 @@ describe('DashboardHeader', () => {
 
   it('botón "Exportar PDF" solo aparece cuando hasResult es true', () => {
     const { rerender } = render(<DashboardHeader {...defaultProps} hasResult={false} />)
-    expect(screen.queryByText('Exportar PDF')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/Exportar reporte/i)).not.toBeInTheDocument()
 
     rerender(<DashboardHeader {...defaultProps} hasResult={true} />)
-    expect(screen.getByText('Exportar PDF')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Exportar reporte/i)).toBeInTheDocument()
   })
 
   it('click en botones dispara los callbacks correctos', async () => {
@@ -59,22 +59,23 @@ describe('DashboardHeader', () => {
       />
     )
 
-    await user.click(screen.getByText('Incidentes guardados'))
+    await user.click(screen.getByLabelText(/Ver incidentes guardados/i))
     expect(onOpenSavedList).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Analizar otro log'))
+    await user.click(screen.getByLabelText(/Analizar otro archivo/i))
     expect(onAnalyzeNew).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Guardar incidente'))
+    await user.click(screen.getByLabelText(/Guardar análisis actual/i))
     expect(onSaveIncident).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Asociar SDS'))
+    await user.click(screen.getByLabelText(/Asociar con portal HP SDS/i))
     expect(onAddSds).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByText('Exportar PDF'))
+    await user.click(screen.getByLabelText(/Exportar reporte/i))
     expect(onExportPdf).toHaveBeenCalledOnce()
 
     await user.click(screen.getByLabelText('Ayuda — ¿Cómo funciona?'))
     expect(onHelp).toHaveBeenCalledOnce()
   })
 })
+

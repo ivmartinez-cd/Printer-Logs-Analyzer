@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import { KPICards } from '../../components/KPICards'
+import { KPICards } from '../../components/Monitor/KPICards'
 import { mockEvent, mockIncidents, mockEvents } from '../fixtures/events'
 
 afterEach(cleanup)

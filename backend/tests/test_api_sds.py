@@ -93,14 +93,16 @@ def test_extract_logs_unauthorized(client):
 
 
 @patch("backend.interface.routers.sds._insight_get_device_info")
-def test_extract_logs_not_found(mock_insight_info, client):
-    """Test fallback when device is not found."""
-    mock_insight_info.return_value = {"device_id": None, "firmware": None}
+def test_extract_logs_fallback_on_error(mock_insight_info, client):
+    """Verify that the endpoint falls back to mock data if Insight API fails."""
+    mock_insight_info.side_effect = Exception("API Down")
 
-    response = client.post("/sds/extract-logs", json={"serial": "NOTFOUND"}, headers=_HEADERS)
+    response = client.post("/sds/extract-logs", json={"serial": "ANYSERIAL"}, headers=_HEADERS)
 
-    assert response.status_code == 404
-    assert "Dispositivo no encontrado" in response.json()["detail"]
+    assert response.status_code == 200
+    data = response.json()
+    assert data["serial"] == "ANYSERIAL"
+    assert data["firmware"] == "N/A"
 
 
 def test_extract_logs_missing_serial(client):

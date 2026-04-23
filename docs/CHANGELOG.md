@@ -2,6 +2,14 @@
 
 Historial extraído de CLAUDE.md. Para guía activa del repo, ver CLAUDE.md.
 
+**Mantenimiento y Estructura Profesional: Reorganización y Gestión de Flota (2026-04-22)**
+- **Reorganización de Directorios**: Limpieza profunda de la raíz y categorización de componentes frontend por dominio (Analysis, Monitor, Parser, UI, Maintenance).
+- **Módulo de Avisos (Fleet Monitoring)**: Implementación de sincronización de flota en segundo plano con tracking de progreso y reglas de alertas críticas.
+- **Sistema de Migraciones Robusto**: Nuevo runner con tracking de estado para evitar re-ejecuciones y garantizar integridad de la DB.
+- **Categorización de Scripts**: Clasificación de utilidades en `internal/` y `poc/`.
+- **Estandarización de Casing**: Resolución de conflictos de mayúsculas/minúsculas en carpetas de componentes para compatibilidad multiplataforma.
+- **Estabilidad de Tests**: 358 tests pasando (172 FE, 186 BE) tras la reorganización.
+
 **Mantenimiento y DevOps: Sincronización y Dockerización (2026-04-21)**
 - **Sincronización Local**: Actualización masiva de `main` (13 commits tras SSD recovery) e integración de todas las ramas de feature activas (`fix/fleet-telemetry-sync`, `fix/layout-overflow-welcome`).
 - **Limpieza de Ramas**: Eliminación de ramas locales y remotas fusionadas para mantener el repositorio limpio y enfocado.

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { AIDiagnosticPanel } from '../../components/AIDiagnosticPanel'
+import { AIDiagnosticPanel } from '../../components/Analysis/AIDiagnosticPanel'
 import * as api from '../../services/api'
 
 vi.mock('../../services/api', () => ({

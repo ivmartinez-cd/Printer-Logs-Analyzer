@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { IncidentsTable } from '../../components/IncidentsTable'
+import { IncidentsTable } from '../../components/Parser/IncidentsTable'
 import { mockEvent, mockIncidentRow } from '../fixtures/events'
 
 afterEach(cleanup)

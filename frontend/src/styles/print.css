@@ -18,15 +18,39 @@
 .is-exporting body {
   background-color: #ffffff !important;
 }
-
 .is-exporting .dashboard {
-  padding: 30px !important;
+  padding: 0 !important;
+  margin: 0 !important;
   max-width: none !important;
+  width: 1024px !important; /* Fixed width for jsPDF/html2canvas stability */
   background: #ffffff !important;
   color: #111827 !important;
-  gap: 20px !important;
+  display: block !important;
+}
+
+.is-exporting .dashboard__content-wrap {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 20px 40px !important;
+  background: #ffffff !important;
+}
+
+.is-exporting .dashboard__above-fold {
+  display: block !important;
+  width: 100% !important;
+}
+
+.is-exporting .dashboard__above-fold__charts-row {
   display: flex !important;
   flex-direction: column !important;
+  gap: 20px !important;
+  width: 100% !important;
+}
+
+.is-exporting .dashboard__above-fold__chart {
+  width: 100% !important;
+  max-width: none !important;
 }
 
 /* Forzar expansion de paneles colapsables */
@@ -211,7 +235,11 @@
 .is-exporting .dashboard__actions,
 .is-exporting .insight-alerts-panel,
 .is-exporting .sds-incident-panel,
-.is-exporting .events-table {
+.is-exporting .events-table,
+.is-exporting .chart-controls,
+.is-exporting .dashboard-table__sort-icon,
+.is-exporting .dashboard-table__filter-btn,
+.is-exporting .dashboard-table__severity-btn {
   display: none !important;
 }
 

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { SDSIncidentPanel } from '../../components/SDSIncidentPanel'
+import { SDSIncidentPanel } from '../../components/Monitor/SDSIncidentPanel'
 
 const mockSdsIncident = {
   code: '60.00.02',

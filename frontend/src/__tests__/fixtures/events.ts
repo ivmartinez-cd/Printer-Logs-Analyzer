@@ -1,5 +1,5 @@
 import type { EnrichedEvent, Incident } from '../../types/api'
-import type { IncidentRow } from '../../components/IncidentsTable'
+import type { IncidentRow } from '../../components/Parser/IncidentsTable'
 
 export function mockEvent(overrides: Partial<EnrichedEvent> = {}): EnrichedEvent {
   return {
@@ -30,7 +30,7 @@ export function mockIncident(overrides: Partial<Incident> = {}): Incident {
     end_time: events[events.length - 1].timestamp,
     counter_range: [events[0].counter, events[events.length - 1].counter],
     events,
-    sds_link: undefined,
+    sds_link: null,
     sds_solution_content: null,
     ...overrides,
   }

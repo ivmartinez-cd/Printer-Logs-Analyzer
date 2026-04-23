@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,7 +8,10 @@ from backend.interface.routers import fleet as fleet_router
 from fastapi.testclient import TestClient
 
 _HEADERS = {"x-api-key": "dev"}
-_SAMPLE_TSV = "Type\tCode\tDate\tCounter\tFirmware\tHelp\nInfo\t00.00.00\t10-mar-2026 10:00:00\t100\tFW\tOK\n"
+_SAMPLE_TSV = (
+    "Type\tCode\tDate\tCounter\tFirmware\tHelp\nInfo\t00.00.00\t10-mar-2026 10:00:00\t100\tFW\tOK\n"
+)
+
 
 def _make_settings() -> Settings:
     return Settings(
@@ -22,12 +24,14 @@ def _make_settings() -> Settings:
         INSIGHT_API_SECRET="secret",
     )
 
+
 @pytest.fixture
 def client() -> TestClient:
     app = get_app(settings=_make_settings())
     mock_repo = MagicMock()
     app.dependency_overrides[get_error_code_repo] = lambda: mock_repo
     return TestClient(app)
+
 
 @patch("backend.interface.routers.fleet.get_sds_session")
 @patch("backend.interface.routers.fleet.html_to_tsv")
@@ -60,15 +64,15 @@ def test_scan_fleet_syncs_realtime_consumables(
         "device_id": 12345,
         "model_name": "HP LaserJet Managed MFP",
         "firmware": "FS4.11",
-        "metadata": {}, # This currently triggers fallback to 20/57
-        "raw_extended": {}
+        "metadata": {},  # This currently triggers fallback to 20/57
+        "raw_extended": {},
     }
 
     # Mock real-time consumables (what we want to see)
     mock_consumables.return_value = [
         {"type": "TONER", "percentLeft": 68.0, "sku": "W9004MC"},
         {"type": "FUSER", "percentLeft": 82.0, "sku": "L0H24A"},
-        {"type": "MAINTENANCE_KIT", "percentLeft": 77.0, "sku": "MK"}
+        {"type": "MAINTENANCE_KIT", "percentLeft": 77.0, "sku": "MK"},
     ]
 
     mock_sds = MagicMock()

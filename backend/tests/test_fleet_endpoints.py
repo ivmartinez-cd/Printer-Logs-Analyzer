@@ -36,6 +36,7 @@ def client() -> TestClient:
 
 # ── /fleet/clients ──────────────────────────────────────────────────────────
 
+
 def test_list_clients_returns_200(client: TestClient) -> None:
     resp = client.get("/fleet/clients")
     assert resp.status_code == 200
@@ -59,6 +60,7 @@ def test_list_clients_schema(client: TestClient) -> None:
 
 
 # ── /fleet/clients/{client_id} ──────────────────────────────────────────────
+
 
 def test_get_client_dia(client: TestClient) -> None:
     with patch(
@@ -91,6 +93,7 @@ def test_get_client_devices_schema(client: TestClient) -> None:
 
 # ── /fleet/scan ─────────────────────────────────────────────────────────────
 
+
 def _make_mock_info(serial: str) -> dict:
     return {
         "device_id": 1001,
@@ -116,8 +119,13 @@ def _mock_alerts_error() -> dict:
 @pytest.fixture
 def scan_mocks():
     with (
-        patch("backend.interface.routers.fleet._insight_get_device_info", side_effect=_make_mock_info),
-        patch("backend.interface.routers.fleet._insight_get_device_alerts", return_value=_mock_alerts_ok()),
+        patch(
+            "backend.interface.routers.fleet._insight_get_device_info", side_effect=_make_mock_info
+        ),
+        patch(
+            "backend.interface.routers.fleet._insight_get_device_alerts",
+            return_value=_mock_alerts_ok(),
+        ),
         patch("backend.interface.routers.fleet.search_customers", side_effect=Exception("skip")),
         patch("backend.interface.routers.fleet.get_sds_session") as mock_sds,
         patch("backend.interface.routers.fleet.html_to_tsv", return_value=""),
@@ -156,12 +164,15 @@ def test_scan_with_model_filter(client: TestClient, scan_mocks: None) -> None:
 
 # ── _compute_health ──────────────────────────────────────────────────────────
 
+
 def test_compute_health_ok() -> None:
     from backend.interface.routers.fleet import _compute_health
+
     rollers = [{"label": "Rodillo Bandeja 1", "percent": 90.0}]
     status, count, severity = _compute_health(
         {"fuser_life_percent": 80.0, "black_toner_percent": 75.0},
-        rollers, [],
+        rollers,
+        [],
     )
     assert status == "ok"
     assert count == 0
@@ -170,37 +181,45 @@ def test_compute_health_ok() -> None:
 
 def test_compute_health_critical_toner() -> None:
     from backend.interface.routers.fleet import _compute_health
+
     status, _, _ = _compute_health(
         {"fuser_life_percent": 80.0, "black_toner_percent": 10.0},
-        [], [],
+        [],
+        [],
     )
     assert status == "critical"
 
 
 def test_compute_health_warning_toner() -> None:
     from backend.interface.routers.fleet import _compute_health
+
     status, _, _ = _compute_health(
         {"fuser_life_percent": 80.0, "black_toner_percent": 20.0},
-        [], [],
+        [],
+        [],
     )
     assert status == "warning"
 
 
 def test_compute_health_critical_roller() -> None:
     from backend.interface.routers.fleet import _compute_health
+
     rollers = [{"label": "Rodillo ADF", "percent": 8.0}]
     status, _, _ = _compute_health(
         {"fuser_life_percent": 80.0, "black_toner_percent": 75.0},
-        rollers, [],
+        rollers,
+        [],
     )
     assert status == "critical"
 
 
 def test_compute_health_critical_alert() -> None:
     from backend.interface.routers.fleet import _compute_health
+
     status, count, severity = _compute_health(
         {"fuser_life_percent": 80.0, "black_toner_percent": 75.0},
-        [], [{"severity": "ERROR", "description": "jam"}],
+        [],
+        [{"severity": "ERROR", "description": "jam"}],
     )
     assert status == "critical"
     assert count == 1
@@ -209,9 +228,11 @@ def test_compute_health_critical_alert() -> None:
 
 def test_compute_health_warning_alert() -> None:
     from backend.interface.routers.fleet import _compute_health
+
     status, count, severity = _compute_health(
         {"fuser_life_percent": 80.0, "black_toner_percent": 75.0},
-        [], [{"severity": "WARNING", "description": "low toner"}],
+        [],
+        [{"severity": "WARNING", "description": "low toner"}],
     )
     assert status == "warning"
     assert severity == "WARNING"
