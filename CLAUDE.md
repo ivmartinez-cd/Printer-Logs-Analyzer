@@ -142,7 +142,7 @@ Printer-Logs-Analyzer/
         │   └── Maintenance/      # AvisosSidebar, RuleCard, ...
         ├── hooks/                # useAnalysis, useExportPdf, useDateFilter, ...
         ├── store/                # useAnalysisStore, useUIStore (Zustand)
-        └── __tests__/            # 172 tests vitest
+        └── __tests__/            # 187 tests vitest
 ```
 
 ---
