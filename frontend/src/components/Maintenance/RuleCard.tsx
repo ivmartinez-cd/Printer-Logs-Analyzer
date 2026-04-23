@@ -1,131 +1,133 @@
+import { MaintenanceDevice, MaintenanceDeviceState, MaintenanceIncident, MaintenanceModelRule } from '../../types/api'
+
 interface RuleCardProps {
-  rule: any
-  state: any
-  selectedDevice: any
-  incident?: any
-  onEditRule: (rule: any) => void
-  onAdjustState: (rule: any, state: any) => void
-  onRecordChange: (rule: any) => void
-  onOpenIncident?: (rule: any) => void
-  onCloseIncident?: (rule: any, incident: any) => void
+  rule: MaintenanceModelRule
+  selectedDevice: MaintenanceDevice | null
+  state?: MaintenanceDeviceState
+  incident?: MaintenanceIncident
+  onEditRule: (rule: MaintenanceModelRule) => void
+  onAdjustState: (rule: MaintenanceModelRule, state?: MaintenanceDeviceState) => void
+  onRecordChange: (rule: MaintenanceModelRule) => void
+  onOpenIncident: (rule: MaintenanceModelRule) => void
+  onCloseIncident: (rule: MaintenanceModelRule, incident: MaintenanceIncident) => void
+  loading?: boolean
 }
 
 export function RuleCard({
   rule,
-  state,
   selectedDevice,
+  state,
   incident,
   onEditRule,
   onAdjustState,
   onRecordChange,
   onOpenIncident,
   onCloseIncident,
+  loading,
 }: RuleCardProps) {
-  const lastCounter = state ? state.last_change_counter : 0
-  const nextChange = lastCounter + rule.expected_life
-  const remaining = selectedDevice ? (nextChange - selectedDevice.last_sync_counter) : null
-  const percent = selectedDevice ? Math.max(0, Math.min(100, (remaining! / rule.expected_life) * 100)) : null
+  // Para esta demo, calculamos el próximo cambio basándonos en el último counter registrado
+  // Si no hay counter registrado en 'state', asumimos el counter actual del equipo como baseline
+  const currentCounter = selectedDevice?.last_sync_counter ?? 0
+  const baseline = state?.last_change_counter ?? currentCounter
+  const nextChange = baseline + rule.expected_life
+  const remaining = nextChange - currentCounter
+  
+  const isWarning = remaining <= rule.alert_margin && remaining > 0
+  const isCritical = remaining <= 0
 
-  const isWarning = selectedDevice && remaining! <= rule.alert_margin
-  const isCritical = selectedDevice && remaining! <= 0
+  const statusClass = incident
+    ? 'is-incident'
+    : isCritical
+      ? 'is-critical'
+      : isWarning
+        ? 'is-warning'
+        : 'is-ok'
+
+  const statusLabel = incident
+    ? 'INCIDENTE ABIERTO'
+    : isCritical
+      ? 'CRÍTICO'
+      : isWarning
+        ? 'Atención'
+        : 'ESTADO ÓPTIMO'
 
   return (
-    <div className={`avisos-rule-card ${isCritical ? 'is-critical' : ''} ${incident ? 'has-incident' : ''}`}>
-      <div className="avisos-rule-header">
-        <h4>{rule.component_type}</h4>
-        <div className="avisos-rule-header-actions">
-          {!selectedDevice && (
+    <div className={`maintenance-rule-card ${statusClass}`}>
+      <div className="rule-card-header">
+        <div className="rule-component-info">
+          <span className="rule-icon">⚙️</span>
+          <h4 className="rule-component-name">{rule.component_type}</h4>
+          <button 
+            className="dashboard__btn--icon-edit" 
+            onClick={() => onEditRule(rule)}
+            title="Editar Regla"
+            style={{ padding: '4px', marginLeft: '8px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+          >
+            ✏️ Editar
+          </button>
+        </div>
+        <div className="rule-status-badge">{statusLabel}</div>
+      </div>
+
+      <div className="rule-card-body">
+        <div className="rule-stat-grid">
+          <div className="rule-stat-item">
+            <span className="rule-stat-label">Vida Útil Esperada</span>
+            <span className="rule-stat-value">{rule.expected_life.toLocaleString()} págs.</span>
+          </div>
+          <div className="rule-stat-item">
+            <span className="rule-stat-label">Margen de Alerta</span>
+            <span className="rule-stat-value">{rule.alert_margin.toLocaleString()} págs.</span>
+          </div>
+        </div>
+
+        <div className="rule-progress-section">
+          <div className="rule-progress-info">
+            <span className="rule-progress-label">Páginas restantes</span>
+            <span className="rule-progress-value">{remaining.toLocaleString()} páginas restantes</span>
+          </div>
+          <div className="rule-progress-bar-container">
             <div
-              className="edit-indicator-compact"
-              onClick={() => onEditRule(rule)}
-              title="Editar Regla Maestra"
-            >
-              ✏️ Editar
-            </div>
-          )}
-          {selectedDevice && (
-            <>
-              <div
-                className="edit-indicator-compact"
-                onClick={() => onAdjustState(rule, state)}
-                title="Ajustar Contador de Último Cambio"
-              >
-                ⚙️ Ajustar
-              </div>
-              {incident ? (
-                <span className="avisos-rule-badge is-incident" title={`Incidente abierto: ${incident.incident_number}`}>
-                  🎫 {incident.incident_number}
-                </span>
-              ) : (
-                <span className={`avisos-rule-badge ${isWarning ? 'is-warning' : ''}`}>
-                  {isCritical ? 'CRÍTICO' : isWarning ? 'Atención' : 'OK'}
-                </span>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="avisos-rule-body">
-        {selectedDevice && (
-          <div className="avisos-rule-progress">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${percent}%`,
-                  backgroundColor: percent! < 15 ? '#ef4444' : percent! < 30 ? '#f59e0b' : '#10b981'
-                }}
-              ></div>
-            </div>
-            <div className="progress-text">
-              {remaining?.toLocaleString()} páginas restantes
-            </div>
+              className="rule-progress-bar-fill"
+              style={{
+                width: `${Math.max(0, Math.min(100, (remaining / rule.expected_life) * 100))}%`,
+              }}
+            ></div>
           </div>
-        )}
-
-        <div className="avisos-rule-metric">
-          <span className="label">Vida Útil:</span>
-          <span className="value">{rule.expected_life?.toLocaleString()} págs.</span>
         </div>
 
-        <div className="avisos-rule-metric">
-          <span className="label">Margen Alerta:</span>
-          <span className="value">{rule.alert_margin?.toLocaleString()} págs.</span>
-        </div>
-
-        {selectedDevice && (
-          <div className="avisos-rule-metric">
-            <span className="label">Último Cambio:</span>
-            <span className="value">{lastCounter.toLocaleString()}</span>
-          </div>
-        )}
-
-        {incident?.notes && (
-          <div className="avisos-rule-metric">
-            <span className="label">Nota:</span>
-            <span className="value" style={{ fontStyle: 'italic', opacity: 0.8 }}>{incident.notes}</span>
+        {incident && (
+          <div className="rule-incident-info">
+            <span className="incident-icon">🎫</span>
+            <span className="incident-text">Incidente: {incident.incident_number}</span>
           </div>
         )}
       </div>
 
-      {selectedDevice && (
-        <div className="avisos-rule-actions">
+      {!loading && selectedDevice && (
+        <div className="rule-card-actions">
           {incident ? (
             <button
-              className="dashboard__btn dashboard__btn--primary"
+              className="dashboard__btn dashboard__btn--vibrant"
               style={{ width: '100%', height: '44px' }}
-              onClick={() => onCloseIncident?.(rule, incident)}
+              onClick={() => onCloseIncident(rule, incident)}
             >
               ✅ Cerrar Incidente y Registrar Reemplazo
             </button>
           ) : (
             <>
+              <button
+                className="dashboard__btn dashboard__btn--secondary"
+                style={{ width: '100%', height: '44px', marginBottom: '8px' }}
+                onClick={() => onAdjustState(rule, state)}
+              >
+                ⚙️ Ajustar Último Cambio
+              </button>
               {(isWarning || isCritical) && (
                 <button
                   className="dashboard__btn dashboard__btn--warning"
                   style={{ width: '100%', height: '44px', marginBottom: '8px' }}
-                  onClick={() => onOpenIncident?.(rule)}
+                  onClick={() => onOpenIncident(rule)}
                 >
                   🎫 Abrir Incidente
                 </button>

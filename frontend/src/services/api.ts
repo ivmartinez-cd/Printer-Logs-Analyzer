@@ -13,7 +13,16 @@ import type {
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
-  FleetScanResult
+  FleetScanResult,
+  FleetScanStatusResponse,
+  MaintenanceCheckJob,
+  MaintenanceDevice,
+  MaintenanceDeviceState,
+  MaintenanceHistory,
+  MaintenanceIncident,
+  MaintenanceModelRule,
+  MaintenanceMutationResponse,
+  MaintenanceSyncStatus,
 } from '../types/api'
 
 const API_BASE =
@@ -420,13 +429,16 @@ export async function triggerFleetScan(
   return handleResponse(res)
 }
 
-export async function getFleetScanStatus(jobId: string, signal?: AbortSignal): Promise<any> {
+export async function getFleetScanStatus(
+  jobId: string,
+  signal?: AbortSignal
+): Promise<FleetScanStatusResponse> {
   const res = await apiFetch(`${API_BASE}/fleet/scan-status/${jobId}`, {
     method: 'GET',
     headers: apiHeaders(),
     signal,
   })
-  return handleResponse(res)
+  return handleResponse<FleetScanStatusResponse>(res)
 }
 
 export async function scanFleet(
@@ -450,17 +462,19 @@ export async function scanFleet(
 
 // --- Maintenance / Avisos ---
 
-export async function getMaintenanceDevices(): Promise<any[]> {
+export async function getMaintenanceDevices(): Promise<MaintenanceDevice[]> {
   const res = await apiFetch(`${API_BASE}/maintenance/devices`, { method: 'GET', headers: apiHeaders() })
-  return handleResponse(res)
+  return handleResponse<MaintenanceDevice[]>(res)
 }
 
-export async function getMaintenanceModelRules(modelFamily: string): Promise<any[]> {
+export async function getMaintenanceModelRules(
+  modelFamily: string
+): Promise<MaintenanceModelRule[]> {
   const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/rules`, { method: 'GET', headers: apiHeaders() })
-  return handleResponse(res)
+  return handleResponse<MaintenanceModelRule[]>(res)
 }
 
-export async function upsertMaintenanceModelRule(rule: any): Promise<void> {
+export async function upsertMaintenanceModelRule(rule: MaintenanceModelRule): Promise<void> {
   const res = await apiFetch(`${API_BASE}/maintenance/models/rules`, {
     method: 'POST',
     headers: apiHeaders(),
@@ -469,9 +483,11 @@ export async function upsertMaintenanceModelRule(rule: any): Promise<void> {
   return handleResponse(res)
 }
 
-export async function getMaintenanceDeviceState(serial: string): Promise<any[]> {
+export async function getMaintenanceDeviceState(
+  serial: string
+): Promise<MaintenanceDeviceState[]> {
   const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/state`, { method: 'GET', headers: apiHeaders() })
-  return handleResponse(res)
+  return handleResponse<MaintenanceDeviceState[]>(res)
 }
 
 export async function updateDeviceState(serial: string, componentType: string, lastChangeCounter: number): Promise<void> {
@@ -494,41 +510,42 @@ export async function discoverFamily(modelFamily: string): Promise<void> {
 export async function triggerMaintenanceCheck(
   modelFamily?: string,
   sendEmails: boolean = true
-): Promise<{ job_id: string; total: number; status: string }> {
+): Promise<MaintenanceCheckJob> {
   const body = JSON.stringify({ model_family: modelFamily ?? null, send_emails: sendEmails })
   const res = await apiFetch(`${API_BASE}/maintenance/check-now`, {
     method: 'POST',
     headers: apiHeaders(),
     body,
   })
-  return handleResponse(res)
+  return handleResponse<MaintenanceCheckJob>(res)
 }
 
-export async function getMaintenanceSyncStatus(
-  jobId: string
-): Promise<{ status: string; processed: number; total: number; errors: number }> {
+export async function getMaintenanceSyncStatus(jobId: string): Promise<MaintenanceSyncStatus> {
   const res = await apiFetch(
     `${API_BASE}/maintenance/sync-status/${encodeURIComponent(jobId)}`,
     { method: 'GET', headers: apiHeaders() }
   )
-  return handleResponse(res)
+  return handleResponse<MaintenanceSyncStatus>(res)
 }
 
-export async function syncMaintenanceDevice(serial: string, sendEmails: boolean = true): Promise<any> {
-  const url = `${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/sync?send_emails=${sendEmails}`;
+export async function syncMaintenanceDevice(
+  serial: string,
+  sendEmails: boolean = true
+): Promise<MaintenanceDevice> {
+  const url = `${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/sync?send_emails=${sendEmails}`
   const res = await apiFetch(url, {
     method: 'POST',
     headers: apiHeaders(),
   }, 30_000)
-  return handleResponse(res)
+  return handleResponse<MaintenanceDevice>(res)
 }
 
-export async function getMaintenanceHistory(serial: string): Promise<any[]> {
+export async function getMaintenanceHistory(serial: string): Promise<MaintenanceHistory[]> {
   const res = await apiFetch(`${API_BASE}/maintenance/history/${encodeURIComponent(serial)}`, {
     method: 'GET',
     headers: apiHeaders(),
   })
-  return handleResponse(res)
+  return handleResponse<MaintenanceHistory[]>(res)
 }
 
 export async function recordMaintenanceChange(data: {
@@ -550,30 +567,33 @@ export async function openMaintenanceIncident(data: {
   component_type: string
   incident_number: string
   notes?: string
-}): Promise<any> {
+}): Promise<MaintenanceIncident> {
   const res = await apiFetch(`${API_BASE}/maintenance/incidents`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify(data),
   })
-  return handleResponse(res)
+  return handleResponse<MaintenanceIncident>(res)
 }
 
-export async function closeMaintenanceIncident(incidentId: string, notes?: string): Promise<any> {
+export async function closeMaintenanceIncident(
+  incidentId: string,
+  notes?: string
+): Promise<MaintenanceMutationResponse> {
   const res = await apiFetch(`${API_BASE}/maintenance/incidents/${encodeURIComponent(incidentId)}/close`, {
     method: 'POST',
     headers: apiHeaders(),
     body: JSON.stringify({ notes }),
   })
-  return handleResponse(res)
+  return handleResponse<MaintenanceMutationResponse>(res)
 }
 
-export async function getDeviceIncidents(serial: string): Promise<any[]> {
+export async function getDeviceIncidents(serial: string): Promise<MaintenanceIncident[]> {
   const res = await apiFetch(`${API_BASE}/maintenance/devices/${encodeURIComponent(serial)}/incidents`, {
     method: 'GET',
     headers: apiHeaders(),
   })
-  return handleResponse(res)
+  return handleResponse<MaintenanceIncident[]>(res)
 }
 
 export async function renameFamily(oldName: string, newName: string): Promise<void> {

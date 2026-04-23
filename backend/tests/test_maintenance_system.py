@@ -165,7 +165,9 @@ def test_maintenance_api_endpoints(client):
     assert response.status_code == 200
 
     # Test forcing check — now returns immediately with job_id
-    response = client.post("/maintenance/check-now", headers=headers, json={})
+    with patch("backend.infrastructure.repositories.maintenance_repository.MaintenanceRepository.get_all_devices") as mock_get:
+        mock_get.return_value = [MaintenanceDevice(serial="S1", model_family="F1")]
+        response = client.post("/maintenance/check-now", headers=headers, json={})
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "running"

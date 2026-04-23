@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AvisosPage } from '../../pages/AvisosPage'
 import * as api from '../../services/api'
 import { ToastProvider } from '../../contexts/ToastContext'
+import type { MaintenanceDevice, MaintenanceModelRule } from '../../types/api'
 
 // Mock the API services
 vi.mock('../../services/api', () => ({
@@ -20,8 +21,7 @@ describe('AvisosPage Integration', () => {
   })
 
   it('renders the empty state when no family is selected', async () => {
-    // @ts-ignore
-    api.getMaintenanceDevices.mockResolvedValue([])
+    vi.mocked(api.getMaintenanceDevices).mockResolvedValue([])
 
     render(
       <ToastProvider>
@@ -37,12 +37,11 @@ describe('AvisosPage Integration', () => {
   })
 
   it('loads and displays devices in the sidebar', async () => {
-    const mockDevices = [
+    const mockDevices: MaintenanceDevice[] = [
       { serial: 'SERIAL-1', model_family: 'Family 1', last_sync_counter: 1000 },
       { serial: 'SERIAL-2', model_family: 'Family 1', last_sync_counter: 2000 },
     ]
-    // @ts-ignore
-    api.getMaintenanceDevices.mockResolvedValue(mockDevices)
+    vi.mocked(api.getMaintenanceDevices).mockResolvedValue(mockDevices)
 
     render(
       <ToastProvider>
@@ -57,13 +56,22 @@ describe('AvisosPage Integration', () => {
   })
 
   it('loads family rules when a family is selected', async () => {
-    const mockDevices = [{ serial: 'S1', model_family: 'Family 1', last_sync_counter: 1000 }]
-    const mockRules = [{ id: 1, family: 'Family 1', part_name: 'Roller', interval_pages: 100000 }]
+    const mockDevices: MaintenanceDevice[] = [
+      { serial: 'S1', model_family: 'Family 1', last_sync_counter: 1000 },
+    ]
+    const mockRules: MaintenanceModelRule[] = [
+      {
+        id: 1,
+        model_family: 'Family 1',
+        component_type: 'Roller',
+        expected_life: 100000,
+        alert_margin: 10000,
+        email_recipients: null,
+      },
+    ]
     
-    // @ts-ignore
-    api.getMaintenanceDevices.mockResolvedValue(mockDevices)
-    // @ts-ignore
-    api.getMaintenanceModelRules.mockResolvedValue(mockRules)
+    vi.mocked(api.getMaintenanceDevices).mockResolvedValue(mockDevices)
+    vi.mocked(api.getMaintenanceModelRules).mockResolvedValue(mockRules)
 
     render(
       <ToastProvider>

@@ -80,57 +80,85 @@ export function DashboardHeader({
         {showSavedListButton && (
           <button
             type="button"
-            className="dashboard__btn dashboard__btn--secondary"
+            className="dashboard__btn--icon"
             onClick={onOpenSavedList}
+            data-tooltip="Incidentes guardados"
+            aria-label="Ver incidentes guardados"
           >
-            Incidentes guardados
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
           </button>
         )}
         {hasResult && (
           <button
             type="button"
-            className="dashboard__btn dashboard__btn--primary dashboard__btn--header-cta"
+            className="dashboard__btn--icon dashboard__btn--icon--primary"
             onClick={onAnalyzeNew}
+            data-tooltip="Analizar otro log"
+            aria-label="Analizar otro archivo de log"
           >
-            Analizar otro log
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
           </button>
         )}
         {hasResult && (
           <button
             type="button"
-            className="dashboard__btn dashboard__btn--secondary"
+            className="dashboard__btn--icon"
             onClick={onSaveIncident}
+            data-tooltip="Guardar incidente"
+            aria-label="Guardar análisis actual como incidente"
           >
-            Guardar incidente
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+            </svg>
           </button>
         )}
         {hasResult && (
           <button
             type="button"
-            className="dashboard__btn dashboard__btn--secondary"
+            className="dashboard__btn--icon"
             onClick={onAddSds}
+            data-tooltip="Asociar SDS"
+            aria-label="Asociar con portal HP SDS"
           >
-            Asociar SDS
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
           </button>
         )}
         {hasResult && (
           <button
             type="button"
-            className="dashboard__btn dashboard__btn--secondary"
+            className="dashboard__btn--icon"
             onClick={onExportPdf}
             disabled={exportingPdf}
+            data-tooltip={exportingPdf ? 'Generando PDF…' : 'Exportar PDF'}
+            aria-label="Exportar reporte a PDF"
           >
-            {exportingPdf ? 'Generando PDF…' : 'Exportar PDF'}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
           </button>
         )}
         <button
           type="button"
           className="dashboard__btn--help-icon"
           onClick={onHelp}
-          title="¿Cómo funciona?"
+          data-tooltip="¿Cómo funciona?"
           aria-label="Ayuda — ¿Cómo funciona?"
         >
-          ?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
         </button>
         <LiveClock className="dashboard__datetime" />
         <DbStatusBadge status={healthStatus} />

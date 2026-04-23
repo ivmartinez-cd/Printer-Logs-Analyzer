@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getMaintenanceDevices,
   getMaintenanceModelRules,
@@ -20,38 +20,63 @@ import {
 import { useToast } from '../contexts/ToastContext'
 import { AvisosSidebar } from '../components/Maintenance/AvisosSidebar'
 import { RuleCard } from '../components/Maintenance/RuleCard'
-import { RuleModal, RecordChangeModal, StateModal, NewFamilyModal, OpenIncidentModal, CloseIncidentModal, HowItWorksModal } from '../components/Maintenance/MaintenanceModals'
+import {
+  CloseIncidentModal,
+  HowItWorksModal,
+  type MaintenanceCloseIncidentDraft,
+  NewFamilyModal,
+  OpenIncidentModal,
+  type MaintenanceRecordDraft,
+  RecordChangeModal,
+  RuleModal,
+  type MaintenanceStateDraft,
+  StateModal,
+} from '../components/Maintenance/MaintenanceModals'
+import type {
+  MaintenanceDevice,
+  MaintenanceDeviceState,
+  MaintenanceHistory,
+  MaintenanceIncident,
+  MaintenanceModelRule,
+} from '../types/api'
+
+interface MaintenanceSyncJobState {
+  jobId: string
+  processed: number
+  total: number
+  errors: number
+}
 
 export function AvisosPage({ onBack }: { onBack: () => void }) {
-  const [devices, setDevices] = useState<any[]>([])
+  const [devices, setDevices] = useState<MaintenanceDevice[]>([])
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
   const [discovering, setDiscovering] = useState(false)
-  const [syncJob, setSyncJob] = useState<{ jobId: string; processed: number; total: number; errors: number } | null>(null)
+  const [syncJob, setSyncJob] = useState<MaintenanceSyncJobState | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null)
-  const [selectedDevice, setSelectedDevice] = useState<any | null>(null)
+  const [selectedDevice, setSelectedDevice] = useState<MaintenanceDevice | null>(null)
   
-  const [rules, setRules] = useState<any[]>([])
-  const [deviceStates, setDeviceStates] = useState<any[]>([])
-  const [history, setHistory] = useState<any[]>([])
-  const [incidents, setIncidents] = useState<any[]>([])
+  const [rules, setRules] = useState<MaintenanceModelRule[]>([])
+  const [deviceStates, setDeviceStates] = useState<MaintenanceDeviceState[]>([])
+  const [history, setHistory] = useState<MaintenanceHistory[]>([])
+  const [incidents, setIncidents] = useState<MaintenanceIncident[]>([])
   const [loadingRules, setLoadingRules] = useState(false)
   
   // Rule Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingRule, setEditingRule] = useState<any | null>(null)
+  const [editingRule, setEditingRule] = useState<MaintenanceModelRule | null>(null)
   const [saving, setSaving] = useState(false)
 
   // Record Change Modal State
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false)
-  const [recordingData, setRecordingData] = useState<any | null>(null)
+  const [recordingData, setRecordingData] = useState<MaintenanceRecordDraft | null>(null)
   const [recording, setRecording] = useState(false)
 
   // Manual State Update Modal
   const [isStateModalOpen, setIsStateModalOpen] = useState(false)
-  const [stateEditingData, setStateEditingData] = useState<any | null>(null)
+  const [stateEditingData, setStateEditingData] = useState<MaintenanceStateDraft | null>(null)
   const [updatingState, setUpdatingState] = useState(false)
   
   // New Family Modal State
@@ -59,10 +84,11 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
 
   // Incident Modal State
   const [isOpenIncidentModalOpen, setIsOpenIncidentModalOpen] = useState(false)
-  const [openIncidentData, setOpenIncidentData] = useState<any | null>(null)
+  const [openIncidentData, setOpenIncidentData] = useState<MaintenanceRecordDraft | null>(null)
   const [openingIncident, setOpeningIncident] = useState(false)
   const [isCloseIncidentModalOpen, setIsCloseIncidentModalOpen] = useState(false)
-  const [closingIncidentData, setClosingIncidentData] = useState<any | null>(null)
+  const [closingIncidentData, setClosingIncidentData] =
+    useState<MaintenanceCloseIncidentDraft | null>(null)
   const [closingIncident, setClosingIncident] = useState(false)
   
   // How it works modal
@@ -72,7 +98,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
 
   // Agrupar equipos por familia
   const groupedDevices = useMemo(() => {
-    return devices.reduce((acc: any, device: any) => {
+    return devices.reduce<Record<string, MaintenanceDevice[]>>((acc, device) => {
       const family = device.model_family || 'Sin Modelo'
       if (!acc[family]) acc[family] = []
       acc[family].push(device)
@@ -80,24 +106,24 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }, {})
   }, [devices])
 
+  const loadDevices = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await getMaintenanceDevices()
+      setDevices(data)
+    } catch {
+      toast.showError('Error al cargar dispositivos')
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
+
   useEffect(() => {
     loadDevices()
     return () => {
       if (pollRef.current) clearInterval(pollRef.current)
     }
-  }, [])
-
-  const loadDevices = async () => {
-    setLoading(true)
-    try {
-      const data = await getMaintenanceDevices()
-      setDevices(data)
-    } catch (e) {
-      toast.showError('Error al cargar dispositivos')
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [loadDevices])
 
   const handleSyncFamily = async (sendEmails: boolean = true) => {
     if (!selectedFamily) return
@@ -136,7 +162,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
           toast.showError('Error al monitorear la sincronización')
         }
       }, 2000)
-    } catch (e) {
+    } catch {
       setChecking(false)
       setSyncJob(null)
       toast.showError('Error al iniciar sincronización')
@@ -150,18 +176,19 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       setRules(rulesData)
       setDeviceStates([])
       setHistory([])
-    } catch (e) {
+    } catch {
       toast.showError('Error al cargar reglas de familia')
     } finally {
       setLoadingRules(false)
     }
   }
 
-  const loadDeviceData = async (device: any) => {
+  const loadDeviceData = async (device: MaintenanceDevice) => {
     setLoadingRules(true)
     try {
+      const modelFamily = device.model_family
       const [rulesData, statesData, historyData, incidentsData] = await Promise.all([
-        getMaintenanceModelRules(device.model_family),
+        modelFamily ? getMaintenanceModelRules(modelFamily) : Promise.resolve([]),
         getMaintenanceDeviceState(device.serial),
         getMaintenanceHistory(device.serial),
         getDeviceIncidents(device.serial),
@@ -170,7 +197,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       setDeviceStates(statesData)
       setHistory(historyData)
       setIncidents(incidentsData)
-    } catch (e) {
+    } catch {
       toast.showError('Error al cargar datos del equipo')
     } finally {
       setLoadingRules(false)
@@ -183,7 +210,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     loadFamilyRules(family)
   }
 
-  const handleSelectDevice = async (device: any) => {
+  const handleSelectDevice = async (device: MaintenanceDevice) => {
     setSelectedDevice(device)
     setSelectedFamily(device.model_family)
     loadDeviceData(device)
@@ -195,7 +222,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const handleOpenModal = (rule?: any) => {
+  const handleOpenModal = (rule?: MaintenanceModelRule) => {
     if (rule) {
       setEditingRule({ ...rule })
     } else {
@@ -210,8 +237,9 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     setIsModalOpen(true)
   }
 
-  const handleSaveRule = async (e: React.FormEvent) => {
+  const handleSaveRule = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!editingRule) return
     setSaving(true)
     try {
       await upsertMaintenanceModelRule(editingRule)
@@ -220,7 +248,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       setSelectedFamily(editingRule.model_family)
       await loadDevices()
       loadFamilyRules(editingRule.model_family)
-    } catch (e) {
+    } catch {
       toast.showError('Error al guardar la regla')
     } finally {
       setSaving(false)
@@ -234,7 +262,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       await discoverFamily(selectedFamily)
       toast.showSuccess(`Descubrimiento para ${selectedFamily} completado`)
       await loadDevices()
-    } catch (e) {
+    } catch {
       toast.showError('Error al buscar equipos en SDS')
     } finally {
       setDiscovering(false)
@@ -253,7 +281,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       setSelectedFamily(newName)
       await loadDevices()
       await loadFamilyRules(newName)
-    } catch (e) {
+    } catch {
       toast.showError('Error al renombrar familia')
     } finally {
       setLoadingRules(false)
@@ -269,14 +297,18 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       await clearFamilyDevices(selectedFamily)
       toast.showSuccess('Lista de equipos limpiada')
       await loadDevices()
-    } catch (e) {
+    } catch {
       toast.showError('Error al limpiar equipos')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleOpenStateModal = (rule: any, currentState: any) => {
+  const handleOpenStateModal = (
+    rule: MaintenanceModelRule,
+    currentState?: MaintenanceDeviceState
+  ) => {
+    if (!selectedDevice) return
     setStateEditingData({
       serial: selectedDevice.serial,
       component_type: rule.component_type,
@@ -285,8 +317,9 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     setIsStateModalOpen(true)
   }
 
-  const handleSaveManualState = async (e: React.FormEvent) => {
+  const handleSaveManualState = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!stateEditingData || !selectedDevice) return
     setUpdatingState(true)
     try {
       await updateDeviceState(
@@ -297,14 +330,14 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       toast.showSuccess('Estado actualizado correctamente')
       setIsStateModalOpen(false)
       loadDeviceData(selectedDevice)
-    } catch (e) {
+    } catch {
       toast.showError('Error al actualizar estado')
     } finally {
       setUpdatingState(false)
     }
   }
 
-  const handleOpenRecordModal = (rule: any) => {
+  const handleOpenRecordModal = (rule: MaintenanceModelRule) => {
     if (!selectedDevice) return
     setRecordingData({
       serial: selectedDevice.serial,
@@ -315,8 +348,9 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     setIsRecordModalOpen(true)
   }
 
-  const handleRecordChange = async (e: React.FormEvent) => {
+  const handleRecordChange = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!recordingData) return
     setRecording(true)
     try {
       await recordMaintenanceChange(recordingData)
@@ -326,21 +360,22 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
         loadDeviceData(selectedDevice)
         loadDevices() // Refresh sync counter
       }
-    } catch (e) {
+    } catch {
       toast.showError('Error al registrar el cambio')
     } finally {
       setRecording(false)
     }
   }
 
-  const handleOpenIncident = (rule: any) => {
+  const handleOpenIncident = (rule: MaintenanceModelRule) => {
     if (!selectedDevice) return
     setOpenIncidentData({ serial: selectedDevice.serial, component_type: rule.component_type, incident_number: '', notes: '' })
     setIsOpenIncidentModalOpen(true)
   }
 
-  const handleSaveOpenIncident = async (e: React.FormEvent) => {
+  const handleSaveOpenIncident = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!openIncidentData || !selectedDevice) return
     setOpeningIncident(true)
     try {
       await openMaintenanceIncident(openIncidentData)
@@ -354,13 +389,18 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const handleOpenCloseIncident = (rule: any, incident: any) => {
+  const handleOpenCloseIncident = (
+    rule: MaintenanceModelRule,
+    incident: MaintenanceIncident
+  ) => {
+    if (!incident.id) return
     setClosingIncidentData({ incident_id: incident.id, incident_number: incident.incident_number, component_type: rule.component_type, notes: '' })
     setIsCloseIncidentModalOpen(true)
   }
 
-  const handleSaveCloseIncident = async (e: React.FormEvent) => {
+  const handleSaveCloseIncident = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!closingIncidentData || !selectedDevice) return
     setClosingIncident(true)
     try {
       await closeMaintenanceIncident(closingIncidentData.incident_id, closingIncidentData.notes)
@@ -543,7 +583,9 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                     <div className="avisos-history-list">
                       {history.map((h) => (
                         <div key={h.id} className="avisos-history-item">
-                          <div className="history-date">{new Date(h.changed_at).toLocaleDateString()}</div>
+                          <div className="history-date">
+                            {h.changed_at ? new Date(h.changed_at).toLocaleDateString() : 'N/A'}
+                          </div>
                           <div className="history-content">
                             <div className="history-main">
                               <strong>{h.component_type}</strong> cambiado a las <strong>{h.change_counter?.toLocaleString()}</strong> págs.
@@ -588,7 +630,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
         <RecordChangeModal 
           recordingData={recordingData}
           setRecordingData={setRecordingData}
-          currentCounter={selectedDevice.last_sync_counter}
+          currentCounter={selectedDevice?.last_sync_counter ?? 0}
           onSave={handleRecordChange}
           onClose={() => setIsRecordModalOpen(false)}
           recording={recording}
@@ -599,7 +641,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
         <StateModal 
           stateEditingData={stateEditingData}
           setStateEditingData={setStateEditingData}
-          currentCounter={selectedDevice.last_sync_counter}
+          currentCounter={selectedDevice?.last_sync_counter ?? 0}
           onSave={handleSaveManualState}
           onClose={() => setIsStateModalOpen(false)}
           updating={updatingState}

@@ -5,6 +5,7 @@ import { MonitorWizard } from '../../components/Monitor/MonitorWizard'
 import * as api from '../../services/api'
 import { useUIStore } from '../../store/useUIStore'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
+import type { FleetClientDetail, FleetClientSummary } from '../../types/api'
 
 // Mock APIs
 vi.mock('../../services/api', () => ({
@@ -26,12 +27,11 @@ describe('MonitorWizard', () => {
   })
 
   it('renders client selection step and lists clients', async () => {
-    const mockClients = [
+    const mockClients: FleetClientSummary[] = [
       { id: '1', name: 'Client A', device_count: 5 },
       { id: '2', name: 'Client B', device_count: 10 },
     ]
-    // @ts-ignore
-    api.listFleetClients.mockResolvedValue(mockClients)
+    vi.mocked(api.listFleetClients).mockResolvedValue(mockClients)
 
     render(<MonitorWizard />)
 
@@ -42,20 +42,18 @@ describe('MonitorWizard', () => {
   })
 
   it('navigates to model selection after selecting a client', async () => {
-    const mockClients = [{ id: '1', name: 'Client A', device_count: 5 }]
-    const mockClientDetail = {
+    const mockClients: FleetClientSummary[] = [{ id: '1', name: 'Client A', device_count: 5 }]
+    const mockClientDetail: FleetClientDetail = {
       id: '1',
       name: 'Client A',
       devices: [
-        { serial: 'S1', model: 'Model X' },
-        { serial: 'S2', model: 'Model Y' },
-      ]
+        { serial: 'S1', location: 'Office', model: 'Model X' },
+        { serial: 'S2', location: 'Lab', model: 'Model Y' },
+      ],
     }
     
-    // @ts-ignore
-    api.listFleetClients.mockResolvedValue(mockClients)
-    // @ts-ignore
-    api.getFleetClient.mockResolvedValue(mockClientDetail)
+    vi.mocked(api.listFleetClients).mockResolvedValue(mockClients)
+    vi.mocked(api.getFleetClient).mockResolvedValue(mockClientDetail)
 
     render(<MonitorWizard />)
 
@@ -72,17 +70,15 @@ describe('MonitorWizard', () => {
   })
 
   it('completes the wizard and updates the analysis store', async () => {
-    const mockClients = [{ id: '1', name: 'Client A', device_count: 1 }]
-    const mockClientDetail = {
+    const mockClients: FleetClientSummary[] = [{ id: '1', name: 'Client A', device_count: 1 }]
+    const mockClientDetail: FleetClientDetail = {
       id: '1',
       name: 'Client A',
-      devices: [{ serial: 'S1', model: 'Model X' }]
+      devices: [{ serial: 'S1', location: 'Office', model: 'Model X' }],
     }
     
-    // @ts-ignore
-    api.listFleetClients.mockResolvedValue(mockClients)
-    // @ts-ignore
-    api.getFleetClient.mockResolvedValue(mockClientDetail)
+    vi.mocked(api.listFleetClients).mockResolvedValue(mockClients)
+    vi.mocked(api.getFleetClient).mockResolvedValue(mockClientDetail)
 
     const setMonitorClientId = vi.spyOn(useAnalysisStore.getState(), 'setMonitorClientId')
     const setMonitorModels = vi.spyOn(useAnalysisStore.getState(), 'setMonitorModels')

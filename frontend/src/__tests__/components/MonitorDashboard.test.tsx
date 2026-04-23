@@ -1,13 +1,14 @@
-
+import type { ReactNode } from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MonitorDashboard } from '../../components/Monitor/MonitorDashboard'
 import * as api from '../../services/api'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
+import type { FleetClientDetail, FleetScanResult } from '../../types/api'
 
 // Mock Recharts
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   AreaChart: () => <div data-testid="area-chart" />,
   Area: () => null,
   XAxis: () => null,
@@ -24,16 +25,16 @@ vi.mock('../../services/api', () => ({
 }))
 
 describe('MonitorDashboard', () => {
-  const mockClient = {
+  const mockClient: FleetClientDetail = {
     id: 'client-1',
     name: 'Test Client',
     devices: [
       { serial: 'S1', location: 'Office', model: 'M1' },
       { serial: 'S2', location: 'Lab', model: 'M2' },
-    ]
+    ],
   }
 
-  const mockScanResults = [
+  const mockScanResults: FleetScanResult[] = [
     {
       serial: 'S1',
       status: 'ok',
@@ -42,8 +43,11 @@ describe('MonitorDashboard', () => {
       black_toner_percent: 80,
       fuser_life_percent: 90,
       location: 'Office',
+      model_name: 'M1',
+      firmware: null,
+      last_event_date: null,
       top_errors: [{ code: '10.00.00', count: 1 }],
-      timeline_data: [{ date: '2026-04-22', errors: 1, warnings: 0 }]
+      timeline_data: [{ date: '2026-04-22', errors: 1, warnings: 0 }],
     },
     {
       serial: 'S2',
@@ -53,19 +57,21 @@ describe('MonitorDashboard', () => {
       black_toner_percent: 5,
       fuser_life_percent: 10,
       location: 'Lab',
+      model_name: 'M2',
+      firmware: null,
+      last_event_date: null,
       top_errors: [{ code: '11.00.00', count: 5 }],
-      timeline_data: [{ date: '2026-04-22', errors: 5, warnings: 2 }]
-    }
+      timeline_data: [{ date: '2026-04-22', errors: 5, warnings: 2 }],
+    },
   ]
 
   beforeEach(() => {
     vi.clearAllMocks()
     useAnalysisStore.setState({
       monitorClientId: 'client-1',
-      monitorModels: []
+      monitorModels: [],
     })
-    // @ts-ignore
-    api.getFleetClient.mockResolvedValue(mockClient)
+    vi.mocked(api.getFleetClient).mockResolvedValue(mockClient)
   })
 
   it('renders initial state with devices as unreachable', async () => {
@@ -81,14 +87,12 @@ describe('MonitorDashboard', () => {
   })
 
   it('updates dashboard after scanning fleet', async () => {
-    // @ts-ignore
-    api.triggerFleetScan.mockResolvedValue({ job_id: 'job-123', total: 2, status: 'running' })
-    // @ts-ignore
-    api.getFleetScanStatus.mockResolvedValue({ 
+    vi.mocked(api.triggerFleetScan).mockResolvedValue({ job_id: 'job-123', total: 2, status: 'running' })
+    vi.mocked(api.getFleetScanStatus).mockResolvedValue({
       processed: 2, 
       total: 2, 
       status: 'completed', 
-      results: mockScanResults 
+      results: mockScanResults,
     })
 
     render(<MonitorDashboard pollingInterval={10} />)
@@ -103,14 +107,12 @@ describe('MonitorDashboard', () => {
   })
 
   it('filters devices when clicking on KPI cards', async () => {
-    // @ts-ignore
-    api.triggerFleetScan.mockResolvedValue({ job_id: 'job-123', total: 2, status: 'running' })
-    // @ts-ignore
-    api.getFleetScanStatus.mockResolvedValue({ 
+    vi.mocked(api.triggerFleetScan).mockResolvedValue({ job_id: 'job-123', total: 2, status: 'running' })
+    vi.mocked(api.getFleetScanStatus).mockResolvedValue({
       processed: 2, 
       total: 2, 
       status: 'completed', 
-      results: mockScanResults 
+      results: mockScanResults,
     })
 
     render(<MonitorDashboard pollingInterval={10} />)
@@ -127,14 +129,12 @@ describe('MonitorDashboard', () => {
   })
 
   it('expands device row on click', async () => {
-    // @ts-ignore
-    api.triggerFleetScan.mockResolvedValue({ job_id: 'job-123', total: 2, status: 'running' })
-    // @ts-ignore
-    api.getFleetScanStatus.mockResolvedValue({ 
+    vi.mocked(api.triggerFleetScan).mockResolvedValue({ job_id: 'job-123', total: 2, status: 'running' })
+    vi.mocked(api.getFleetScanStatus).mockResolvedValue({
       processed: 2, 
       total: 2, 
       status: 'completed', 
-      results: mockScanResults 
+      results: mockScanResults,
     })
 
     render(<MonitorDashboard pollingInterval={10} />)

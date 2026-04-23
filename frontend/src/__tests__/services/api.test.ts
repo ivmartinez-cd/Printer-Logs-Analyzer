@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as api from '../../services/api'
+import type { ParseLogsResponse } from '../../types/api'
 
 // Mock fetch globally
 const mockFetch = vi.fn()
@@ -85,8 +86,8 @@ describe('api.ts service', () => {
       incidents: [{ code: 'E1', severity: 'C', occurrences: 1, events: [], start_time: '', end_time: '' }],
       events: [{ timestamp: '2023-01-01', counter: 100 }],
       global_severity: 'C'
-    }
-    await api.aiDiagnose(result as any)
+    } as unknown as ParseLogsResponse
+    await api.aiDiagnose(result)
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/analysis/ai-diagnose'),
       expect.objectContaining({

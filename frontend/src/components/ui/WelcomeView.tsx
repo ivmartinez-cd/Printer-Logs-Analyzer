@@ -132,7 +132,7 @@ export function WelcomeView({
         </div>
 
         {/* CARD 1: Saved Incidents */}
-        <div className="welcome-grid__item welcome-grid__item--activity">
+        <div className="welcome-grid__item welcome-grid__item--history">
           <div className="welcome-activity">
             <div className="welcome-activity__header">
               <h3 className="welcome-activity__title">📂 Incidentes Guardados</h3>
@@ -140,18 +140,16 @@ export function WelcomeView({
             </div>
             <div className="welcome-activity__list">
                 {displaySaved.length > 0 ? displaySaved.map((item) => {
-                  // Intentar extraer Serial vs Modelo si viene en formato "Modelo (Serial)"
                   let title = item.equipment_identifier || item.name || 'Análisis Guardado'
                   let subtitle: string | null = null
                   
                   if (item.equipment_identifier && item.equipment_identifier.includes('(')) {
                     const match = item.equipment_identifier.match(/^(.*)\s\((.*)\)$/)
                     if (match) {
-                      title = match[2] // Serial
-                      subtitle = match[1] // Modelo
+                      title = match[2]
+                      subtitle = match[1]
                     }
                   } else if (item.equipment_identifier && item.name && item.name !== item.equipment_identifier) {
-                    // Si el nombre es distinto al ID de equipo, usar ID como título y nombre como subtítulo
                     title = item.equipment_identifier
                     subtitle = item.name
                   }
@@ -191,7 +189,7 @@ export function WelcomeView({
         </div>
 
         {/* CARD 2: Recent Search History */}
-        <div className="welcome-grid__item welcome-grid__item--activity">
+        <div className="welcome-grid__item welcome-grid__item--history">
           <div className="welcome-activity">
             <div className="welcome-activity__header">
               <h3 className="welcome-activity__title">🔍 Búsquedas Recientes</h3>
@@ -220,31 +218,6 @@ export function WelcomeView({
             </div>
           </div>
         </div>
-
-        {/* CARD: AI & Metrics Info */}
-        <div className="welcome-grid__item">
-          <div className="welcome-grid__content">
-            <div className="welcome-grid__icon">🧠</div>
-            <h3 className="welcome-grid__title">Diagnóstico IA</h3>
-            <p className="welcome-grid__desc">Análisis semántico avanzado, recomendaciones de FRUs y KPIs de severidad automáticos.</p>
-          </div>
-          <div className="welcome-grid__footer">
-            Soporte Inteligente
-          </div>
-        </div>
-
-        {/* CARD: Hardware RT (Resized) */}
-        <div className="welcome-grid__item">
-          <div className="welcome-grid__content">
-            <div className="welcome-grid__icon">⚡</div>
-            <h3 className="welcome-grid__title">Hardware RT</h3>
-            <p className="welcome-grid__desc">Estado de consumibles, fusores y kits de mantenimiento vía HP Insight API.</p>
-          </div>
-          <div className="welcome-grid__footer">
-             Real-Time Data
-          </div>
-        </div>
-
       </div>
 
       {/* Footer Info */}

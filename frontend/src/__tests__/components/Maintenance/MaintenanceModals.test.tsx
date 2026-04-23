@@ -68,7 +68,8 @@ describe('MaintenanceModals', () => {
 
       expect(screen.getByText(/Fuser/)).toBeInTheDocument()
       expect(screen.getByText(/SERIAL-123/)).toBeInTheDocument()
-      expect(screen.getByText(/50\.000/)).toBeInTheDocument()
+      // Match 50.000 or 50,000
+      expect(screen.getByText(/50[.,]000/)).toBeInTheDocument()
     })
   })
 

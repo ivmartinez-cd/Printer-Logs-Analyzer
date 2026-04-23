@@ -36,8 +36,8 @@ describe('RuleCard', () => {
     )
 
     expect(screen.getByText('Fuser')).toBeInTheDocument()
-    expect(screen.getByText('100.000 págs.')).toBeInTheDocument()
-    expect(screen.getByText('10.000 págs.')).toBeInTheDocument() // Margin
+    expect(screen.getByText(new RegExp((100000).toLocaleString() + ' págs.'))).toBeInTheDocument()
+    expect(screen.getByText(new RegExp((10000).toLocaleString() + ' págs.'))).toBeInTheDocument() // Margin
   })
 
   it('calculates and displays remaining pages correctly', () => {
@@ -51,7 +51,8 @@ describe('RuleCard', () => {
     )
 
     // Limit is 50k + 100k = 150k. Current is 140k. Remaining = 10k.
-    expect(screen.getByText('10.000 páginas restantes')).toBeInTheDocument()
+    const expectedRemaining = (10000).toLocaleString() + ' páginas restantes'
+    expect(screen.getByText(expectedRemaining)).toBeInTheDocument()
   })
 
   it('shows critical status when remaining pages <= 0', () => {

@@ -254,10 +254,6 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
     getFleetClient(monitorClientId).then(setClient).catch(() => setClient(null))
   }, [monitorClientId])
 
-  useEffect(() => {
-    setExpandedSerial(null)
-  }, [results])
-
   const handleScan = async () => {
     if (!monitorClientId) return
     setScanning(true)
@@ -327,6 +323,9 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
     statusFilter === 'all' ? displayRows : displayRows.filter(d => d.status === statusFilter),
     [displayRows, statusFilter]
   )
+  const activeExpandedSerial = displayRows.some((device) => device.serial === expandedSerial)
+    ? expandedSerial
+    : null
 
   return (
     <div className="monitor-dashboard" style={{ padding: '0 40px 40px', maxWidth: '1600px', margin: '0 auto', color: '#fff' }}>
@@ -482,7 +481,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             )}
             {filteredRows.map(device => {
               const s = STATUS_COLOR[device.status] ?? STATUS_COLOR.unreachable
-              const isExpanded = expandedSerial === device.serial
+              const isExpanded = activeExpandedSerial === device.serial
               return (
                 <React.Fragment key={device.serial}>
                   <tr

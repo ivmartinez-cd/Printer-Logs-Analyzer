@@ -37,8 +37,7 @@ import { IncidentsTable, type IncidentRow } from '../components/Parser/Incidents
 import { IncidentsChart } from '../components/Monitor/IncidentsChart'
 import { TopErrorsChart } from '../components/Monitor/TopErrorsChart'
 import { Skeleton } from '../components/ui/Skeleton'
-import { ExecutiveSummary } from '../components/Analysis/ExecutiveSummary'
-import { ReportCover } from '../components/Analysis/ReportCover'
+import { ExecutivePrintReport } from '../components/Analysis/ExecutivePrintReport'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
@@ -320,14 +319,7 @@ export default function DashboardPage({
     exportingPdf,
     handleExportPDF,
     dashboardRef,
-    reportCoverRef,
-    executiveSummaryRef,
-    aiDiagnosticRef,
-    kpisRef,
-    consumableRef,
-    areaChartRef,
-    barChartRef,
-    incidentsTableRef,
+    printReportRef,
   } = useExportPdf(logFileName)
 
   const autoResolveAndAnalyze = useCallback(async (serial: string) => {
@@ -384,7 +376,7 @@ export default function DashboardPage({
         setMonitorWizardOpen(true)
       }
     } else if (initialIsAvisos) {
-      setViewMode('avisos' as any) // Cast as any if 'avisos' is not in viewMode type yet
+      setViewMode('avisos')
     } else if (initialSerial) {
       setViewMode('dashboard')
       if (initialSerial !== currentSerialNumber) {
@@ -451,6 +443,7 @@ export default function DashboardPage({
     () => getIncidentTableRows(incidents, events, activeFilter),
     [incidents, events, activeFilter]
   )
+  const reportGeneratedAtIso = new Date().toISOString()
 
   const handleSaveCodeToCatalog = useCallback(
     async (body: ErrorCodeUpsertBody, isEdit = false) => {
@@ -488,21 +481,11 @@ export default function DashboardPage({
     [handleSaveIncident, toast, setSaveIncidentModalOpen]
   )
 
-  const isWelcome = !result && !loading && viewMode === 'dashboard';
-  const dashboardClass = `dashboard ${exportingPdf ? 'is-exporting' : ''} ${isWelcome ? 'dashboard--welcome' : ''}`;
+  const isWelcome = !result && !loading && viewMode === 'dashboard'
+  const dashboardClass = `dashboard ${isWelcome ? 'dashboard--welcome' : ''}`
 
   return (
     <div className={dashboardClass} ref={dashboardRef}>
-      <div ref={reportCoverRef}>
-        <ReportCover
-          serialNumber={currentSerialNumber}
-          modelName={currentModelName}
-          logFileName={logFileName}
-          startDate={result?.log_start_date}
-          endDate={result?.log_end_date}
-          totalEvents={(result?.incidents?.length || 0) + (result?.events?.length || 0)}
-        />
-      </div>
       <header className="export-header">
         <div className="export-header__left">
           <h1 className="dashboard__title">HP Logs Analyzer</h1>
@@ -544,6 +527,25 @@ export default function DashboardPage({
           isAtTop={isAtTop}
           showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
         />
+      )}
+      {viewMode === 'dashboard' && result && (
+        <div className="report-only-section" aria-hidden="true">
+          <div ref={printReportRef}>
+            <ExecutivePrintReport
+              result={result}
+              filteredIncidents={filteredIncidents}
+              filteredEvents={filteredEvents}
+              consumableWarnings={realtimeConsumables}
+              lastErrorLabel={lastErrorLabel}
+              logFileName={logFileName}
+              serialNumber={currentSerialNumber}
+              modelName={currentModelName}
+              topCodes={topCodes}
+              incidentRows={incidentRows}
+              generatedAtIso={reportGeneratedAtIso}
+            />
+          </div>
+        </div>
       )}
       {!result && !loading && viewMode === 'dashboard' ? (
         <WelcomeView 
@@ -748,19 +750,6 @@ export default function DashboardPage({
                 </div>
               )}
 
-              {result && (
-                    <div className="report-only-section" ref={executiveSummaryRef}>
-                      <ExecutiveSummary
-                        result={result}
-                        filteredIncidents={filteredIncidents}
-                        filteredEvents={filteredEvents}
-                        consumableWarnings={realtimeConsumables}
-                        lastErrorLabel={lastErrorLabel}
-                        logFileName={logFileName}
-                        serialNumber={currentSerialNumber}
-                      />
-                    </div>
-                  )}
                   {/* Subheader: Panel de errores | filtro de fecha */}
                   <div className="dashboard__subheader">
                     <div className="dashboard__subheader-title-group">
@@ -797,7 +786,7 @@ export default function DashboardPage({
                   <div className="dashboard__above-fold">
 
                     {/* BLOQUE 1: KPIs ejecutivos */}
-                    <section ref={kpisRef} className="animate-in delay-1 kpis">
+                    <section className="animate-in delay-1 kpis">
                       <KPICards
                         filteredIncidents={filteredIncidents}
                         filteredEvents={filteredEvents}
@@ -808,7 +797,7 @@ export default function DashboardPage({
 
                     <div className="dashboard__above-fold__charts-row">
                       {/* BLOQUE 2a: Gráfico de volumen */}
-                      <div ref={areaChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                      <div className="animate-in delay-2 dashboard__above-fold__chart">
                         <IncidentsChart
                           events={events}
                           activeFilter={activeFilter}
@@ -825,7 +814,7 @@ export default function DashboardPage({
                       </div>
 
                       {/* BLOQUE 2b: Errores más frecuentes */}
-                      <div ref={barChartRef} className="animate-in delay-2 dashboard__above-fold__chart">
+                      <div className="animate-in delay-2 dashboard__above-fold__chart">
                         <TopErrorsChart 
                           topCodes={topCodes} 
                           onViewSolution={(code, sdsContent, sdsUrl) =>
@@ -840,7 +829,6 @@ export default function DashboardPage({
 
                   {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}
                   <AIDiagnosticPanel
-                    ref={aiDiagnosticRef}
                     className="animate-in delay-3"
                     result={result}
                     consumables={realtimeConsumables}
@@ -855,7 +843,7 @@ export default function DashboardPage({
                   {/* ── BLOQUE 5: Paneles de diagnóstico (drill-down) ── */}
                   <div className="dashboard__drilldown-panels">
                     {/* Incidencias detectadas */}
-                    <section ref={incidentsTableRef} className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
+                    <section className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
                       <button
                         type="button"
                         className="collapsible-panel__header"
@@ -906,7 +894,7 @@ export default function DashboardPage({
                     />
 
                     {/* Consumibles en tiempo real */}
-                    <div ref={consumableRef}>
+                    <div>
                       <ConsumableWarningsPanel warnings={realtimeConsumables} />
                     </div>
 

@@ -265,3 +265,73 @@ export interface FleetScanResult {
   top_errors?: FleetTopError[]
   timeline_data?: FleetTimelinePoint[]
 }
+
+export interface FleetScanStatusResponse {
+  status: string
+  processed: number
+  total: number
+  results?: FleetScanResult[]
+}
+
+export interface MaintenanceDevice {
+  serial: string
+  model_family: string | null
+  last_sync_counter: number
+  last_sync_at?: string | null
+  is_active: boolean
+}
+
+export interface MaintenanceModelRule {
+  id?: number | null
+  model_family: string
+  component_type: string
+  expected_life: number
+  alert_margin: number
+  email_recipients?: string | null
+}
+
+export interface MaintenanceDeviceState {
+  id?: number | null
+  device_serial: string
+  component_type: string
+  last_change_counter: number
+}
+
+export interface MaintenanceHistory {
+  id?: number | null
+  device_serial: string
+  component_type: string
+  change_counter: number
+  incident_number?: string | null
+  technician_notes?: string | null
+  changed_at?: string | null
+}
+
+export interface MaintenanceIncident {
+  id?: string | null
+  device_serial: string
+  component_type: string
+  incident_number: string
+  notes?: string | null
+  status: string
+  opened_at?: string | null
+  closed_at?: string | null
+}
+
+export interface MaintenanceCheckJob {
+  job_id: string
+  total: number
+  status: string
+}
+
+export interface MaintenanceSyncStatus {
+  status: string
+  processed: number
+  total: number
+  errors: number
+}
+
+export interface MaintenanceMutationResponse {
+  status: string
+  history_id?: number | null
+}

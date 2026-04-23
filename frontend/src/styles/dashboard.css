@@ -27,13 +27,18 @@
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: var(--border-glass);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   transition: var(--transition-premium);
-  margin: 16px auto 0; /* Centered with top margin */
+  margin: 16px auto 0;
   width: 95%;
   max-width: 1800px;
-  box-shadow: var(--shadow-premium);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 .dashboard__header.at-top {
@@ -144,17 +149,23 @@
     display: none; /* Chrome/Safari */
   }
 
-  .dashboard__btn {
-    flex: 0 0 auto; /* Prevent shrinking */
+  .dashboard__btn,
+  .dashboard__btn--icon {
+    flex: 0 0 auto;
     font-size: 0.85rem;
-    height: 36px;
+    height: 40px;
     padding: 0 16px;
-    border-radius: 99px; /* More pill-like for swipe bars */
+    border-radius: 12px;
+  }
+  
+  .dashboard__btn--icon {
+    width: 44px; /* Larger tap target on mobile */
+    padding: 0;
   }
 
   .db-status-badge {
     flex: 0 0 auto;
-    order: 0; /* Keep it normal flow */
+    order: 0;
   }
 }
 
@@ -277,13 +288,110 @@
   font-family: monospace;
 }
 
-.dashboard__btn--help-icon {
-  width: 32px;
-  height: 32px;
+/* ─── Modern Icon Buttons 2026 ───────────────────────────────────────── */
+.dashboard__btn--icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  position: relative;
+  transition: var(--transition-premium);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.dashboard__btn--icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.75px;
+}
+
+.dashboard__btn--icon:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard__btn--icon--primary {
+  background: var(--hp-blue-vibrant);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 0 15px var(--hp-blue-glow);
+}
+
+.dashboard__btn--icon--primary:hover:not(:disabled) {
+  background: #00b4ff;
+  box-shadow: 0 0 25px var(--hp-blue-glow);
+}
+
+.dashboard__btn--icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Tooltips */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  padding: 6px 12px;
+  background: #1e293b;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  z-index: 10000;
+}
+
+[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #1e293b transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition-fast);
+  pointer-events: none;
+  z-index: 10001;
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dashboard__btn--help-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-muted);
@@ -296,6 +404,7 @@
   background: var(--hp-blue-vibrant);
   color: #fff;
   border-color: var(--hp-blue-vibrant);
+  transform: translateY(-2px);
 }
 
 /* ─── Codes New Section ──────────────────────────────────────────────── */
