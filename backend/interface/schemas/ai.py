@@ -61,3 +61,22 @@ class AiDiagnoseResponse(BaseModel):
     model: str
     tokens_used: Dict[str, int]
     cost_usd: float
+
+
+class AiPdfSummaryRequest(BaseModel):
+    """Body para POST /analysis/pdf-summary."""
+
+    incidents: List[AiDiagnoseIncidentItem]
+    consumables: Optional[List[Dict[str, Any]]] = None
+    top_codes: Optional[List[Dict[str, Any]]] = None
+    model_name: Optional[str] = None
+    serial_number: Optional[str] = None
+
+
+class AiPdfSummaryResponse(BaseModel):
+    """Respuesta del resumen AI para PDF."""
+
+    narrative_summary: str
+    tone: str
+    action_plan: List[str]
+    error_translations: Dict[str, str]

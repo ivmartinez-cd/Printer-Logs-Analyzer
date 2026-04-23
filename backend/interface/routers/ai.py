@@ -6,7 +6,12 @@ from backend.infrastructure.config import Settings
 from backend.interface.auth import authenticate
 from backend.interface.deps import get_settings
 from backend.interface.rate_limiter import limiter
-from backend.interface.schemas.ai import AiDiagnoseRequest, AiDiagnoseResponse
+from backend.interface.schemas.ai import (
+    AiDiagnoseRequest,
+    AiDiagnoseResponse,
+    AiPdfSummaryRequest,
+    AiPdfSummaryResponse,
+)
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 router = APIRouter(prefix="/analysis", tags=["AI Diagnosis"])
@@ -155,3 +160,30 @@ async def ai_diagnose(
     except Exception as e:
         _logger.error(f"FATAL ERROR IN AI DIAGNOSIS: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error interno en la IA: {str(e)}") from e
+
+
+@router.post(
+    "/pdf-summary",
+    response_model=AiPdfSummaryResponse,
+    dependencies=[Depends(authenticate)],
+    summary="Genera un resumen ejecutivo para PDF usando IA",
+)
+@limiter.limit("100/minute")
+async def ai_pdf_summary(
+    request: Request, body: AiPdfSummaryRequest, settings: Settings = Depends(get_settings)
+) -> AiPdfSummaryResponse:
+    """Generate a PDF executive summary using Haiku."""
+    from backend.application.services.ai_pdf_service import generate_pdf_summary
+
+    api_key = settings.anthropic_api_key
+    if not api_key:
+        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY no configurada.")
+
+    payload = body.model_dump(exclude_none=True)
+
+    try:
+        parsed_result = await generate_pdf_summary(payload, api_key)
+        return AiPdfSummaryResponse(**parsed_result)
+    except Exception as e:
+        _logger.error("Error generando PDF summary IA: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"Error interno IA: {str(e)}") from e

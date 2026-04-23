@@ -47,8 +47,52 @@ class OpenIncidentRequest(BaseModel):
 class CloseIncidentRequest(BaseModel):
     notes: Optional[str] = None
 
+class SendAlertRequest(BaseModel):
+    serial: str
+    component_type: str
+
 def get_maintenance_service():
     return MaintenanceService()
+
+@router.post("/send-alert")
+def send_alert_manual(req: SendAlertRequest, service: MaintenanceService = Depends(get_maintenance_service)):
+    """Fuerza el envío inmediato de una alerta de mantenimiento por email para un equipo y componente específico."""
+    try:
+        # Buscar el dispositivo entre todos los disponibles
+        all_devices = service.repo.get_all_devices()
+        device = next((d for d in all_devices if d.serial == req.serial), None)
+        if not device:
+            raise HTTPException(status_code=404, detail=f"Equipo {req.serial} no encontrado")
+
+        rule = next((r for r in service.repo.get_model_rules(device.model_family or '') if r.component_type == req.component_type), None)
+        if not rule:
+            raise HTTPException(status_code=404, detail=f"No existe regla para {req.component_type} en este modelo")
+
+        recipients = [r.strip() for r in (rule.email_recipients or '').split(',') if r.strip()]
+        if not recipients:
+            raise HTTPException(status_code=422, detail="La regla no tiene destinatarios de email configurados")
+
+        # Obtener el estado del componente para calcular remaining
+        all_states = service.repo.get_device_state(req.serial)
+        state = next((s for s in all_states if s.component_type == req.component_type), None)
+        current_counter = device.last_sync_counter or 0
+        last_change_counter = state.last_change_counter if state else current_counter
+        next_change = last_change_counter + rule.expected_life
+        remaining = next_change - current_counter
+
+        service.email.send_maintenance_alert(
+            serial=device.serial,
+            component=rule.component_type,
+            current_counter=current_counter,
+            next_change=next_change,
+            remaining=remaining,
+            recipients=recipients,
+        )
+        return {"status": "sent", "recipients": recipients}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/models/rename")
 def rename_family(req: RenameFamilyRequest, service: MaintenanceService = Depends(get_maintenance_service)):
@@ -58,6 +102,11 @@ def rename_family(req: RenameFamilyRequest, service: MaintenanceService = Depend
 @router.delete("/models/{model_family}/devices")
 def clear_devices(model_family: str, service: MaintenanceService = Depends(get_maintenance_service)):
     service.clear_family_devices(model_family)
+    return {"status": "ok"}
+
+@router.delete("/models/{model_family}")
+def delete_family(model_family: str, service: MaintenanceService = Depends(get_maintenance_service)):
+    service.repo.delete_family(model_family)
     return {"status": "ok"}
 
 @router.post("/models/{model_family}/discover")
@@ -87,6 +136,10 @@ def list_model_rules(model_family: str, service: MaintenanceService = Depends(ge
 def upsert_model_rule(rule: MaintenanceModelRule, service: MaintenanceService = Depends(get_maintenance_service)):
     service.repo.upsert_model_rule(rule)
     return {"status": "ok"}
+
+@router.get("/models/families", response_model=List[str])
+def list_families(service: MaintenanceService = Depends(get_maintenance_service)):
+    return service.repo.get_all_model_families()
 
 @router.get("/devices/{serial}/state", response_model=List[MaintenanceDeviceState])
 def get_device_state(serial: str, service: MaintenanceService = Depends(get_maintenance_service)):

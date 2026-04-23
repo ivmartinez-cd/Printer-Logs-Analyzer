@@ -85,6 +85,15 @@ export function WelcomeView({
                 <>Analizar</>
               )}
             </button>
+            <button 
+              type="button"
+              className="hiw-trigger-btn"
+              onClick={onHelp}
+              title="¿Cómo funciona HP Logs Analyzer?"
+              style={{ marginLeft: '12px' }}
+            >
+              ?
+            </button>
           </div>
           <p className="welcome-searchbox__tip">
             💡 Consejo: Pega un número de serie para un diagnóstico instantáneo vía HP Insight API.

@@ -25,8 +25,15 @@ export interface Incident {
   end_time: string
   counter_range: [number, number]
   events: EnrichedEvent[]
-  sds_link?: string
+  sds_link?: string | null
   sds_solution_content?: string | null
+}
+
+export interface AIPdfSummaryResponse {
+  narrative_summary: string
+  tone: 'critical' | 'watch' | 'ok'
+  action_plan: string[]
+  error_translations: Record<string, string>
 }
 
 export interface ParserError {

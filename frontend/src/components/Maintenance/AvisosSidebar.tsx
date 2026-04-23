@@ -3,6 +3,7 @@ import type { MaintenanceDevice } from '../../types/api'
 
 interface AvisosSidebarProps {
   groupedDevices: Record<string, MaintenanceDevice[]>
+  allFamilies: string[]
   selectedFamily: string | null
   selectedDevice: MaintenanceDevice | null
   loading: boolean
@@ -13,6 +14,7 @@ interface AvisosSidebarProps {
 
 export function AvisosSidebar({
   groupedDevices,
+  allFamilies,
   selectedFamily,
   selectedDevice,
   loading,
@@ -36,17 +38,17 @@ export function AvisosSidebar({
   }
 
   const families = useMemo(() => {
-    const allFamilies = new Set(Object.keys(groupedDevices))
-    if (selectedFamily) allFamilies.add(selectedFamily)
-
-    return Array.from(allFamilies).filter((family) => {
+    // Combine families from backend and the currently selected one (in case it's newly created)
+    const combined = new Set([...allFamilies, ...(selectedFamily ? [selectedFamily] : [])])
+    
+    return Array.from(combined).filter((family) => {
       if (!normalizedSearch) return true
       if (family.toLowerCase().includes(normalizedSearch)) return true
       return (groupedDevices[family] || []).some((device) =>
         device.serial.toLowerCase().includes(normalizedSearch)
       )
-    })
-  }, [groupedDevices, normalizedSearch, selectedFamily])
+    }).sort()
+  }, [allFamilies, groupedDevices, normalizedSearch, selectedFamily])
 
   return (
     <aside className="avisos-sidebar">
@@ -87,8 +89,7 @@ export function AvisosSidebar({
             const matchesSearch = normalizedSearch
               ? devices.some((device) => device.serial.toLowerCase().includes(normalizedSearch))
               : false
-            const isExpanded =
-              expandedFamilies.has(family) || selectedFamily === family || matchesSearch
+            const isExpanded = expandedFamilies.has(family) || matchesSearch
 
             return (
               <div key={family} className={`avisos-family-group ${isExpanded ? 'is-expanded' : ''}`}>
@@ -104,10 +105,11 @@ export function AvisosSidebar({
                   <button
                     className={`family-collapse-btn ${isExpanded ? 'is-rotated' : ''}`}
                     onClick={(e) => toggleFamily(e, family)}
+                    title={isExpanded ? 'Colapsar' : 'Expandir'}
                   >
-                    &gt;
+                    <span className="family-collapse-icon">›</span>
                   </button>
-                  <span className="family-icon">[]</span>
+                  <span className="family-icon">🖨️</span>
                   <span className="family-name">{family}</span>
                   <span className="family-count">{devices.length}</span>
                 </div>

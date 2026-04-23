@@ -12,10 +12,13 @@ import {
   updateDeviceState,
   renameFamily,
   clearFamilyDevices,
+  deleteFamily,
   syncMaintenanceDevice,
   openMaintenanceIncident,
   closeMaintenanceIncident,
   getDeviceIncidents,
+  getMaintenanceFamilies,
+  sendMaintenanceAlert,
 } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
 import { AvisosSidebar } from '../components/Maintenance/AvisosSidebar'
@@ -31,6 +34,8 @@ import {
   RuleModal,
   type MaintenanceStateDraft,
   StateModal,
+  RenameFamilyModal,
+  DeleteFamilyModal,
 } from '../components/Maintenance/MaintenanceModals'
 import type {
   MaintenanceDevice,
@@ -47,6 +52,8 @@ interface MaintenanceSyncJobState {
   errors: number
 }
 
+
+
 export function AvisosPage({ onBack }: { onBack: () => void }) {
   const [devices, setDevices] = useState<MaintenanceDevice[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,6 +69,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   const [deviceStates, setDeviceStates] = useState<MaintenanceDeviceState[]>([])
   const [history, setHistory] = useState<MaintenanceHistory[]>([])
   const [incidents, setIncidents] = useState<MaintenanceIncident[]>([])
+  const [allFamilies, setAllFamilies] = useState<string[]>([])
   const [loadingRules, setLoadingRules] = useState(false)
   
   // Rule Modal State
@@ -94,6 +102,10 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   // How it works modal
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false)
   
+  // Edit/Delete Family States
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  
   const toast = useToast()
 
   // Agrupar equipos por familia
@@ -109,8 +121,12 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   const loadDevices = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getMaintenanceDevices()
-      setDevices(data)
+      const [devicesData, familiesData] = await Promise.all([
+        getMaintenanceDevices(),
+        getMaintenanceFamilies()
+      ])
+      setDevices(devicesData)
+      setAllFamilies(familiesData)
     } catch {
       toast.showError('Error al cargar dispositivos')
     } finally {
@@ -125,8 +141,28 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }, [loadDevices])
 
+  const handleDeleteFamily = async () => {
+    if (!selectedFamily) return
+    
+    try {
+      await deleteFamily(selectedFamily)
+      toast.showSuccess(`Familia ${selectedFamily} eliminada correctamente`)
+      setSelectedFamily(null)
+      setSelectedDevice(null)
+      setIsDeleteModalOpen(false)
+      loadDevices()
+    } catch {
+      toast.showError('Error al eliminar la familia')
+    }
+  }
+
   const handleSyncFamily = async (sendEmails: boolean = true) => {
     if (!selectedFamily) return
+    const familyDevices = groupedDevices[selectedFamily] || []
+    if (familyDevices.length === 0) {
+      toast.showError(`La familia ${selectedFamily} no tiene equipos. Usa "Buscar Equipos en SDS" primero.`)
+      return
+    }
     setChecking(true)
     setSyncJob(null)
     try {
@@ -269,16 +305,19 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const handleRenameFamily = async () => {
+  const handleRenameFamily = async (newName: string) => {
     if (!selectedFamily) return
-    const newName = window.prompt('Nuevo nombre para la familia:', selectedFamily)
-    if (!newName || newName === selectedFamily) return
+    if (!newName || newName === selectedFamily) {
+      setIsRenameModalOpen(false)
+      return
+    }
 
     setLoadingRules(true)
     try {
       await renameFamily(selectedFamily, newName)
       toast.showSuccess('Familia renombrada correctamente')
       setSelectedFamily(newName)
+      setIsRenameModalOpen(false)
       await loadDevices()
       await loadFamilyRules(newName)
     } catch {
@@ -415,16 +454,39 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const handleCreateNewFamily = (family: string) => {
+  const handleSendAlert = async (rule: MaintenanceModelRule) => {
+    if (!selectedDevice) return
+    try {
+      const result = await sendMaintenanceAlert(selectedDevice.serial, rule.component_type)
+      toast.showSuccess(`📧 Alerta enviada a: ${result.recipients.join(', ')}`)
+    } catch (err) {
+      toast.showError(err instanceof Error ? err.message : 'Error al enviar la alerta')
+    }
+  }
+
+  const handleCreateNewFamily = async (family: string) => {
     const trimmed = family.trim()
     if (!trimmed) return
-    setSelectedFamily(trimmed)
-    setSelectedDevice(null)
-    setRules([])
-    setDeviceStates([])
-    setHistory([])
-    setIsNewFamilyModalOpen(false)
-    toast.showSuccess(`Familia ${trimmed} lista para configurar`)
+    
+    try {
+      await upsertMaintenanceModelRule({
+        model_family: trimmed,
+        component_type: 'Fuser Kit',
+        expected_life: 200000,
+        alert_margin: 10000,
+        email_recipients: ''
+      })
+      
+      toast.showSuccess(`Familia ${trimmed} lista para configurar`)
+      setIsNewFamilyModalOpen(false)
+      
+      await loadDevices()
+      setSelectedFamily(trimmed)
+      setSelectedDevice(null)
+      loadFamilyRules(trimmed)
+    } catch {
+      toast.showError('Error al crear la familia')
+    }
   }
 
   return (
@@ -442,7 +504,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                 onClick={() => setIsHowItWorksOpen(true)}
                 title="¿Cómo funciona este módulo?"
               >
-                ❓
+                ?
               </button>
             </div>
             <p className="dashboard__subheader-meta">Gestión preventiva de componentes y suministros</p>
@@ -457,6 +519,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
       <div className="avisos-grid">
         <AvisosSidebar 
           groupedDevices={groupedDevices}
+          allFamilies={allFamilies}
           selectedFamily={selectedFamily}
           selectedDevice={selectedDevice}
           loading={loading}
@@ -469,79 +532,87 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
           {selectedFamily ? (
             <div className="avisos-detail">
               <div className="avisos-detail-header">
-                {selectedDevice ? (
-                  <>
-                    <h2>Equipo: {selectedDevice.serial}</h2>
-                    <p className="detail-subtitle">Modelo: {selectedDevice.model_family}</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="family-title-group">
-                      <div className="family-title-main">
-                        <h2>Familia: {selectedFamily}</h2>
-                        <button 
-                          onClick={handleRenameFamily}
-                          className="dashboard__btn--icon-edit"
-                          title="Renombrar Familia"
-                        >
-                          ✏️
-                        </button>
-                      </div>
-                      <p className="detail-subtitle">Configuración maestra para todos los equipos de este modelo.</p>
+                <div className="avisos-detail-title-row">
+                  <h2>{selectedDevice ? `Equipo: ${selectedDevice.serial}` : `Familia: ${selectedFamily}`}</h2>
+                  {selectedFamily && !selectedDevice && (
+                    <>
+                      <button 
+                        onClick={() => setIsRenameModalOpen(true)}
+                        className="dashboard__btn--icon-edit"
+                        title="Renombrar Familia"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        className="dashboard__btn--icon-edit"
+                        style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                        title="Eliminar Familia"
+                      >
+                        🗑️
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className="detail-subtitle">
+                  {selectedDevice 
+                    ? `Monitoreo de componentes para el serie ${selectedDevice.serial}`
+                    : 'Configuración maestra para todos los equipos de este modelo.'}
+                </p>
+                
+                {!selectedDevice && (
+                  <div className="avisos-detail-actions">
+                    <button
+                      onClick={() => handleSyncFamily(false)}
+                      disabled={checking}
+                      title="Sincroniza contadores pero NO envía correos de alerta"
+                      className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'} dashboard__btn--small`}
+                    >
+                      {checking
+                        ? syncJob
+                          ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
+                          : 'Iniciando...'
+                        : '🔇 Sincronización Silenciosa'}
+                    </button>
+                    <button
+                      onClick={() => handleSyncFamily(true)}
+                      disabled={checking}
+                      className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--primary'} dashboard__btn--small`}
+                    >
+                      {checking
+                        ? syncJob
+                          ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
+                          : 'Iniciando...'
+                        : '🔄 Sincronizar Familia'}
+                    </button>
+                    <button
+                      onClick={handleDiscoverFamily}
+                      disabled={discovering}
+                      className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
+                    >
+                      {discovering ? 'Buscando...' : '🔍 Buscar Equipos en SDS'}
+                    </button>
+                    <button
+                      onClick={handleClearDevices}
+                      className="dashboard__btn dashboard__btn--danger-outline dashboard__btn--small"
+                    >
+                      🗑️ Limpiar Equipos
+                    </button>
+                  </div>
+                )}
+                
+                {checking && syncJob && syncJob.total > 0 && (
+                  <div className="sync-inline-progress">
+                    <div className="sync-inline-bar">
+                      <div
+                        className="sync-inline-fill"
+                        style={{ width: `${Math.round((syncJob.processed / syncJob.total) * 100)}%` }}
+                      />
                     </div>
-                    <div className="avisos-detail-actions">
-                      <button
-                        onClick={() => handleSyncFamily(false)}
-                        disabled={checking}
-                        title="Sincroniza contadores pero NO envía correos de alerta"
-                        className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'} dashboard__btn--small`}
-                      >
-                        {checking
-                          ? syncJob
-                            ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
-                            : 'Iniciando...'
-                          : '🔇 Sincronización Silenciosa (Primera vez)'}
-                      </button>
-                      <button
-                        onClick={() => handleSyncFamily(true)}
-                        disabled={checking}
-                        className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--primary'} dashboard__btn--small`}
-                      >
-                        {checking
-                          ? syncJob
-                            ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
-                            : 'Iniciando...'
-                          : '🔄 Sincronizar Familia'}
-                      </button>
-                      <button
-                        onClick={handleDiscoverFamily}
-                        disabled={discovering}
-                        className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
-                      >
-                        {discovering ? 'Buscando...' : '🔍 Buscar Equipos en SDS'}
-                      </button>
-                      <button
-                        onClick={handleClearDevices}
-                        className="dashboard__btn dashboard__btn--danger-outline dashboard__btn--small"
-                      >
-                        🗑️ Limpiar Equipos
-                      </button>
-                    </div>
-                    {checking && syncJob && syncJob.total > 0 && (
-                      <div className="sync-inline-progress">
-                        <div className="sync-inline-bar">
-                          <div
-                            className="sync-inline-fill"
-                            style={{ width: `${Math.round((syncJob.processed / syncJob.total) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="sync-inline-text">
-                          {syncJob.processed} / {syncJob.total} equipos
-                          {syncJob.errors > 0 && <span className="sync-inline-errors"> · {syncJob.errors} errores</span>}
-                        </span>
-                      </div>
-                    )}
-                  </>
+                    <span className="sync-inline-text">
+                      {syncJob.processed} / {syncJob.total} equipos
+                    </span>
+                  </div>
                 )}
               </div>
 
@@ -565,6 +636,7 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
                         onRecordChange={handleOpenRecordModal}
                         onOpenIncident={handleOpenIncident}
                         onCloseIncident={handleOpenCloseIncident}
+                        onSendAlert={handleSendAlert}
                       />
                     ))}
                     {!selectedDevice && rules.length < 8 && (
@@ -672,7 +744,23 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
         />
       )}
       {isHowItWorksOpen && (
-        <HowItWorksModal onClose={() => setIsHowItWorksOpen(false)} />
+        <HowItWorksModal
+          onClose={() => setIsHowItWorksOpen(false)}
+        />
+      )}
+      {isRenameModalOpen && selectedFamily && (
+        <RenameFamilyModal
+          currentName={selectedFamily}
+          onSave={handleRenameFamily}
+          onClose={() => setIsRenameModalOpen(false)}
+        />
+      )}
+      {isDeleteModalOpen && selectedFamily && (
+        <DeleteFamilyModal
+          familyName={selectedFamily}
+          onConfirm={handleDeleteFamily}
+          onClose={() => setIsDeleteModalOpen(false)}
+        />
       )}
     </div>
   )

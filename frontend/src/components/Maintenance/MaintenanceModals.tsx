@@ -88,7 +88,7 @@ export function RuleModal({
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>{editingRule.id ? 'Editar Regla Maestra' : 'Nueva Regla Maestra'}</h3>
-        <form onSubmit={onSave} className="maintenance-form" style={{ marginTop: '20px' }}>
+        <form onSubmit={onSave} className="maintenance-form">
           <div className="form-group">
             <label>Familia de Modelo (ej: 50145)</label>
             <input
@@ -177,7 +177,7 @@ export function RecordChangeModal({
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>Registrar Cambio de Componente</h3>
-        <p style={{ marginBottom: '20px', opacity: 0.7, fontSize: '0.9rem' }}>
+        <p>
           Se registrará el cambio de <strong>{recordingData.component_type}</strong> para el
           equipo {recordingData.serial} con el contador actual de{' '}
           <strong>{currentCounter.toLocaleString()}</strong> págs.
@@ -231,7 +231,7 @@ export function StateModal({
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>⚙️ Ajustar Último Cambio</h3>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem' }}>
+        <p>
           Ajusta manualmente el contador en el que se realizó el último cambio para este equipo.
         </p>
         <form onSubmit={onSave} className="maintenance-form">
@@ -253,7 +253,7 @@ export function StateModal({
               }
               required
             />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+            <span className="form-help-text">
               Contador actual del equipo: {currentCounter.toLocaleString()}
             </span>
           </div>
@@ -276,13 +276,13 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
     <div className="maintenance-modal-overlay" onClick={onClose}>
       <div className="maintenance-modal maintenance-modal--wide" onClick={(e) => e.stopPropagation()}>
         <div className="hiw-header">
-          <div>
-            <h3 style={{ margin: 0 }}>¿Cómo funciona el módulo de Avisos?</h3>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.5 }}>
+          <div className="dashboard__subheader-title-group">
+            <h3 className="log-modal__title">¿Cómo funciona el módulo de Avisos?</h3>
+            <p className="dashboard__subheader-meta">
               Sistema de mantenimiento preventivo por contador de motor
             </p>
           </div>
-          <button className="hiw-close-btn" onClick={onClose}>
+          <button className="hiw-close-btn" onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
         </div>
@@ -421,8 +421,8 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
           </div>
         </div>
 
-        <div className="form-actions" style={{ marginTop: '24px' }}>
-          <button className="dashboard__btn dashboard__btn--primary" onClick={onClose} style={{ width: '100%' }}>
+        <div className="log-modal__actions" style={{ padding: '24px 40px' }}>
+          <button className="dashboard__btn dashboard__btn--primary vibrant" onClick={onClose} style={{ width: '100%' }}>
             Entendido
           </button>
         </div>
@@ -442,7 +442,7 @@ export function OpenIncidentModal({
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>🎫 Abrir Incidente de Mantenimiento</h3>
-        <p style={{ marginBottom: '20px', opacity: 0.7, fontSize: '0.9rem' }}>
+        <p>
           Al cargar el incidente, las alertas por email quedarán suspendidas hasta que sea cerrado.
         </p>
         <form onSubmit={onSave} className="maintenance-form">
@@ -497,7 +497,7 @@ export function CloseIncidentModal({
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>✅ Cerrar Incidente y Registrar Reemplazo</h3>
-        <p style={{ marginBottom: '20px', opacity: 0.7, fontSize: '0.9rem' }}>
+        <p>
           Se registrará el reemplazo de <strong>{data.component_type}</strong> y el contador
           se reiniciará desde el valor actual. El incidente <strong>{data.incident_number}</strong>{' '}
           quedará cerrado.
@@ -543,7 +543,7 @@ export function NewFamilyModal({ onSave, onClose }: NewFamilyModalProps) {
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>📂 Nueva Familia de Equipos</h3>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem' }}>
+        <p>
           Crea un nuevo grupo de configuración maestra para un modelo de impresora.
         </p>
         <form onSubmit={handleSubmit} className="maintenance-form">
@@ -567,6 +567,95 @@ export function NewFamilyModal({ onSave, onClose }: NewFamilyModalProps) {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+export function RenameFamilyModal({ 
+  currentName, 
+  onSave, 
+  onClose 
+}: { 
+  currentName: string; 
+  onSave: (newName: string) => void; 
+  onClose: () => void; 
+}) {
+  const [name, setName] = React.useState(currentName)
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (name.trim() && name.trim() !== currentName) {
+      onSave(name.trim())
+    } else {
+      onClose()
+    }
+  }
+
+  return (
+    <div className="maintenance-modal-overlay">
+      <div className="maintenance-modal">
+        <h3>✏️ Renombrar Familia</h3>
+        <p>
+          Cambia el nombre de la familia maestra. Se actualizarán todos los equipos y reglas asociados.
+        </p>
+        <form onSubmit={handleSubmit} className="maintenance-form">
+          <div className="form-group">
+            <label>Nuevo Nombre</label>
+            <input
+              className="form-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+              required
+            />
+          </div>
+          <div className="form-actions">
+            <button type="button" onClick={onClose} className="dashboard__btn dashboard__btn--secondary">
+              Cancelar
+            </button>
+            <button type="submit" className="dashboard__btn dashboard__btn--primary">
+              Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export function DeleteFamilyModal({ 
+  familyName, 
+  onConfirm, 
+  onClose 
+}: { 
+  familyName: string; 
+  onConfirm: () => void; 
+  onClose: () => void; 
+}) {
+  return (
+    <div className="maintenance-modal-overlay">
+      <div className="maintenance-modal">
+        <h3 style={{ color: '#ef4444' }}>⚠️ Eliminar Familia</h3>
+        <p className="danger-text">
+          ¿Estás seguro de que deseas eliminar la familia <strong>"{familyName}"</strong>?<br/><br/>
+          Esta acción es <strong>irreversible</strong> y eliminará:<br/>
+          • Todas las reglas maestras configuradas.<br/>
+          • Todos los equipos asociados a este modelo.<br/>
+          • El historial de mantenimiento y alertas.
+        </p>
+        <div className="form-actions">
+          <button type="button" onClick={onClose} className="dashboard__btn dashboard__btn--secondary">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            onClick={onConfirm} 
+            className="dashboard__btn dashboard__btn--danger"
+          >
+            Sí, Eliminar Todo
+          </button>
+        </div>
       </div>
     </div>
   )

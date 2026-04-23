@@ -23,6 +23,7 @@ import type {
   MaintenanceModelRule,
   MaintenanceMutationResponse,
   MaintenanceSyncStatus,
+  AIPdfSummaryResponse,
 } from '../types/api'
 
 const API_BASE =
@@ -333,6 +334,29 @@ export async function aiDiagnose(
   return handleResponse<AIDiagnosisResponse>(res)
 }
 
+export async function generatePdfSummary(
+  payload: {
+    incidents: any[]
+    consumables?: any[]
+    top_codes?: any[]
+    model_name?: string | null
+    serial_number?: string | null
+  },
+  signal?: AbortSignal
+): Promise<AIPdfSummaryResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/analysis/pdf-summary`,
+    {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify(payload),
+      signal,
+    },
+    40_000
+  )
+  return handleResponse<AIPdfSummaryResponse>(res)
+}
+
 export interface HealthStatus {
   db_available: boolean
   db_mode: 'postgres' | 'local_fallback'
@@ -474,6 +498,11 @@ export async function getMaintenanceModelRules(
   return handleResponse<MaintenanceModelRule[]>(res)
 }
 
+export async function getMaintenanceFamilies(): Promise<string[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/families`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse<string[]>(res)
+}
+
 export async function upsertMaintenanceModelRule(rule: MaintenanceModelRule): Promise<void> {
   const res = await apiFetch(`${API_BASE}/maintenance/models/rules`, {
     method: 'POST',
@@ -609,6 +638,23 @@ export async function clearFamilyDevices(modelFamily: string): Promise<void> {
   const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}/devices`, {
     method: 'DELETE',
     headers: apiHeaders()
+  })
+  return handleResponse(res)
+}
+
+export async function deleteFamily(modelFamily: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/maintenance/models/${encodeURIComponent(modelFamily)}`, {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  return handleResponse(res)
+}
+
+export async function sendMaintenanceAlert(serial: string, componentType: string): Promise<{ status: string; recipients: string[] }> {
+  const res = await apiFetch(`${API_BASE}/maintenance/send-alert`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ serial, component_type: componentType }),
   })
   return handleResponse(res)
 }

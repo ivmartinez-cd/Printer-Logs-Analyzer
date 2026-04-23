@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 interface HelpModalProps {
   onClose: () => void
 }
@@ -10,324 +12,116 @@ export function HelpModal({ onClose }: HelpModalProps) {
       aria-modal="true"
       aria-labelledby="help-modal-title"
     >
-      <div className="log-modal help-modal">
-        <div className="log-modal__header">
-          <h2 id="help-modal-title" className="log-modal__title">
-            ¿Cómo funciona HP Logs Analyzer?
-          </h2>
-          <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
-            ×
+      <div className="log-modal maintenance-modal--wide">
+        <div className="hiw-header">
+          <div className="dashboard__subheader-title-group">
+            <h2 id="help-modal-title" className="log-modal__title">
+              ¿Cómo funciona HP Logs Analyzer?
+            </h2>
+            <p className="dashboard__subheader-meta">Guía de arquitectura y capacidades del sistema</p>
+          </div>
+          <button type="button" className="hiw-close-btn" onClick={onClose} aria-label="Cerrar">
+            <X size={24} />
           </button>
         </div>
 
-        <div className="help-modal__body">
+        <div className="hiw-body">
           {/* FLUJO DE ANÁLISIS */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Flujo de análisis</h3>
-            <ol className="help-modal__steps">
-              <li>
-                <strong>Opción 1 — Deep Link (recomendado para técnicos):</strong> Ingresá
-                directamente a <code>https://printer-logs-analyzer.vercel.app/SERIALNUMBER</code>.
-                La app detecta el serial en la URL, resuelve el modelo automáticamente y extrae los
-                logs del portal HP SDS sin ninguna acción adicional.
-              </li>
-              <li>
-                <strong>Opción 2 — Extracción automática por serial:</strong> En el modal inicial,
-                ingresá el número de serie. El sistema hace Login → Búsqueda → Resolución de modelo
-                → Extracción de logs → Análisis de forma completamente automatizada.
-              </li>
-              <li>
-                <strong>Opción 3 — Log manual:</strong> Pegá el log exportado desde el portal HP. 
-                El modelo se detectará automáticamente si el log contiene información de identidad, 
-                o podés seleccionar uno de la lista si lo conocés.
-              </li>
-              <li>
-                El backend parsea cada línea, agrupa los eventos por código formando incidentes, y
-                los enriquece con el catálogo de códigos y soluciones CPMD.
-              </li>
-              <li>
-                Opcional: agregar un <strong>SDS Engineering Incident</strong> para hacer match
-                automático contra los códigos del log.
-              </li>
-            </ol>
-          </section>
-
-          {/* KPIs */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Panel de KPIs</h3>
-            <div className="help-modal__kpi-grid">
-              <div className="help-modal__kpi-item">
-                <span className="help-modal__kpi-label">Estado de errores</span>
-                <span className="help-modal__kpi-desc">
-                  Conteo de incidentes ERROR · WARNING · INFO dentro del filtro de fecha activo.
-                </span>
-              </div>
-              <div className="help-modal__kpi-item">
-                <span className="help-modal__kpi-label">Incidencias Activas</span>
-                <span className="help-modal__kpi-desc">
-                  Total de incidentes (grupos de código) en el período filtrado.
-                </span>
-              </div>
-              <div className="help-modal__kpi-item">
-                <span className="help-modal__kpi-label">Último error crítico</span>
-                <span className="help-modal__kpi-desc">
-                  Código y timestamp del evento ERROR más reciente dentro del filtro activo.
-                </span>
-              </div>
-              <div className="help-modal__kpi-item">
-                <span className="help-modal__kpi-label">Tasa de errores</span>
-                <span className="help-modal__kpi-desc">
-                  Frecuencia de errores en función de las páginas impresas:{' '}
-                  <em>"1 error c/N pág."</em> Calculado como{' '}
-                  <em>ERRORs ÷ (contador máx − contador mín)</em> del período. Muestra "—" si el
-                  log no incluye datos de contador.
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* DIAGNÓSTICO CON IA */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Diagnóstico con IA</h3>
-            <p className="help-modal__intro-text">
-              Panel ejecutivo colapsado por defecto. Al expandirlo, hacé click en{' '}
-              <strong>"Generar análisis con IA"</strong> para que <strong>Claude Opus 4.6</strong>{' '}
-              procese los incidentes del log, el estado de consumibles y el historial de alertas.
-              El resultado se muestra en formato ejecutivo con:
-            </p>
-            <ul className="help-modal__list">
-              <li>
-                <strong>Diagnóstico:</strong> causa raíz técnica en máximo 60 palabras, con código
-                de error y correlación temporal.
-              </li>
-              <li>
-                <strong>Acciones:</strong> hasta 3 pasos accionables priorizados.
-              </li>
-              <li>
-                <strong>Prioridad:</strong> badge coloreado (<em>alta / media / baja</em>).
-              </li>
-              <li>
-                <strong>Impacto operativo:</strong> consecuencia concreta en máximo 20 palabras.
-              </li>
-            </ul>
-            <p className="help-modal__note">
-              Colapsar el panel no resetea el diagnóstico ya generado. El análisis considera
-              correlaciones temporales entre eventos, consumibles en tiempo real e historial del
-              portal. Límite: 5 diagnósticos por minuto.
-            </p>
-          </section>
-
-          {/* ALERTAS INSIGHT EN VIVO */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Alertas Insight en vivo</h3>
-            <p className="help-modal__intro-text">
-              Panel colapsado que consulta la API oficial HP Insight al cargar el dashboard (si se
-              ingresó un número de serie). Muestra las alertas activas del dispositivo y el
-              historial del último mes directamente desde el portal.
-            </p>
-            <p className="help-modal__note">
-              Requiere que el entorno tenga configuradas las credenciales de la API Insight
-              (INSIGHT_API_KEY, INSIGHT_API_SECRET). Si no están configuradas, el panel se oculta
-              automáticamente.
-            </p>
-          </section>
-
-          {/* SDS ENGINEERING INCIDENT */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">SDS Engineering Incident</h3>
-            <p className="help-modal__intro-text">
-              Panel colapsado que permite cargar manualmente un incidente SDS y hacer match contra
-              los códigos del log analizado.
-            </p>
-            <ul className="help-modal__list">
-              <li>
-                El match usa <code>event_context</code> como código primario y{' '}
-                <code>more_info</code> como secundarios. Soporta sufijo <code>z</code> como comodín
-                hex (ej. <code>53.B0.0z</code> coincide con <code>53.B0.01</code>,{' '}
-                <code>53.B0.0A</code>, etc.).
-              </li>
-              <li>
-                Si el SDS coincide con un código que indica reemplazo de consumible, se muestra una
-                sección extra <strong>"Verificar cambio de consumible"</strong> con el part number,
-                vida útil y contador actual.
-              </li>
-            </ul>
-          </section>
-
-          {/* ESTADO DE CONSUMIBLES */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Estado de consumibles</h3>
-            <p className="help-modal__intro-text">
-              Panel colapsado con dos fuentes de datos:
-            </p>
-            <ul className="help-modal__list">
-              <li>
-                <strong>Datos CPMD (catálogo local):</strong> aparece si el modelo cargado tiene
-                consumibles con códigos del log asociados. Muestra categoría, part number, vida útil
-                estimada, contador actual, % de uso y estado.
-              </li>
-              <li>
-                <strong>Consumibles en tiempo real (Insight API):</strong> si el equipo fue
-                identificado por serial, muestra datos directos del portal HP: % restante de tóner /
-                componente, páginas estimadas restantes y días restantes.
-              </li>
-            </ul>
-            <p className="help-modal__note">
-              <strong>Qué se muestra y qué no:</strong> se excluyen los tóners de la sección CPMD y
-              los rodillos du ADF (Automatic Document Feeder). Solo se incluyen componentes cuyo
-              ciclo de vida está vinculado al contador de la impresora.
-            </p>
-            <ul className="help-modal__list">
-              <li>
-                <strong>Verde "Sin alertas"</strong>: uso por debajo del 80% de la vida útil.
-              </li>
-              <li>
-                <strong>Amarillo "Próximo a revisar"</strong>: uso entre 80% y 99%.
-              </li>
-              <li>
-                <strong>Rojo "Revisar historial"</strong>: el contador supera el 100% de la vida
-                útil documentada. Verificar en el historial del equipo cuándo fue el último
-                reemplazo — no es una orden de cambio inmediato.
-              </li>
-              <li>
-                Los patrones de código soportan el comodín <code>z</code> (cualquier dígito hex):
-                por ejemplo, <code>53.B0.0z</code> coincide con <code>53.B0.01</code>,{' '}
-                <code>53.B0.0A</code>, etc.
-              </li>
-            </ul>
-          </section>
-
-          {/* FILTROS DE FECHA */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Filtros de fecha</h3>
-            <p className="help-modal__intro-text">
-              Botón único con calendario y presets en un popover. Todos los KPIs, gráficos y tablas
-              respetan el filtro activo.
-            </p>
-            <div className="help-modal__filter-list">
-              {[
-                { label: 'Todo el período', desc: 'Sin filtro — todos los eventos del log.' },
-                { label: 'Hoy', desc: 'Solo eventos del día actual.' },
-                { label: 'Esta semana', desc: 'Lunes–domingo de la semana actual.' },
-                { label: 'Semana anterior', desc: 'Lunes–domingo de la semana pasada.' },
-                { label: 'Este mes', desc: 'Del primer al último día del mes actual.' },
-                { label: 'Mes anterior', desc: 'Del primer al último día del mes pasado.' },
-                { label: 'Últimos 7 días', desc: 'Ventana móvil de los últimos 7 días.' },
-                { label: 'Últimos 30 días', desc: 'Ventana móvil de los últimos 30 días.' },
-              ].map((f) => (
-                <div key={f.label} className="help-modal__filter-row">
-                  <code className="help-modal__filter-label">{f.label}</code>
-                  <span className="help-modal__filter-desc">{f.desc}</span>
+          <section className="hiw-section hiw-section--direct">
+            <div className="hiw-step-number">1</div>
+            <div className="hiw-step-content">
+              <h4>Flujo de Análisis</h4>
+              <p>El sistema soporta tres métodos principales para procesar la información:</p>
+              <div className="help-modal__flow-list">
+                <div className="flow-item">
+                  <strong>Opción 1 — Deep Link:</strong> Ingresa directamente vía URL con el serial. La app resuelve el modelo y extrae logs de HP SDS automáticamente.
                 </div>
-              ))}
+                <div className="flow-item">
+                  <strong>Opción 2 — Extracción Automática:</strong> Ingresa el serial en el modal inicial para un flujo completo de Login → Extracción → Análisis.
+                </div>
+                <div className="flow-item">
+                  <strong>Opción 3 — Log Manual:</strong> Pega el contenido crudo. El sistema detecta la identidad del equipo automáticamente.
+                </div>
+              </div>
+              <div className="hiw-callout">
+                El backend parsea cada línea, agrupa eventos por código formando <strong>incidentes</strong> y los enriquece con el catálogo CPMD.
+              </div>
             </div>
-            <p className="help-modal__note">
-              Selección custom: hacé click en dos días del calendario para definir un rango libre,
-              después "Aplicar". Cancelar o click afuera descarta la selección sin cambiar el filtro
-              activo.
-            </p>
           </section>
 
-          {/* GRÁFICOS */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Gráficos</h3>
-            <ul className="help-modal__list">
-              <li>
-                <strong>Volumen de incidencias:</strong> AreaChart por hora con toggles de
-                severidad. El tooltip muestra los códigos de error específicos del bucket.
-              </li>
-              <li>
-                <strong>Errores más frecuentes:</strong> BarChart con top 10 códigos. Toggles ERROR
-                / WARNING / INFO (los 3 activos por default). Las barras se colorean según
-                severidad.
-              </li>
-            </ul>
+          {/* Panel de KPIs */}
+          <section className="hiw-section hiw-section--formula">
+            <div className="hiw-step-number">2</div>
+            <div className="hiw-step-content">
+              <h4>Panel de KPIs Inteligentes</h4>
+              <p>Métricas clave para entender la salud del dispositivo de un vistazo:</p>
+              <div className="help-modal__kpi-grid">
+                <div className="help-modal__kpi-card">
+                  <h5>Estado de Errores</h5>
+                  <p>Conteo de incidentes críticos, advertencias e informativos.</p>
+                </div>
+                <div className="help-modal__kpi-card">
+                  <h5>Tasa de Errores</h5>
+                  <p>Frecuencia basada en páginas: <code>Errores / (Contador Máx - Mín)</code>.</p>
+                </div>
+                <div className="help-modal__kpi-card">
+                  <h5>Último Crítico</h5>
+                  <p>Identificación inmediata del evento ERROR más reciente.</p>
+                </div>
+                <div className="help-modal__kpi-card">
+                  <h5>Incidencias Activas</h5>
+                  <p>Total de grupos de códigos detectados en el período.</p>
+                </div>
+              </div>
+            </div>
           </section>
 
-          {/* TABLAS */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Tablas</h3>
-            <ul className="help-modal__list">
-              <li>
-                <strong>Incidencias:</strong> agrupadas por código, con sort, búsqueda, filtro por
-                severidad y expand de cada incidencia para ver sus eventos individuales. Hacé click
-                en el código subrayado para ver o editar la entrada del catálogo.
-              </li>
-              <li>
-                <strong>Eventos del período:</strong> tabla colapsada por defecto con todos los
-                eventos crudos del filtro activo, ordenable y con búsqueda.
-              </li>
-            </ul>
+          {/* Diagnóstico con IA */}
+          <section className="hiw-section hiw-section--incident">
+            <div className="hiw-step-number">3</div>
+            <div className="hiw-step-content">
+              <h4>Diagnóstico Ejecutivo (IA)</h4>
+              <p>Utiliza <strong>Claude 3.5 Opus</strong> para procesar correlaciones temporales, consumibles y alertas.</p>
+              <ul className="help-modal__premium-list">
+                <li><strong>Diagnóstico:</strong> Causa raíz técnica en formato conciso.</li>
+                <li><strong>Acciones:</strong> Pasos accionables priorizados para el técnico.</li>
+                <li><strong>Impacto:</strong> Consecuencia operativa real del problema.</li>
+              </ul>
+            </div>
           </section>
 
-          {/* CATÁLOGO DE CÓDIGOS */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Catálogo de códigos de error</h3>
-            <ul className="help-modal__list">
-              <li>
-                Hacé click en cualquier <strong>código subrayado</strong> en la tabla de incidentes
-                o en "Editar" para agregar o modificar la descripción, severidad y URL de solución.
-              </li>
-              <li>
-                Cuando agregás un link, el backend descarga y guarda el contenido HTML — así podés
-                verlo aunque el link de HP expire.
-              </li>
-              <li>
-                Si el análisis detecta <strong>códigos nuevos</strong> (no están en el catálogo),
-                aparece una sección para agregarlos uno a uno o ignorarlos.
-              </li>
-              <li>
-                Si el modelo tiene CPMD cargado, cada código muestra automáticamente los pasos
-                técnicos del manual de servicio y los FRUs asociados, sin necesidad de abrir el PDF.
-              </li>
-            </ul>
+          {/* Consumibles e Insight */}
+          <section className="hiw-section hiw-section--alert">
+            <div className="hiw-step-number">4</div>
+            <div className="hiw-step-content">
+              <h4>Consumibles y Alertas Insight</h4>
+              <p>Sincronización en tiempo real con la API oficial de HP Insight.</p>
+              <div className="hiw-callout">
+                Compara la vida útil teórica (CPMD) contra el estado real reportado por el portal para detectar discrepancias.
+              </div>
+            </div>
           </section>
 
-
-          {/* INCIDENTES GUARDADOS */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Incidentes guardados</h3>
-            <ul className="help-modal__list">
-              <li>
-                El botón <strong>"Guardar incidente"</strong> en el header guarda un snapshot del
-                análisis actual con nombre y equipment identifier opcional. Útil como línea base.
-              </li>
-              <li>
-                <strong>"Incidentes guardados"</strong> muestra la lista, permite re-abrirlos y
-                compararlos contra logs nuevos para ver tendencia:{' '}
-                <em>mejoró / estable / empeoró</em>.
-              </li>
-              <li>
-                Si un equipo tiene 3 o más snapshots se genera un gráfico de línea con la evolución
-                de errores y advertencias a lo largo del tiempo.
-              </li>
-            </ul>
-          </section>
-
-          {/* EXPORTAR PDF */}
-          <section className="help-modal__section">
-            <h3 className="help-modal__section-title">Exportar PDF</h3>
-            <p className="help-modal__intro-text">
-              El botón <strong>"Exportar PDF"</strong> en el header genera un PDF A4 ejecutivo en
-              modo Light que incluye: Resumen Ejecutivo, Diagnóstico IA (si fue generado), KPIs,
-              gráfico de errores frecuentes y tabla completa de incidencias. Los filtros, botones de
-              expansión y links de solución se ocultan automáticamente para mayor claridad.
-            </p>
+          {/* Exportación */}
+          <section className="hiw-section hiw-section--close">
+            <div className="hiw-step-number">5</div>
+            <div className="hiw-step-content">
+              <h4>Reporte Ejecutivo PDF</h4>
+              <p>Genera un documento A4 profesional, optimizado para impresión, que incluye el resumen ejecutivo, diagnósticos de IA y la tabla de incidentes completa.</p>
+            </div>
           </section>
         </div>
 
-        <div className="log-modal__actions">
+        <div className="log-modal__actions" style={{ padding: '24px 40px' }}>
           <button
             type="button"
-            className="dashboard__btn dashboard__btn--primary"
+            className="dashboard__btn dashboard__btn--primary vibrant"
             onClick={onClose}
           >
-            Entendido
+            Entendido, ¡vamos allá!
           </button>
         </div>
       </div>
     </div>
   )
 }
-
-

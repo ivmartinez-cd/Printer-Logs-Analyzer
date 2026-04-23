@@ -4,6 +4,7 @@ import type {
   Incident as ApiIncident,
   ParseLogsResponse,
   RealtimeConsumable,
+  AIPdfSummaryResponse,
 } from '../../types/api'
 import type { IncidentRow } from '../Parser/IncidentsTable'
 import styles from './ExecutivePrintReport.module.css'
@@ -26,6 +27,7 @@ interface ExecutivePrintReportProps {
   topCodes: TopCodeSummary[]
   incidentRows: IncidentRow[]
   generatedAtIso: string
+  aiSummary?: AIPdfSummaryResponse | null
 }
 
 type ReportTone = 'critical' | 'watch' | 'ok'
@@ -323,6 +325,7 @@ export const ExecutivePrintReport = forwardRef<HTMLDivElement, ExecutivePrintRep
       topCodes,
       incidentRows,
       generatedAtIso,
+      aiSummary,
     },
     ref
   ) => {
@@ -403,29 +406,50 @@ export const ExecutivePrintReport = forwardRef<HTMLDivElement, ExecutivePrintRep
 
           <div className={styles.coverHero}>
             <div className={styles.heroCopy}>
-              <span className={styles.heroTag}>Executive print report</span>
-              <h1 className={styles.heroTitle}>Estado actual, impacto y plan de acción.</h1>
+              <span className={styles.heroTag}>
+                {aiSummary ? 'AI Powered Executive Summary' : 'Executive print report'}
+              </span>
+              <h1 className={styles.heroTitle}>
+                {aiSummary 
+                  ? 'Diagnóstico ejecutivo generado por Inteligencia Artificial' 
+                  : 'Estado actual, impacto y plan de acción.'}
+              </h1>
               <p className={styles.heroText}>
-                Este informe consolida las métricas clave de rendimiento, alertas preventivas y
-                diagnósticos técnicos para facilitar la toma de decisiones estratégicas y el
-                aseguramiento de la continuidad operativa.
+                {aiSummary ? aiSummary.narrative_summary : (
+                  'Este informe consolida las métricas clave de rendimiento, alertas preventivas y ' +
+                  'diagnósticos técnicos para facilitar la toma de decisiones estratégicas y el ' +
+                  'aseguramiento de la continuidad operativa.'
+                )}
               </p>
             </div>
 
             <aside className={styles.heroPanel}>
               <span
                 className={`${styles.statusPill} ${
-                  toneMetrics.tone === 'critical'
+                  (aiSummary?.tone || toneMetrics.tone) === 'critical'
                     ? styles.statusPillCritical
-                    : toneMetrics.tone === 'watch'
+                    : (aiSummary?.tone || toneMetrics.tone) === 'watch'
                       ? styles.statusPillWatch
                       : styles.statusPillOk
                 }`}
               >
-                {toneMetrics.status}
+                {aiSummary ? (
+                   aiSummary.tone === 'critical' ? 'Prioridad alta' : 
+                   aiSummary.tone === 'watch' ? 'Atencion requerida' : 'Operacion estable'
+                ) : toneMetrics.status}
               </span>
-              <div className={styles.statusTitle}>{toneMetrics.window}</div>
-              <div className={styles.statusText}>{toneMetrics.summary}</div>
+              <div className={styles.statusTitle}>
+                {aiSummary ? 'Plan de Acción Sugerido' : toneMetrics.window}
+              </div>
+              <div className={styles.statusText}>
+                {aiSummary ? (
+                  <ul className={styles.aiActionList}>
+                    {aiSummary.action_plan.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                ) : toneMetrics.summary}
+              </div>
             </aside>
           </div>
 
@@ -735,7 +759,14 @@ export const ExecutivePrintReport = forwardRef<HTMLDivElement, ExecutivePrintRep
                 {topIncidentRows.length > 0 ? (
                   topIncidentRows.map((incident) => (
                     <tr key={incident.id}>
-                      <td className={styles.codeCell}>{incident.code}</td>
+                      <td className={styles.codeCell}>
+                        {incident.code}
+                        {aiSummary?.error_translations[incident.code] && (
+                          <span className={styles.aiTranslation}>
+                            {aiSummary.error_translations[incident.code]}
+                          </span>
+                        )}
+                      </td>
                       <td>{incident.classification || incident.code}</td>
                       <td>
                         <span className={severityClassName(incident.severity)}>

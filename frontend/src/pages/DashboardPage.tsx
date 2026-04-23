@@ -5,6 +5,7 @@ import {
   compareSavedAnalysis,
   deleteSavedAnalysis,
   extractSdsLogs,
+  generatePdfSummary,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -17,6 +18,7 @@ import type {
   ErrorCodeUpsertBody,
   RealtimeConsumable,
   ParserError,
+  AIPdfSummaryResponse,
 } from '../types/api'
 import { AddCodeToCatalogModal } from '../components/Parser/AddCodeToCatalogModal'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
@@ -104,7 +106,7 @@ function getTopIncidentsForChart(
   events: ApiEvent[],
   selectedDate: DateFilter,
   n: number
-): { name: string; count: number; severity: string; sds_link?: string; sds_solution_content?: string | null }[] {
+): { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -236,6 +238,9 @@ export default function DashboardPage({
   const [realtimeConsumables, setRealtimeConsumables] = useState<RealtimeConsumable[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [pdfAiSummary, setPdfAiSummary] = useState<AIPdfSummaryResponse | null>(null)
+  const [isAiPdfReady, setIsAiPdfReady] = useState(false)
+  const [isGeneratingAiPdf, setIsGeneratingAiPdf] = useState(false)
 
   const lastNavState = useRef({ viewMode, currentSerialNumber, selectedSavedId })
 
@@ -522,7 +527,39 @@ export default function DashboardPage({
           onAnalyzeNew={() => setLogModalOpen(true)}
           onSaveIncident={() => setSaveIncidentModalOpen(true)}
           onAddSds={() => setSdsModalOpen(true)}
-          onExportPdf={() => handleExportPDF(!!result)}
+          onExportPdf={async () => {
+            if (!result) return
+            setPdfAiSummary(null)
+            setIsAiPdfReady(false)
+            setIsGeneratingAiPdf(true)
+            
+            try {
+              const summary = await generatePdfSummary({
+                incidents: filteredIncidents.map(i => ({
+                  code: i.code,
+                  severity: i.severity,
+                  occurrences: i.occurrences,
+                  description: i.classification,
+                  start_time: i.start_time,
+                  end_time: i.end_time
+                })),
+                consumables: realtimeConsumables,
+                top_codes: topCodes,
+                model_name: currentModelName,
+                serial_number: currentSerialNumber
+              }, AbortSignal.timeout(30000))
+              
+              setPdfAiSummary(summary)
+              setIsAiPdfReady(true)
+            } catch (err) {
+              console.error('Error generating AI PDF Summary:', err)
+              toast.showError('Error al contactar con la IA, se generara reporte estandar.')
+              setPdfAiSummary(null)
+              handleExportPDF(true)
+            } finally {
+              setIsGeneratingAiPdf(false)
+            }
+          }}
           onHelp={() => setHelpModalOpen(true)}
           isAtTop={isAtTop}
           showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
@@ -543,6 +580,7 @@ export default function DashboardPage({
               topCodes={topCodes}
               incidentRows={incidentRows}
               generatedAtIso={reportGeneratedAtIso}
+              aiSummary={pdfAiSummary}
             />
           </div>
         </div>
@@ -1137,6 +1175,110 @@ export default function DashboardPage({
             </div>
           </div>
         </div>
+      )}
+      {/* ===== Modal de Exportación PDF (auto-contenido) ===== */}
+      {(exportingPdf || isAiPdfReady || isGeneratingAiPdf) && (
+        <>
+          {/* Keyframes del spinner embebidos directamente */}
+          <style>{`
+            @keyframes pdf-spin { to { transform: rotate(360deg); } }
+            .pdf-export-spinner {
+              width: 52px;
+              height: 52px;
+              border: 5px solid rgba(255,255,255,0.12);
+              border-top-color: #38bdf8;
+              border-radius: 50%;
+              animation: pdf-spin 0.9s linear infinite;
+              margin-bottom: 28px;
+            }
+          `}</style>
+
+          {/* Overlay */}
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(8, 12, 22, 0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            zIndex: 100000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {/* Cuadro del modal */}
+            <div style={{
+              background: '#111827',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '20px',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              width: '380px',
+              padding: '52px 40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+            }}>
+              {!isAiPdfReady ? (
+                <>
+                  <div className="pdf-export-spinner" />
+                  <p style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '1.35rem',
+                    fontWeight: 700,
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    Generando reporte
+                  </p>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '13px',
+                    color: '#64748b',
+                    lineHeight: 1.5
+                  }}>
+                    Redactando resumen ejecutivo con IA...
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: '52px', lineHeight: 1, marginBottom: '24px' }}>✅</div>
+                  <p style={{
+                    margin: '0 0 10px 0',
+                    fontSize: '1.35rem',
+                    fontWeight: 700,
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    ¡Reporte Listo!
+                  </p>
+                  <p style={{
+                    margin: '0 0 32px 0',
+                    fontSize: '13px',
+                    color: '#64748b',
+                    lineHeight: 1.5
+                  }}>
+                    La IA ha finalizado el resumen ejecutivo.
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button
+                      className="dashboard__btn"
+                      onClick={() => setIsAiPdfReady(false)}
+                    >
+                      Cerrar
+                    </button>
+                    <button
+                      className="dashboard__btn dashboard__btn--primary"
+                      onClick={() => { setIsAiPdfReady(false); handleExportPDF(true) }}
+                    >
+                      Abrir Impresión
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

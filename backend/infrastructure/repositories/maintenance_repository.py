@@ -84,8 +84,12 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
     def _get_all_model_families_db(self) -> List[str]:
         with self._db.connect() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT DISTINCT model_family FROM maintenance_model_rules")
-                return [r[0] for r in cur.fetchall()]
+                cur.execute("""
+                    SELECT DISTINCT model_family FROM maintenance_model_rules
+                    UNION
+                    SELECT DISTINCT model_family FROM maintenance_devices
+                """)
+                return [r[0] for r in cur.fetchall() if r[0]]
 
     # --- Device State ---
     def get_device_state(self, serial: str) -> List[MaintenanceDeviceState]:
@@ -290,4 +294,15 @@ class MaintenanceRepository(BaseRepository[MaintenanceDevice, str]):
         with self._db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM maintenance_devices WHERE model_family = %s", (family,))
+            conn.commit()
+
+    def delete_family(self, family: str):
+        self._execute_with_fallback(self._delete_family_db, lambda f: None, family)
+
+    def _delete_family_db(self, family: str):
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                # Due to CASCADE, deleting devices will clean up state, history, alerts, and incidents
+                cur.execute("DELETE FROM maintenance_devices WHERE model_family = %s", (family,))
+                cur.execute("DELETE FROM maintenance_model_rules WHERE model_family = %s", (family,))
             conn.commit()

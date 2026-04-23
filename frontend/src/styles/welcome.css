@@ -82,6 +82,7 @@
   border: var(--border-glass);
   border-radius: 20px;
   padding: 6px;
+  padding-right: 14px;
   transition: var(--transition-premium);
   box-shadow: var(--shadow-premium);
 }

@@ -136,7 +136,7 @@ describe('ExecutivePrintReport', () => {
 
     expect(screen.getAllByText('Operacion estable').length).toBeGreaterThan(0)
     expect(
-      screen.getByText('No hay codigos recurrentes para mostrar en la ventana filtrada.')
+      screen.getByText('No hay códigos recurrentes para mostrar en la ventana filtrada.')
     ).toBeInTheDocument()
     expect(
       screen.getByText('No hay incidentes priorizados en la ventana filtrada.')

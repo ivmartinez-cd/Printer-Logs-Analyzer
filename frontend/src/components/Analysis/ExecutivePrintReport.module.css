@@ -555,6 +555,30 @@
   color: #64748b;
 }
 
+.aiActionList {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style-type: disc;
+}
+
+.aiActionList li {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.aiTranslation {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0369a1;
+  font-style: italic;
+}
+
 @media print {
   .report {
     width: auto;

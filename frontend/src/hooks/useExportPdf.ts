@@ -3,11 +3,11 @@ import { useToast } from '../contexts/ToastContext'
 
 function escapeHtml(value: string) {
   return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 function buildHeadMarkup(title: string) {
@@ -107,24 +107,28 @@ export function useExportPdf(logFileName: string | null) {
   const printReportRef = useRef<HTMLDivElement>(null)
   const toast = useToast()
 
-  async function handleExportPDF(hasResult: boolean) {
+  async function handleExportPDF(hasResult: boolean, onBeforePrint?: () => Promise<void>) {
     if (!hasResult) return
-
-    const reportMarkup = printReportRef.current?.outerHTML
-    if (!reportMarkup) {
-      toast.showError('No se pudo preparar el reporte ejecutivo')
-      return
-    }
-
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) {
-      toast.showError('No se pudo abrir la vista de impresion')
-      return
-    }
 
     setExportingPdf(true)
 
     try {
+      if (onBeforePrint) {
+        await onBeforePrint()
+      }
+
+      const reportMarkup = printReportRef.current?.outerHTML
+      if (!reportMarkup) {
+        toast.showError('No se pudo preparar el reporte ejecutivo')
+        return
+      }
+
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        toast.showError('El navegador bloqueo la ventana emergente. Por favor, permite popups para este sitio.')
+        return
+      }
+
       const fileStem = logFileName ? logFileName.replace(/\.[^.]+$/, '') : 'HP_Logs_Analyzer'
       const title = `Reporte_Ejecutivo_${fileStem}`
 
@@ -145,7 +149,7 @@ export function useExportPdf(logFileName: string | null) {
       printWindow.print()
       printWindow.onafterprint = () => {
         setTimeout(() => {
-          if (!printWindow.closed) {
+          if (printWindow && !printWindow.closed) {
             printWindow.close()
           }
         }, 150)
@@ -154,9 +158,6 @@ export function useExportPdf(logFileName: string | null) {
       toast.showSuccess('Vista de impresion lista')
     } catch (error) {
       console.error('Error al preparar el reporte ejecutivo:', error)
-      if (!printWindow.closed) {
-        printWindow.close()
-      }
       toast.showError('Error al preparar el PDF para impresion')
     } finally {
       setExportingPdf(false)

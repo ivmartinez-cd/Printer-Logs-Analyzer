@@ -6,11 +6,11 @@ import { AvisosSidebar } from '../../../components/Maintenance/AvisosSidebar'
 describe('AvisosSidebar', () => {
   const mockGroupedDevices = {
     'Family A': [
-      { serial: 'SERIAL-A1', last_sync_counter: 1000 },
-      { serial: 'SERIAL-A2', last_sync_counter: 2000 },
+      { serial: 'SERIAL-A1', last_sync_counter: 1000, model_family: 'Family A', is_active: true },
+      { serial: 'SERIAL-A2', last_sync_counter: 2000, model_family: 'Family A', is_active: true },
     ],
     'Family B': [
-      { serial: 'SERIAL-B1', last_sync_counter: 3000 },
+      { serial: 'SERIAL-B1', last_sync_counter: 3000, model_family: 'Family B', is_active: true },
     ],
   }
 
@@ -24,6 +24,7 @@ describe('AvisosSidebar', () => {
     render(
       <AvisosSidebar 
         groupedDevices={mockGroupedDevices} 
+        allFamilies={Object.keys(mockGroupedDevices)}
         selectedFamily={null} 
         selectedDevice={null} 
         loading={false} 
@@ -41,6 +42,7 @@ describe('AvisosSidebar', () => {
     render(
       <AvisosSidebar 
         groupedDevices={mockGroupedDevices} 
+        allFamilies={Object.keys(mockGroupedDevices)}
         selectedFamily={null} 
         selectedDevice={null} 
         loading={false} 
@@ -59,6 +61,7 @@ describe('AvisosSidebar', () => {
     render(
       <AvisosSidebar 
         groupedDevices={mockGroupedDevices} 
+        allFamilies={Object.keys(mockGroupedDevices)}
         selectedFamily={null} 
         selectedDevice={null} 
         loading={false} 
@@ -78,6 +81,7 @@ describe('AvisosSidebar', () => {
     render(
       <AvisosSidebar 
         groupedDevices={mockGroupedDevices} 
+        allFamilies={Object.keys(mockGroupedDevices)}
         selectedFamily={null} 
         selectedDevice={null} 
         loading={false} 
@@ -99,6 +103,7 @@ describe('AvisosSidebar', () => {
     render(
       <AvisosSidebar 
         groupedDevices={mockGroupedDevices} 
+        allFamilies={Object.keys(mockGroupedDevices)}
         selectedFamily={null} 
         selectedDevice={null} 
         loading={false} 
