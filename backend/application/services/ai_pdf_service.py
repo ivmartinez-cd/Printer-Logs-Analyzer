@@ -39,6 +39,7 @@ SYSTEM_PROMPT = (
     "REGLA DE ORO: NO envíes ningún texto fuera del bloque JSON. Formato JSON estricto."
 )
 
+
 def _extract_json(text: str) -> dict | None:
     cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.IGNORECASE)
     cleaned = re.sub(r"\s*```$", "", cleaned.strip())
@@ -58,6 +59,7 @@ def _extract_json(text: str) -> dict | None:
     _logger.warning("No se pudo extraer JSON de la respuesta IA (Haiku): %s", text[:200])
     return None
 
+
 async def generate_pdf_summary(payload: dict[str, Any], api_key: str) -> dict[str, Any]:
     """Genera un resumen ejecutivo vía IA para inyectar en el reporte PDF."""
     client = AsyncAnthropic(api_key=api_key)
@@ -72,14 +74,14 @@ async def generate_pdf_summary(payload: dict[str, Any], api_key: str) -> dict[st
                     "content": json.dumps(payload, ensure_ascii=False, indent=2),
                 }
             ],
-            temperature=0.3, # Baja temperatura para respuestas más deterministas y consistentes
+            temperature=0.3,  # Baja temperatura para respuestas más deterministas y consistentes
         )
         raw_text = response.content[0].text
-        
+
         parsed = _extract_json(raw_text)
         if not parsed:
             raise ValueError("La IA no devolvió un JSON válido.")
-            
+
         return parsed
     except Exception as e:
         _logger.error("Error al generar resumen ejecutivo PDF con Haiku: %s", str(e))

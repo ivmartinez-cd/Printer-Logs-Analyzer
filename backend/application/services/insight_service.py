@@ -254,17 +254,24 @@ def search_devices_by_model(
                 {
                     "deviceId": 9001,
                     "serialNumber": "BRBSN9YYHQ",
-                    "extendedFields": {"model": "HP LaserJet M600 Series", "zone": "Soporte Técnica"}
+                    "extendedFields": {
+                        "model": "HP LaserJet M600 Series",
+                        "zone": "Soporte Técnica",
+                    },
                 },
                 {
                     "deviceId": 9002,
                     "serialNumber": "CZ12345678",
-                    "extendedFields": {"model": "HP LaserJet M600 Series", "zone": "Administración"}
-                }
+                    "extendedFields": {
+                        "model": "HP LaserJet M600 Series",
+                        "zone": "Administración",
+                    },
+                },
             ]
         return []
 
     import urllib.parse
+
     token = _get_jwt(portal_url, api_key, api_secret)
     base = portal_url.rstrip("/")
     quoted_query = urllib.parse.quote(f"~{model_family}")
@@ -286,15 +293,20 @@ def get_device_meters(
 
     # Insight API v7 requires startDate and endDate for history
     from datetime import datetime, timedelta
+
     now = datetime.now()
     start_date = (now - timedelta(days=days)).strftime("%Y-%m-%d")
     end_date = now.strftime("%Y-%m-%d")
 
     # Discovery Mock for local development
-    if api_key == "dev" or "hp-sds-latam" not in portal_url or device_id == sum(ord(c) for c in "BRBSN9YYHQ"):
+    if (
+        api_key == "dev"
+        or "hp-sds-latam" not in portal_url
+        or device_id == sum(ord(c) for c in "BRBSN9YYHQ")
+    ):
         return [
             {"date": now.strftime("%Y-%m-%dT%H:%M:%S"), "totalValue": 150000},
-            {"date": (now - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S"), "totalValue": 149500}
+            {"date": (now - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S"), "totalValue": 149500},
         ]
 
     ep = f"{base}/PortalAPI/api/devices/{device_id}/meters/history?startDate={start_date}&endDate={end_date}"

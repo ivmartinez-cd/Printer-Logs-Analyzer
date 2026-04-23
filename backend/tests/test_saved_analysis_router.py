@@ -1,13 +1,14 @@
-
 import unittest
-from unittest.mock import MagicMock, patch
-from fastapi.testclient import TestClient
-from uuid import uuid4
 from datetime import datetime
-from backend.interface.api import app
-from backend.interface.deps import get_saved_analysis_repo
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
+
 from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisSnapshot
+from backend.interface.api import app
 from backend.interface.auth import authenticate
+from backend.interface.deps import get_saved_analysis_repo
+from fastapi.testclient import TestClient
+
 
 class TestSavedAnalysisRouter(unittest.TestCase):
     def setUp(self):
@@ -21,7 +22,14 @@ class TestSavedAnalysisRouter(unittest.TestCase):
 
     def test_list_analyses(self):
         self.mock_repo.list.return_value = [
-            SavedAnalysisSnapshot(id=uuid4(), name="Test", equipment_identifier="S1", incidents=[], global_severity="INFO", created_at=datetime.now())
+            SavedAnalysisSnapshot(
+                id=uuid4(),
+                name="Test",
+                equipment_identifier="S1",
+                incidents=[],
+                global_severity="INFO",
+                created_at=datetime.now(),
+            )
         ]
         response = self.client.get("/saved-analyses")
         self.assertEqual(response.status_code, 200)
@@ -30,7 +38,12 @@ class TestSavedAnalysisRouter(unittest.TestCase):
     def test_get_analysis(self):
         id_val = uuid4()
         self.mock_repo.get_by_id.return_value = SavedAnalysisSnapshot(
-            id=id_val, name="Test", equipment_identifier="S1", incidents=[], global_severity="INFO", created_at=datetime.now()
+            id=id_val,
+            name="Test",
+            equipment_identifier="S1",
+            incidents=[],
+            global_severity="INFO",
+            created_at=datetime.now(),
         )
         response = self.client.get(f"/saved-analyses/{id_val}")
         self.assertEqual(response.status_code, 200)
@@ -44,13 +57,18 @@ class TestSavedAnalysisRouter(unittest.TestCase):
     def test_create_analysis(self):
         id_val = uuid4()
         self.mock_repo.create.return_value = SavedAnalysisSnapshot(
-            id=id_val, name="New", equipment_identifier="S1", incidents=[], global_severity="INFO", created_at=datetime.now()
+            id=id_val,
+            name="New",
+            equipment_identifier="S1",
+            incidents=[],
+            global_severity="INFO",
+            created_at=datetime.now(),
         )
         payload = {
             "name": "New",
             "incidents": [],
             "global_severity": "INFO",
-            "equipment_identifier": "S1"
+            "equipment_identifier": "S1",
         }
         response = self.client.post("/saved-analyses", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -60,6 +78,7 @@ class TestSavedAnalysisRouter(unittest.TestCase):
         self.mock_repo.delete.return_value = True
         response = self.client.delete(f"/saved-analyses/{uuid4()}")
         self.assertEqual(response.status_code, 204)
+
 
 if __name__ == "__main__":
     unittest.main()

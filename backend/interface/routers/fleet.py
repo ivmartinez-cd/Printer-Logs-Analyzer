@@ -23,6 +23,7 @@ from backend.application.services.insight_service import (
 from backend.application.services.insight_service import (
     get_device_info as _insight_get_device_info,
 )
+from backend.application.services.job_tracker import create_job, get_job, update_job
 from backend.application.services.sds_web_service import (
     extract_help_urls,
     html_to_tsv,
@@ -42,8 +43,7 @@ from backend.interface.schemas.fleet import (
     DeviceSummary,
     ScanRequest,
 )
-from backend.application.services.job_tracker import create_job, get_job, update_job
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 router = APIRouter(prefix="/fleet", tags=["Fleet Monitor"])
 _logger = logging.getLogger(__name__)
@@ -98,7 +98,8 @@ def _compute_health(
         max_severity = "INFO"
 
     consumable_values: list[float] = [
-        v for k, v in telemetry.items()
+        v
+        for k, v in telemetry.items()
         if k in ("fuser_life_percent", "black_toner_percent") and v is not None
     ]
     consumable_values += [r["percent"] for r in roller_components]
@@ -208,18 +209,20 @@ async def scan_fleet_async(
 
     # Resolve devices first to know the total count
     devices = await _resolve_devices(client, body, settings)
-    
+
     if not devices:
         raise HTTPException(
-            status_code=400, 
-            detail="No se encontraron dispositivos. Verificá la configuración del cliente o los modelos seleccionados."
+            status_code=400,
+            detail="No se encontraron dispositivos. Verificá la configuración del cliente o los modelos seleccionados.",
         )
 
     job_id = create_job(len(devices))
 
     async def _run_scan():
         try:
-            results = await _perform_scan(body, settings, error_code_repo, job_id=job_id, devices=devices)
+            results = await _perform_scan(
+                body, settings, error_code_repo, job_id=job_id, devices=devices
+            )
             update_job(job_id, len(devices), 0, status="completed", results=results)
         except Exception as e:
             _logger.error(f"Background scan failed: {e}")
@@ -242,7 +245,11 @@ async def _resolve_devices(client: any, body: ScanRequest, settings: Settings) -
 
     if client.get("is_dynamic"):
         try:
-            from backend.application.services.insight_service import search_customers, get_devices_by_customer
+            from backend.application.services.insight_service import (
+                get_devices_by_customer,
+                search_customers,
+            )
+
             customers = await asyncio.to_thread(
                 search_customers,
                 settings.insight_portal_url or "",
@@ -274,7 +281,7 @@ async def _resolve_devices(client: any, body: ScanRequest, settings: Settings) -
 
     if body.models:
         devices = [device for device in devices if device.get("model") in body.models]
-    
+
     return devices
 
 
@@ -283,7 +290,7 @@ async def _perform_scan(
     settings: Settings,
     error_code_repo: ErrorCodeRepository,
     job_id: str | None = None,
-    devices: list[DeviceEntry] | None = None
+    devices: list[DeviceEntry] | None = None,
 ) -> list[DeviceScanResult]:
     if not (settings.sds_web_username and settings.sds_web_password):
         raise HTTPException(status_code=503, detail="Integración SDS Web no configurada")
@@ -305,28 +312,40 @@ async def _perform_scan(
     processed = 0
     errors = 0
     results = []
-    
+
     lock = asyncio.Lock()
 
     async def _scan_device_task(serial: str, location: str, model: str | None) -> DeviceScanResult:
         nonlocal processed, errors
         async with semaphore:
-            res = await asyncio.to_thread(_scan_device_sync, serial, location, model, settings, error_code_repo, body.days)
+            res = await asyncio.to_thread(
+                _scan_device_sync, serial, location, model, settings, error_code_repo, body.days
+            )
             async with lock:
                 processed += 1
                 if res.status == "unreachable" and res.error_message:
-                     errors += 1
+                    errors += 1
                 if job_id:
                     update_job(job_id, processed, errors)
                 results.append(res)
             return res
 
-    tasks = [_scan_device_task(device["serial"], device["location"], device.get("model")) for device in devices]
+    tasks = [
+        _scan_device_task(device["serial"], device["location"], device.get("model"))
+        for device in devices
+    ]
     await asyncio.gather(*tasks)
     return results
 
 
-def _scan_device_sync(serial: str, location: str, model: str | None, settings: Settings, error_code_repo: ErrorCodeRepository, days: int) -> DeviceScanResult:
+def _scan_device_sync(
+    serial: str,
+    location: str,
+    model: str | None,
+    settings: Settings,
+    error_code_repo: ErrorCodeRepository,
+    days: int,
+) -> DeviceScanResult:
     normalized_serial = serial.strip().upper()
     info: dict[str, Any] | None = None
     telemetry = _telemetry_payload(normalized_serial, None)
@@ -350,16 +369,22 @@ def _scan_device_sync(serial: str, location: str, model: str | None, settings: S
                 info["device_id"],
             )
             if real_consumables:
-                updated_metadata = merge_consumables_into_metadata(info.get("metadata") or {}, real_consumables)
+                updated_metadata = merge_consumables_into_metadata(
+                    info.get("metadata") or {}, real_consumables
+                )
                 telemetry = _telemetry_payload(normalized_serial, updated_metadata)
-                real_rollers = extract_roller_components({
-                    item.get("description") or item.get("type"): item.get("percentLeft")
-                    for item in real_consumables
-                })
+                real_rollers = extract_roller_components(
+                    {
+                        item.get("description") or item.get("type"): item.get("percentLeft")
+                        for item in real_consumables
+                    }
+                )
                 if real_rollers:
                     roller_components = real_rollers
         except Exception as exc:
-            _logger.warning("Could not fetch real-time consumables for %s: %s", normalized_serial, exc)
+            _logger.warning(
+                "Could not fetch real-time consumables for %s: %s", normalized_serial, exc
+            )
 
         if not info.get("device_id"):
             return DeviceScanResult(
@@ -387,7 +412,9 @@ def _scan_device_sync(serial: str, location: str, model: str | None, settings: S
         except Exception as exc:
             _logger.warning("Could not fetch alerts for %s: %s", normalized_serial, exc)
 
-        status, alert_count, max_severity = _compute_health(telemetry, roller_components, active_alerts)
+        status, alert_count, max_severity = _compute_health(
+            telemetry, roller_components, active_alerts
+        )
 
         sds = get_sds_session(settings)
         raw_html = sds.fetch_event_logs_html(str(info["device_id"]), days)

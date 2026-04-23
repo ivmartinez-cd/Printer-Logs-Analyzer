@@ -25,19 +25,39 @@ _logger = logging.getLogger(__name__)
 
 from backend.application.services.job_tracker import (
     create_job as create_sync_job,
+)
+from backend.application.services.job_tracker import (
     get_job as get_sync_job,
+)
+from backend.application.services.job_tracker import (
     update_job as _update_sync_job,
 )
 
+
 class MaintenanceService:
-    def __init__(self, repository: Optional[MaintenanceRepository] = None, email_service: Optional[EmailService] = None):
+    def __init__(
+        self,
+        repository: Optional[MaintenanceRepository] = None,
+        email_service: Optional[EmailService] = None,
+    ):
         self.repo = repository or MaintenanceRepository()
         self.email = email_service or EmailService()
         self.settings = get_settings()
 
-    def sync_and_check_all(self, discover: bool = False, model_family: Optional[str] = None, send_emails: bool = True, job_id: Optional[str] = None):
+    def sync_and_check_all(
+        self,
+        discover: bool = False,
+        model_family: Optional[str] = None,
+        send_emails: bool = True,
+        job_id: Optional[str] = None,
+    ):
         """Main entry point for the scheduler and manual sync."""
-        _logger.info("Starting maintenance sync and check process (discover=%s, family=%s, send_emails=%s)...", discover, model_family, send_emails)
+        _logger.info(
+            "Starting maintenance sync and check process (discover=%s, family=%s, send_emails=%s)...",
+            discover,
+            model_family,
+            send_emails,
+        )
 
         if discover:
             self.discover_new_devices()
@@ -79,26 +99,38 @@ class MaintenanceService:
             self.settings.insight_portal_url,
             self.settings.insight_api_key,
             self.settings.insight_api_secret,
-            device.serial
+            device.serial,
         )
         meters = get_device_meters(
             self.settings.insight_portal_url,
             self.settings.insight_api_key,
             self.settings.insight_api_secret,
-            device_id
+            device_id,
         )
 
         current_counter = 0
         if meters:
             # Sort meters by date descending to get the most recent reading first
-            sorted_meters = sorted(meters, key=lambda x: x.get("readingDateTime") or x.get("readingDate") or x.get("date") or "", reverse=True)
+            sorted_meters = sorted(
+                meters,
+                key=lambda x: (
+                    x.get("readingDateTime") or x.get("readingDate") or x.get("date") or ""
+                ),
+                reverse=True,
+            )
 
             for m in sorted_meters:
                 # 1. Check for nested structure: {"date": "...", "meters": [{"name": "...", "value": ...}]}
                 nested_meters = m.get("meters", [])
                 if nested_meters:
                     # Look for specific names
-                    names_to_find = ["Ciclos de trabajo", "Engine Cycles", "Total Impressions", "Total Value", "Páginas monocromáticas"]
+                    names_to_find = [
+                        "Ciclos de trabajo",
+                        "Engine Cycles",
+                        "Total Impressions",
+                        "Total Value",
+                        "Páginas monocromáticas",
+                    ]
                     found_value = None
                     for name in names_to_find:
                         for nm in nested_meters:
@@ -125,13 +157,13 @@ class MaintenanceService:
             metadata = device_info.get("extendedFields", {})
             # Common fields for total counters in Insight
             current_counter = int(
-                metadata.get("engineCycles") or
-                metadata.get("workCycles") or
-                metadata.get("ciclos_motor") or
-                metadata.get("totalCounter") or
-                metadata.get("total_counter") or
-                metadata.get("total_value") or
-                0
+                metadata.get("engineCycles")
+                or metadata.get("workCycles")
+                or metadata.get("ciclos_motor")
+                or metadata.get("totalCounter")
+                or metadata.get("total_counter")
+                or metadata.get("total_value")
+                or 0
             )
 
         if current_counter == 0:
@@ -143,7 +175,7 @@ class MaintenanceService:
             model_family=device.model_family,
             last_sync_counter=current_counter,
             last_sync_at=datetime.utcnow(),
-            is_active=device.is_active
+            is_active=device.is_active,
         )
         self.repo.upsert_device(device_update)
 
@@ -157,18 +189,30 @@ class MaintenanceService:
             if not state:
                 # FIRST TIME we see this component: initialize baseline to current counter
                 # This prevents old devices from triggering alerts on their first sync
-                _logger.info("Initializing baseline for %s - %s at %s pages", device.serial, rule.component_type, current_counter)
+                _logger.info(
+                    "Initializing baseline for %s - %s at %s pages",
+                    device.serial,
+                    rule.component_type,
+                    current_counter,
+                )
                 state = MaintenanceDeviceState(
                     device_serial=device.serial,
                     component_type=rule.component_type,
-                    last_change_counter=current_counter
+                    last_change_counter=current_counter,
                 )
                 self.repo.upsert_device_state(state)
 
             last_change = state.last_change_counter
             self._evaluate_rule(device, rule, last_change, current_counter, send_emails=send_emails)
 
-    def _evaluate_rule(self, device: MaintenanceDevice, rule: MaintenanceModelRule, last_change_counter: int, current_counter: int, send_emails: bool = True):
+    def _evaluate_rule(
+        self,
+        device: MaintenanceDevice,
+        rule: MaintenanceModelRule,
+        last_change_counter: int,
+        current_counter: int,
+        send_emails: bool = True,
+    ):
         next_change = last_change_counter + rule.expected_life
         remaining = next_change - current_counter
 
@@ -176,15 +220,27 @@ class MaintenanceService:
             # Open incident suppresses all further alerts
             open_incident = self.repo.get_open_incident(device.serial, rule.component_type)
             if open_incident:
-                _logger.info("Alert suppressed for %s - %s: open incident %s", device.serial, rule.component_type, open_incident.incident_number)
+                _logger.info(
+                    "Alert suppressed for %s - %s: open incident %s",
+                    device.serial,
+                    rule.component_type,
+                    open_incident.incident_number,
+                )
                 return
 
             last_alert = self.repo.get_last_alert(device.serial, rule.component_type)
             COOLDOWN_PAGES = 500
             if not last_alert or (current_counter - last_alert.counter_at_alert >= COOLDOWN_PAGES):
-                _logger.info("ALERT TRIGGERED for %s - %s (Remaining: %s)", device.serial, rule.component_type, remaining)
+                _logger.info(
+                    "ALERT TRIGGERED for %s - %s (Remaining: %s)",
+                    device.serial,
+                    rule.component_type,
+                    remaining,
+                )
 
-                recipients = [r.strip() for r in (rule.email_recipients or "").split(",") if r.strip()]
+                recipients = [
+                    r.strip() for r in (rule.email_recipients or "").split(",") if r.strip()
+                ]
                 email_sent = False
 
                 if recipients and self.settings.maintenance_emails_enabled and send_emails:
@@ -194,18 +250,22 @@ class MaintenanceService:
                         current_counter=current_counter,
                         next_change=next_change,
                         remaining=remaining,
-                        recipients=recipients
+                        recipients=recipients,
                     )
                     email_sent = True
                 elif recipients:
-                    _logger.info("Emails are globally disabled. Skipping email for %s", device.serial)
+                    _logger.info(
+                        "Emails are globally disabled. Skipping email for %s", device.serial
+                    )
 
-                self.repo.create_alert(MaintenanceAlert(
-                    device_serial=device.serial,
-                    component_type=rule.component_type,
-                    counter_at_alert=current_counter,
-                    status="SENT" if email_sent else "SKIPPED"
-                ))
+                self.repo.create_alert(
+                    MaintenanceAlert(
+                        device_serial=device.serial,
+                        component_type=rule.component_type,
+                        counter_at_alert=current_counter,
+                        status="SENT" if email_sent else "SKIPPED",
+                    )
+                )
 
     def sync_single_device(self, serial: str, send_emails: bool = True) -> MaintenanceDevice:
         """Syncs a single device and returns the updated MaintenanceDevice."""
@@ -217,7 +277,13 @@ class MaintenanceService:
         updated_devices = self.repo.get_all_devices()
         return next((d for d in updated_devices if d.serial == serial), device)
 
-    def record_change(self, serial: str, component_type: str, incident_number: Optional[str] = None, notes: Optional[str] = None):
+    def record_change(
+        self,
+        serial: str,
+        component_type: str,
+        incident_number: Optional[str] = None,
+        notes: Optional[str] = None,
+    ):
         """Records a component change, resets the rule counter and clears alerts."""
         _logger.info("Recording maintenance change for %s - %s", serial, component_type)
 
@@ -234,9 +300,7 @@ class MaintenanceService:
             raise ValueError(f"Rule for {component_type} not found on model {device.model_family}")
 
         new_state = MaintenanceDeviceState(
-            device_serial=serial,
-            component_type=component_type,
-            last_change_counter=current_counter
+            device_serial=serial, component_type=component_type, last_change_counter=current_counter
         )
         self.repo.upsert_device_state(new_state)
 
@@ -245,7 +309,7 @@ class MaintenanceService:
             component_type=component_type,
             change_counter=current_counter,
             incident_number=incident_number,
-            technician_notes=notes
+            technician_notes=notes,
         )
         self.repo.create_history_record(history)
         self.repo.delete_alerts_for_component(serial, component_type)
@@ -255,7 +319,9 @@ class MaintenanceService:
     def get_history(self, serial: str) -> List[MaintenanceHistory]:
         return self.repo.get_history(serial)
 
-    def open_incident(self, serial: str, component_type: str, incident_number: str, notes: Optional[str] = None) -> MaintenanceIncident:
+    def open_incident(
+        self, serial: str, component_type: str, incident_number: str, notes: Optional[str] = None
+    ) -> MaintenanceIncident:
         incident = MaintenanceIncident(
             device_serial=serial,
             component_type=component_type,
@@ -270,7 +336,9 @@ class MaintenanceService:
             raise ValueError(f"Incident {incident_id} not found")
         if incident.status != "open":
             raise ValueError(f"Incident {incident_id} is already closed")
-        history = self.record_change(incident.device_serial, incident.component_type, incident.incident_number, notes)
+        history = self.record_change(
+            incident.device_serial, incident.component_type, incident.incident_number, notes
+        )
         self.repo.close_incident(incident_id)
         return history
 
@@ -282,7 +350,7 @@ class MaintenanceService:
             self.settings.insight_portal_url,
             self.settings.insight_api_key,
             self.settings.insight_api_secret,
-            serial
+            serial,
         )
         return info.get("device_id")
 
@@ -303,7 +371,7 @@ class MaintenanceService:
                 self.settings.insight_portal_url,
                 self.settings.insight_api_key,
                 self.settings.insight_api_secret,
-                family
+                family,
             )
 
             _logger.info("Found %s devices for family %s", len(found_devices), family)
@@ -318,14 +386,16 @@ class MaintenanceService:
                 family_lower = family.lower()
 
                 if family_lower not in model_name:
-                    _logger.debug("Skipping device %s: model '%s' does not match family '%s'", serial, model_name, family)
+                    _logger.debug(
+                        "Skipping device %s: model '%s' does not match family '%s'",
+                        serial,
+                        model_name,
+                        family,
+                    )
                     continue
 
                 device = MaintenanceDevice(
-                    serial=serial,
-                    model_family=family,
-                    last_sync_counter=0,
-                    is_active=True
+                    serial=serial, model_family=family, last_sync_counter=0, is_active=True
                 )
                 self.repo.upsert_device(device)
                 _logger.debug("Discovered/Updated device %s for family %s", serial, family)
@@ -334,11 +404,13 @@ class MaintenanceService:
 
     def manual_update_state(self, serial: str, component_type: str, last_change_counter: int):
         """Manually updates the last change counter for a specific device component."""
-        _logger.info("Manually updating state for %s - %s to %s", serial, component_type, last_change_counter)
+        _logger.info(
+            "Manually updating state for %s - %s to %s", serial, component_type, last_change_counter
+        )
         new_state = MaintenanceDeviceState(
             device_serial=serial,
             component_type=component_type,
-            last_change_counter=last_change_counter
+            last_change_counter=last_change_counter,
         )
         self.repo.upsert_device_state(new_state)
         return new_state

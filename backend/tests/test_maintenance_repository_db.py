@@ -1,21 +1,22 @@
-
 import unittest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
 from backend.domain.entities import (
-    MaintenanceDevice, 
-    MaintenanceModelRule, 
-    MaintenanceDeviceState, 
-    MaintenanceAlert, 
-    MaintenanceHistory
+    MaintenanceAlert,
+    MaintenanceDevice,
+    MaintenanceDeviceState,
+    MaintenanceHistory,
+    MaintenanceModelRule,
 )
 from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
+
 
 class TestMaintenanceRepositoryDB(unittest.TestCase):
     def setUp(self):
         self.mock_db = MagicMock()
         self.repo = MaintenanceRepository(database=self.mock_db)
-        
+
         # Setup common mock chain
         self.mock_conn = self.mock_db.connect.return_value.__enter__.return_value
         self.mock_cur = self.mock_conn.cursor.return_value.__enter__.return_value
@@ -24,9 +25,9 @@ class TestMaintenanceRepositoryDB(unittest.TestCase):
         self.mock_cur.fetchall.return_value = [
             ("SER123", "FamilyX", 100, datetime(2023, 1, 1), True)
         ]
-        
+
         devices = self.repo._get_all_devices_db()
-        
+
         self.assertEqual(len(devices), 1)
         self.assertEqual(devices[0].serial, "SER123")
         self.mock_cur.execute.assert_called()
@@ -62,7 +63,9 @@ class TestMaintenanceRepositoryDB(unittest.TestCase):
         self.assertEqual(states[0].last_change_counter, 500)
 
     def test_upsert_device_state_db(self):
-        state = MaintenanceDeviceState(device_serial="S", component_type="C", last_change_counter=10)
+        state = MaintenanceDeviceState(
+            device_serial="S", component_type="C", last_change_counter=10
+        )
         self.repo._upsert_device_state_db(state)
         self.mock_conn.commit.assert_called_once()
 
@@ -71,14 +74,16 @@ class TestMaintenanceRepositoryDB(unittest.TestCase):
         self.mock_cur.fetchone.return_value = (1, "S1", "C1", datetime.now(), 500, "active")
         alert = self.repo._get_last_alert_db("S1", "C1")
         self.assertIsNotNone(alert)
-        
+
         # Not found case
         self.mock_cur.fetchone.return_value = None
         alert = self.repo._get_last_alert_db("S1", "C1")
         self.assertIsNone(alert)
 
     def test_create_alert_db(self):
-        alert = MaintenanceAlert(device_serial="S", component_type="C", triggered_at=datetime.now(), counter_at_alert=100)
+        alert = MaintenanceAlert(
+            device_serial="S", component_type="C", triggered_at=datetime.now(), counter_at_alert=100
+        )
         self.repo._create_alert_db(alert)
         self.mock_conn.commit.assert_called_once()
 
@@ -88,13 +93,17 @@ class TestMaintenanceRepositoryDB(unittest.TestCase):
         self.mock_conn.commit.assert_called_once()
 
     def test_get_history_db(self):
-        self.mock_cur.fetchall.return_value = [(1, "S1", "C1", 100, "INC-1", "Notes", datetime.now())]
+        self.mock_cur.fetchall.return_value = [
+            (1, "S1", "C1", 100, "INC-1", "Notes", datetime.now())
+        ]
         history = self.repo._get_history_db("S1")
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].incident_number, "INC-1")
 
     def test_create_history_record_db(self):
-        record = MaintenanceHistory(device_serial="S", component_type="C", change_counter=10, changed_at=datetime.now())
+        record = MaintenanceHistory(
+            device_serial="S", component_type="C", change_counter=10, changed_at=datetime.now()
+        )
         self.repo._create_history_record_db(record)
         self.mock_conn.commit.assert_called_once()
 
@@ -111,6 +120,7 @@ class TestMaintenanceRepositoryDB(unittest.TestCase):
     def test_local_fallbacks_empty(self):
         # Coverage for local_func lambdas and methods returning empty
         self.assertEqual(self.repo._get_all_devices_local(), [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -115,7 +115,9 @@ async def extract_sds_logs(
                 serial,
             )
         except Exception as exc:
-            _logger.warning("Insight API failed for serial %s: %s. Using mock fallback.", serial, exc)
+            _logger.warning(
+                "Insight API failed for serial %s: %s. Using mock fallback.", serial, exc
+            )
             # Create a mock info object to allow the dashboard to load
             mock_id = sum(ord(c) for c in serial)
             info = {
@@ -130,7 +132,7 @@ async def extract_sds_logs(
         device_id = str(info["device_id"])
         tsv_text = ""
         realtime_consumables = []
-        
+
         try:
             sds = get_sds_session(settings)
             raw_html = sds.fetch_event_logs_html(device_id, body.days)
@@ -178,7 +180,9 @@ async def extract_sds_logs(
     try:
         return await asyncio.wait_for(asyncio.to_thread(_do_extract), timeout=25.0)
     except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="La extracción de logs tardó demasiado.")
+        raise HTTPException(
+            status_code=504, detail="La extracción de logs tardó demasiado."
+        ) from None
 
 
 @router.get(

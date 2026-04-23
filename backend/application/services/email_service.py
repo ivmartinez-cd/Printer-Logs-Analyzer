@@ -8,6 +8,7 @@ from backend.infrastructure.config import get_settings
 
 _logger = logging.getLogger(__name__)
 
+
 class EmailService:
     def __init__(self):
         self.settings = get_settings()
@@ -19,11 +20,11 @@ class EmailService:
             return
 
         msg = MIMEMultipart()
-        msg['From'] = self.settings.smtp_from
-        msg['To'] = ", ".join(recipients)
-        msg['Subject'] = subject
+        msg["From"] = self.settings.smtp_from
+        msg["To"] = ", ".join(recipients)
+        msg["Subject"] = subject
 
-        msg.attach(MIMEText(body_html, 'html'))
+        msg.attach(MIMEText(body_html, "html"))
 
         try:
             with smtplib.SMTP(self.settings.smtp_host, self.settings.smtp_port) as server:
@@ -35,7 +36,15 @@ class EmailService:
         except Exception as e:
             _logger.error("Failed to send email to %s: %s", recipients, e)
 
-    def send_maintenance_alert(self, serial: str, component: str, current_counter: int, next_change: int, remaining: int, recipients: List[str]):
+    def send_maintenance_alert(
+        self,
+        serial: str,
+        component: str,
+        current_counter: int,
+        next_change: int,
+        remaining: int,
+        recipients: List[str],
+    ):
         subject = f"⚠️ ALERTA: Mantenimiento Preventivo - {serial} - {component}"
 
         body = f"""

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 _jobs: dict[str, dict] = {}
 _jobs_lock = threading.Lock()
 
+
 def create_job(total: int) -> str:
     job_id = str(uuid.uuid4())
     cutoff = datetime.utcnow() - timedelta(hours=1)
@@ -15,21 +16,25 @@ def create_job(total: int) -> str:
         for k in stale:
             del _jobs[k]
         _jobs[job_id] = {
-            "status": "running", 
-            "processed": 0, 
-            "total": total, 
-            "errors": 0, 
+            "status": "running",
+            "processed": 0,
+            "total": total,
+            "errors": 0,
             "started_at": datetime.utcnow(),
-            "results": None
+            "results": None,
         }
     return job_id
+
 
 def get_job(job_id: str) -> dict | None:
     with _jobs_lock:
         job = _jobs.get(job_id)
         return dict(job) if job else None
 
-def update_job(job_id: str, processed: int, errors: int, status: str = "running", results: any = None):
+
+def update_job(
+    job_id: str, processed: int, errors: int, status: str = "running", results: any = None
+):
     with _jobs_lock:
         if job_id in _jobs:
             _jobs[job_id]["processed"] = processed
