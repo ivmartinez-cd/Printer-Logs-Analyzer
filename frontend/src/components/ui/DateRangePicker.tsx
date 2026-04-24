@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
-import { createPortal } from 'react-dom'
+import { Portal } from './Portal'
 import { Calendar } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
 import { es } from 'date-fns/locale'
@@ -206,63 +206,64 @@ export function DateRangePicker({ activeFilter, minDate, maxDate, onChange }: Da
         <span className="date-range-picker__button-label">{filterLabel(activeFilter)}</span>
       </button>
 
-      {open && createPortal(
-        <div 
-          ref={popoverRef} 
-          className="date-range-picker__popover" 
-          role="dialog" 
-          aria-modal="true"
-          style={{ 
-            top: `${coords.top}px`, 
-            right: `${coords.right}px` 
-          }}
-        >
-          <div className="date-range-picker__layout">
-            {/* Columna izquierda: presets */}
-            <div className="date-range-picker__presets">
-              {presets.map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  className="date-range-picker__preset-button"
-                  onClick={p.action}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+      {open && (
+        <Portal>
+          <div 
+            ref={popoverRef} 
+            className="date-range-picker__popover" 
+            role="dialog" 
+            aria-modal="true"
+            style={{ 
+              top: `${coords.top}px`, 
+              right: `${coords.right}px` 
+            }}
+          >
+            <div className="date-range-picker__layout">
+              {/* Columna izquierda: presets */}
+              <div className="date-range-picker__presets">
+                {presets.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    className="date-range-picker__preset-button"
+                    onClick={p.action}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
 
-            {/* Columna derecha: DayPicker + footer */}
-            <div className="date-range-picker__calendar-wrapper">
-              <DayPicker
-                mode="range"
-                locale={es}
-                selected={tempRange.from ? { from: tempRange.from, to: tempRange.to } : undefined}
-                onSelect={(range) => setTempRange(range ?? {})}
-                fromDate={minDate}
-                toDate={maxDate}
-              />
-              <div className="date-range-picker__footer">
-                <button
-                  type="button"
-                  className="date-range-picker__cancel-button"
-                  onClick={cancelCalendar}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="date-range-picker__apply-button"
-                  onClick={applyCalendar}
-                  disabled={!tempRange.from}
-                >
-                  Aplicar
-                </button>
+              {/* Columna derecha: DayPicker + footer */}
+              <div className="date-range-picker__calendar-wrapper">
+                <DayPicker
+                  mode="range"
+                  locale={es}
+                  selected={tempRange.from ? { from: tempRange.from, to: tempRange.to } : undefined}
+                  onSelect={(range) => setTempRange(range ?? {})}
+                  fromDate={minDate}
+                  toDate={maxDate}
+                />
+                <div className="date-range-picker__footer">
+                  <button
+                    type="button"
+                    className="date-range-picker__cancel-button"
+                    onClick={cancelCalendar}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="date-range-picker__apply-button"
+                    onClick={applyCalendar}
+                    disabled={!tempRange.from}
+                  >
+                    Aplicar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>,
-        document.body
+        </Portal>
       )}
     </div>
   )

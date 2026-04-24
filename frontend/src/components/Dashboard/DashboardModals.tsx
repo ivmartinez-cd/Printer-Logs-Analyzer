@@ -3,7 +3,8 @@ import { useUIStore } from '../../store/useUIStore'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
 import { useToast } from '../../contexts/ToastContext'
 import { deleteSavedAnalysis, compareSavedAnalysis } from '../../services/api'
-import type { SavedAnalysisSummary } from '../../types/api'
+import type { SavedAnalysisSummary, SavedAnalysisFull, CompareResponse } from '../../types/api'
+import type { ViewMode } from '../ui/Navigation'
 
 import { SDSIncidentModal } from '../Monitor/SDSIncidentModal'
 import { LogPasteModal } from '../Analysis/LogPasteModal'
@@ -22,10 +23,10 @@ interface DashboardModalsProps {
   selectedSavedId: string | null
   autoResolveAndAnalyze: (serial: string) => void
   setSavedList: React.Dispatch<React.SetStateAction<SavedAnalysisSummary[] | null>>
-  setViewMode: (mode: any) => void
-  setSavedDetail: (val: any) => void
+  setViewMode: (mode: ViewMode) => void
+  setSavedDetail: (val: SavedAnalysisFull | null) => void
   setSelectedSavedId: (val: string | null) => void
-  setCompareResult: (val: any) => void
+  setCompareResult: (val: CompareResponse | null) => void
   
   exportingPdf: boolean
   isAiPdfReady: boolean

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Portal } from '../ui/Portal'
 
 export interface SdsIncidentData {
   code: string | null
@@ -73,42 +74,44 @@ export function SDSIncidentModal({ onContinue, onClose }: SDSIncidentModalProps)
   }
 
   return (
-    <div
-      className="log-modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="sds-modal-title"
-    >
-      <div className="log-modal">
-        <div className="log-modal__header">
-          <h2 id="sds-modal-title" className="log-modal__title">
-            Pegar incidente SDS
-          </h2>
-          <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
-            ×
-          </button>
-        </div>
-        <textarea
-          ref={textareaRef}
-          className="log-modal__textarea"
-          placeholder="Pegá el incidente SDS completo"
-          value={sdsText}
-          onChange={(e) => setSdsText(e.target.value)}
-        />
-        <div className="log-modal__actions">
-          <button
-            type="button"
-            className="dashboard__btn dashboard__btn--primary"
-            onClick={handleContinue}
-          >
-            Agregar
-          </button>
-          <button type="button" className="log-modal__btn-secondary" onClick={onClose}>
-            Cancelar
-          </button>
+    <Portal>
+      <div
+        className="log-modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sds-modal-title"
+      >
+        <div className="log-modal">
+          <div className="log-modal__header">
+            <h2 id="sds-modal-title" className="log-modal__title">
+              Pegar incidente SDS
+            </h2>
+            <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
+              ×
+            </button>
+          </div>
+          <textarea
+            ref={textareaRef}
+            className="log-modal__textarea"
+            placeholder="Pegá el incidente SDS completo"
+            value={sdsText}
+            onChange={(e) => setSdsText(e.target.value)}
+          />
+          <div className="log-modal__actions">
+            <button
+              type="button"
+              className="dashboard__btn dashboard__btn--primary"
+              onClick={handleContinue}
+            >
+              Agregar
+            </button>
+            <button type="button" className="log-modal__btn-secondary" onClick={onClose}>
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }
 

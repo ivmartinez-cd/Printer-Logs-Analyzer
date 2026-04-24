@@ -2,6 +2,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { RuleCard } from '../../../components/Maintenance/RuleCard'
+import type { MaintenanceDeviceState, MaintenanceIncident } from '../../../types/api'
 
 describe('RuleCard', () => {
   const mockRule = {
@@ -30,13 +31,13 @@ describe('RuleCard', () => {
   }
 
   it('renders correctly in OK state', () => {
-    const mockState = { last_change_counter: 0 }
+    const mockState: MaintenanceDeviceState = { last_change_counter: 0, device_serial: 'SERIAL1', component_type: 'Fuser' }
     render(
-      <RuleCard 
-        rule={mockRule} 
-        selectedDevice={{ ...mockDevice, last_sync_counter: 10000 }} 
-        state={mockState as any}
-        {...mockHandlers} 
+      <RuleCard
+        rule={mockRule}
+        selectedDevice={{ ...mockDevice, last_sync_counter: 10000 }}
+        state={mockState}
+        {...mockHandlers}
       />
     )
 
@@ -45,13 +46,13 @@ describe('RuleCard', () => {
   })
 
   it('renders correctly in Warning state', () => {
-    const mockState = { last_change_counter: 0 }
+    const mockState: MaintenanceDeviceState = { last_change_counter: 0, device_serial: 'SERIAL1', component_type: 'Fuser' }
     render(
-      <RuleCard 
-        rule={mockRule} 
-        selectedDevice={{ ...mockDevice, last_sync_counter: 95000 }} 
-        state={mockState as any}
-        {...mockHandlers} 
+      <RuleCard
+        rule={mockRule}
+        selectedDevice={{ ...mockDevice, last_sync_counter: 95000 }}
+        state={mockState}
+        {...mockHandlers}
       />
     )
 
@@ -61,13 +62,13 @@ describe('RuleCard', () => {
   })
 
   it('renders correctly in Critical state', () => {
-    const mockState = { last_change_counter: 0 }
+    const mockState: MaintenanceDeviceState = { last_change_counter: 0, device_serial: 'SERIAL1', component_type: 'Fuser' }
     render(
-      <RuleCard 
-        rule={mockRule} 
-        selectedDevice={{ ...mockDevice, last_sync_counter: 105000 }} 
-        state={mockState as any}
-        {...mockHandlers} 
+      <RuleCard
+        rule={mockRule}
+        selectedDevice={{ ...mockDevice, last_sync_counter: 105000 }}
+        state={mockState}
+        {...mockHandlers}
       />
     )
 
@@ -81,7 +82,7 @@ describe('RuleCard', () => {
   })
 
   it('renders incident status when incident is provided', () => {
-    const mockIncident = {
+    const mockIncident: MaintenanceIncident = {
       id: '123',
       device_serial: 'SERIAL1',
       component_type: 'Fuser',
@@ -89,11 +90,11 @@ describe('RuleCard', () => {
       status: 'open'
     }
     render(
-      <RuleCard 
-        rule={mockRule} 
-        selectedDevice={mockDevice} 
-        incident={mockIncident as any} 
-        {...mockHandlers} 
+      <RuleCard
+        rule={mockRule}
+        selectedDevice={mockDevice}
+        incident={mockIncident}
+        {...mockHandlers}
       />
     )
 

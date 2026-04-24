@@ -13,6 +13,8 @@ import { ConsumableWarningsPanel } from '../Monitor/ConsumableWarningsPanel'
 import { InsightAlertsPanel } from '../Monitor/InsightAlertsPanel'
 import { SDSIncidentPanel } from '../Monitor/SDSIncidentPanel'
 
+import { ErrorHeatmap } from '../Analysis/ErrorHeatmap'
+
 interface AnalysisDashboardViewProps {
   result: ParseLogsResponse
   filteredIncidents: ApiIncident[]
@@ -98,6 +100,11 @@ export function AnalysisDashboardView({
             />
           </div>
         </div>
+        
+        {/* BLOQUE 3: Patrones temporales */}
+        <section className="animate-in delay-2">
+          <ErrorHeatmap events={events} />
+        </section>
       </div>
 
       {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}

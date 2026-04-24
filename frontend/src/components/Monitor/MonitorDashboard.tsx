@@ -329,12 +329,9 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
 
   return (
     <div className="monitor-dashboard" style={{ padding: '0 40px 40px', maxWidth: '1600px', margin: '0 auto', color: '#fff' }}>
-      <header className="dashboard__subheader" style={{ marginTop: '32px', marginBottom: '32px', padding: '24px', border: 'var(--border-glass)', background: 'var(--bg-glass)', backdropFilter: 'var(--glass-blur)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', padding: '0 0 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="dashboard__subheader-title-group">
-          <h2 className="dashboard__subheader-title" style={{ fontSize: '1.8rem', background: 'var(--text-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-            Monitor de Flota
-          </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
              <p className="dashboard__subheader-meta" style={{ margin: 0 }}>
                {client ? <span style={{ color: '#fff', fontWeight: 600 }}>{client.name}</span> : '—'}
                {' · '}
@@ -366,7 +363,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             ) : '🔄 Sincronizar Todo'}
           </button>
         </div>
-      </header>
+      </div>
 
       {scanning && scanJob && (
         <div style={{ 

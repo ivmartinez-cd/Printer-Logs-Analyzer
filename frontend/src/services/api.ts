@@ -334,11 +334,28 @@ export async function aiDiagnose(
   return handleResponse<AIDiagnosisResponse>(res)
 }
 
+interface PdfIncidentSummary {
+  code: string
+  severity: string
+  occurrences: number
+  description?: string | null
+  start_time?: string
+  end_time?: string
+}
+
+interface PdfTopCode {
+  name: string
+  count: number
+  severity: string
+  sds_link?: string | null
+  sds_solution_content?: string | null
+}
+
 export async function generatePdfSummary(
   payload: {
-    incidents: any[]
-    consumables?: any[]
-    top_codes?: any[]
+    incidents: PdfIncidentSummary[]
+    consumables?: RealtimeConsumable[]
+    top_codes?: PdfTopCode[]
     model_name?: string | null
     serial_number?: string | null
   },

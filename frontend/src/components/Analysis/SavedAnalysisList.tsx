@@ -7,7 +7,6 @@ interface SavedAnalysisListProps {
   savedListSearch: string
   setSavedListSearch: (v: string) => void
   deletingId: string | null
-  onBack: () => void
   onOpen: (id: string) => void
   onDelete: (item: { id: string; name: string }) => void
 }
@@ -17,7 +16,6 @@ export function SavedAnalysisList({
   savedListSearch,
   setSavedListSearch,
   deletingId,
-  onBack,
   onOpen,
   onDelete,
 }: SavedAnalysisListProps) {
@@ -47,10 +45,6 @@ export function SavedAnalysisList({
 
   return (
     <div className="dashboard__saved-section">
-      <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={onBack}>
-        ← Volver al dashboard
-      </button>
-      <h2 className="dashboard__subheader-title">Incidentes guardados</h2>
       {savedList !== null && savedList.length > 0 && (
         <div className="table-toolbar">
           <input

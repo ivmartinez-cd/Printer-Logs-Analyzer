@@ -54,7 +54,7 @@ interface MaintenanceSyncJobState {
 
 
 
-export function AvisosPage({ onBack }: { onBack: () => void }) {
+export function AvisosPage() {
   const [devices, setDevices] = useState<MaintenanceDevice[]>([])
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
@@ -490,31 +490,18 @@ export function AvisosPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="avisos-page animate-in">
-      <div className="dashboard__subheader">
-        <div className="avisos-subheader-header">
-          <button onClick={onBack} className="dashboard__btn dashboard__btn--secondary dashboard__btn--small">
-            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>‹</span> Volver
-          </button>
-          <div className="dashboard__subheader-title-group">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h1 className="dashboard__subheader-title">Avisos de Mantenimiento</h1>
-              <button 
-                className="hiw-trigger-btn"
-                onClick={() => setIsHowItWorksOpen(true)}
-                title="¿Cómo funciona este módulo?"
-              >
-                ?
-              </button>
-            </div>
-            <p className="dashboard__subheader-meta">Gestión preventiva de componentes y suministros</p>
-          </div>
+    <div className="avisos-page animate-in" style={{ padding: '0 40px 40px' }}>
+      <header className="dashboard__subheader">
+        <div className="dashboard__subheader-title-group">
+          <h2 className="dashboard__subheader-title">Avisos de Mantenimiento</h2>
+          <p className="dashboard__subheader-meta">Gestión proactiva de consumibles y alertas</p>
         </div>
         <div className="dashboard__subheader-actions">
-          {/* Sincronización global movida a cada familia */}
+           <button className="dashboard__btn dashboard__btn--secondary" onClick={() => setIsHowItWorksOpen(true)}>
+             ¿Cómo funciona?
+           </button>
         </div>
-      </div>
-
+      </header>
 
       <div className="avisos-grid">
         <AvisosSidebar 

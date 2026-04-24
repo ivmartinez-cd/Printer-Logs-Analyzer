@@ -52,10 +52,16 @@
   margin: 0;
   padding: 0.1em 0;
   /* Extra vertical space for background-clip */
-  background: var(--text-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
+}
+
+.welcome-hero__title-suffix {
+  color: var(--hp-blue-vibrant);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+  margin-left: 0.2em;
 }
 
 .welcome-hero__tagline {

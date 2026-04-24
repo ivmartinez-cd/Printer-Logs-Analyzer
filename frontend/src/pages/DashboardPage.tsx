@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
+import { Menu } from 'lucide-react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
@@ -26,7 +27,7 @@ import { useInsightData } from '../hooks/useInsightData'
 import { useToast } from '../contexts/ToastContext'
 import { WelcomeView } from '../components/ui/WelcomeView'
 import { MonitorDashboard } from '../components/Monitor/MonitorDashboard'
-import { DashboardHeader } from '../components/ui/DashboardHeader'
+import { Navigation, type ViewMode as NavViewMode } from '../components/ui/Navigation'
 import { AvisosPage } from './AvisosPage'
 import {
   useDateFilter,
@@ -108,7 +109,8 @@ export default function DashboardPage({
   const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [currentModelId, setCurrentModelId] = useState<string | null>(null)
-  const [isAtTop, setIsAtTop] = useState(true)
+  const [navCollapsed, setNavCollapsed] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [currentSerialNumber, setCurrentSerialNumber] = useState<string | null>(null)
   const [autoExtracting, setAutoExtracting] = useState(false)
   const [realtimeConsumables, setRealtimeConsumables] = useState<RealtimeConsumable[]>([])
@@ -153,13 +155,6 @@ export default function DashboardPage({
     lastNavState.current = { viewMode, currentSerialNumber, selectedSavedId }
   }, [viewMode, currentSerialNumber, selectedSavedId])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsAtTop(window.scrollY < 20)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   useEffect(() => {
     listSavedAnalyses()
@@ -329,294 +324,341 @@ export default function DashboardPage({
     [storeSaveCode, toast, setAddCodeModalCode, setEditCodeInitial]
   )
 
+  const handleNavigate = useCallback((newView: NavViewMode) => {
+    if (newView === 'dashboard') {
+      setCurrentSerialNumber(null)
+      setResult(null)
+      setSelectedSavedId(null)
+      setSavedDetail(null)
+    }
+    setViewMode(newView)
+  }, [setViewMode, setCurrentSerialNumber, setResult, setSelectedSavedId, setSavedDetail])
+
   const isWelcome = !result && !loading && viewMode === 'dashboard'
   const dashboardClass = `dashboard ${isWelcome ? 'dashboard--welcome' : ''}`
 
+
   return (
-    <div className={dashboardClass} ref={dashboardRef}>
-      <header className="export-header">
-        <div className="export-header__left">
-          <h1 className="dashboard__title">HP Logs Analyzer</h1>
-          <p className="dashboard__report-type">Reporte de Análisis de Diagnóstico Técnico</p>
-        </div>
-        <div className="export-header__right dashboard__subheader">
-          <div>Archivo: <strong>{logFileName || 'Logs Pegados'}</strong></div>
-          {currentSerialNumber && <div>Serial: <strong>{currentSerialNumber}</strong></div>}
-          {result && (
-            <div className="export-header__period">
-              Periodo: {new Date(result.log_start_date).toLocaleDateString()} - {new Date(result.log_end_date).toLocaleDateString()}
-            </div>
-          )}
-          {result && <div>Total Eventos: <strong>{result.incidents.length + result.events.length}</strong></div>}
-          <div className="export-header__date">Generado el {new Date().toLocaleString()}</div>
-        </div>
-      </header>
+    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh' }}>
+      <Navigation 
+        viewMode={viewMode}
+        onNavigate={(mode) => {
+          handleNavigate(mode)
+          setMobileMenuOpen(false)
+        }}
+        onNewAnalysis={() => {
+          setLogModalOpen(true)
+          setMobileMenuOpen(false)
+        }}
+        onHelp={() => {
+          setHelpModalOpen(true)
+          setMobileMenuOpen(false)
+        }}
+        healthStatus={healthStatus}
+        isCollapsed={navCollapsed}
+        onToggleCollapse={() => setNavCollapsed(!navCollapsed)}
+        isMobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
 
-      {!isWelcome && (
-        <DashboardHeader
-          healthStatus={healthStatus}
-          hasResult={!!result}
-          exportingPdf={exportingPdf}
-          onOpenSavedList={() => {
-            setViewMode('saved-list')
-            setSavedList(null)
-            setSavedListSearch('')
-            listSavedAnalyses()
-              .then(setSavedList)
-              .catch(() => setSavedList([]))
-          }}
-          onAnalyzeNew={() => setLogModalOpen(true)}
-          onSaveIncident={() => setSaveIncidentModalOpen(true)}
-          onAddSds={() => setSdsModalOpen(true)}
-          onExportPdf={async () => {
-            if (!result) return
-            setPdfAiSummary(null)
-            setIsAiPdfReady(false)
-            setIsGeneratingAiPdf(true)
-            
-            try {
-              const summary = await generatePdfSummary({
-                incidents: filteredIncidents.map(i => ({
-                  code: i.code,
-                  severity: i.severity,
-                  occurrences: i.occurrences,
-                  description: i.classification,
-                  start_time: i.start_time,
-                  end_time: i.end_time
-                })),
-                consumables: realtimeConsumables,
-                top_codes: topCodes,
-                model_name: currentModelName,
-                serial_number: currentSerialNumber
-              }, AbortSignal.timeout(30000))
-              
-              setPdfAiSummary(summary)
-              setIsAiPdfReady(true)
-            } catch (err) {
-              console.error('Error generating AI PDF Summary:', err)
-              toast.showError('Error al contactar con la IA, se generara reporte estandar.')
-              setPdfAiSummary(null)
-              handleExportPDF(true)
-            } finally {
-              setIsGeneratingAiPdf(false)
-            }
-          }}
-          onHelp={() => setHelpModalOpen(true)}
-          isAtTop={isAtTop}
-          showSavedListButton={viewMode !== 'monitor' && viewMode !== 'avisos'}
-        />
-      )}
-
-      {viewMode === 'dashboard' && result && (
-        <div className="report-only-section" aria-hidden="true">
-          <div ref={printReportRef}>
-            <ExecutivePrintReport
-              result={result}
-              filteredIncidents={filteredIncidents}
-              filteredEvents={filteredEvents}
-              consumableWarnings={realtimeConsumables}
-              lastErrorLabel={lastErrorLabel}
-              logFileName={logFileName}
-              serialNumber={currentSerialNumber}
-              modelName={currentModelName}
-              topCodes={topCodes}
-              incidentRows={incidentRows}
-              generatedAtIso={reportGeneratedAtIso}
-              aiSummary={pdfAiSummary}
-            />
+      <button className="dashboard__mobile-menu-btn" onClick={() => setMobileMenuOpen(true)}>
+        <Menu size={24} />
+      </button>
+      
+      <div 
+        className={dashboardClass} 
+        ref={dashboardRef} 
+        style={{ 
+          marginLeft: typeof window !== 'undefined' && window.innerWidth > 1024 ? (navCollapsed ? '80px' : '280px') : '0', 
+          minWidth: 0,
+          transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'margin-left',
+          transform: 'translateZ(0)'
+        }}
+      >
+        <header className="export-header">
+          <div className="export-header__left">
+            <h1 className="dashboard__title">
+              HP Logs <span className="dashboard__title-suffix">Analyzer</span>
+            </h1>
+            <p className="dashboard__report-type">Reporte de Análisis de Diagnóstico Técnico</p>
           </div>
-        </div>
-      )}
+          <div className="export-header__right dashboard__subheader">
+            <div>Archivo: <strong>{logFileName || 'Logs Pegados'}</strong></div>
+            {currentSerialNumber && <div>Serial: <strong>{currentSerialNumber}</strong></div>}
+            {result && (
+              <div className="export-header__period">
+                Periodo: {new Date(result.log_start_date).toLocaleDateString()} - {new Date(result.log_end_date).toLocaleDateString()}
+              </div>
+            )}
+            {result && <div>Total Eventos: <strong>{result.incidents.length + result.events.length}</strong></div>}
+            <div className="export-header__date">Generado el {new Date().toLocaleString()}</div>
+          </div>
+        </header>
 
-      {!result && !loading && viewMode === 'dashboard' ? (
-        <WelcomeView 
-          onAnalyzeNew={() => setLogModalOpen(true)}
-          onViewSaved={() => {
-            setViewMode('saved-list')
-            setSavedList(null)
-            setSavedListSearch('')
-            listSavedAnalyses()
-              .then(setSavedList)
-              .catch(() => setSavedList([]))
-          }}
-          onHelp={() => setHelpModalOpen(true)}
-          savedList={savedList || []}
-          recentSearches={recentSearches}
-          onQuickSearch={autoResolveAndAnalyze}
-          loadingQuickSearch={autoExtracting || loading}
-          onOpenSaved={(id) => {
-            setViewMode('saved-detail')
-            setSavedDetail(null)
-            getSavedAnalysis(id)
-              .then(setSavedDetail)
-              .catch(() => setSavedDetail(null))
-          }}
-          onOpenMonitor={() => setMonitorWizardOpen(true)}
-          onOpenAvisos={() => setViewMode('avisos')}
-        />
-      ) : viewMode === 'monitor' ? (
-        <MonitorDashboard />
-      ) : viewMode === 'avisos' ? (
-        <div className="dashboard__content-wrap">
-          <AvisosPage onBack={() => setViewMode('dashboard')} />
-        </div>
-      ) : result || loading || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
-        <>
-          <div className="dashboard__content-wrap">
 
-          {viewMode === 'saved-list' && (
-            <SavedAnalysisList
-              savedList={savedList}
-              savedListSearch={savedListSearch}
-              setSavedListSearch={setSavedListSearch}
-              deletingId={deletingId}
-              onBack={() => setViewMode('dashboard')}
-              onOpen={(id) => {
-                setSelectedSavedId(id)
-                setSavedDetail(null)
-                setCompareResult(null)
-                setViewMode('saved-detail')
-                getSavedAnalysis(id)
-                  .then(setSavedDetail)
-                  .catch(() => toast.showError('Error al cargar'))
-              }}
-              onDelete={setDeleteConfirm}
-            />
-          )}
-
-          {viewMode === 'saved-detail' && selectedSavedId && (
-            <SavedAnalysisDetail
-              savedDetail={savedDetail}
-              deletingId={deletingId}
-              compareResult={compareResult}
-              onBack={() => {
-                setViewMode('saved-list')
-                setSavedDetail(null)
-                setSelectedSavedId(null)
-                setCompareResult(null)
-              }}
-              onDelete={setDeleteConfirm}
-              onCompare={() => {
-                setCompareModalOpen(true)
-              }}
-            />
-          )}
-
-          {viewMode === 'dashboard' && (
-            <>
-              <ParseErrorsBanner errors={result?.errors || []} />
-              
-              <NewCodesSection 
+        {viewMode === 'dashboard' && result && (
+          <div className="report-only-section" aria-hidden="true">
+            <div ref={printReportRef}>
+              <ExecutivePrintReport
                 result={result}
-                codesNew={codesNew}
-                savingCode={savingCode}
-                onAddCode={setAddCodeModalCode}
-                onIgnore={() => setCodesNew(() => [])}
+                filteredIncidents={filteredIncidents}
+                filteredEvents={filteredEvents}
+                consumableWarnings={realtimeConsumables}
+                lastErrorLabel={lastErrorLabel}
+                logFileName={logFileName}
+                serialNumber={currentSerialNumber}
+                modelName={currentModelName}
+                topCodes={topCodes}
+                incidentRows={incidentRows}
+                generatedAtIso={reportGeneratedAtIso}
+                aiSummary={pdfAiSummary}
               />
-
-              {addCodeModalCode && result && (
-                <AddCodeToCatalogModal
-                  code={addCodeModalCode}
-                  initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
-                  initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
-                  onSave={(body) => handleSaveCodeToCatalog(body, false)}
-                  onClose={() => !savingCode && setAddCodeModalCode(null)}
-                  saving={savingCode}
-                />
-              )}
-
-              {editCodeInitial && (
-                <AddCodeToCatalogModal
-                  code={editCodeInitial.code}
-                  initialDescription={editCodeInitial.description}
-                  initialSeverity={editCodeInitial.severity}
-                  initialSolutionUrl={editCodeInitial.solutionUrl}
-                  title="Editar código en el catálogo"
-                  submitLabel="Guardar"
-                  onSave={(body) => handleSaveCodeToCatalog(body, true)}
-                  onClose={() => !savingCode && setEditCodeInitial(null)}
-                  saving={savingCode}
-                />
-              )}
-
-              {codesNew.length === 0 && (
-                <>
-                  {loading && !result && (
-                    <div className="dashboard__content-main animate-in">
-                      <section className="dashboard__subheader">
-                        <Skeleton className="skeleton--title" width="300px" />
-                        <Skeleton className="skeleton--text" width="120px" height="32px" />
-                      </section>
-                      <section className="dashboard__kpi-grid">
-                        <Skeleton className="skeleton--card" />
-                        <Skeleton className="skeleton--card" />
-                        <Skeleton className="skeleton--card" />
-                        <Skeleton className="skeleton--card" />
-                      </section>
-                      <section style={{ marginTop: '24px' }}>
-                        <Skeleton height="300px" />
-                      </section>
-                    </div>
-                  )}
-
-                  <div className="dashboard__subheader">
-                    <div className="dashboard__subheader-title-group">
-                      <span className="dashboard__subheader-title">Panel de errores</span>
-                      {(currentModelName || currentSerialNumber || logFileName) && (
-                        <span className="dashboard__subheader-meta">
-                          {currentModelName && currentModelName}
-                          {currentSerialNumber && ` · ${currentSerialNumber}`}
-                          {!currentSerialNumber && logFileName && logFileName}
-                        </span>
-                      )}
-                    </div>
-                    <div className="dashboard__subheader-actions">
-                      <DateRangePicker
-                        activeFilter={activeFilter}
-                        minDate={dateRange ? new Date(dateRange.minDate + 'T00:00:00') : undefined}
-                        maxDate={dateRange ? new Date(dateRange.maxDate + 'T00:00:00') : undefined}
-                        onChange={(filter) => {
-                          if (filter === null) {
-                            dateFilter.reset()
-                          } else if (typeof filter === 'string') {
-                            setSelectedDate(filter)
-                            setSelectedWeekRange(null)
-                          } else {
-                            setSelectedWeekRange(filter)
-                            setSelectedDate(null)
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {result && (
-                    <AnalysisDashboardView
-                      result={result as ParseLogsResponse}
-                      filteredIncidents={filteredIncidents}
-                      filteredEvents={filteredEvents}
-                      events={events}
-                      lastErrorEvent={lastErrorEvent}
-                      lastErrorLabel={lastErrorLabel || ''}
-                      activeFilter={activeFilter}
-                      topCodes={topCodes}
-                      realtimeConsumables={realtimeConsumables}
-                      insightData={insightData}
-                      currentSerialNumber={currentSerialNumber}
-                      currentModelName={currentModelName}
-                      incidentRows={incidentRows}
-                      sdsIncident={sdsIncident}
-                      onSetEditCodeInitial={setEditCodeInitial}
-                      onSetSolutionModal={setSolutionModal}
-                    />
-                  )}
-                </>
-              )}
-            </>
-          )}
+            </div>
           </div>
-        </>
-      ) : null}
+        )}
+
+        {!result && !loading && viewMode === 'dashboard' ? (
+          <WelcomeView 
+            onAnalyzeNew={() => setLogModalOpen(true)}
+            onViewSaved={() => {
+              setViewMode('saved-list')
+              setSavedList(null)
+              setSavedListSearch('')
+              listSavedAnalyses()
+                .then(setSavedList)
+                .catch(() => setSavedList([]))
+            }}
+            onHelp={() => setHelpModalOpen(true)}
+            savedList={savedList || []}
+            recentSearches={recentSearches}
+            onQuickSearch={autoResolveAndAnalyze}
+            loadingQuickSearch={autoExtracting || loading}
+            onOpenSaved={(id) => {
+              setViewMode('saved-detail')
+              setSavedDetail(null)
+              getSavedAnalysis(id)
+                .then(setSavedDetail)
+                .catch(() => setSavedDetail(null))
+            }}
+            onOpenMonitor={() => setViewMode('monitor')}
+            onOpenAvisos={() => setViewMode('avisos')}
+          />
+        ) : viewMode === 'monitor' ? (
+          <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
+            <MonitorDashboard />
+          </div>
+        ) : viewMode === 'avisos' ? (
+          <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
+            <AvisosPage />
+          </div>
+        ) : result || loading || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
+          <>
+            <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
+
+            {viewMode === 'saved-list' && (
+              <SavedAnalysisList
+                savedList={savedList}
+                savedListSearch={savedListSearch}
+                setSavedListSearch={setSavedListSearch}
+                deletingId={deletingId}
+                onOpen={(id) => {
+                  setSelectedSavedId(id)
+                  setSavedDetail(null)
+                  setCompareResult(null)
+                  setViewMode('saved-detail')
+                  getSavedAnalysis(id)
+                    .then(setSavedDetail)
+                    .catch(() => toast.showError('Error al cargar'))
+                }}
+                onDelete={setDeleteConfirm}
+              />
+            )}
+
+            {viewMode === 'saved-detail' && selectedSavedId && (
+              <SavedAnalysisDetail
+                savedDetail={savedDetail}
+                deletingId={deletingId}
+                compareResult={compareResult}
+                onDelete={setDeleteConfirm}
+                onCompare={() => {
+                  setCompareModalOpen(true)
+                }}
+              />
+            )}
+
+            {viewMode === 'dashboard' && (
+              <>
+                <ParseErrorsBanner errors={result?.errors || []} />
+                
+                <NewCodesSection 
+                  result={result}
+                  codesNew={codesNew}
+                  savingCode={savingCode}
+                  onAddCode={setAddCodeModalCode}
+                  onIgnore={() => setCodesNew(() => [])}
+                />
+
+                {addCodeModalCode && result && (
+                  <AddCodeToCatalogModal
+                    code={addCodeModalCode}
+                    initialDescription={getEventInfoForCode(result, addCodeModalCode).description}
+                    initialSeverity={getEventInfoForCode(result, addCodeModalCode).severity}
+                    onSave={(body) => handleSaveCodeToCatalog(body, false)}
+                    onClose={() => !savingCode && setAddCodeModalCode(null)}
+                    saving={savingCode}
+                  />
+                )}
+
+                {editCodeInitial && (
+                  <AddCodeToCatalogModal
+                    code={editCodeInitial.code}
+                    initialDescription={editCodeInitial.description}
+                    initialSeverity={editCodeInitial.severity}
+                    initialSolutionUrl={editCodeInitial.solutionUrl}
+                    title="Editar código en el catálogo"
+                    submitLabel="Guardar"
+                    onSave={(body) => handleSaveCodeToCatalog(body, true)}
+                    onClose={() => !savingCode && setEditCodeInitial(null)}
+                    saving={savingCode}
+                  />
+                )}
+
+                {codesNew.length === 0 && (
+                  <>
+                    {loading && !result && (
+                      <div className="dashboard__content-main animate-in" style={{ paddingTop: '32px' }}>
+                        <section className="dashboard__subheader">
+                          <Skeleton className="skeleton--title" width="300px" />
+                          <Skeleton className="skeleton--text" width="120px" height="32px" />
+                        </section>
+                        <section className="dashboard__kpi-grid">
+                          <Skeleton className="skeleton--card" />
+                          <Skeleton className="skeleton--card" />
+                          <Skeleton className="skeleton--card" />
+                          <Skeleton className="skeleton--card" />
+                        </section>
+                        <section style={{ marginTop: '24px' }}>
+                          <Skeleton height="300px" />
+                        </section>
+                      </div>
+                    )}
+
+                    <div className="dashboard__subheader">
+                      <div className="dashboard__subheader-title-group">
+                        <span className="dashboard__subheader-title">Panel de errores</span>
+                        {(currentModelName || currentSerialNumber || logFileName) && (
+                          <span className="dashboard__subheader-meta">
+                            {currentModelName && currentModelName}
+                            {currentSerialNumber && ` · ${currentSerialNumber}`}
+                            {!currentSerialNumber && logFileName && logFileName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="dashboard__subheader-actions">
+                        <DateRangePicker
+                          activeFilter={activeFilter}
+                          minDate={dateRange ? new Date(dateRange.minDate + 'T00:00:00') : undefined}
+                          maxDate={dateRange ? new Date(dateRange.maxDate + 'T00:00:00') : undefined}
+                          onChange={(filter) => {
+                            if (filter === null) {
+                              dateFilter.reset()
+                            } else if (typeof filter === 'string') {
+                              setSelectedDate(filter)
+                              setSelectedWeekRange(null)
+                            } else {
+                              setSelectedWeekRange(filter)
+                              setSelectedDate(null)
+                            }
+                          }}
+                        />
+                        
+                        <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
+                          <button
+                            className="dashboard__btn dashboard__btn--secondary"
+                            onClick={() => setSdsModalOpen(true)}
+                            title="Ingresar Incidente SDS"
+                          >
+                            SDS
+                          </button>
+                          <button
+                            className="dashboard__btn dashboard__btn--secondary"
+                            onClick={() => setSaveIncidentModalOpen(true)}
+                            title="Guardar Análisis"
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            className={`dashboard__btn ${isGeneratingAiPdf ? 'dashboard__btn--loading' : 'dashboard__btn--primary'}`}
+                            onClick={async () => {
+                              if (!result) return
+                              setPdfAiSummary(null)
+                              setIsAiPdfReady(false)
+                              setIsGeneratingAiPdf(true)
+                              
+                              try {
+                                const summary = await generatePdfSummary({
+                                  incidents: filteredIncidents.map(i => ({
+                                    code: i.code,
+                                    severity: i.severity,
+                                    occurrences: i.occurrences,
+                                    description: i.classification,
+                                    start_time: i.start_time,
+                                    end_time: i.end_time
+                                  })),
+                                  consumables: realtimeConsumables,
+                                  top_codes: topCodes,
+                                  model_name: currentModelName,
+                                  serial_number: currentSerialNumber
+                                }, AbortSignal.timeout(30000))
+                                
+                                setPdfAiSummary(summary)
+                                setIsAiPdfReady(true)
+                              } catch (err) {
+                                console.error('Error generating AI PDF Summary:', err)
+                                toast.showError('Error al contactar con la IA, se generara reporte estandar.')
+                                setPdfAiSummary(null)
+                                handleExportPDF(true)
+                              } finally {
+                                setIsGeneratingAiPdf(false)
+                              }
+                            }}
+                            disabled={exportingPdf || isGeneratingAiPdf}
+                          >
+                            {isGeneratingAiPdf ? 'Procesando...' : exportingPdf ? 'Exportando...' : 'Exportar PDF'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {result && (
+                      <AnalysisDashboardView
+                        result={result as ParseLogsResponse}
+                        filteredIncidents={filteredIncidents}
+                        filteredEvents={filteredEvents}
+                        events={events}
+                        lastErrorEvent={lastErrorEvent}
+                        lastErrorLabel={lastErrorLabel || ''}
+                        activeFilter={activeFilter}
+                        topCodes={topCodes}
+                        realtimeConsumables={realtimeConsumables}
+                        insightData={insightData}
+                        currentSerialNumber={currentSerialNumber}
+                        currentModelName={currentModelName}
+                        incidentRows={incidentRows}
+                        sdsIncident={sdsIncident}
+                        onSetEditCodeInitial={setEditCodeInitial}
+                        onSetSolutionModal={setSolutionModal}
+                      />
+                    )}
+                  </>
+                )}
+              </>
+            )}
+            </div>
+          </>
+        ) : null}
+      </div>
 
       <DashboardModals
         serverWasCold={serverWasCold}

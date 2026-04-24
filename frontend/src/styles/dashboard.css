@@ -18,68 +18,71 @@
 /* ─── Global Application Header ──────────────────────────────────────── */
 .dashboard__header {
   position: sticky;
-  top: 16px;
-  z-index: 9999;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
+  justify-content: flex-end; /* Align actions to the right */
+  padding: 12px 32px;
+  background: rgba(13, 17, 23, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: var(--transition-premium);
-  margin: 16px auto 0;
-  width: 95%;
-  max-width: 1800px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  width: 100%;
+}
+
+.dashboard__header-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard__header-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--text-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dashboard__header.at-top {
-  transform: scale(1);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
 }
 
 .dashboard__header:not(.at-top) {
-  margin-top: 8px;
-  padding: 10px 20px;
-  border-radius: 16px;
-  background: rgba(14, 18, 26, 0.9);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(13, 17, 23, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.dashboard__title-group {
+.dashboard__title {
+  margin: 0;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.dashboard__title-group--interactive {
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.dashboard__title-group--interactive:hover {
-  opacity: 0.8;
-}
-
-.dashboard__title-icon {
-  width: 24px;
-  height: 24px;
+.dashboard__title-suffix {
   color: var(--hp-blue-vibrant);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
 }
 
-.dashboard__title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.02em;
+.dashboard__report-type {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
 }
 
 .dashboard__header-actions {
@@ -201,13 +204,13 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 24px;
-  background: var(--bg-surface);
-  border: var(--border-glass);
-  border-radius: 20px;
+  padding: 32px 0 16px;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 24px;
   animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   position: relative;
-  z-index: 900; /* High enough to be over siblings, but under global header (1000) */
+  z-index: 900;
 }
 
 .dashboard__subheader-title-group {
@@ -458,4 +461,42 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ─── Mobile Adjustments ────────────────────────────────────────── */
+.dashboard__mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  background: var(--bg-surface);
+  border: var(--border-glass);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-premium);
+  transition: var(--transition-fast);
+}
+
+.dashboard__mobile-menu-btn:hover {
+  background: var(--hp-blue-vibrant);
+  transform: scale(1.05);
+}
+
+@media (max-width: 1024px) {
+  .dashboard__mobile-menu-btn {
+    display: flex;
+  }
+
+  .dashboard__content-wrap,
+  .dashboard__content-main,
+  .avisos-page,
+  .monitor-dashboard {
+    padding: 80px 20px 20px !important;
+  }
 }

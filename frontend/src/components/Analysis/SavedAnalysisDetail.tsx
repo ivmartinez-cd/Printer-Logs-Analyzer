@@ -5,7 +5,6 @@ interface SavedAnalysisDetailProps {
   savedDetail: SavedAnalysisFull | null
   deletingId: string | null
   compareResult: CompareResponse | null
-  onBack: () => void
   onDelete: (item: { id: string; name: string }) => void
   onCompare: () => void
 }
@@ -14,16 +13,12 @@ export function SavedAnalysisDetail({
   savedDetail,
   deletingId,
   compareResult,
-  onBack,
   onDelete,
   onCompare,
 }: SavedAnalysisDetailProps) {
   if (!savedDetail) {
     return (
       <div className="dashboard__saved-section">
-        <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={onBack}>
-          ← Volver a la lista
-        </button>
         <p className="dashboard__muted dashboard__muted--top">Cargando…</p>
       </div>
     )
@@ -31,10 +26,6 @@ export function SavedAnalysisDetail({
 
   return (
     <div className="dashboard__saved-section">
-      <button type="button" className="dashboard__btn dashboard__btn--secondary" onClick={onBack}>
-        ← Volver a la lista
-      </button>
-      <h2 className="dashboard__subheader-title">{savedDetail.name}</h2>
       {savedDetail.equipment_identifier && (
         <p className="dashboard__muted">Equipo: {savedDetail.equipment_identifier}</p>
       )}

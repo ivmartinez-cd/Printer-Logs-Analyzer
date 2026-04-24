@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Portal } from '../ui/Portal'
 import type { ErrorCodeUpsertBody } from '../../types/api'
 
 export interface AddCodeToCatalogModalProps {
@@ -54,108 +55,110 @@ export function AddCodeToCatalogModal({
   }
 
   return (
-    <div
-      className="log-modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="add-code-modal-title"
-    >
-      <div className="log-modal add-code-modal">
-        <div className="log-modal__header">
-          <h2 id="add-code-modal-title" className="log-modal__title">
-            {title}
-          </h2>
-          <button
-            type="button"
-            className="log-modal__close"
-            onClick={onClose}
-            aria-label="Cerrar"
-            disabled={saving}
-          >
-            ×
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="add-code-modal__form">
-          <div className="add-code-modal__field">
-            <label className="add-code-modal__label" htmlFor="add-code-code">
-              Código
-            </label>
-            <input
-              id="add-code-code"
-              type="text"
-              className="add-code-modal__input add-code-modal__input--readonly"
-              value={code}
-              readOnly
-              aria-readonly="true"
-            />
-          </div>
-          <div className="add-code-modal__field">
-            <label className="add-code-modal__label" htmlFor="add-code-severity">
-              Severidad
-            </label>
-            <select
-              id="add-code-severity"
-              className="add-code-modal__input add-code-modal__select"
-              value={severity}
-              onChange={(e) => setSeverity(e.target.value)}
-              disabled={saving}
-            >
-              {SEVERITY_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="add-code-modal__field">
-            <label className="add-code-modal__label" htmlFor="add-code-description">
-              Descripción (del log)
-            </label>
-            <textarea
-              id="add-code-description"
-              className="add-code-modal__textarea"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descripción del código..."
-              disabled={saving}
-            />
-          </div>
-          <div className="add-code-modal__field">
-            <label className="add-code-modal__label" htmlFor="add-code-solution-url">
-              URL de la posible solución
-            </label>
-            <input
-              id="add-code-solution-url"
-              type="url"
-              className="add-code-modal__input"
-              value={solutionUrl}
-              onChange={(e) => setSolutionUrl(e.target.value)}
-              placeholder="https://..."
-              disabled={saving}
-            />
-          </div>
-
-          <div className="log-modal__actions">
-            <button
-              type="submit"
-              className="dashboard__btn dashboard__btn--primary"
-              disabled={saving}
-            >
-              {saving ? 'Guardando…' : submitLabel}
-            </button>
+    <Portal>
+      <div
+        className="log-modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-code-modal-title"
+      >
+        <div className="log-modal add-code-modal">
+          <div className="log-modal__header">
+            <h2 id="add-code-modal-title" className="log-modal__title">
+              {title}
+            </h2>
             <button
               type="button"
-              className="log-modal__btn-secondary"
+              className="log-modal__close"
               onClick={onClose}
+              aria-label="Cerrar"
               disabled={saving}
             >
-              Cancelar
+              ×
             </button>
           </div>
-        </form>
+          <form onSubmit={handleSubmit} className="add-code-modal__form">
+            <div className="add-code-modal__field">
+              <label className="add-code-modal__label" htmlFor="add-code-code">
+                Código
+              </label>
+              <input
+                id="add-code-code"
+                type="text"
+                className="add-code-modal__input add-code-modal__input--readonly"
+                value={code}
+                readOnly
+                aria-readonly="true"
+              />
+            </div>
+            <div className="add-code-modal__field">
+              <label className="add-code-modal__label" htmlFor="add-code-severity">
+                Severidad
+              </label>
+              <select
+                id="add-code-severity"
+                className="add-code-modal__input add-code-modal__select"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+                disabled={saving}
+              >
+                {SEVERITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="add-code-modal__field">
+              <label className="add-code-modal__label" htmlFor="add-code-description">
+                Descripción (del log)
+              </label>
+              <textarea
+                id="add-code-description"
+                className="add-code-modal__textarea"
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descripción del código..."
+                disabled={saving}
+              />
+            </div>
+            <div className="add-code-modal__field">
+              <label className="add-code-modal__label" htmlFor="add-code-solution-url">
+                URL de la posible solución
+              </label>
+              <input
+                id="add-code-solution-url"
+                type="url"
+                className="add-code-modal__input"
+                value={solutionUrl}
+                onChange={(e) => setSolutionUrl(e.target.value)}
+                placeholder="https://..."
+                disabled={saving}
+              />
+            </div>
+
+            <div className="log-modal__actions">
+              <button
+                type="submit"
+                className="dashboard__btn dashboard__btn--primary"
+                disabled={saving}
+              >
+                {saving ? 'Guardando…' : submitLabel}
+              </button>
+              <button
+                type="button"
+                className="log-modal__btn-secondary"
+                onClick={onClose}
+                disabled={saving}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </Portal>
   )
 }
 
