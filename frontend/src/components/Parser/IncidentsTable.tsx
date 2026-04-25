@@ -2,6 +2,24 @@ import React, { useState } from 'react'
 import type { EnrichedEvent as ApiEvent } from '../../types/api'
 import { formatDateTime } from '../../hooks/useDateFilter'
 
+function exportIncidentsCSV(rows: IncidentRow[]) {
+  const headers = ['Código', 'Clasificación', 'Severidad', 'Ocurrencias', 'Primera vez', 'Última vez']
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const body = rows.map(r => [
+    r.code,
+    r.classification,
+    r.severity,
+    r.occurrences,
+    r.start_time ? new Date(r.start_time).toLocaleString('es-AR') : '',
+    r.end_time   ? new Date(r.end_time).toLocaleString('es-AR')   : '',
+  ].map(escape).join(','))
+  const csv = '﻿' + [headers.join(','), ...body].join('\r\n')
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'incidencias.csv' })
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export type IncidentRow = {
   id: string
   code: string
@@ -95,6 +113,14 @@ export function IncidentsTable({
     <section className="section dashboard__table-section">
       <h2 className="section__title">Incidencias</h2>
       <div className="table-toolbar">
+        <button
+          className="dashboard__btn dashboard__btn--secondary"
+          style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+          onClick={() => exportIncidentsCSV(sortedRows)}
+          title="Exportar incidencias visibles a CSV"
+        >
+          ↓ CSV
+        </button>
         <label className="table-toolbar__label" htmlFor="incidents-severity-filter">
           Severidad:
         </label>

@@ -178,9 +178,6 @@
   display: inline-block;
 }
 
-.collapsible-panel__chevron--expanded {
-  transform: rotate(90deg);
-}
 
 .collapsible-panel__body {
   padding: 16px;

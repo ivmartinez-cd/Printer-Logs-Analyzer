@@ -98,6 +98,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
             evt.code === body.code
               ? {
                   ...evt,
+                  code_description: body.description ?? evt.code_description,
+                  code_severity: body.severity ?? evt.code_severity,
                   code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url,
                   code_solution_content: res.solution_content ?? evt.code_solution_content,
                 }
@@ -108,15 +110,24 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
               evt.code === body.code
                 ? {
                     ...evt,
+                    code_description: body.description ?? evt.code_description,
+                    code_severity: body.severity ?? evt.code_severity,
                     code_solution_url: res.solution_url ?? body.solution_url ?? evt.code_solution_url,
                     code_solution_content: res.solution_content ?? evt.code_solution_content,
                   }
                 : evt
             )
             if (inc.code !== body.code) return { ...inc, events: updatedEvents }
+            
+            const severity = (body.severity || inc.severity || 'INFO').toUpperCase()
+            const severity_weight = severity === 'ERROR' ? 3 : severity === 'WARNING' ? 2 : 1
+
             return {
               ...inc,
               events: updatedEvents,
+              classification: body.description ?? inc.classification,
+              severity,
+              severity_weight,
               sds_link: res.solution_url ?? body.solution_url ?? inc.sds_link,
               sds_solution_content: res.solution_content ?? inc.sds_solution_content,
             }

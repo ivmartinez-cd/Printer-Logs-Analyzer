@@ -104,7 +104,7 @@
   flex-shrink: 0;
 }
 
-.collapsible-panel__chevron--open {
+.collapsible-panel__chevron--expanded {
   transform: rotate(180deg);
 }
 

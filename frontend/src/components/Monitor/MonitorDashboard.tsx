@@ -2,7 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { getFleetClient, triggerFleetScan, getFleetScanStatus } from '../../services/api'
 import type { FleetClientDetail, FleetScanResult, RollerComponent } from '../../types/api'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
+import { useUIStore } from '../../store/useUIStore'
 import { SolutionContentModal } from '../Parser/SolutionContentModal'
+import { Portal } from '../ui/Portal'
 import { 
   AreaChart, 
   Area, 
@@ -229,6 +231,92 @@ function TelemetryGauge({ percent, label }: { percent: number | null | undefined
   )
 }
 
+function DeviceCard({
+  device,
+  isExpanded,
+  onToggle,
+  onNavigate,
+}: {
+  device: FleetScanResult
+  isExpanded: boolean
+  onToggle: () => void
+  onNavigate: (e: React.MouseEvent) => void
+}) {
+  const s = STATUS_COLOR[device.status] ?? STATUS_COLOR.unreachable
+  const rollers = (device.roller_components ?? []).slice(0, 2)
+
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        borderRadius: '16px',
+        border: `1px solid ${isExpanded ? s.text : s.border}`,
+        background: isExpanded ? `linear-gradient(135deg, ${s.bg}, var(--bg-card))` : 'var(--bg-card)',
+        backdropFilter: 'blur(20px)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: 'pointer',
+        transition: 'border-color 0.2s, background 0.2s',
+        boxShadow: isExpanded ? `0 0 24px ${s.bg}` : 'none',
+      }}
+    >
+      <div style={{ height: '3px', background: s.text, boxShadow: `0 0 8px ${s.text}`, flexShrink: 0 }} />
+
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+        {/* Serial + badge */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+          <a
+            href={`/${device.serial}`}
+            onClick={onNavigate}
+            style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--hp-blue-vibrant)', textDecoration: 'none', lineHeight: 1.2 }}
+          >
+            {device.serial}
+          </a>
+          <span style={{ padding: '2px 10px', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}`, flexShrink: 0, whiteSpace: 'nowrap' }}>
+            {s.label}
+          </span>
+        </div>
+
+        {/* Location + model */}
+        <div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>{('location' in device ? (device as FleetScanResult).location : null) || '—'}</div>
+          {device.model_name && (
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>{device.model_name}</div>
+          )}
+        </div>
+
+        {/* Telemetry */}
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <TelemetryGauge percent={device.black_toner_percent} label="Tóner" />
+          <TelemetryGauge percent={device.fuser_life_percent} label="Fusor" />
+          {rollers.map((r: RollerComponent) => (
+            <TelemetryGauge key={r.label} percent={r.percent} label={r.label} />
+          ))}
+          {device.black_toner_percent == null && device.fuser_life_percent == null && rollers.length === 0 && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', padding: '8px 0' }}>Sin telemetría</span>
+          )}
+        </div>
+
+        {/* Footer: counts + date */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: device.error_count > 0 ? '#ff5252' : 'var(--text-muted)' }}>
+              ✕ {device.error_count}
+            </span>
+            <span style={{ fontSize: '0.8rem', color: device.warning_count > 0 ? '#ffb300' : 'var(--text-muted)' }}>
+              ⚠ {device.warning_count}
+            </span>
+          </div>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            {device.last_event_date ? new Date(device.last_event_date).toLocaleDateString('es-AR') : '—'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type StatusFilter = 'all' | 'critical' | 'warning' | 'ok' | 'unreachable'
 
 const FILTER_LABELS: Record<StatusFilter, string> = {
@@ -241,6 +329,7 @@ const FILTER_LABELS: Record<StatusFilter, string> = {
 
 export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?: number }) {
   const { monitorClientId, monitorModels } = useAnalysisStore()
+  const { setMonitorWizardOpen } = useUIStore()
   const [client, setClient] = useState<FleetClientDetail | null>(null)
   const [results, setResults] = useState<FleetScanResult[]>([])
   const [scanning, setScanning] = useState(false)
@@ -248,6 +337,9 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [viewingSolution, setViewingSolution] = useState<string | null>(null)
   const [scanJob, setScanJob] = useState<{ processed: number; total: number; status: string } | null>(null)
+  const [gridView, setGridView] = useState(true)
+
+
 
   useEffect(() => {
     if (!monitorClientId) return
@@ -349,6 +441,9 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
           </div>
         </div>
         <div className="dashboard__subheader-actions">
+          <button className="dashboard__btn dashboard__btn--secondary" onClick={() => setMonitorWizardOpen(true)}>
+            Cambiar cliente
+          </button>
           <button className="dashboard__btn dashboard__btn--secondary" onClick={() => {
             window.history.pushState({ viewMode: 'dashboard' }, '', '/')
             window.dispatchEvent(new CustomEvent('hp-navigation-change'))
@@ -424,8 +519,8 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
       
       <StatusLegend />
 
-      {/* Filter chips */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
+      {/* Filter chips + view toggle */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginRight: '4px' }}>Filtrar:</span>
         {(Object.keys(FILTER_LABELS) as StatusFilter[]).map(f => (
           <button
@@ -446,6 +541,29 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             {FILTER_LABELS[f]}{f !== 'all' ? ` (${kpis[f]})` : ` (${displayRows.length})`}
           </button>
         ))}
+        <div style={{ marginLeft: 'auto', display: 'flex', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', overflow: 'hidden' }}>
+          {([
+            { mode: false, icon: '☰', title: 'Vista tabla' },
+            { mode: true,  icon: '⊞', title: 'Vista grid' },
+          ] as const).map(({ mode, icon, title }) => (
+            <button
+              key={String(mode)}
+              title={title}
+              onClick={() => setGridView(mode)}
+              style={{
+                padding: '5px 12px',
+                border: 'none',
+                background: gridView === mode ? 'rgba(0,161,255,0.2)' : 'transparent',
+                color: gridView === mode ? 'var(--hp-blue-vibrant)' : 'var(--text-muted)',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
       </div>
 
       {scanning && (
@@ -454,118 +572,190 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
         </div>
       )}
 
-      <div className="monitor-grid" style={{ background: 'var(--bg-card)', border: 'var(--border-glass)', borderRadius: '24px', overflow: 'hidden', backdropFilter: 'blur(20px)', boxShadow: 'var(--shadow-premium)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Número de Serie</th>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ubicación</th>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</th>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Telemetría</th>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Errores</th>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Warnings</th>
-              <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Última Lectura</th>
-              <th style={{ padding: '20px 24px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.length === 0 && (
-              <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  No hay dispositivos en este estado.
-                </td>
+      {gridView ? (
+        <>
+          {filteredRows.length === 0 && (
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+              No hay dispositivos en este estado.
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px', marginBottom: activeExpandedSerial ? '0' : undefined }}>
+            {filteredRows.map(device => (
+              <DeviceCard
+                key={device.serial}
+                device={device}
+                isExpanded={activeExpandedSerial === device.serial}
+                onToggle={() => setExpandedSerial(activeExpandedSerial === device.serial ? null : device.serial)}
+                onNavigate={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  window.history.pushState(null, '', `/${device.serial}`)
+                  window.dispatchEvent(new CustomEvent('hp-navigation-change'))
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Grid detail modal */}
+          {activeExpandedSerial && <Portal>{(() => {
+            const device = filteredRows.find(d => d.serial === activeExpandedSerial)
+            if (!device) return null
+            const s = STATUS_COLOR[device.status] ?? STATUS_COLOR.unreachable
+            return (
+              <div
+                onClick={() => setExpandedSerial(null)}
+                style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+              >
+                <div
+                  onClick={e => e.stopPropagation()}
+                  style={{ width: '100%', maxWidth: '780px', maxHeight: '85vh', overflowY: 'auto', background: '#0e121a', border: `1px solid ${s.border}`, borderRadius: '20px', boxShadow: `0 0 40px ${s.bg}`, display: 'flex', flexDirection: 'column' }}
+                >
+                  {/* Modal header */}
+                  <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--hp-blue-vibrant)' }}>{device.serial}</span>
+                      <span style={{ padding: '2px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>{s.label}</span>
+                      {device.model_name && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{device.model_name}</span>}
+                      {device.firmware && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>FW: {device.firmware}</span>}
+                      <span style={{ fontSize: '0.85rem' }}>Errores: <strong style={{ color: 'var(--color-error)' }}>{device.error_count}</strong></span>
+                      <span style={{ fontSize: '0.85rem' }}>Warnings: <strong style={{ color: 'var(--color-warning)' }}>{device.warning_count}</strong></span>
+                    </div>
+                    <button onClick={() => setExpandedSerial(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', lineHeight: 1, flexShrink: 0 }}>✕</button>
+                  </div>
+
+                  {/* Telemetry row */}
+                  <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <TelemetryGauge percent={device.black_toner_percent} label="Tóner" />
+                    <TelemetryGauge percent={device.fuser_life_percent} label="Fusor" />
+                    {(device.roller_components ?? []).map((r: RollerComponent) => (
+                      <TelemetryGauge key={r.label} percent={r.percent} label={r.label} />
+                    ))}
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ padding: '20px 24px' }}>
+                    {device.error_message ? (
+                      <p style={{ color: '#ff5252', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{device.error_message}</p>
+                    ) : results.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)' }}>Presioná "Sincronizar Todo" para cargar los logs de este dispositivo.</p>
+                    ) : (
+                      <>
+                        <DeviceMiniAnalysis device={device} onViewSolution={(code) => setViewingSolution(code)} />
+                        <p style={{ margin: '16px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Para análisis completo, usá el flujo individual desde la pantalla principal.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })()} </Portal>}
+        </>
+      ) : (
+        <div className="monitor-grid" style={{ background: 'var(--bg-card)', border: 'var(--border-glass)', borderRadius: '24px', overflow: 'hidden', backdropFilter: 'blur(20px)', boxShadow: 'var(--shadow-premium)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Número de Serie</th>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ubicación</th>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</th>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Telemetría</th>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Errores</th>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Warnings</th>
+                <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Última Lectura</th>
+                <th style={{ padding: '20px 24px' }}></th>
               </tr>
-            )}
-            {filteredRows.map(device => {
-              const s = STATUS_COLOR[device.status] ?? STATUS_COLOR.unreachable
-              const isExpanded = activeExpandedSerial === device.serial
-              return (
-                <React.Fragment key={device.serial}>
-                  <tr
-                    onClick={() => setExpandedSerial(isExpanded ? null : device.serial)}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: isExpanded ? 'rgba(255,255,255,0.03)' : 'transparent' }}
-                  >
-                    <td style={{ padding: '20px 24px', fontWeight: 700 }}>
-                      <a 
-                        href={`/${device.serial}`}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          window.history.pushState(null, '', `/${device.serial}`)
-                          window.dispatchEvent(new CustomEvent('hp-navigation-change'))
-                        }}
-                        style={{ 
-                          color: 'var(--hp-blue-vibrant)', 
-                          textDecoration: 'none',
-                          borderBottom: '1px solid transparent',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseOver={(e) => (e.currentTarget.style.borderBottomColor = 'var(--hp-blue-vibrant)')}
-                        onMouseOut={(e) => (e.currentTarget.style.borderBottomColor = 'transparent')}
-                      >
-                        {device.serial}
-                      </a>
-                    </td>
-                    <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      {'location' in device ? (device as FleetScanResult).location : '—'}
-                    </td>
-                    <td style={{ padding: '20px 24px' }}>
-                      <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
-                        {s.label}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 24px' }}>
-                       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No hay dispositivos en este estado.
+                  </td>
+                </tr>
+              )}
+              {filteredRows.map(device => {
+                const s = STATUS_COLOR[device.status] ?? STATUS_COLOR.unreachable
+                const isExpanded = activeExpandedSerial === device.serial
+                return (
+                  <React.Fragment key={device.serial}>
+                    <tr
+                      onClick={() => setExpandedSerial(isExpanded ? null : device.serial)}
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: isExpanded ? 'rgba(255,255,255,0.03)' : 'transparent' }}
+                    >
+                      <td style={{ padding: '20px 24px', fontWeight: 700 }}>
+                        <a
+                          href={`/${device.serial}`}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            window.history.pushState(null, '', `/${device.serial}`)
+                            window.dispatchEvent(new CustomEvent('hp-navigation-change'))
+                          }}
+                          style={{ color: 'var(--hp-blue-vibrant)', textDecoration: 'none', borderBottom: '1px solid transparent', transition: 'all 0.2s' }}
+                          onMouseOver={(e) => (e.currentTarget.style.borderBottomColor = 'var(--hp-blue-vibrant)')}
+                          onMouseOut={(e) => (e.currentTarget.style.borderBottomColor = 'transparent')}
+                        >
+                          {device.serial}
+                        </a>
+                      </td>
+                      <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        {'location' in device ? (device as FleetScanResult).location : '—'}
+                      </td>
+                      <td style={{ padding: '20px 24px' }}>
+                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
+                          {s.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 24px' }}>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                           <TelemetryGauge percent={device.black_toner_percent} label="Tóner" />
                           <TelemetryGauge percent={device.fuser_life_percent} label="Fusor" />
                           {(device.roller_components ?? []).map((r: RollerComponent) => (
                             <TelemetryGauge key={r.label} percent={r.percent} label={r.label} />
                           ))}
-                       </div>
-                    </td>
-                    <td style={{ padding: '20px 24px', color: device.error_count > 0 ? '#ff5252' : 'var(--text-muted)', fontWeight: device.error_count > 0 ? 700 : 400 }}>{device.error_count}</td>
-                    <td style={{ padding: '20px 24px', color: device.warning_count > 0 ? '#ffb300' : 'var(--text-muted)' }}>{device.warning_count}</td>
-                    <td style={{ padding: '20px 24px', fontSize: '0.85rem', color: 'var(--text-dim)' }}>{device.last_event_date ? new Date(device.last_event_date).toLocaleDateString('es-AR') : '—'}</td>
-                    <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                      <span style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s' }}>▼</span>
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`${device.serial}-detail`}>
-                      <td colSpan={8} style={{ padding: 0 }}>
-                        <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--hp-blue-vibrant)' }}>
-                          {device.error_message ? (
-                            <p style={{ color: '#ff5252', fontFamily: 'monospace', fontSize: '0.85rem' }}>{device.error_message}</p>
-                          ) : results.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>Presioná "Sincronizar Todo" para cargar los logs de este dispositivo.</p>
-                          ) : (
-                            <>
-                              <div style={{ display: 'flex', gap: '24px', marginBottom: '12px' }}>
-                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Firmware: <strong style={{ color: '#fff' }}>{device.firmware ?? '—'}</strong></span>
-                                <span>Errores: <strong style={{ color: 'var(--color-error)' }}>{device.error_count}</strong></span>
-                                <span>Warnings: <strong style={{ color: 'var(--color-warning)' }}>{device.warning_count}</strong></span>
-                              </div>
-                              
-                              <DeviceMiniAnalysis 
-                                device={device} 
-                                onViewSolution={(code) => setViewingSolution(code)}
-                              />
-                              
-                              <p style={{ margin: '16px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                Para análisis completo, usá el flujo individual desde la pantalla principal.
-                              </p>
-                            </>
-                          )}
                         </div>
                       </td>
+                      <td style={{ padding: '20px 24px', color: device.error_count > 0 ? '#ff5252' : 'var(--text-muted)', fontWeight: device.error_count > 0 ? 700 : 400 }}>{device.error_count}</td>
+                      <td style={{ padding: '20px 24px', color: device.warning_count > 0 ? '#ffb300' : 'var(--text-muted)' }}>{device.warning_count}</td>
+                      <td style={{ padding: '20px 24px', fontSize: '0.85rem', color: 'var(--text-dim)' }}>{device.last_event_date ? new Date(device.last_event_date).toLocaleDateString('es-AR') : '—'}</td>
+                      <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                        <span style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s' }}>▼</span>
+                      </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+                    {isExpanded && (
+                      <tr key={`${device.serial}-detail`}>
+                        <td colSpan={8} style={{ padding: 0 }}>
+                          <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--hp-blue-vibrant)' }}>
+                            {device.error_message ? (
+                              <p style={{ color: '#ff5252', fontFamily: 'monospace', fontSize: '0.85rem' }}>{device.error_message}</p>
+                            ) : results.length === 0 ? (
+                              <p style={{ color: 'var(--text-muted)' }}>Presioná "Sincronizar Todo" para cargar los logs de este dispositivo.</p>
+                            ) : (
+                              <>
+                                <div style={{ display: 'flex', gap: '24px', marginBottom: '12px' }}>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Firmware: <strong style={{ color: '#fff' }}>{device.firmware ?? '—'}</strong></span>
+                                  <span>Errores: <strong style={{ color: 'var(--color-error)' }}>{device.error_count}</strong></span>
+                                  <span>Warnings: <strong style={{ color: 'var(--color-warning)' }}>{device.warning_count}</strong></span>
+                                </div>
+                                <DeviceMiniAnalysis device={device} onViewSolution={(code) => setViewingSolution(code)} />
+                                <p style={{ margin: '16px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  Para análisis completo, usá el flujo individual desde la pantalla principal.
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {viewingSolution && (
         <SolutionContentModal

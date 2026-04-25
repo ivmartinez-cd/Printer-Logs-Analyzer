@@ -53,7 +53,7 @@
 
 .error-heatmap__filter-btn.active.error { border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
 .error-heatmap__filter-btn.active.warning { border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; }
-.error-heatmap__filter-btn.active.info { border-color: rgba(56, 189, 248, 0.5); color: #7dd3fc; }
+.error-heatmap__filter-btn.active.info { border-color: rgba(59, 130, 246, 0.5); color: #93c5fd; }
 
 .error-heatmap__title {
   font-size: 1.1rem;
@@ -148,10 +148,11 @@
 
 /* Modal Detalle Heatmap */
 .heatmap-modal-body {
-  padding: 0;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  padding: 24px 32px 24px 24px;
+  max-height: 65vh;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.15);
+  position: relative;
 }
 
 .heatmap-modal-grid {
@@ -166,18 +167,13 @@
   overflow-y: auto;
 }
 
-.heatmap-modal-summary {
-  border-right: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.02);
-}
-
 .heatmap-modal-section-title {
-  font-size: 0.9rem;
+  margin: 0 0 16px 0;
+  font-size: 0.75rem;
   font-weight: 700;
+  color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-dim);
-  margin-bottom: 16px;
 }
 
 .heatmap-modal-severity-row {
@@ -187,37 +183,39 @@
 
 .severity-pill {
   flex: 1;
-  padding: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   text-align: center;
   font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid transparent;
+  color: var(--text-dim);
 }
-
-.severity-pill--error { border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; }
-.severity-pill--warning { border-color: rgba(245, 158, 11, 0.3); color: #fcd34d; }
-.severity-pill--info { border-color: rgba(56, 189, 248, 0.3); color: #7dd3fc; }
 
 .severity-pill strong {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  margin-bottom: 4px;
 }
+
+.severity-pill--error strong { color: #ef4444; }
+.severity-pill--warning strong { color: #f59e0b; }
+.severity-pill--info strong { color: #3b82f6; }
 
 .heatmap-modal-codes-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .heatmap-modal-code-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  padding: 12px;
 }
 
 .severity-indicator {
@@ -226,9 +224,9 @@
   border-radius: 2px;
 }
 
-.severity-indicator--error { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
-.severity-indicator--warning { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
-.severity-indicator--info { background: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
+.severity-indicator--error { background: #ef4444; }
+.severity-indicator--warning { background: #f59e0b; }
+.severity-indicator--info { background: #3b82f6; }
 
 .heatmap-modal-code-info { flex: 1; }
 
@@ -236,45 +234,72 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
-.heatmap-modal-code-name { font-weight: 700; color: #fff; }
+.heatmap-modal-code-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.heatmap-modal-code-name:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
 .heatmap-modal-code-count { font-size: 0.75rem; color: var(--text-dim); }
-.heatmap-modal-code-desc { font-size: 0.8rem; color: var(--text-secondary); }
+.heatmap-modal-code-desc { margin: 0; font-size: 0.8rem; color: var(--text-dim); }
 
 .heatmap-modal-event-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .heatmap-modal-event-row {
-  display: grid;
-  grid-template-columns: 80px 100px 1fr;
+  display: flex;
   align-items: center;
+  gap: 16px;
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
-.heatmap-modal-event-time { color: var(--text-dim); }
-.heatmap-modal-event-counter { color: var(--text-secondary); text-align: right; }
+.heatmap-modal-event-time {
+  width: 60px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
 
 .severity-tag {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 4px;
-  text-align: center;
-  width: fit-content;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.severity-tag:hover {
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
 .severity-tag--error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 .severity-tag--warning { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-.severity-tag--info { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; }
+.severity-tag--info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+.heatmap-modal-event-counter {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
 
 .error-heatmap__legend {
   display: flex;

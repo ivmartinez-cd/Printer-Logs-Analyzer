@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react'
 import type { EnrichedEvent } from '../../types/api'
 import { Portal } from '../ui/Portal'
+import '../../styles/error-heatmap.css'
 
 interface ErrorHeatmapProps {
   events: EnrichedEvent[]
+  visibleSeverities: Set<string>
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
+  onEditCode: (code: string, description: string, severity: string, solutionUrl: string) => void
 }
 
 type CellData = {
@@ -14,7 +18,6 @@ type CellData = {
   events: EnrichedEvent[]
 }
 
-type SeverityFilter = 'ALL' | 'ERROR' | 'WARNING' | 'INFO'
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -22,12 +25,11 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const SEVERITY_COLORS: Record<string, string> = {
   ERROR: '239, 68, 68', // Red-500
   WARNING: '245, 158, 11', // Amber-500
-  INFO: '56, 189, 248', // Sky-400
-  ALL: '56, 189, 248' // Default Blue
+  INFO: '59, 130, 246',
+  ALL: '59, 130, 246'
 }
 
-export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
-  const [filter, setFilter] = useState<SeverityFilter>('ALL')
+export function ErrorHeatmap({ events, visibleSeverities, onViewSolution, onEditCode }: ErrorHeatmapProps) {
   const [selectedCell, setSelectedCell] = useState<{ dayIdx: number; hour: number; data: CellData } | null>(null)
 
   const { matrix, maxCount, dateRangeText } = useMemo(() => {
@@ -63,9 +65,12 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
       }
     })
 
-    // Calculate max based on current filter
+    // Calculate max based on current filter (sum of selected severities)
     matrix.forEach(row => row.forEach(cell => {
-      const val = filter === 'ALL' ? cell.total : (cell[filter as keyof Omit<CellData, 'events'>] as number)
+      let val = 0
+      visibleSeverities.forEach(sev => {
+        val += (cell[sev as keyof Omit<CellData, 'events'>] as number) || 0
+      })
       if (val > maxCount) maxCount = val
     }))
 
@@ -75,23 +80,24 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
       : 'periodo analizado'
 
     return { matrix, maxCount, dateRangeText }
-  }, [events, filter])
+  }, [events, visibleSeverities])
 
   if (events.length === 0) return null
 
   const getCellColor = (dayIdx: number, hour: number) => {
     const cell = matrix[dayIdx][hour]
-    const count = filter === 'ALL' ? cell.total : (cell[filter as keyof Omit<CellData, 'events'>] as number)
+    let count = 0
+    visibleSeverities.forEach(sev => {
+      count += (cell[sev as keyof Omit<CellData, 'events'>] as number) || 0
+    })
     if (count === 0) return 'rgba(255, 255, 255, 0.03)'
 
-    let colorRgb = SEVERITY_COLORS[filter]
-    
-    // If ALL, use the color of the most critical severity present
-    if (filter === 'ALL') {
-      if (cell.ERROR > 0) colorRgb = SEVERITY_COLORS.ERROR
-      else if (cell.WARNING > 0) colorRgb = SEVERITY_COLORS.WARNING
-      else colorRgb = SEVERITY_COLORS.INFO
-    }
+    // Use color of the most critical severity present among SELECTED ones
+    const colorRgb = (visibleSeverities.has('ERROR') && cell.ERROR > 0)
+      ? SEVERITY_COLORS.ERROR
+      : (visibleSeverities.has('WARNING') && cell.WARNING > 0)
+        ? SEVERITY_COLORS.WARNING
+        : SEVERITY_COLORS.INFO
 
     const opacity = maxCount > 0 ? count / maxCount : 0
     return `rgba(${colorRgb}, ${0.2 + opacity * 0.8})`
@@ -99,14 +105,16 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
 
   const getTooltip = (dayLabel: string, hour: number, cell: CellData) => {
     let text = `${dayLabel} ${hour}:00h`
-    if (filter === 'ALL') {
-      text += ` \nTotal: ${cell.total}`
-      if (cell.ERROR > 0) text += ` \nErrores: ${cell.ERROR}`
-      if (cell.WARNING > 0) text += ` \nWarnings: ${cell.WARNING}`
-      if (cell.INFO > 0) text += ` \nInfo: ${cell.INFO}`
-    } else {
-      const count = cell[filter as keyof Omit<CellData, 'events'>] as number
-      text += ` \n${filter}: ${count}`
+    let totalActive = 0
+    visibleSeverities.forEach(sev => {
+      const count = (cell[sev as keyof Omit<CellData, 'events'>] as number) || 0
+      if (count > 0) {
+        text += ` \n${sev}: ${count}`
+        totalActive += count
+      }
+    })
+    if (visibleSeverities.size > 1) {
+      text += ` \nTotal Seleccionado: ${totalActive}`
     }
     return text
   }
@@ -121,19 +129,6 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
               Patrones semanales detectados entre el{' '}
               <span className="error-heatmap__date-highlight">{dateRangeText}</span>
             </p>
-          </div>
-          
-          <div className="error-heatmap__filters">
-            {(['ALL', 'ERROR', 'WARNING', 'INFO'] as SeverityFilter[]).map(f => (
-              <button
-                key={f}
-                type="button"
-                className={`error-heatmap__filter-btn ${filter === f ? 'active' : ''} ${f.toLowerCase()}`}
-                onClick={() => setFilter(f)}
-              >
-                {f === 'ALL' ? 'Todos' : f}
-              </button>
-            ))}
           </div>
         </div>
       </div>
@@ -157,7 +152,10 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
               <div className="error-heatmap__cells">
                 {HOURS.map(hour => {
                   const cell = matrix[dayIdx][hour]
-                  const count = filter === 'ALL' ? cell.total : (cell[filter as keyof Omit<CellData, 'events'>] as number)
+                  let count = 0
+                  visibleSeverities.forEach(sev => {
+                    count += (cell[sev as keyof Omit<CellData, 'events'>] as number) || 0
+                  })
                   
                   return (
                     <div
@@ -181,7 +179,7 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
             <span>Menos</span>
             <div 
               className="error-heatmap__legend-gradient" 
-              style={{ background: `linear-gradient(to right, rgba(${SEVERITY_COLORS[filter]}, 0.1), rgba(${SEVERITY_COLORS[filter]}, 1))` }}
+              style={{ background: `linear-gradient(to right, rgba(${visibleSeverities.has('ERROR') ? SEVERITY_COLORS.ERROR : visibleSeverities.has('WARNING') ? SEVERITY_COLORS.WARNING : SEVERITY_COLORS.INFO}, 0.1), rgba(${visibleSeverities.has('ERROR') ? SEVERITY_COLORS.ERROR : visibleSeverities.has('WARNING') ? SEVERITY_COLORS.WARNING : SEVERITY_COLORS.INFO}, 1))` }}
             />
             <span>Más</span>
           </div>
@@ -194,22 +192,40 @@ export function ErrorHeatmap({ events }: ErrorHeatmapProps) {
           hour={selectedCell.hour} 
           data={selectedCell.data} 
           onClose={() => setSelectedCell(null)} 
+          onViewSolution={onViewSolution}
+          onEditCode={onEditCode}
         />
       )}
     </div>
   )
 }
 
-function HeatmapDetailModal({ day, hour, data, onClose }: { day: string; hour: number; data: CellData; onClose: () => void }) {
+function HeatmapDetailModal({ 
+  day, 
+  hour, 
+  data, 
+  onClose,
+  onViewSolution,
+  onEditCode
+}: { 
+  day: string; 
+  hour: number; 
+  data: CellData; 
+  onClose: () => void;
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void;
+  onEditCode: (code: string, description: string, severity: string, solutionUrl: string) => void;
+}) {
   // Group codes by count
   const codeStats = useMemo(() => {
-    const stats: Record<string, { count: number; severity: string; description: string }> = {}
+    const stats: Record<string, { count: number; severity: string; description: string | null; sds_url?: string | null; sds_content?: string | null }> = {}
     data.events.forEach(e => {
       if (!stats[e.code]) {
         stats[e.code] = { 
           count: 0, 
           severity: (e.code_severity || e.type || 'INFO').toUpperCase(),
-          description: e.code_description || 'Sin descripción'
+          description: e.code_description || null,
+          sds_url: e.code_solution_url,
+          sds_content: e.code_solution_content
         }
       }
       stats[e.code].count++
@@ -254,10 +270,28 @@ function HeatmapDetailModal({ day, hour, data, onClose }: { day: string; hour: n
                       <div className={`severity-indicator severity-indicator--${stat.severity.toLowerCase()}`} />
                       <div className="heatmap-modal-code-info">
                         <div className="heatmap-modal-code-header">
-                          <span className="heatmap-modal-code-name">{code}</span>
-                          <span className="heatmap-modal-code-count">{stat.count} ocurrencias</span>
+                          <button 
+                            type="button"
+                            className="heatmap-modal-code-name"
+                            onClick={() => onViewSolution(code, stat.sds_content || (stat.sds_url ? null : (stat.description || null)), stat.sds_url)}
+                            title="Ver solución técnica"
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                          >
+                            {code}
+                          </button>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span className="heatmap-modal-code-count">{stat.count} ocurrencias</span>
+                            <button
+                              type="button"
+                              className="dashboard__btn dashboard__btn--secondary"
+                              style={{ padding: '2px 8px', fontSize: '0.7rem', height: 'auto' }}
+                              onClick={() => onEditCode(code, stat.description || '', stat.severity, stat.sds_url || '')}
+                            >
+                              Editar
+                            </button>
+                          </div>
                         </div>
-                        <p className="heatmap-modal-code-desc">{stat.description}</p>
+                        <p className="heatmap-modal-code-desc">{stat.description || 'Sin descripción'}</p>
                       </div>
                     </div>
                   ))}
@@ -267,20 +301,26 @@ function HeatmapDetailModal({ day, hour, data, onClose }: { day: string; hour: n
               <div className="heatmap-modal-timeline">
                 <h4 className="heatmap-modal-section-title">Secuencia de Eventos</h4>
                 <div className="heatmap-modal-event-list">
-                  {data.events.slice(0, 50).map((evt, i) => (
+                  {data.events.slice(0, 100).map((evt, i) => (
                     <div key={i} className="heatmap-modal-event-row">
                       <span className="heatmap-modal-event-time">
                         {new Date(evt.timestamp).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
                       </span>
-                      <span className={`severity-tag severity-tag--${(evt.code_severity || evt.type || 'INFO').toLowerCase()}`}>
+                      <button 
+                        type="button"
+                        className={`severity-tag severity-tag--${(evt.code_severity || evt.type || 'INFO').toLowerCase()}`}
+                        onClick={() => onViewSolution(evt.code, evt.code_solution_content || (evt.code_solution_url ? null : evt.code_description), evt.code_solution_url)}
+                        title="Ver solución técnica"
+                        style={{ border: 'none', cursor: 'pointer' }}
+                      >
                         {evt.code}
-                      </span>
+                      </button>
                       <span className="heatmap-modal-event-counter">#{evt.counter}</span>
                     </div>
                   ))}
-                  {data.events.length > 50 && (
+                  {data.events.length > 100 && (
                     <p className="dashboard__muted" style={{ padding: '12px', textAlign: 'center' }}>
-                      Mostrando los primeros 50 eventos...
+                      Mostrando los primeros 100 eventos...
                     </p>
                   )}
                 </div>

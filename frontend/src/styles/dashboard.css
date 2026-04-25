@@ -92,7 +92,7 @@
 }
 
 /* ─── Responsive Header ──────────────────────────────────────────────── */
-@media (max-width: var(--bp-desktop, 1280px)) {
+@media (max-width: 1280px) {
   .dashboard__header {
     padding: 10px 16px;
     gap: 12px;
@@ -106,7 +106,7 @@
   }
 }
 
-@media (max-width: var(--bp-tablet, 1024px)) {
+@media (max-width: 1024px) {
   .dashboard__datetime {
     display: none; /* Ocultar reloj en tablets para ganar espacio */
   }
@@ -288,7 +288,7 @@
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--text-dim);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 /* ─── Modern Icon Buttons 2026 ───────────────────────────────────────── */
@@ -448,7 +448,7 @@
 }
 
 .dashboard__codes-new-code {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-weight: 700;
   color: var(--hp-blue-vibrant);
 }
@@ -500,3 +500,41 @@
     padding: 80px 20px 20px !important;
   }
 }
+
+/* ─── Unified Chart Filters ─────────────────────────────────────────── */
+.chart-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chart-filters__btn {
+  padding: 6px 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+}
+
+.chart-filters__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.chart-filters__btn.active {
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 1 !important;
+}
+
+/* Severity Specific Active States */
+.chart-filters__btn.active[style*="#ef4444"] { background: #ef4444 !important; border-color: #ef4444 !important; }
+.chart-filters__btn.active[style*="#f59e0b"] { background: #f59e0b !important; border-color: #f59e0b !important; }
+.chart-filters__btn.active[style*="#3b82f6"] { background: #3b82f6 !important; border-color: #3b82f6 !important; }

@@ -22,6 +22,7 @@ export function SolutionContentModal({
   const [content, setContent] = useState<string | null>(initialContent || null)
   const [loading, setLoading] = useState(shouldFetchLive)
   const [source, setSource] = useState<'cache' | 'live'>(initialContent ? 'cache' : 'live')
+  const [liveUrl, setLiveUrl] = useState<string | null>(sdsUrl || null)
 
   useEffect(() => {
     // If we have a URL but no content, or it's a KaaS URL, try to fetch live via proxy
@@ -31,6 +32,7 @@ export function SolutionContentModal({
           if (res.content) {
             setContent(res.content)
             setSource(res.source)
+            if (res.url) setLiveUrl(res.url)
           }
         })
         .catch((err) => {
@@ -49,6 +51,7 @@ export function SolutionContentModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="solution-modal-title"
+        style={{ zIndex: 11000 }}
       >
         <div className="log-modal solution-content-modal">
           <div className="log-modal__header">
@@ -61,17 +64,21 @@ export function SolutionContentModal({
           </div>
 
           <div className="solution-content-modal__tab-content">
-            {sdsUrl && (
+            {(sdsUrl || liveUrl || source === 'live') && (
               <p className="solution-content-modal__source">
                 Fuente:{' '}
-                <a
-                  href={sdsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="solution-content-modal__url"
-                >
-                  HP Portal
-                </a>{' '}
+                {sdsUrl || liveUrl ? (
+                  <a
+                    href={sdsUrl || liveUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="solution-content-modal__url"
+                  >
+                    HP Portal
+                  </a>
+                ) : (
+                  <span className="solution-content-modal__url">HP Portal</span>
+                )}{' '}
                 <span className="solution-content-modal__url-warning">
                   ({source === 'live' ? 'contenido actualizado en vivo' : 'versión guardada'})
                 </span>
@@ -87,7 +94,7 @@ export function SolutionContentModal({
               <pre className="solution-content-modal__body">{content}</pre>
             ) : (
               <p className="solution-content-modal__empty">
-                {sdsUrl 
+                {sdsUrl || liveUrl
                   ? 'No se pudo recuperar el contenido. El link puede estar vencido o las credenciales SDS son incorrectas.'
                   : 'Sin información disponible para este código.'}
               </p>

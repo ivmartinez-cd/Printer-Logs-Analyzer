@@ -21,7 +21,7 @@
 }
 
 .consumable-warnings-panel__part {
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 0.8125rem;
   color: #a5b4c8;
 }
@@ -106,7 +106,7 @@
 .consumable-warnings-panel__codes {
   font-size: 0.75rem;
   color: #9aa3b2;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 
 .consumable-warnings-panel__intro {

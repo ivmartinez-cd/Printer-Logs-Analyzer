@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, Zap, Save, FileText } from 'lucide-react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
@@ -82,6 +82,7 @@ export default function DashboardPage({
     setCodesNew,
     savingCode,
     monitorClientId,
+    monitorModels,
   } = useAnalysisStore()
 
   const toast = useToast()
@@ -182,6 +183,11 @@ export default function DashboardPage({
     })
   }, [])
 
+  const monitorKey = useMemo(
+    () => `${monitorClientId}-${(monitorModels ?? []).slice().sort().join(',')}`,
+    [monitorClientId, monitorModels]
+  )
+ 
   const insightData = useInsightData(currentSerialNumber)
 
   const {
@@ -446,7 +452,7 @@ export default function DashboardPage({
           />
         ) : viewMode === 'monitor' ? (
           <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
-            <MonitorDashboard />
+            <MonitorDashboard key={monitorKey} />
           </div>
         ) : viewMode === 'avisos' ? (
           <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
@@ -579,6 +585,7 @@ export default function DashboardPage({
                             onClick={() => setSdsModalOpen(true)}
                             title="Ingresar Incidente SDS"
                           >
+                            <Zap size={16} />
                             SDS
                           </button>
                           <button
@@ -586,6 +593,7 @@ export default function DashboardPage({
                             onClick={() => setSaveIncidentModalOpen(true)}
                             title="Guardar Análisis"
                           >
+                            <Save size={16} />
                             Guardar
                           </button>
                           <button
@@ -625,6 +633,7 @@ export default function DashboardPage({
                             }}
                             disabled={exportingPdf || isGeneratingAiPdf}
                           >
+                            <FileText size={16} />
                             {isGeneratingAiPdf ? 'Procesando...' : exportingPdf ? 'Exportando...' : 'Exportar PDF'}
                           </button>
                         </div>
