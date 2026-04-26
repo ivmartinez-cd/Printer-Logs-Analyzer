@@ -1,0 +1,319 @@
+.error-heatmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.error-heatmap__header {
+  margin-bottom: 24px;
+}
+
+.error-heatmap__title-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.error-heatmap__filters {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.error-heatmap__filter-btn {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.error-heatmap__filter-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.error-heatmap__filter-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.error-heatmap__filter-btn.active.error { border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+.error-heatmap__filter-btn.active.warning { border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; }
+.error-heatmap__filter-btn.active.info { border-color: rgba(59, 130, 246, 0.5); color: #93c5fd; }
+
+.error-heatmap__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.error-heatmap__subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.error-heatmap__date-highlight {
+  color: var(--accent-color, #38bdf8);
+  font-weight: 600;
+}
+
+.error-heatmap__container {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.error-heatmap__grid-wrapper {
+  min-width: 600px;
+}
+
+.error-heatmap__hours-header {
+  display: grid;
+  grid-template-columns: 45px repeat(24, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.error-heatmap__hour-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.error-heatmap__row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.error-heatmap__day-label {
+  width: 45px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.error-heatmap__cells {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 4px;
+}
+
+.error-heatmap__cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.error-heatmap__cell:hover {
+  transform: scale(1.1);
+  z-index: 10;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.error-heatmap__cell-count {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.error-heatmap__footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Modal Detalle Heatmap */
+.heatmap-modal-body {
+  padding: 24px 32px 24px 24px;
+  max-height: 65vh;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.heatmap-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+}
+
+.heatmap-modal-summary,
+.heatmap-modal-timeline {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.heatmap-modal-section-title {
+  margin: 0 0 16px 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.heatmap-modal-severity-row {
+  display: flex;
+  gap: 12px;
+}
+
+.severity-pill {
+  flex: 1;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.severity-pill strong {
+  display: block;
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.severity-pill--error strong { color: #ef4444; }
+.severity-pill--warning strong { color: #f59e0b; }
+.severity-pill--info strong { color: #3b82f6; }
+
+.heatmap-modal-codes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heatmap-modal-code-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.severity-indicator {
+  width: 4px;
+  height: 32px;
+  border-radius: 2px;
+}
+
+.severity-indicator--error { background: #ef4444; }
+.severity-indicator--warning { background: #f59e0b; }
+.severity-indicator--info { background: #3b82f6; }
+
+.heatmap-modal-code-info { flex: 1; }
+
+.heatmap-modal-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.heatmap-modal-code-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.heatmap-modal-code-name:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.heatmap-modal-code-count { font-size: 0.75rem; color: var(--text-dim); }
+.heatmap-modal-code-desc { margin: 0; font-size: 0.8rem; color: var(--text-dim); }
+
+.heatmap-modal-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heatmap-modal-event-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.heatmap-modal-event-time {
+  width: 60px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.severity-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.severity-tag:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.severity-tag--error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.severity-tag--warning { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+.severity-tag--info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+.heatmap-modal-event-counter {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+.error-heatmap__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.error-heatmap__legend-gradient {
+  width: 120px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.03), rgba(56, 189, 248, 1));
+}

@@ -56,7 +56,7 @@ export function WelcomeView({
         
         <div className="welcome-hero__titles">
           <h1 className="welcome-hero__title">
-            HP Logs Analyzer
+            HP Logs <span className="welcome-hero__title-suffix">Analyzer</span>
           </h1>
           <p className="welcome-hero__tagline">
             Análisis técnico avanzado de logs HP con detección inteligente de errores y estado de hardware en tiempo real.

@@ -28,6 +28,9 @@ Printer-Logs-Analyzer.env
 *.tsbuildinfo
 frontend/vite.config.js
 frontend/dist/
+coverage/
+.coverage
+htmlcov/
 
 # Backend local data (fallback JSON, debug)
 backend/data/

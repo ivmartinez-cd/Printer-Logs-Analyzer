@@ -1,33 +1,33 @@
 /* â”€â”€ AI Diagnostic Panel â€” contenido especÃ­fico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /* Estilo destacado para darle "Stardom" al tablero */
-.collapsible-panel--featured {
-  border: 1px solid rgba(139, 92, 246, 0.3) !important;
-  background: rgba(139, 92, 246, 0.02) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 20px rgba(139, 92, 246, 0.05) !important;
+.collapsible-panel.collapsible-panel--featured {
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.02);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 20px rgba(139, 92, 246, 0.05);
   margin-top: 12px;
-  margin-bottom: 32px !important;
+  margin-bottom: 32px;
   transition: all 0.3s ease;
 }
 
-.collapsible-panel--featured:hover {
-  border-color: rgba(139, 92, 246, 0.5) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 25px rgba(139, 92, 246, 0.1) !important;
+.collapsible-panel.collapsible-panel--featured:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 25px rgba(139, 92, 246, 0.1);
 }
 
-.collapsible-panel--featured .collapsible-panel__header {
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.12) 0%, rgba(22, 163, 74, 0.03) 100%) !important;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1) !important;
+.collapsible-panel.collapsible-panel--featured .collapsible-panel__header {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.12) 0%, rgba(22, 163, 74, 0.03) 100%);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
 }
 
-.collapsible-panel--featured .collapsible-panel__title {
-  color: #d8b4fe !important;
-  font-weight: 700 !important;
+.collapsible-panel.collapsible-panel--featured .collapsible-panel__title {
+  color: #d8b4fe;
+  font-weight: 700;
   text-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
 }
 
-.collapsible-panel--featured .collapsible-panel__chevron {
-  color: #a78bfa !important;
+.collapsible-panel.collapsible-panel--featured .collapsible-panel__chevron {
+  color: #a78bfa;
 }
 
 /* Estado inicial: CTA centrado */

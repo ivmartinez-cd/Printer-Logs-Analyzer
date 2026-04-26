@@ -1,4 +1,5 @@
 import React from 'react'
+import { Portal } from '../ui/Portal'
 import type { MaintenanceModelRule } from '../../types/api'
 
 export interface MaintenanceRecordDraft {
@@ -85,6 +86,7 @@ export function RuleModal({
   saving,
 }: RuleModalProps) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>{editingRule.id ? 'Editar Regla Maestra' : 'Nueva Regla Maestra'}</h3>
@@ -162,6 +164,7 @@ export function RuleModal({
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -174,6 +177,7 @@ export function RecordChangeModal({
   recording,
 }: RecordChangeModalProps) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>Registrar Cambio de Componente</h3>
@@ -216,6 +220,7 @@ export function RecordChangeModal({
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -228,6 +233,7 @@ export function StateModal({
   updating,
 }: StateModalProps) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>⚙️ Ajustar Último Cambio</h3>
@@ -268,11 +274,13 @@ export function StateModal({
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
 export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay" onClick={onClose}>
       <div className="maintenance-modal maintenance-modal--wide" onClick={(e) => e.stopPropagation()}>
         <div className="hiw-header">
@@ -428,6 +436,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -439,6 +448,7 @@ export function OpenIncidentModal({
   saving,
 }: OpenIncidentModalProps) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>🎫 Abrir Incidente de Mantenimiento</h3>
@@ -483,6 +493,7 @@ export function OpenIncidentModal({
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -494,6 +505,7 @@ export function CloseIncidentModal({
   saving,
 }: CloseIncidentModalProps) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>✅ Cerrar Incidente y Registrar Reemplazo</h3>
@@ -528,6 +540,7 @@ export function CloseIncidentModal({
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -540,6 +553,7 @@ export function NewFamilyModal({ onSave, onClose }: NewFamilyModalProps) {
   }
 
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>📂 Nueva Familia de Equipos</h3>
@@ -569,6 +583,7 @@ export function NewFamilyModal({ onSave, onClose }: NewFamilyModalProps) {
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -593,6 +608,7 @@ export function RenameFamilyModal({
   }
 
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3>✏️ Renombrar Familia</h3>
@@ -621,6 +637,7 @@ export function RenameFamilyModal({
         </form>
       </div>
     </div>
+    </Portal>
   )
 }
 
@@ -634,6 +651,7 @@ export function DeleteFamilyModal({
   onClose: () => void; 
 }) {
   return (
+    <Portal>
     <div className="maintenance-modal-overlay">
       <div className="maintenance-modal">
         <h3 style={{ color: '#ef4444' }}>⚠️ Eliminar Familia</h3>
@@ -658,5 +676,6 @@ export function DeleteFamilyModal({
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

@@ -198,14 +198,12 @@ interface IncidentsChartProps {
   events: ApiEvent[]
   activeFilter: DateFilter
   visibleSeverities: Set<string>
-  onSeverityToggle: (severity: string) => void
 }
 
 export function IncidentsChart({
   events,
   activeFilter,
   visibleSeverities,
-  onSeverityToggle,
 }: IncidentsChartProps) {
   const [chartView, setChartView] = useState<ChartView>('area')
 
@@ -354,34 +352,6 @@ export function IncidentsChart({
                 {label}
               </button>
             ))}
-          </div>
-
-          {/* Severity filters */}
-          <div className="chart-filters">
-            {(
-              [
-                ['ERROR', '#ef4444'],
-                ['WARNING', '#f59e0b'],
-                ['INFO', '#3b82f6'],
-              ] as const
-            ).map(([sev, color]) => {
-              const active = visibleSeverities.has(sev)
-              return (
-                <button
-                  key={sev}
-                  onClick={() => onSeverityToggle(sev)}
-                  className="chart-filters__btn"
-                  style={{
-                    border: `1px solid ${color}`,
-                    background: active ? color : 'transparent',
-                    color: active ? '#fff' : color,
-                    opacity: active ? 1 : 0.6,
-                  }}
-                >
-                  {sev}
-                </button>
-              )
-            })}
           </div>
         </div>
       </div>

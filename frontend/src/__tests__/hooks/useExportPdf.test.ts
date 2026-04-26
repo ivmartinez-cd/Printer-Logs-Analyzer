@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { useExportPdf } from '../../hooks/useExportPdf'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type MockInstance } from 'vitest'
+import type { MutableRefObject } from 'react'
 
 // Mock de useToast
 vi.mock('../../contexts/ToastContext', () => ({
@@ -11,8 +12,13 @@ vi.mock('../../contexts/ToastContext', () => ({
 }))
 
 describe('useExportPdf', () => {
-  let mockWindowOpen: any
-  let mockDocument: any
+  let mockWindowOpen: MockInstance
+  let mockDocument: {
+    open: ReturnType<typeof vi.fn>
+    write: ReturnType<typeof vi.fn>
+    close: ReturnType<typeof vi.fn>
+    title: string
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -29,7 +35,7 @@ describe('useExportPdf', () => {
       close: vi.fn(),
       closed: false,
     }
-    mockWindowOpen = vi.spyOn(window, 'open').mockReturnValue(mockWindow as any)
+    mockWindowOpen = vi.spyOn(window, 'open').mockReturnValue(mockWindow as unknown as Window)
   })
 
   it('debe abrir la ventana inmediatamente y luego llamar a onBeforePrint', async () => {
@@ -39,8 +45,7 @@ describe('useExportPdf', () => {
       await new Promise(r => setTimeout(r, 10))
     })
 
-    // Mock printReportRef (usamos cast a any para poder asignar en el test)
-    ;(result.current.printReportRef as any).current = document.createElement('div')
+    ;(result.current.printReportRef as MutableRefObject<HTMLDivElement | null>).current = document.createElement('div')
     result.current.printReportRef.current!.innerHTML = '<h1>Reporte de Prueba</h1>'
 
     await act(async () => {

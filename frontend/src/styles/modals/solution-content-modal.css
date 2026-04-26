@@ -203,7 +203,7 @@ button.dashboard-table__solution-link {
 }
 
 .solution-content-modal__cpmd-pn {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   background: #1a1d26;
   padding: 1px 4px;

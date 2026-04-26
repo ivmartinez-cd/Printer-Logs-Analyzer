@@ -40,7 +40,7 @@ describe('AvisosPage Integration', () => {
   it('renders the empty state when no family is selected', async () => {
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
@@ -56,7 +56,7 @@ describe('AvisosPage Integration', () => {
     
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
@@ -71,7 +71,7 @@ describe('AvisosPage Integration', () => {
 
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
@@ -98,7 +98,7 @@ describe('AvisosPage Integration', () => {
 
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
@@ -121,7 +121,7 @@ describe('AvisosPage Integration', () => {
     vi.mocked(api.getMaintenanceFamilies).mockResolvedValue(['Family 1'])
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
@@ -147,7 +147,7 @@ describe('AvisosPage Integration', () => {
     
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
@@ -168,7 +168,7 @@ describe('AvisosPage Integration', () => {
     
     render(
       <ToastProvider>
-        <AvisosPage onBack={vi.fn()} />
+        <AvisosPage />
       </ToastProvider>
     )
 
