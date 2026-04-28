@@ -23,8 +23,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -53,8 +53,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
       target: build # Usamos la etapa que tiene Node.js para desarrollo
       args:
         - VITE_API_KEY=${API_KEY:-dev}
