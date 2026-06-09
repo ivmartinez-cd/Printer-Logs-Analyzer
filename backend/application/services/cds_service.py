@@ -77,22 +77,84 @@ def _is_cds_template(text: str) -> bool:
     """Return True if text is a CDS auto-generated form header, not real work done."""
     return any(text.startswith(p) for p in _CDS_TEMPLATE_PREFIXES)
 
-def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]], List[str]]:
-    """Fetch counter, replacements and jobs synchronously for a single incident."""
-    counter = None
+def fetch_machine_counters_sync(settings: Settings, machine_id: str) -> List[Dict[str, Any]]:
+    """Fetch all counter readings for a machine via getCounters."""
+    try:
+        xml_res = call_soap_method(
+            settings, "getCounters",
+            f"<tns:getCounters><IdMaquina>{machine_id}</IdMaquina></tns:getCounters>"
+        )
+        data = parse_soap_response(xml_res, "getCountersResponse")
+        if data and isinstance(data, list):
+            return data
+    except Exception as e:
+        _logger.warning("Failed to fetch machine counters for machine %s: %s", machine_id, e)
+    return []
+
+def find_counter_for_incident(
+    counters: List[Dict[str, Any]],
+    fecha_str: str,
+    fecha_cierre_str: Optional[str],
+) -> Optional[str]:
+    """Return the best matching counter reading for an incident.
+
+    Strategy:
+    1. Prefer 'Informe S. Tecnico' readings within [Fecha, FechaCierre].
+    2. Fall back to the closest reading on or before the upper bound.
+    """
+    FMT = "%d/%m/%Y %H:%M:%S"
+    FMT_D = "%d/%m/%Y"
+
+    try:
+        fecha_dt = datetime.strptime(fecha_str, FMT)
+    except ValueError:
+        return None
+
+    upper: datetime
+    if fecha_cierre_str:
+        try:
+            upper = datetime.strptime(fecha_cierre_str, FMT)
+        except ValueError:
+            upper = fecha_dt + timedelta(days=30)
+    else:
+        upper = fecha_dt + timedelta(days=30)
+
+    parsed: List[tuple[datetime, str, str]] = []
+    for entry in counters:
+        c = entry.get("Counter", entry) if isinstance(entry, dict) else {}
+        raw_date = c.get("FechaToma", "")
+        valor = c.get("Contador")
+        tipo = c.get("TipoToma", "")
+        if not valor:
+            continue
+        for fmt in (FMT_D, FMT):
+            try:
+                parsed.append((datetime.strptime(raw_date, fmt), str(valor), tipo))
+                break
+            except ValueError:
+                pass
+
+    if not parsed:
+        return None
+
+    # 1. "Informe S. Tecnico" within [fecha_dt, upper]
+    st = [(dt, v) for dt, v, t in parsed if t == "Informe S. Tecnico" and fecha_dt <= dt <= upper]
+    if st:
+        return max(st, key=lambda x: x[0])[1]
+
+    # 2. Any reading on or before upper, take the latest
+    past = [(dt, v) for dt, v, _ in parsed if dt <= upper]
+    if past:
+        return max(past, key=lambda x: x[0])[1]
+
+    return None
+
+def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[List[Dict[str, Any]], List[str]]:
+    """Fetch replacements and jobs synchronously for a single incident."""
     replacements = []
     jobs = []
 
-    # 1. Fetch Counter
-    try:
-        xml_res = call_soap_method(settings, "getIncidentSTCounter", f"<tns:getIncidentSTCounter><id>{incident_id}</id></tns:getIncidentSTCounter>")
-        counter_data = parse_soap_response(xml_res, "getIncidentSTCounterResponse")
-        if counter_data and isinstance(counter_data, dict):
-            counter = counter_data.get("Contador")
-    except Exception as e:
-        _logger.warning("Failed to fetch counter for incident %s: %s", incident_id, e)
-
-    # 2. Fetch Replacements
+    # 1. Fetch Replacements
     try:
         xml_res = call_soap_method(settings, "getIncidentReplacements", f"<tns:getIncidentReplacements><id>{incident_id}</id></tns:getIncidentReplacements>")
         repl_data = parse_soap_response(xml_res, "getIncidentReplacementsResponse")
@@ -107,7 +169,7 @@ def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[O
     except Exception as e:
         _logger.warning("Failed to fetch replacements for incident %s: %s", incident_id, e)
 
-    # 3. Fetch Jobs (Performed Tasks)
+    # 2. Fetch Jobs (Performed Tasks)
     try:
         xml_res = call_soap_method(settings, "getIncidentJobs", f"<tns:getIncidentJobs><id>{incident_id}</id></tns:getIncidentJobs>")
         jobs_data = parse_soap_response(xml_res, "getIncidentJobsResponse")
@@ -123,9 +185,9 @@ def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[O
     except Exception as e:
         _logger.warning("Failed to fetch jobs for incident %s: %s", incident_id, e)
 
-    return counter, replacements, jobs
+    return replacements, jobs
 
-async def fetch_incident_details_async(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]], List[str]]:
+async def fetch_incident_details_async(settings: Settings, incident_id: str) -> tuple[List[Dict[str, Any]], List[str]]:
     return await asyncio.to_thread(fetch_incident_details_sync, settings, incident_id)
 
 def get_mock_incidents_for_test() -> List[Dict[str, Any]]:
@@ -277,32 +339,38 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
         # Cap the number of recent incidents to enrich to prevent overloading SOAP server
         recent_incidents = recent_incidents[:15]
 
-        # 4. Resolve details (replacements + counters) concurrently with limited semaphore
+        # 4. Fetch machine counters ONCE for all incidents
+        machine_counters = await asyncio.to_thread(fetch_machine_counters_sync, settings, machine_id)
+
+        # 5. Resolve details (replacements + jobs) concurrently with limited semaphore
         sem = asyncio.Semaphore(3)
 
         async def enrich_incident(inc: Dict[str, Any]) -> Dict[str, Any]:
             async with sem:
                 inc_id = inc.get("id")
+                fecha_str = inc.get("Fecha", "")
+                fecha_cierre_str = inc.get("FechaCierre")
+                counter = find_counter_for_incident(machine_counters, fecha_str, fecha_cierre_str)
                 if not inc_id:
                     return {
-                        "id": inc.get("id", ""),
+                        "id": "",
                         "numero_incidente": inc.get("NroIncidente", ""),
-                        "fecha": inc.get("Fecha", ""),
+                        "fecha": fecha_str,
                         "motivo": inc.get("Motivo", "Sin motivo"),
                         "estado": inc.get("Estado", "Desconocido"),
-                        "contador": None,
+                        "contador": counter,
                         "repuestos": [],
                         "tareas_realizadas": []
                     }
                 try:
-                    counter, replacements, jobs = await fetch_incident_details_async(settings, inc_id)
+                    replacements, jobs = await fetch_incident_details_async(settings, inc_id)
                 except Exception as e:
                     _logger.error("Error fetching details for incident %s: %s", inc_id, e)
-                    counter, replacements, jobs = None, [], []
+                    replacements, jobs = [], []
                 return {
                     "id": inc_id,
                     "numero_incidente": inc.get("NroIncidente", ""),
-                    "fecha": inc.get("Fecha", ""),
+                    "fecha": fecha_str,
                     "motivo": inc.get("Motivo", "Sin motivo"),
                     "estado": inc.get("Estado", "Desconocido"),
                     "contador": counter,

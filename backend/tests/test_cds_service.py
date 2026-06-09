@@ -58,11 +58,14 @@ async def test_get_cds_incidents_live_flow(mock_soap, mock_settings):
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>"""
 
-    # Mock counter response
-    counter_soap_res = """<?xml version="1.0" encoding="utf-8"?>
+    # Mock getCounters response — one "Informe S. Tecnico" reading dated today
+    today_str = datetime.now().strftime("%d/%m/%Y")
+    counters_soap_res = f"""<?xml version="1.0" encoding="utf-8"?>
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
   <SOAP-ENV:Body>
-    <Respuesta xsi:type="xsd:string">{"Contador":"50000","Error":""}</Respuesta>
+    <Result xsi:type="xsd:string">[
+      {{"Counter": {{"FechaToma": "{today_str}", "Contador": "50000", "TipoToma": "Informe S. Tecnico", "ClaseContador": "Mono"}}}}
+    ]</Result>
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>"""
 
@@ -89,7 +92,7 @@ async def test_get_cds_incidents_live_flow(mock_soap, mock_settings):
     mock_soap.side_effect = [
         machine_soap_res,
         incidents_soap_res,
-        counter_soap_res,
+        counters_soap_res,
         replacements_soap_res,
         jobs_soap_res
     ]
