@@ -3,7 +3,6 @@ import logging
 from typing import Any, Dict, List
 
 from backend.application.services.cds_service import (
-    fetch_incident_details_async,
     get_cds_incidents_for_serial,
 )
 from backend.application.services.insight_service import (
@@ -249,7 +248,7 @@ async def get_insight_meters(
     "/cds/devices/{serial}/incidents",
     dependencies=[Depends(authenticate)],
     summary="Get incidents from Canal Directo SOAP API",
-    response_description="A lightweight list of incidents (no per-incident detail calls).",
+    response_description="A list of detailed device incidents within last 6 months.",
 )
 @limiter.limit("20/minute")
 async def get_cds_incidents_endpoint(
@@ -258,19 +257,4 @@ async def get_cds_incidents_endpoint(
     settings: Settings = Depends(get_settings),
 ) -> List[Dict[str, Any]]:
     return await get_cds_incidents_for_serial(settings, serial)
-
-
-@router.get(
-    "/cds/incidents/{incident_id}/details",
-    dependencies=[Depends(authenticate)],
-    summary="Get replacements and jobs for a single CDS incident (lazy load)",
-)
-@limiter.limit("30/minute")
-async def get_cds_incident_details_endpoint(
-    request: Request,
-    incident_id: str,
-    settings: Settings = Depends(get_settings),
-) -> Dict[str, Any]:
-    replacements, jobs = await fetch_incident_details_async(settings, incident_id)
-    return {"repuestos": replacements, "tareas_realizadas": jobs}
 

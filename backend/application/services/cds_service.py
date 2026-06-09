@@ -336,26 +336,53 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
             except ValueError:
                 _logger.warning("Failed to parse date string %s", fecha_str)
 
+        # Cap the number of recent incidents to enrich to prevent overloading SOAP server
+        recent_incidents = recent_incidents[:15]
+
         # 4. Fetch machine counters ONCE for all incidents
         machine_counters = await asyncio.to_thread(fetch_machine_counters_sync, settings, machine_id)
 
-        # 5. Build lightweight incident list — no per-incident SOAP calls
-        results = []
-        for inc in recent_incidents:
-            fecha_str = inc.get("Fecha", "")
-            results.append({
-                "id": inc.get("id", ""),
-                "numero_incidente": inc.get("NroIncidente", ""),
-                "fecha": fecha_str,
-                "motivo": inc.get("Motivo", "Sin motivo"),
-                "estado": inc.get("Estado", "Desconocido"),
-                "contador": find_counter_for_incident(
-                    machine_counters, fecha_str, inc.get("FechaCierre")
-                ),
-            })
+        # 5. Resolve details (replacements + jobs) concurrently with limited semaphore
+        sem = asyncio.Semaphore(3)
+
+        async def enrich_incident(inc: Dict[str, Any]) -> Dict[str, Any]:
+            async with sem:
+                inc_id = inc.get("id")
+                fecha_str = inc.get("Fecha", "")
+                fecha_cierre_str = inc.get("FechaCierre")
+                counter = find_counter_for_incident(machine_counters, fecha_str, fecha_cierre_str)
+                if not inc_id:
+                    return {
+                        "id": "",
+                        "numero_incidente": inc.get("NroIncidente", ""),
+                        "fecha": fecha_str,
+                        "motivo": inc.get("Motivo", "Sin motivo"),
+                        "estado": inc.get("Estado", "Desconocido"),
+                        "contador": counter,
+                        "repuestos": [],
+                        "tareas_realizadas": []
+                    }
+                try:
+                    replacements, jobs = await fetch_incident_details_async(settings, inc_id)
+                except Exception as e:
+                    _logger.error("Error fetching details for incident %s: %s", inc_id, e)
+                    replacements, jobs = [], []
+                return {
+                    "id": inc_id,
+                    "numero_incidente": inc.get("NroIncidente", ""),
+                    "fecha": fecha_str,
+                    "motivo": inc.get("Motivo", "Sin motivo"),
+                    "estado": inc.get("Estado", "Desconocido"),
+                    "contador": counter,
+                    "repuestos": replacements,
+                    "tareas_realizadas": jobs
+                }
+
+        tasks = [enrich_incident(inc) for inc in recent_incidents]
+        results = await asyncio.gather(*tasks)
 
         # Sort by date descending
-        def get_date_key(item: Dict[str, Any]) -> datetime:
+        def get_date_key(item):
             try:
                 return datetime.strptime(item["fecha"], "%d/%m/%Y %H:%M:%S")
             except Exception:
@@ -363,6 +390,7 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
 
         results.sort(key=get_date_key, reverse=True)
 
+        # Store in cache
         _cds_cache[serial] = (now_ts + CACHE_TTL, results)
         return results
 

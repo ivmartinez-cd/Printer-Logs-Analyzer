@@ -348,11 +348,6 @@ export interface CdsReplacement {
   cantidad: number
 }
 
-export interface CdsIncidentDetails {
-  repuestos: CdsReplacement[]
-  tareas_realizadas: string[]
-}
-
 export interface CdsIncident {
   id: string
   numero_incidente: string
@@ -360,5 +355,7 @@ export interface CdsIncident {
   motivo: string
   estado: string
   contador: string | null
+  repuestos: CdsReplacement[]
+  tareas_realizadas: string[]
 }
 
