@@ -71,6 +71,12 @@ def parse_soap_response(xml_text: str, tag_name: str) -> Any:
                 _logger.warning("Failed to parse JSON response from tag %s: %s", tag, e)
     return None
 
+_CDS_TEMPLATE_PREFIXES = ("Fallas:", "Mensaje de error:", "Observaciones:")
+
+def _is_cds_template(text: str) -> bool:
+    """Return True if text is a CDS auto-generated form header, not real work done."""
+    return any(text.startswith(p) for p in _CDS_TEMPLATE_PREFIXES)
+
 def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]], List[str]]:
     """Fetch counter, replacements and jobs synchronously for a single incident."""
     counter = None
@@ -110,9 +116,9 @@ def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[O
                 job = j.get("Job", {})
                 desc = job.get("Descripcion", "").strip()
                 observ = job.get("Observ", "").strip()
-                if desc and desc != "." and len(desc) > 2:
+                if desc and desc != "." and len(desc) > 2 and not _is_cds_template(desc):
                     jobs.append(desc)
-                if observ and observ != "." and len(observ) > 2 and observ not in ["OK", "ok", "Ok", "OK.", "ok."]:
+                if observ and observ != "." and len(observ) > 2 and observ not in ["OK", "ok", "Ok", "OK.", "ok."] and not _is_cds_template(observ):
                     jobs.append(observ)
     except Exception as e:
         _logger.warning("Failed to fetch jobs for incident %s: %s", incident_id, e)
