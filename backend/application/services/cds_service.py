@@ -190,73 +190,6 @@ def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[L
 async def fetch_incident_details_async(settings: Settings, incident_id: str) -> tuple[List[Dict[str, Any]], List[str]]:
     return await asyncio.to_thread(fetch_incident_details_sync, settings, incident_id)
 
-def get_mock_incidents_for_test() -> List[Dict[str, Any]]:
-    """Generate mock incidents for BRBSN9YYK7 to test rendering and date filtering."""
-    now = datetime.now()
-
-    # 1. Incident 1: 15 days ago (should show)
-    date_1 = (now - timedelta(days=15)).strftime("%d/%m/%Y %H:%M:%S")
-    # 2. Incident 2: 45 days ago (should show)
-    date_2 = (now - timedelta(days=45)).strftime("%d/%m/%Y %H:%M:%S")
-    # 3. Incident 3: 7 months ago (should NOT show, older than 6 months)
-    date_3 = (now - timedelta(days=210)).strftime("%d/%m/%Y %H:%M:%S")
-
-    raw_mock = [
-        {
-            "id": "mock-inc-1",
-            "numero_incidente": "826546",
-            "fecha": date_1,
-            "motivo": "Atasco constante de papel en bandeja 2",
-            "estado": "Cerrado",
-            "contador": "85240",
-            "repuestos": [{"articulo": "Pickup Roller Tray 2", "cantidad": 1}],
-            "tareas_realizadas": [
-                "Se reemplaza rodillo de toma de papel de bandeja 2",
-                "Limpieza general de rodillos de registro",
-                "Se testea funcionamiento y alimentación de papel: OK"
-            ]
-        },
-        {
-            "id": "mock-inc-2",
-            "numero_incidente": "822753",
-            "fecha": date_2,
-            "motivo": "La impresora hace ruidos al encender",
-            "estado": "Cerrado",
-            "contador": "81050",
-            "repuestos": [],
-            "tareas_realizadas": [
-                "Se revisa equipo por ruidos al encender",
-                "Se lubrican engranajes del mecanismo principal de tracción",
-                "Se realiza prueba de encendido y testeo de funcionamiento: OK"
-            ]
-        },
-        {
-            "id": "mock-inc-3",
-            "numero_incidente": "811230",
-            "fecha": date_3,
-            "motivo": "Impresión con manchas negras",
-            "estado": "Cerrado",
-            "contador": "52040",
-            "repuestos": [{"articulo": "Fuser Asm", "cantidad": 1}],
-            "tareas_realizadas": [
-                "Se limpia el cristal de exposición",
-                "Se realiza mantenimiento preventivo general"
-            ]
-        }
-    ]
-
-    # Apply the 6 months filter locally to make sure it functions properly
-    six_months_ago = now - timedelta(days=180)
-    filtered = []
-    for inc in raw_mock:
-        try:
-            fecha_dt = datetime.strptime(inc["fecha"], "%d/%m/%Y %H:%M:%S")
-            if fecha_dt >= six_months_ago:
-                filtered.append(inc)
-        except ValueError:
-            pass
-    return filtered
-
 async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[Dict[str, Any]]:
     """Retrieve detailed incidents from Canal Directo SOAP service within last 6 months."""
     serial = serial.strip().upper()
@@ -270,13 +203,6 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
         if now_ts < expire:
             _logger.info("Returning cached CDS incidents for serial %s", serial)
             return cached_data
-
-    # Mock fallback for test serial BRBSN9YYK7
-    if serial == "BRBSN9YYK7":
-        _logger.info("Serving mock incidents for test serial BRBSN9YYK7")
-        mock_data = get_mock_incidents_for_test()
-        _cds_cache[serial] = (now_ts + CACHE_TTL, mock_data)
-        return mock_data
 
     try:
         # 1. Resolve machine ID

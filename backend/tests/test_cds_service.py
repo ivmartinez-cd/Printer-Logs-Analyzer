@@ -21,18 +21,9 @@ def mock_settings():
     )
 
 @pytest.mark.anyio
-async def test_get_cds_incidents_mock_serial(mock_settings):
-    # Tests the mock/test serial number BRBSN9YYK7
-    incidents = await get_cds_incidents_for_serial(mock_settings, "BRBSN9YYK7")
-    assert len(incidents) == 2
-    assert incidents[0]["numero_incidente"] == "826546"
-    assert incidents[0]["contador"] == "85240"
-    assert len(incidents[0]["repuestos"]) == 1
-    assert incidents[0]["repuestos"][0]["articulo"] == "Pickup Roller Tray 2"
-
-    assert incidents[1]["numero_incidente"] == "822753"
-    assert incidents[1]["contador"] == "81050"
-    assert len(incidents[1]["repuestos"]) == 0
+async def test_get_cds_incidents_empty_serial(mock_settings):
+    incidents = await get_cds_incidents_for_serial(mock_settings, "")
+    assert incidents == []
 
 @pytest.mark.anyio
 @patch("backend.application.services.cds_service.call_soap_method")
