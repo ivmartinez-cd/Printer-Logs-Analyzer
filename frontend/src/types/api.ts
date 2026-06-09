@@ -155,6 +155,8 @@ export interface ErrorSolution {
 
 export interface AIDiagnosisResponse {
   diagnosis: string
+  tareas_resumen?: string | null
+  urgencia?: 'urgente' | 'programar' | 'monitorear' | null
   model: string
   tokens_used: {
     input: number

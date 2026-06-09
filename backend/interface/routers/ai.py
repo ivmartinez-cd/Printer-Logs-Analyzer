@@ -111,6 +111,17 @@ async def ai_diagnose(
         diagnosis, tokens = await call_claude(payload, api_key)
         cost = compute_cost(tokens)
 
+        # Extraer campos del JSON de diagnóstico
+        tareas_resumen: str | None = None
+        urgencia: str | None = None
+        try:
+            import json as _json
+            _parsed = _json.loads(diagnosis)
+            tareas_resumen = _parsed.get("tareas_resumen") or None
+            urgencia = _parsed.get("urgencia") or None
+        except Exception:
+            pass
+
         # 3. AUTO-SAVE: Automatically save this AI diagnosis to the database
         try:
             from backend.interface.deps import get_saved_analysis_repo
@@ -153,6 +164,8 @@ async def ai_diagnose(
 
         return AiDiagnoseResponse(
             diagnosis=diagnosis,
+            tareas_resumen=tareas_resumen,
+            urgencia=urgencia,
             model=MODEL,
             tokens_used=tokens,
             cost_usd=cost,
