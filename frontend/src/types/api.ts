@@ -153,15 +153,8 @@ export interface ErrorSolution {
 
 // --- Diagnóstico con IA ---
 
-export interface AIDiagnosisDespacho {
-  decision: 'urgente' | 'programar' | 'monitorear'
-  razon: string
-}
-
 export interface AIDiagnosisResponse {
   diagnosis: string
-  tareas_resumen?: string | null
-  despacho?: AIDiagnosisDespacho | null
   model: string
   tokens_used: {
     input: number
@@ -349,21 +342,3 @@ export interface MaintenanceMutationResponse {
   status: string
   history_id?: number | null
 }
-
-export interface CdsReplacement {
-  articulo: string
-  cantidad: number
-}
-
-export interface CdsIncident {
-  id: string
-  numero_incidente: string
-  fecha: string
-  tipo?: string | null
-  motivo: string
-  estado: string
-  contador: string | null
-  repuestos: CdsReplacement[]
-  tareas_realizadas: string[]
-}
-
