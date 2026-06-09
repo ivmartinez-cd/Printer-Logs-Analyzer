@@ -2,9 +2,6 @@ import asyncio
 import logging
 from typing import Any, Dict, List
 
-from backend.application.services.cds_service import (
-    get_cds_incidents_for_serial,
-)
 from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
 )
@@ -242,19 +239,3 @@ async def get_insight_meters(
         settings.insight_api_secret,
         info["device_id"],
     )
-
-
-@router.get(
-    "/cds/devices/{serial}/incidents",
-    dependencies=[Depends(authenticate)],
-    summary="Get incidents from Canal Directo SOAP API",
-    response_description="A list of detailed device incidents within last 12 months.",
-)
-@limiter.limit("20/minute")
-async def get_cds_incidents_endpoint(
-    request: Request,
-    serial: str,
-    settings: Settings = Depends(get_settings),
-) -> List[Dict[str, Any]]:
-    return await get_cds_incidents_for_serial(settings, serial)
-

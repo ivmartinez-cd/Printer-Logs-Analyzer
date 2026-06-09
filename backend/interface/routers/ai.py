@@ -7,7 +7,6 @@ from backend.interface.auth import authenticate
 from backend.interface.deps import get_settings
 from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.ai import (
-    AiDespachoResponse,
     AiDiagnoseRequest,
     AiDiagnoseResponse,
     AiPdfSummaryRequest,
@@ -109,23 +108,8 @@ async def ai_diagnose(
     # I'll let them bubble up for now or just simplify.
 
     try:
-        diagnosis_raw, tokens = await call_claude(payload, api_key)
+        diagnosis, tokens = await call_claude(payload, api_key)
         cost = compute_cost(tokens)
-
-        # Extraer campos del JSON de diagnóstico (si el modelo lo incluyó)
-        tareas_resumen: str | None = None
-        despacho = None
-        try:
-            import json as _json
-            _parsed = _json.loads(diagnosis_raw)
-            tareas_resumen = _parsed.get("tareas_resumen") or None
-            _d = _parsed.get("despacho")
-            if isinstance(_d, dict) and _d.get("decision") and _d.get("razon"):
-                despacho = AiDespachoResponse(
-                    decision=_d["decision"], razon=_d["razon"]
-                )
-        except Exception:
-            pass
 
         # 3. AUTO-SAVE: Automatically save this AI diagnosis to the database
         try:
@@ -161,16 +145,14 @@ async def ai_diagnose(
                 incidents=persistence_incidents,
                 global_severity=body.global_severity,
                 equipment_identifier=serial,
-                ai_diagnosis=diagnosis_raw,
+                ai_diagnosis=diagnosis,
             )
             _logger.info("Auto-saved AI diagnosis for %s", serial)
         except Exception as save_exc:
             _logger.warning("Failed to auto-save AI diagnosis: %s", save_exc)
 
         return AiDiagnoseResponse(
-            diagnosis=diagnosis_raw,
-            tareas_resumen=tareas_resumen,
-            despacho=despacho,
+            diagnosis=diagnosis,
             model=MODEL,
             tokens_used=tokens,
             cost_usd=cost,
