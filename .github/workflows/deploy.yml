@@ -1,0 +1,27 @@
+name: Deploy Backend via SSH
+
+on:
+  push:
+    branches:
+      - main
+      - feature/cds-incidents
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_IP }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/ivmartinez_cd/Printer-Logs-Analyzer
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+            sudo docker compose down backend
+            sudo docker compose up -d --build backend
+            # Ejecutar migraciones si es necesario
+            sudo docker exec printer-logs-analyzer-backend-1 python backend/scripts/run_migrations.py || true
