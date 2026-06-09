@@ -234,7 +234,7 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
                   <IdSector></IdSector>
                   <top>50</top>
                   <estado></estado>
-                  <tipo></tipo>
+                  <tipo>Todos</tipo>
                 </tns:getMachineIncidents>"""
         )
         inc_data = parse_soap_response(incidents_xml, "getMachineIncidentsResponse")
@@ -280,6 +280,7 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
                         "numero_incidente": inc.get("NroIncidente", ""),
                         "fecha": fecha_str,
                         "motivo": inc.get("Motivo", "Sin motivo"),
+                        "tipo": inc.get("Tipo", "Desconocido"),
                         "estado": inc.get("Estado", "Desconocido"),
                         "contador": counter,
                         "repuestos": [],
@@ -295,6 +296,7 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
                     "numero_incidente": inc.get("NroIncidente", ""),
                     "fecha": fecha_str,
                     "motivo": inc.get("Motivo", "Sin motivo"),
+                    "tipo": inc.get("Tipo", "Desconocido"),
                     "estado": inc.get("Estado", "Desconocido"),
                     "contador": counter,
                     "repuestos": replacements,
