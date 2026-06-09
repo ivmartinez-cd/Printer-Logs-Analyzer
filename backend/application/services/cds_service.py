@@ -14,7 +14,21 @@ _logger = logging.getLogger(__name__)
 _cds_cache: Dict[str, tuple[float, List[Dict[str, Any]]]] = {}
 CACHE_TTL = 600.0  # 10 minutes in seconds
 
+# Circuit Breaker state
+_consecutive_failures = 0
+_circuit_breaker_until = 0.0
+FAILURE_THRESHOLD = 3
+COOLDOWN_PERIOD = 300.0  # 5 minutes
+
 def call_soap_method(settings: Settings, action: str, body_xml: str) -> str:
+    global _consecutive_failures, _circuit_breaker_until
+
+    # Check circuit breaker status
+    now = time.time()
+    if now < _circuit_breaker_until:
+        _logger.warning("CDS SOAP Circuit breaker active. Skipping request for action %s.", action)
+        raise requests.RequestException("Circuit breaker active: CDS SOAP service is offline.")
+
     url = "https://wsg.cdsisa.com.ar/wsAyC_server.php"
     headers = {
         "Content-Type": "text/xml; charset=utf-8",
@@ -26,9 +40,23 @@ def call_soap_method(settings: Settings, action: str, body_xml: str) -> str:
     {body_xml}
   </soap:Body>
 </soap:Envelope>"""
-    r = requests.post(url, data=payload, headers=headers, verify=False, timeout=15)
-    r.raise_for_status()
-    return r.text
+    try:
+        # Tight connect (3s) and read (7s) timeouts to prevent blocking worker threads
+        r = requests.post(url, data=payload, headers=headers, verify=False, timeout=(3.05, 7.0))
+        r.raise_for_status()
+
+        # Reset circuit breaker on success
+        _consecutive_failures = 0
+        _circuit_breaker_until = 0.0
+
+        return r.text
+    except Exception as e:
+        _consecutive_failures += 1
+        _logger.error("CDS SOAP request failed (consecutive=%d): %s", _consecutive_failures, e)
+        if _consecutive_failures >= FAILURE_THRESHOLD:
+            _circuit_breaker_until = time.time() + COOLDOWN_PERIOD
+            _logger.error("CDS SOAP reached %d failures. Tripping circuit breaker for 5 minutes.", FAILURE_THRESHOLD)
+        raise
 
 def parse_soap_response(xml_text: str, tag_name: str) -> Any:
     # Try finding tag_name, or fallback to Respuesta / Result
@@ -209,29 +237,39 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
             except ValueError:
                 _logger.warning("Failed to parse date string %s", fecha_str)
 
-        # 4. Resolve details (replacements + counters) concurrently
+        # Cap the number of recent incidents to enrich to prevent overloading SOAP server
+        recent_incidents = recent_incidents[:15]
+
+        # 4. Resolve details (replacements + counters) concurrently with limited semaphore
+        sem = asyncio.Semaphore(3)
+
         async def enrich_incident(inc: Dict[str, Any]) -> Dict[str, Any]:
-            inc_id = inc.get("id")
-            if not inc_id:
+            async with sem:
+                inc_id = inc.get("id")
+                if not inc_id:
+                    return {
+                        "id": inc.get("id", ""),
+                        "numero_incidente": inc.get("NroIncidente", ""),
+                        "fecha": inc.get("Fecha", ""),
+                        "motivo": inc.get("Motivo", "Sin motivo"),
+                        "estado": inc.get("Estado", "Desconocido"),
+                        "contador": None,
+                        "repuestos": []
+                    }
+                try:
+                    counter, replacements = await fetch_incident_details_async(settings, inc_id)
+                except Exception as e:
+                    _logger.error("Error fetching details for incident %s: %s", inc_id, e)
+                    counter, replacements = None, []
                 return {
-                    "id": inc.get("id", ""),
+                    "id": inc_id,
                     "numero_incidente": inc.get("NroIncidente", ""),
                     "fecha": inc.get("Fecha", ""),
                     "motivo": inc.get("Motivo", "Sin motivo"),
                     "estado": inc.get("Estado", "Desconocido"),
-                    "contador": None,
-                    "repuestos": []
+                    "contador": counter,
+                    "repuestos": replacements
                 }
-            counter, replacements = await fetch_incident_details_async(settings, inc_id)
-            return {
-                "id": inc_id,
-                "numero_incidente": inc.get("NroIncidente", ""),
-                "fecha": inc.get("Fecha", ""),
-                "motivo": inc.get("Motivo", "Sin motivo"),
-                "estado": inc.get("Estado", "Desconocido"),
-                "contador": counter,
-                "repuestos": replacements
-            }
 
         tasks = [enrich_incident(inc) for inc in recent_incidents]
         results = await asyncio.gather(*tasks)
