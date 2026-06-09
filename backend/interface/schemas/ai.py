@@ -55,11 +55,17 @@ class AiDiagnoseRequest(BaseModel):
     metadata: Optional[AiDiagnoseMetadata] = None
 
 
+class AiDespachoResponse(BaseModel):
+    decision: str
+    razon: str
+
+
 class AiDiagnoseResponse(BaseModel):
     """Respuesta del diagnóstico AI."""
 
     diagnosis: str
     tareas_resumen: Optional[str] = None
+    despacho: Optional[AiDespachoResponse] = None
     model: str
     tokens_used: Dict[str, int]
     cost_usd: float

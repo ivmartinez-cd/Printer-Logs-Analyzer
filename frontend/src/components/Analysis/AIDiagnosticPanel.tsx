@@ -1,6 +1,6 @@
 import { forwardRef, useState, useEffect } from 'react'
 import { aiDiagnose } from '../../services/api'
-import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter, CdsIncident } from '../../types/api'
+import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter, CdsIncident, AIDiagnosisDespacho } from '../../types/api'
 import { AIDiagnosticSkeleton } from './AIDiagnosticSkeleton'
 
 interface AIDiagnosticPanelProps {
@@ -23,6 +23,7 @@ interface DiagnosisData {
   prioridad: 'alta' | 'media' | 'baja'
   impacto?: string
   tareas_resumen?: string | null
+  despacho?: AIDiagnosisDespacho | null
 }
 
 function parseDiagnosis(text: string): DiagnosisData | null {
@@ -60,6 +61,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
   function AIDiagnosticPanel({ result, consumables, alerts, meters, cdsIncidents, className, isFeatured = false, serialNumber, modelName }, ref) {
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
     const [tareas, setTareas] = useState<string | null>(null)
+    const [despacho, setDespacho] = useState<AIDiagnosisDespacho | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [collapsed, setCollapsed] = useState(true)
@@ -68,6 +70,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     useEffect(() => {
       setDiagnosis(null)
       setTareas(null)
+      setDespacho(null)
       setError(null)
     }, [result])
 
@@ -82,6 +85,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
         const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName, cdsIncidents })
         setDiagnosis(res.diagnosis)
         if (res.tareas_resumen) setTareas(res.tareas_resumen)
+        if (res.despacho) setDespacho(res.despacho)
         setCollapsed(false) // Expandir automáticamente cuando se genera
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al generar el diagnóstico')
@@ -163,6 +167,19 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
           {data && !loading && (
             <div className="ai-diagnostic-result">
+              {despacho && (
+                <div className={`ai-diagnostic-result__despacho ai-diagnostic-result__despacho--${despacho.decision}`}>
+                  <span className="ai-diagnostic-result__despacho-icon">
+                    {despacho.decision === 'urgente' ? '🚨' : despacho.decision === 'programar' ? '📅' : '👁️'}
+                  </span>
+                  <div className="ai-diagnostic-result__despacho-content">
+                    <strong className="ai-diagnostic-result__despacho-label">
+                      {despacho.decision === 'urgente' ? 'Enviar técnico hoy' : despacho.decision === 'programar' ? 'Programar visita esta semana' : 'Monitorear — no enviar aún'}
+                    </strong>
+                    <p className="ai-diagnostic-result__despacho-razon">{despacho.razon}</p>
+                  </div>
+                </div>
+              )}
               {tareas && (
                 <div className="ai-diagnostic-result__summary-banner">
                   <span className="ai-diagnostic-result__summary-icon">📋</span>

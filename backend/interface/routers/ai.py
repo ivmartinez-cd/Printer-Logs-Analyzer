@@ -7,6 +7,7 @@ from backend.interface.auth import authenticate
 from backend.interface.deps import get_settings
 from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.ai import (
+    AiDespachoResponse,
     AiDiagnoseRequest,
     AiDiagnoseResponse,
     AiPdfSummaryRequest,
@@ -111,12 +112,18 @@ async def ai_diagnose(
         diagnosis_raw, tokens = await call_claude(payload, api_key)
         cost = compute_cost(tokens)
 
-        # Extraer tareas_resumen del JSON de diagnóstico (si el modelo lo incluyó)
+        # Extraer campos del JSON de diagnóstico (si el modelo lo incluyó)
         tareas_resumen: str | None = None
+        despacho = None
         try:
             import json as _json
             _parsed = _json.loads(diagnosis_raw)
             tareas_resumen = _parsed.get("tareas_resumen") or None
+            _d = _parsed.get("despacho")
+            if isinstance(_d, dict) and _d.get("decision") and _d.get("razon"):
+                despacho = AiDespachoResponse(
+                    decision=_d["decision"], razon=_d["razon"]
+                )
         except Exception:
             pass
 
@@ -163,6 +170,7 @@ async def ai_diagnose(
         return AiDiagnoseResponse(
             diagnosis=diagnosis_raw,
             tareas_resumen=tareas_resumen,
+            despacho=despacho,
             model=MODEL,
             tokens_used=tokens,
             cost_usd=cost,
