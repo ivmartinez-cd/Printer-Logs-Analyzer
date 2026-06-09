@@ -58,6 +58,8 @@ class AiDiagnoseResponse(BaseModel):
     """Respuesta del diagnóstico AI."""
 
     diagnosis: str
+    tareas_resumen: Optional[str] = None
+    urgencia: Optional[str] = None
     model: str
     tokens_used: Dict[str, int]
     cost_usd: float

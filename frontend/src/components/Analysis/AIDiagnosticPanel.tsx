@@ -19,6 +19,8 @@ interface AIDiagnosticPanelProps {
 interface DiagnosisData {
   diagnostico: string
   acciones: string[]
+  tareas_resumen?: string | null
+  urgencia?: 'urgente' | 'programar' | 'monitorear' | null
   prioridad: 'alta' | 'media' | 'baja'
   impacto?: string
 }
@@ -57,6 +59,8 @@ function parseDiagnosis(text: string): DiagnosisData | null {
 export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelProps>(
   function AIDiagnosticPanel({ result, consumables, alerts, meters, className, isFeatured = false, serialNumber, modelName }, ref) {
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
+    const [tareas, setTareas] = useState<string | null>(null)
+    const [urgencia, setUrgencia] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [collapsed, setCollapsed] = useState(true)
@@ -64,6 +68,8 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     // Resetear el diagnóstico cuando el usuario analiza un nuevo log
     useEffect(() => {
       setDiagnosis(null)
+      setTareas(null)
+      setUrgencia(null)
       setError(null)
     }, [result])
 
@@ -77,6 +83,8 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       try {
         const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName })
         setDiagnosis(res.diagnosis)
+        if (res.tareas_resumen) setTareas(res.tareas_resumen)
+        if (res.urgencia) setUrgencia(res.urgencia)
         setCollapsed(false) // Expandir automáticamente cuando se genera
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al generar el diagnóstico')
@@ -158,6 +166,22 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
           {data && !loading && (
             <div className="ai-diagnostic-result">
+              {urgencia && (
+                <div className={`ai-diagnostic-result__urgencia ai-diagnostic-result__urgencia--${urgencia}`}>
+                  <span className="ai-diagnostic-result__urgencia-icon">
+                    {urgencia === 'urgente' ? '🚨' : urgencia === 'programar' ? '📅' : '👁️'}
+                  </span>
+                  <strong className="ai-diagnostic-result__urgencia-label">
+                    {urgencia === 'urgente' ? 'Enviar técnico hoy' : urgencia === 'programar' ? 'Programar visita esta semana' : 'Monitorear — sin intervención inmediata'}
+                  </strong>
+                </div>
+              )}
+              {tareas && (
+                <div className="ai-diagnostic-result__summary-banner">
+                  <span className="ai-diagnostic-result__summary-icon">📋</span>
+                  <p className="ai-diagnostic-result__summary-text">{tareas}</p>
+                </div>
+              )}
               <div className="ai-diagnostic-result__diagnosis-card">
                 <h4 className="ai-diagnostic-result__section-title">
                   <span className="ai-diagnostic-result__icon">🔍</span>
