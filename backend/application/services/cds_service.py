@@ -188,7 +188,7 @@ async def fetch_incident_details_async(settings: Settings, incident_id: str) -> 
     return await asyncio.to_thread(fetch_incident_details_sync, settings, incident_id)
 
 async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[Dict[str, Any]]:
-    """Retrieve detailed incidents from Canal Directo SOAP service within last 6 months."""
+    """Retrieve detailed incidents from Canal Directo SOAP service within last 12 months."""
     serial = serial.strip().upper()
     if not serial:
         return []
@@ -242,8 +242,8 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
             _cds_cache[serial] = (now_ts + CACHE_TTL, [])
             return []
 
-        # 3. Filter last 6 months of incidents
-        six_months_ago = datetime.now() - timedelta(days=180)
+        # 3. Filter last 12 months of incidents
+        six_months_ago = datetime.now() - timedelta(days=365)
         recent_incidents = []
 
         for inc_wrapper in inc_data:

@@ -248,7 +248,7 @@ async def get_insight_meters(
     "/cds/devices/{serial}/incidents",
     dependencies=[Depends(authenticate)],
     summary="Get incidents from Canal Directo SOAP API",
-    response_description="A list of detailed device incidents within last 6 months.",
+    response_description="A list of detailed device incidents within last 12 months.",
 )
 @limiter.limit("20/minute")
 async def get_cds_incidents_endpoint(
