@@ -24,6 +24,7 @@ import type {
   MaintenanceMutationResponse,
   MaintenanceSyncStatus,
   AIPdfSummaryResponse,
+  CdsIncident,
 } from '../types/api'
 
 const API_BASE =
@@ -444,6 +445,19 @@ export async function extractSdsLogs(
   )
   return handleResponse<ExtractSdsLogsResponse>(res)
 }
+
+export async function getCdsIncidents(
+  serial: string,
+  signal?: AbortSignal
+): Promise<CdsIncident[]> {
+  const res = await apiFetch(
+    `${API_BASE}/cds/devices/${encodeURIComponent(serial)}/incidents`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    25_000
+  )
+  return handleResponse<CdsIncident[]>(res)
+}
+
 
 
 export async function listFleetClients(): Promise<import('../types/api').FleetClientSummary[]> {

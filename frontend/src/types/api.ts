@@ -342,3 +342,19 @@ export interface MaintenanceMutationResponse {
   status: string
   history_id?: number | null
 }
+
+export interface CdsReplacement {
+  articulo: string
+  cantidad: number
+}
+
+export interface CdsIncident {
+  id: string
+  numero_incidente: string
+  fecha: string
+  motivo: string
+  estado: string
+  contador: string | null
+  repuestos: CdsReplacement[]
+}
+

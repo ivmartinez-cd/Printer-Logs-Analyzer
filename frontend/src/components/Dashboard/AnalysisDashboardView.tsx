@@ -5,7 +5,8 @@ import type {
   Incident as ApiIncident, 
   RealtimeConsumable,
   DeviceAlertsResponse,
-  InsightMeter
+  InsightMeter,
+  CdsIncident
 } from '../../types/api'
 import type { DateFilter } from '../../hooks/useDateFilter'
 import type { IncidentRow } from '../Parser/IncidentsTable'
@@ -26,6 +27,7 @@ import { IncidentsTable } from '../Parser/IncidentsTable'
 import { EventsTable } from '../Parser/EventsTable'
 import { ConsumableWarningsPanel } from '../Monitor/ConsumableWarningsPanel'
 import { InsightAlertsPanel } from '../Monitor/InsightAlertsPanel'
+import { CdsIncidentsPanel } from '../Monitor/CdsIncidentsPanel'
 import { SDSIncidentPanel } from '../Monitor/SDSIncidentPanel'
 
 import { ErrorHeatmap } from '../Analysis/ErrorHeatmap'
@@ -43,6 +45,7 @@ interface AnalysisDashboardViewProps {
   topCodes: { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[]
   realtimeConsumables: RealtimeConsumable[]
   insightData: InsightDataResult | null
+  cdsIncidents: { data: CdsIncident[]; loading: boolean; error: string | null }
   currentSerialNumber: string | null
   currentModelName: string | null
   incidentRows: IncidentRow[]
@@ -63,6 +66,7 @@ export function AnalysisDashboardView({
   topCodes,
   realtimeConsumables,
   insightData,
+  cdsIncidents,
   currentSerialNumber,
   currentModelName,
   incidentRows,
@@ -252,6 +256,14 @@ export function AnalysisDashboardView({
           data={insightData?.data || null}
           loading={insightData?.loading || false}
           error={insightData?.error || null}
+        />
+
+        {/* Incidentes de Canal Directo (últimos 6 meses) */}
+        <CdsIncidentsPanel
+          serial={currentSerialNumber}
+          data={cdsIncidents.data}
+          loading={cdsIncidents.loading}
+          error={cdsIncidents.error}
         />
 
         {/* SDS Engineering Incident */}
