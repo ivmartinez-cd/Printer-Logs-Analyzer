@@ -177,11 +177,8 @@ def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[L
             for j in jobs_data:
                 job = j.get("Job", {})
                 desc = job.get("Descripcion", "").strip()
-                observ = job.get("Observ", "").strip()
                 if desc and desc != "." and len(desc) > 2 and not _is_cds_template(desc):
                     jobs.append(desc)
-                if observ and observ != "." and len(observ) > 2 and observ not in ["OK", "ok", "Ok", "OK.", "ok."] and not _is_cds_template(observ):
-                    jobs.append(observ)
     except Exception as e:
         _logger.warning("Failed to fetch jobs for incident %s: %s", incident_id, e)
 
