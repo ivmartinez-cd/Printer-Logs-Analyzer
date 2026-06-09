@@ -1,6 +1,6 @@
 import { forwardRef, useState, useEffect } from 'react'
 import { aiDiagnose } from '../../services/api'
-import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter } from '../../types/api'
+import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter, CdsIncident } from '../../types/api'
 import { AIDiagnosticSkeleton } from './AIDiagnosticSkeleton'
 
 interface AIDiagnosticPanelProps {
@@ -8,6 +8,7 @@ interface AIDiagnosticPanelProps {
   consumables?: RealtimeConsumable[]
   alerts?: DeviceAlertsResponse | null
   meters?: InsightMeter[]
+  cdsIncidents?: CdsIncident[]
   className?: string
   isFeatured?: boolean
   serialNumber?: string | null
@@ -21,6 +22,7 @@ interface DiagnosisData {
   acciones: string[]
   prioridad: 'alta' | 'media' | 'baja'
   impacto?: string
+  tareas_resumen?: string | null
 }
 
 function parseDiagnosis(text: string): DiagnosisData | null {
@@ -55,8 +57,9 @@ function parseDiagnosis(text: string): DiagnosisData | null {
 }
 
 export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelProps>(
-  function AIDiagnosticPanel({ result, consumables, alerts, meters, className, isFeatured = false, serialNumber, modelName }, ref) {
+  function AIDiagnosticPanel({ result, consumables, alerts, meters, cdsIncidents, className, isFeatured = false, serialNumber, modelName }, ref) {
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
+    const [tareas, setTareas] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [collapsed, setCollapsed] = useState(true)
@@ -64,6 +67,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
     // Resetear el diagnóstico cuando el usuario analiza un nuevo log
     useEffect(() => {
       setDiagnosis(null)
+      setTareas(null)
       setError(null)
     }, [result])
 
@@ -75,8 +79,9 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       setLoading(true)
       setError(null)
       try {
-        const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName })
+        const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName, cdsIncidents })
         setDiagnosis(res.diagnosis)
+        if (res.tareas_resumen) setTareas(res.tareas_resumen)
         setCollapsed(false) // Expandir automáticamente cuando se genera
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al generar el diagnóstico')
@@ -158,6 +163,12 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
           {data && !loading && (
             <div className="ai-diagnostic-result">
+              {tareas && (
+                <div className="ai-diagnostic-result__summary-banner">
+                  <span className="ai-diagnostic-result__summary-icon">📋</span>
+                  <p className="ai-diagnostic-result__summary-text">{tareas}</p>
+                </div>
+              )}
               <div className="ai-diagnostic-result__diagnosis-card">
                 <h4 className="ai-diagnostic-result__section-title">
                   <span className="ai-diagnostic-result__icon">🔍</span>
