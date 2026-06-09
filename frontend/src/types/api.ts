@@ -356,5 +356,6 @@ export interface CdsIncident {
   estado: string
   contador: string | null
   repuestos: CdsReplacement[]
+  tareas_realizadas: string[]
 }
 

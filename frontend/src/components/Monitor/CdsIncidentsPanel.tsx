@@ -63,6 +63,7 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                         <th scope="col">Fecha</th>
                         <th scope="col">Detalle / Motivo</th>
                         <th scope="col">Repuesto Utilizado</th>
+                        <th scope="col">Tareas Realizadas</th>
                         <th scope="col">Contador</th>
                       </tr>
                     </thead>
@@ -94,6 +95,17 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                               </div>
                             ) : (
                               <span className="cds-incidents-panel__no-replacements">—</span>
+                            )}
+                          </td>
+                          <td>
+                            {inc.tareas_realizadas && inc.tareas_realizadas.length > 0 ? (
+                              <ul className="cds-incidents-panel__jobs-list">
+                                {inc.tareas_realizadas.map((job, idx) => (
+                                  <li key={idx}>{job}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <span className="cds-incidents-panel__no-jobs">—</span>
                             )}
                           </td>
                           <td className="cds-incidents-panel__counter">

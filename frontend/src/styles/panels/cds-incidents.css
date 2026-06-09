@@ -69,3 +69,23 @@
   color: #fca5a5;
   margin: 8px 0 0;
 }
+
+.cds-incidents-panel__jobs-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  list-style-type: disc;
+}
+
+.cds-incidents-panel__jobs-list li {
+  margin-bottom: 4px;
+}
+
+.cds-incidents-panel__jobs-list li:last-child {
+  margin-bottom: 0;
+}
+
+.cds-incidents-panel__no-jobs {
+  color: var(--text-muted);
+}

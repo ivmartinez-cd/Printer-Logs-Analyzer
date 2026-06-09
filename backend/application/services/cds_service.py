@@ -71,10 +71,11 @@ def parse_soap_response(xml_text: str, tag_name: str) -> Any:
                 _logger.warning("Failed to parse JSON response from tag %s: %s", tag, e)
     return None
 
-def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]]]:
-    """Fetch counter and replacements synchronously for a single incident."""
+def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]], List[str]]:
+    """Fetch counter, replacements and jobs synchronously for a single incident."""
     counter = None
     replacements = []
+    jobs = []
 
     # 1. Fetch Counter
     try:
@@ -100,9 +101,25 @@ def fetch_incident_details_sync(settings: Settings, incident_id: str) -> tuple[O
     except Exception as e:
         _logger.warning("Failed to fetch replacements for incident %s: %s", incident_id, e)
 
-    return counter, replacements
+    # 3. Fetch Jobs (Performed Tasks)
+    try:
+        xml_res = call_soap_method(settings, "getIncidentJobs", f"<tns:getIncidentJobs><id>{incident_id}</id></tns:getIncidentJobs>")
+        jobs_data = parse_soap_response(xml_res, "getIncidentJobsResponse")
+        if jobs_data and isinstance(jobs_data, list):
+            for j in jobs_data:
+                job = j.get("Job", {})
+                desc = job.get("Descripcion", "").strip()
+                observ = job.get("Observ", "").strip()
+                if desc and desc != "." and len(desc) > 2:
+                    jobs.append(desc)
+                if observ and observ != "." and len(observ) > 2 and observ not in ["OK", "ok", "Ok", "OK.", "ok."]:
+                    jobs.append(observ)
+    except Exception as e:
+        _logger.warning("Failed to fetch jobs for incident %s: %s", incident_id, e)
 
-async def fetch_incident_details_async(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]]]:
+    return counter, replacements, jobs
+
+async def fetch_incident_details_async(settings: Settings, incident_id: str) -> tuple[Optional[str], List[Dict[str, Any]], List[str]]:
     return await asyncio.to_thread(fetch_incident_details_sync, settings, incident_id)
 
 def get_mock_incidents_for_test() -> List[Dict[str, Any]]:
@@ -124,7 +141,12 @@ def get_mock_incidents_for_test() -> List[Dict[str, Any]]:
             "motivo": "Atasco constante de papel en bandeja 2",
             "estado": "Cerrado",
             "contador": "85240",
-            "repuestos": [{"articulo": "Pickup Roller Tray 2", "cantidad": 1}]
+            "repuestos": [{"articulo": "Pickup Roller Tray 2", "cantidad": 1}],
+            "tareas_realizadas": [
+                "Se reemplaza rodillo de toma de papel de bandeja 2",
+                "Limpieza general de rodillos de registro",
+                "Se testea funcionamiento y alimentación de papel: OK"
+            ]
         },
         {
             "id": "mock-inc-2",
@@ -133,7 +155,12 @@ def get_mock_incidents_for_test() -> List[Dict[str, Any]]:
             "motivo": "La impresora hace ruidos al encender",
             "estado": "Cerrado",
             "contador": "81050",
-            "repuestos": []
+            "repuestos": [],
+            "tareas_realizadas": [
+                "Se revisa equipo por ruidos al encender",
+                "Se lubrican engranajes del mecanismo principal de tracción",
+                "Se realiza prueba de encendido y testeo de funcionamiento: OK"
+            ]
         },
         {
             "id": "mock-inc-3",
@@ -142,7 +169,11 @@ def get_mock_incidents_for_test() -> List[Dict[str, Any]]:
             "motivo": "Impresión con manchas negras",
             "estado": "Cerrado",
             "contador": "52040",
-            "repuestos": [{"articulo": "Fuser Asm", "cantidad": 1}]
+            "repuestos": [{"articulo": "Fuser Asm", "cantidad": 1}],
+            "tareas_realizadas": [
+                "Se limpia el cristal de exposición",
+                "Se realiza mantenimiento preventivo general"
+            ]
         }
     ]
 
@@ -254,13 +285,14 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
                         "motivo": inc.get("Motivo", "Sin motivo"),
                         "estado": inc.get("Estado", "Desconocido"),
                         "contador": None,
-                        "repuestos": []
+                        "repuestos": [],
+                        "tareas_realizadas": []
                     }
                 try:
-                    counter, replacements = await fetch_incident_details_async(settings, inc_id)
+                    counter, replacements, jobs = await fetch_incident_details_async(settings, inc_id)
                 except Exception as e:
                     _logger.error("Error fetching details for incident %s: %s", inc_id, e)
-                    counter, replacements = None, []
+                    counter, replacements, jobs = None, [], []
                 return {
                     "id": inc_id,
                     "numero_incidente": inc.get("NroIncidente", ""),
@@ -268,7 +300,8 @@ async def get_cds_incidents_for_serial(settings: Settings, serial: str) -> List[
                     "motivo": inc.get("Motivo", "Sin motivo"),
                     "estado": inc.get("Estado", "Desconocido"),
                     "contador": counter,
-                    "repuestos": replacements
+                    "repuestos": replacements,
+                    "tareas_realizadas": jobs
                 }
 
         tasks = [enrich_incident(inc) for inc in recent_incidents]

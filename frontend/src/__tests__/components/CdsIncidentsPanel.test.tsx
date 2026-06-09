@@ -11,7 +11,8 @@ const mockCdsIncidents = [
     motivo: 'Atasco en bandeja 2',
     estado: 'Cerrado',
     contador: '100000',
-    repuestos: [{ articulo: 'Pickup Roller', cantidad: 2 }]
+    repuestos: [{ articulo: 'Pickup Roller', cantidad: 2 }],
+    tareas_realizadas: ['Se limpia bandeja 2', 'Reemplazo de pick-up rollers']
   }
 ]
 
@@ -71,6 +72,8 @@ describe('CdsIncidentsPanel', () => {
 
     expect(screen.getByText('Atasco en bandeja 2')).toBeInTheDocument()
     expect(screen.getByText('Pickup Roller (x2)')).toBeInTheDocument()
+    expect(screen.getByText('Se limpia bandeja 2')).toBeInTheDocument()
+    expect(screen.getByText('Reemplazo de pick-up rollers')).toBeInTheDocument()
     expect(screen.getByText('100.000')).toBeInTheDocument() // formatted count
 
     const link = screen.getByRole('link')
