@@ -1,7 +1,14 @@
 // @vitest-environment happy-dom
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { CdsIncidentsPanel } from '../../components/Monitor/CdsIncidentsPanel'
+
+vi.mock('../../services/api', () => ({
+  getCdsIncidentDetails: vi.fn().mockResolvedValue({
+    repuestos: [{ articulo: 'Pickup Roller', cantidad: 2 }],
+    tareas_realizadas: ['Se limpia bandeja 2', 'Reemplazo de pick-up rollers'],
+  }),
+}))
 
 const mockCdsIncidents = [
   {
@@ -11,8 +18,6 @@ const mockCdsIncidents = [
     motivo: 'Atasco en bandeja 2',
     estado: 'Cerrado',
     contador: '100000',
-    repuestos: [{ articulo: 'Pickup Roller', cantidad: 2 }],
-    tareas_realizadas: ['Se limpia bandeja 2', 'Reemplazo de pick-up rollers']
   }
 ]
 
@@ -36,9 +41,7 @@ describe('CdsIncidentsPanel', () => {
     render(
       <CdsIncidentsPanel serial="BRBSN9YYK7" data={[]} loading={true} error={null} />
     )
-    // Expand first
-    const button = screen.getByRole('button')
-    fireEvent.click(button)
+    fireEvent.click(screen.getByRole('button'))
     expect(screen.getByText(/Consultando/)).toBeInTheDocument()
   })
 
@@ -46,9 +49,7 @@ describe('CdsIncidentsPanel', () => {
     render(
       <CdsIncidentsPanel serial="BRBSN9YYK7" data={[]} loading={false} error="API Error" />
     )
-    // Expand
-    const button = screen.getByRole('button')
-    fireEvent.click(button)
+    fireEvent.click(screen.getByRole('button'))
     expect(screen.getByText(/API Error/)).toBeInTheDocument()
   })
 
@@ -56,28 +57,34 @@ describe('CdsIncidentsPanel', () => {
     render(
       <CdsIncidentsPanel serial="BRBSN9YYK7" data={[]} loading={false} error={null} />
     )
-    // Expand
-    const button = screen.getByRole('button')
-    fireEvent.click(button)
+    fireEvent.click(screen.getByRole('button'))
     expect(screen.getByText(/Sin incidentes reportados/)).toBeInTheDocument()
   })
 
-  it('renders list of incidents when data is provided', () => {
+  it('renders incident list with basic info on expand', () => {
     render(
       <CdsIncidentsPanel serial="BRBSN9YYK7" data={mockCdsIncidents} loading={false} error={null} />
     )
-    // Expand
-    const button = screen.getByRole('button')
-    fireEvent.click(button)
-
+    fireEvent.click(screen.getByRole('button', { name: /Incidentes CD/i }))
     expect(screen.getByText('Atasco en bandeja 2')).toBeInTheDocument()
-    expect(screen.getByText('Pickup Roller (x2)')).toBeInTheDocument()
-    expect(screen.getByText('Se limpia bandeja 2')).toBeInTheDocument()
-    expect(screen.getByText('Reemplazo de pick-up rollers')).toBeInTheDocument()
-    expect(screen.getByText('100.000')).toBeInTheDocument() // formatted count
-
+    expect(screen.getByText('100.000')).toBeInTheDocument()
     const link = screen.getByRole('link')
-    expect(link).toBeInTheDocument()
     expect(link.getAttribute('href')).toBe('https://webagentes.canaldirecto.com.ar/incidents/view/123456')
+  })
+
+  it('loads and shows repuestos and tareas when row is expanded', async () => {
+    render(
+      <CdsIncidentsPanel serial="BRBSN9YYK7" data={mockCdsIncidents} loading={false} error={null} />
+    )
+    // Open panel
+    fireEvent.click(screen.getByRole('button', { name: /Incidentes CD/i }))
+    // Expand row
+    fireEvent.click(screen.getByRole('button', { name: /Ver detalles/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Pickup Roller (x2)')).toBeInTheDocument()
+      expect(screen.getByText('Se limpia bandeja 2')).toBeInTheDocument()
+      expect(screen.getByText('Reemplazo de pick-up rollers')).toBeInTheDocument()
+    })
   })
 })

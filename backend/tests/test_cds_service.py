@@ -69,32 +69,10 @@ async def test_get_cds_incidents_live_flow(mock_soap, mock_settings):
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>"""
 
-    # Mock replacements response
-    replacements_soap_res = """<?xml version="1.0" encoding="utf-8"?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-  <SOAP-ENV:Body>
-    <Respuesta xsi:type="xsd:string">[
-      {"Replacement": {"Articulo": "Test Part", "Cantidad": 2}}
-    ]</Respuesta>
-  </SOAP-ENV:Body>
-</SOAP-ENV:Envelope>"""
-
-    # Mock jobs response
-    jobs_soap_res = """<?xml version="1.0" encoding="utf-8"?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-  <SOAP-ENV:Body>
-    <Respuesta xsi:type="xsd:string">[
-      {"Job": {"Descripcion": "Se realiza reparacion de fusor", "Observ": "OK"}}
-    ]</Respuesta>
-  </SOAP-ENV:Body>
-</SOAP-ENV:Envelope>"""
-
     mock_soap.side_effect = [
         machine_soap_res,
         incidents_soap_res,
         counters_soap_res,
-        replacements_soap_res,
-        jobs_soap_res
     ]
 
     incidents = await get_cds_incidents_for_serial(mock_settings, "TESTSERIAL123")
@@ -102,8 +80,6 @@ async def test_get_cds_incidents_live_flow(mock_soap, mock_settings):
     assert incidents[0]["numero_incidente"] == "12345"
     assert incidents[0]["contador"] == "50000"
     assert incidents[0]["motivo"] == "Test Motivo"
-    assert len(incidents[0]["repuestos"]) == 1
-    assert incidents[0]["repuestos"][0]["articulo"] == "Test Part"
-    assert incidents[0]["repuestos"][0]["cantidad"] == 2
-    assert len(incidents[0]["tareas_realizadas"]) == 1
-    assert incidents[0]["tareas_realizadas"][0] == "Se realiza reparacion de fusor"
+    # repuestos/tareas_realizadas are no longer fetched in the list endpoint (lazy load)
+    assert "repuestos" not in incidents[0]
+    assert "tareas_realizadas" not in incidents[0]

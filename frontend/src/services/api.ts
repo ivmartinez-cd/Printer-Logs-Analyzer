@@ -25,6 +25,7 @@ import type {
   MaintenanceSyncStatus,
   AIPdfSummaryResponse,
   CdsIncident,
+  CdsIncidentDetails,
 } from '../types/api'
 
 const API_BASE =
@@ -456,6 +457,18 @@ export async function getCdsIncidents(
     25_000
   )
   return handleResponse<CdsIncident[]>(res)
+}
+
+export async function getCdsIncidentDetails(
+  incidentId: string,
+  signal?: AbortSignal
+): Promise<CdsIncidentDetails> {
+  const res = await apiFetch(
+    `${API_BASE}/cds/incidents/${encodeURIComponent(incidentId)}/details`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    15_000
+  )
+  return handleResponse<CdsIncidentDetails>(res)
 }
 
 

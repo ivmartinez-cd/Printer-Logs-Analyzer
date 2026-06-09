@@ -28,8 +28,6 @@ describe('useCdsIncidents', () => {
         motivo: 'Fallo fusor',
         estado: 'Cerrado',
         contador: '100000',
-        repuestos: [{ articulo: 'Fusor', cantidad: 1 }],
-        tareas_realizadas: []
       }
     ]
     vi.mocked(getCdsIncidents).mockResolvedValue(mockIncidents)
