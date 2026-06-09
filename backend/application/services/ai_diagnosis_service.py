@@ -41,15 +41,20 @@ SYSTEM_PROMPT = (
     "- Usá **negritas** para resaltar componentes o valores críticos. Separás el análisis en párrafos cortos (doble salto de línea).\n\n"
     "Respondé ÚNICAMENTE con este JSON estructurado:\n"
     "{\n"
-    '  "diagnostico": "[MÁX 120 palabras. Análisis técnico con **negritas** y párrafos, diferenciando fallas activas de inactivas.]",\n'
+    '  "diagnostico": "[MÁX 120 palabras. Análisis técnico con **negritas** y párrafos, diferenciando fallas activas de inactivas. Incluí el delta calculado para el error más reciente.]",\n'
     '  "acciones": ["[Acción técnica detallada 1]", "[Acción técnica detallada 2]", "[Acción 3 opcional]"],\n'
     '  "tareas_resumen": "[Texto de ~48 palabras. Instrucción directa para el técnico al momento de cargar el incidente en el sistema: qué tiene que revisar, qué repuestos llevar o pedir, y qué hacer en el equipo. Sin rodeos, como si se lo estuvieras diciendo al técnico por teléfono.]",\n'
+    '  "despacho": {\n'
+    '    "decision": "urgente/programar/monitorear",\n'
+    '    "razon": "[2-3 oraciones explicando la decisión basada en: delta de counter del último error, si el equipo está imprimiendo hoy, densidad del cluster y riesgo de daño progresivo. Sé directo: ¿hay que mandar al técnico hoy, esta semana, o alcanza con monitorear?]"\n'
+    '  },\n'
     '  "prioridad": "alta/media/baja",\n'
     '  "impacto": "[Consecuencia técnica/operativa en el equipo.]"\n'
     "}\n\n"
     "REGLAS:\n"
     "- diagnostico: Máximo 120 PALABRAS. Vocabulario técnico. Párrafos separados.\n"
     "- tareas_resumen: ~48 palabras. Instrucción de campo para el técnico, directa y accionable.\n"
+    "- despacho.decision: Solo 'urgente' (hoy o mañana), 'programar' (esta semana), o 'monitorear' (sin intervención inmediata).\n"
     "- prioridad: Solo 'alta', 'media' o 'baja'.\n"
     "- Sin texto fuera del JSON. Sin markdown externo al JSON."
 )
