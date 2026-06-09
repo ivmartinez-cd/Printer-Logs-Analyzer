@@ -44,6 +44,7 @@ class AiDiagnoseMetadata(BaseModel):
     meters_pattern: Optional[List[Dict[str, Any]]] = None
     serial_number: Optional[str] = None
     model_name: Optional[str] = None
+    cds_incidents: Optional[List[Dict[str, Any]]] = None
 
 
 class AiDiagnoseRequest(BaseModel):
@@ -58,6 +59,7 @@ class AiDiagnoseResponse(BaseModel):
     """Respuesta del diagnóstico AI."""
 
     diagnosis: str
+    tareas_resumen: Optional[str] = None
     model: str
     tokens_used: Dict[str, int]
     cost_usd: float

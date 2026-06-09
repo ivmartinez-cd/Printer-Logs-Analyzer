@@ -187,6 +187,7 @@ export function AnalysisDashboardView({
         consumables={realtimeConsumables}
         alerts={insightData?.data || null}
         meters={insightData?.meters || []}
+        cdsIncidents={cdsIncidents.data}
         isFeatured={true}
         serialNumber={currentSerialNumber}
         modelName={currentModelName}
