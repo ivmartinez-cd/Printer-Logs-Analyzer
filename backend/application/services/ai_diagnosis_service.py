@@ -99,7 +99,7 @@ async def call_claude(payload: dict, api_key: str) -> tuple[str, dict]:
     client = AsyncAnthropic(api_key=api_key)
     response = await client.messages.create(
         model=MODEL,
-        max_tokens=1024,
+        max_tokens=2048,
         system=[
             {
                 "type": "text",
