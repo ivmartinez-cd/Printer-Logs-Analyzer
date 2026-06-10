@@ -25,5 +25,24 @@
       {"serial": "CNNCQ520Y7", "location": "Caja 2 - Sucursal 06", "model": "LaserJet Managed E60175dn"},
       {"serial": "CNNCQ520Y8", "location": "Depósito - Sucursal 06", "model": "LaserJet Managed E60175dn"}
     ]
+  },
+  {
+    "id": "cartocor-arcor",
+    "name": "Cartocor / Arcor",
+    "is_dynamic": true,
+    "devices": [
+      {"serial": "CNNCQ520HG", "location": "Planta Cartocor - Luján", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "MXBC179G55", "location": "Oficinas Arcor - Planta 1", "model": "LaserJet Managed MFP E62655dn"},
+      {"serial": "CNB1P9Y06C", "location": "Expedición - Arcor", "model": "LaserJet Managed E60175dn"}
+    ]
+  },
+  {
+    "id": "canal-directo",
+    "name": "Distribuidora Canal Directo",
+    "is_dynamic": true,
+    "devices": [
+      {"serial": "CNNCQ520LC", "location": "Canal Directo - Recepción", "model": "LaserJet Managed E60175dn"},
+      {"serial": "CNNCQ520X1", "location": "Canal Directo - Despacho", "model": "LaserJet Managed MFP E62655dn"}
+    ]
   }
 ]

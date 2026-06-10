@@ -414,8 +414,13 @@ def search_customers(
     """
     # Discovery Mock for local development without real API keys
     if api_key == "dev" or "hp-sds-latam" not in portal_url:
-        if "DIA" in query.upper():
+        q = query.upper()
+        if "DIA" in q:
             return [{"customerId": 9999, "customerName": "Supermercados DIA - Central"}]
+        elif "CARTOCOR" in q or "ARCOR" in q:
+            return [{"customerId": 5992, "customerName": "Cartocor / Arcor"}]
+        elif "CANAL" in q or "DIRECTO" in q:
+            return [{"customerId": 139, "customerName": "Distribuidora Canal Directo"}]
         return []
 
     token = _get_jwt(portal_url, api_key, api_secret)
@@ -439,6 +444,52 @@ def get_devices_by_customer(
     if api_key == "dev" or "hp-sds-latam" not in portal_url:
         if customer_id == 9999:
             return _get_dia_mock_devices()
+        elif customer_id == 5992:
+            return [
+                {
+                    "deviceId": 5001,
+                    "serialNumber": "CNNCQ520HG",
+                    "extendedFields": {
+                        "model": "LaserJet Managed MFP E62655dn",
+                        "zone": "Planta Cartocor - Luján",
+                    },
+                },
+                {
+                    "deviceId": 5002,
+                    "serialNumber": "MXBC179G55",
+                    "extendedFields": {
+                        "model": "LaserJet Managed MFP E62655dn",
+                        "zone": "Oficinas Arcor - Planta 1",
+                    },
+                },
+                {
+                    "deviceId": 5003,
+                    "serialNumber": "CNB1P9Y06C",
+                    "extendedFields": {
+                        "model": "LaserJet Managed E60175dn",
+                        "zone": "Expedición - Arcor",
+                    },
+                },
+            ]
+        elif customer_id == 139:
+            return [
+                {
+                    "deviceId": 1391,
+                    "serialNumber": "CNNCQ520LC",
+                    "extendedFields": {
+                        "model": "LaserJet Managed E60175dn",
+                        "zone": "Canal Directo - Recepción",
+                    },
+                },
+                {
+                    "deviceId": 1392,
+                    "serialNumber": "CNNCQ520X1",
+                    "extendedFields": {
+                        "model": "LaserJet Managed MFP E62655dn",
+                        "zone": "Canal Directo - Despacho",
+                    },
+                },
+            ]
         return []
 
     token = _get_jwt(portal_url, api_key, api_secret)
