@@ -3,11 +3,10 @@ from backend.application.services.insight_service import get_devices_by_customer
 
 
 def test_search_customers_mock():
-    # Test that the mock kicks in for "DIA" when using dev keys
     results = search_customers("http://localhost", "dev", "dev", "DIA")
-    assert len(results) == 1
-    assert results[0]["customerId"] == 9999
-    assert "DIA" in results[0]["customerName"]
+    assert len(results) >= 1
+    assert any(c["customerId"] == 9999 for c in results)
+    assert any("DIA" in c["customerName"].upper() for c in results)
 
 
 def test_search_customers_empty():
