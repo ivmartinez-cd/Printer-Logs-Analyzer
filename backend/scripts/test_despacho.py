@@ -1,7 +1,11 @@
 """Test script para validar la lógica de despacho del prompt de IA.
 
-Usa el payload real del log BRBST2900Q (jun-2026) para iterar sobre el prompt
-sin necesidad de pasar por la UI.
+Cubre los 5 casos necesarios para validar todas las ramas del prompt:
+  CASO 1 — Hardware RESUELTO + config ACTIVO     → despacho esperado: remoto
+  CASO 2 — Hardware CRÍTICO (delta < 100)         → despacho esperado: si  | urgencia: urgente
+  CASO 3 — Hardware MODERADO (delta 100-400)      → despacho esperado: si  | urgencia: programar
+  CASO 4 — Solo firmware/config activos           → despacho esperado: remoto
+  CASO 5 — Todo RESUELTO                          → despacho esperado: no  | urgencia: monitorear
 
 Uso (desde la raíz del repo):
     python backend/scripts/test_despacho.py
@@ -11,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -23,7 +28,6 @@ if hasattr(sys.stdout, "reconfigure"):
 from dotenv import load_dotenv
 load_dotenv(_REPO_ROOT / ".env")
 
-import os
 api_key = os.getenv("ANTHROPIC_API_KEY")
 if not api_key:
     print("Error: ANTHROPIC_API_KEY no definida en .env")
@@ -32,132 +36,188 @@ if not api_key:
 from backend.application.services.ai_diagnosis_service import SYSTEM_PROMPT, call_claude, compute_cost  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Payload basado en el log real BRBST2900Q (may–jun 2026)
-# counter_range del log completo: [0, 92500]
+# Casos de test
 # ---------------------------------------------------------------------------
-PAYLOAD = {
-    "global_severity": "ERROR",
-    "metadata": {
-        "serial_number": "BRBST2900Q",
-        "model_name": "HP LaserJet Enterprise E52645dn",
-        "firmware": "2509087_000073",
-        "date_range": "21-may-2026 – 09-jun-2026",
-        "counter_range": [0, 92500],
-        "total_events": 280,
-        "consumables": [
-            {"name": "Black Toner", "level_percent": 26, "days_remaining": 46}
-        ],
+
+CASES = [
+    {
+        "name": "CASO 1 — Hardware RESUELTO + config ACTIVO",
+        "expected_despacho": "remoto",
+        "expected_urgencia": "programar",
+        "payload": {
+            "global_severity": "ERROR",
+            "metadata": {
+                "serial_number": "BRBST2900Q",
+                "model_name": "HP LaserJet Enterprise E52645dn",
+                "counter_range": [0, 92500],
+                "date_range": "21-may-2026 – 09-jun-2026",
+                "consumables": [{"name": "Black Toner", "level_percent": 26}],
+            },
+            "incidents": [
+                {"code": "13.B9.D2", "description": "Fuser delivery delay jam.", "severity": "ERROR",
+                 "occurrences": 9, "start": "2026-06-05T05:31:50", "end": "2026-06-06T06:35:15",
+                 "counter_range": [91715, 91972]},
+                {"code": "13.B9.D1", "description": "Fuser delivery delay jam.", "severity": "ERROR",
+                 "occurrences": 2, "start": "2026-05-21T06:40:17", "end": "2026-06-08T07:47:43",
+                 "counter_range": [88508, 92055]},
+                {"code": "41.03.E2", "description": "Paper mismatch between tray and printer config.",
+                 "severity": "ERROR", "occurrences": 4, "start": "2026-06-02T14:37:54",
+                 "end": "2026-06-08T16:38:22", "counter_range": [91134, 92123]},
+            ],
+        },
     },
-    "incidents": [
-        {
-            "code": "13.B9.D2",
-            "description": "Fuser delivery delay jam.",
-            "severity": "ERROR",
-            "occurrences": 9,
-            "start": "2026-06-05T05:31:50",
-            "end": "2026-06-06T06:35:15",
-            "counter_range": [91715, 91972],
-            "pattern": "Rachas de hasta 4 eventos en 2 días",
+    {
+        "name": "CASO 2 — Hardware CRÍTICO (delta < 100)",
+        "expected_despacho": "si",
+        "expected_urgencia": "urgente",
+        "payload": {
+            "global_severity": "ERROR",
+            "metadata": {
+                "serial_number": "TEST002",
+                "model_name": "HP LaserJet Enterprise M608dn",
+                "counter_range": [0, 50100],
+                "date_range": "01-jun-2026 – 10-jun-2026",
+            },
+            "incidents": [
+                {"code": "13.20.00", "description": "Jam in paper path — input area.", "severity": "ERROR",
+                 "occurrences": 5, "start": "2026-06-09T08:00:00", "end": "2026-06-10T09:00:00",
+                 "counter_range": [50020, 50060]},  # delta = 50100-50060 = 40 → CRÍTICO
+                {"code": "59.40.00", "description": "Motor error — main drive.", "severity": "ERROR",
+                 "occurrences": 2, "start": "2026-06-10T08:00:00", "end": "2026-06-10T09:30:00",
+                 "counter_range": [50070, 50085]},  # delta = 50100-50085 = 15 → CRÍTICO
+            ],
         },
-        {
-            "code": "13.B9.D1",
-            "description": "Fuser delivery delay jam.",
-            "severity": "ERROR",
-            "occurrences": 2,
-            "start": "2026-05-21T06:40:17",
-            "end": "2026-06-08T07:47:43",
-            "counter_range": [88508, 92055],
-            "pattern": "2 eventos distribuidos en 18 días",
+    },
+    {
+        "name": "CASO 3 — Hardware MODERADO (delta 100-400)",
+        "expected_despacho": "si",
+        "expected_urgencia": "programar",
+        "payload": {
+            "global_severity": "ERROR",
+            "metadata": {
+                "serial_number": "TEST003",
+                "model_name": "HP LaserJet Enterprise M607dn",
+                "counter_range": [0, 75000],
+                "date_range": "01-jun-2026 – 10-jun-2026",
+            },
+            "incidents": [
+                {"code": "50.3A.00", "description": "Fuser error — high temperature.", "severity": "ERROR",
+                 "occurrences": 3, "start": "2026-06-07T10:00:00", "end": "2026-06-08T14:00:00",
+                 "counter_range": [74500, 74750]},  # delta = 75000-74750 = 250 → MODERADO
+                {"code": "99.07.20", "description": "Firmware upgrade event.", "severity": "INFO",
+                 "occurrences": 2, "start": "2026-06-01T09:00:00", "end": "2026-06-01T09:05:00",
+                 "counter_range": [70000, 70001]},  # delta = 4999 → RESUELTO
+            ],
         },
-        {
-            "code": "41.03.E2",
-            "description": "Errors in the 41.* family are related to printing problems, such as a mismatch between the paper that is in the printer and the paper the printer is configured to use.",
-            "severity": "ERROR",
-            "occurrences": 4,
-            "start": "2026-06-02T14:37:54",
-            "end": "2026-06-08T16:38:22",
-            "counter_range": [91134, 92123],
-            "pattern": "4 eventos distribuidos en 6 días",
+    },
+    {
+        "name": "CASO 4 — Solo firmware/config activos (sin hardware físico)",
+        "expected_despacho": "remoto",
+        "expected_urgencia": "programar",
+        "payload": {
+            "global_severity": "INFO",
+            "metadata": {
+                "serial_number": "TEST004",
+                "model_name": "HP LaserJet Enterprise M612dn",
+                "counter_range": [0, 30000],
+                "date_range": "01-jun-2026 – 10-jun-2026",
+                "consumables": [{"name": "Black Toner", "level_percent": 8}],
+            },
+            "incidents": [
+                {"code": "10.00.15", "description": "Black cartridge very low.", "severity": "INFO",
+                 "occurrences": 3, "start": "2026-06-08T08:00:00", "end": "2026-06-10T10:00:00",
+                 "counter_range": [29800, 29950]},  # delta = 50 → CRÍTICO pero es consumible
+                {"code": "41.03.01", "description": "Paper size mismatch.", "severity": "ERROR",
+                 "occurrences": 2, "start": "2026-06-09T11:00:00", "end": "2026-06-10T09:00:00",
+                 "counter_range": [29900, 29980]},  # delta = 20 → CRÍTICO pero es config
+                {"code": "98.00.07", "description": "Data corruption in firmware.", "severity": "INFO",
+                 "occurrences": 1, "start": "2026-06-05T08:00:00", "end": "2026-06-05T08:00:00",
+                 "counter_range": [28500, 28500]},  # delta = 1500 → RESUELTO
+            ],
         },
-        {
-            "code": "13.B9.A2",
-            "description": "Fuser delivery stay jam.",
-            "severity": "ERROR",
-            "occurrences": 1,
-            "start": "2026-06-05T05:39:01",
-            "end": "2026-06-05T05:39:01",
-            "counter_range": [91716, 91716],
-            "pattern": "1 evento aislado",
+    },
+    {
+        "name": "CASO 5 — Todo RESUELTO",
+        "expected_despacho": "no",
+        "expected_urgencia": "monitorear",
+        "payload": {
+            "global_severity": "INFO",
+            "metadata": {
+                "serial_number": "TEST005",
+                "model_name": "HP LaserJet Enterprise M609dn",
+                "counter_range": [0, 120000],
+                "date_range": "01-may-2026 – 10-jun-2026",
+            },
+            "incidents": [
+                {"code": "13.B9.D2", "description": "Fuser delivery delay jam.", "severity": "ERROR",
+                 "occurrences": 2, "start": "2026-05-01T10:00:00", "end": "2026-05-01T10:30:00",
+                 "counter_range": [110000, 110050]},  # delta = 9950 → RESUELTO
+                {"code": "41.03.E2", "description": "Paper mismatch.", "severity": "ERROR",
+                 "occurrences": 1, "start": "2026-05-15T09:00:00", "end": "2026-05-15T09:00:00",
+                 "counter_range": [115000, 115000]},  # delta = 5000 → RESUELTO
+                {"code": "99.07.20", "description": "Firmware upgrade event.", "severity": "INFO",
+                 "occurrences": 2, "start": "2026-05-10T08:00:00", "end": "2026-05-10T08:05:00",
+                 "counter_range": [112000, 112001]},  # delta = 7999 → RESUELTO
+            ],
         },
-        {
-            "code": "41.03.01",
-            "description": "The printer detected a different paper size than expected.",
-            "severity": "ERROR",
-            "occurrences": 2,
-            "start": "2026-06-03T07:54:31",
-            "end": "2026-06-03T07:54:33",
-            "counter_range": [91321, 91321],
-            "pattern": "2 eventos en 1 minuto",
-        },
-        {
-            "code": "98.00.07",
-            "description": "Errors in the 98.* family are related to data corruption in the firmware.",
-            "severity": "INFO",
-            "occurrences": 3,
-            "start": "2026-05-11T12:34:40",
-            "end": "2026-06-04T17:57:37",
-            "counter_range": [86373, 91624],
-            "pattern": "3 eventos distribuidos en 24 días",
-        },
-        {
-            "code": "33.27.01",
-            "description": "Errors in the 33.* family are related to the printer's storage system or the formatter.",
-            "severity": "INFO",
-            "occurrences": 6,
-            "start": "2026-05-15T20:06:31",
-            "end": "2026-05-29T20:10:05",
-            "counter_range": [87590, 90437],
-            "pattern": "6 eventos distribuidos en 14 días",
-        },
-    ],
-}
+    },
+]
+
+
+# ---------------------------------------------------------------------------
+# Runner
+# ---------------------------------------------------------------------------
+
+async def run_case(case: dict) -> dict:
+    text, tokens = await call_claude(case["payload"], api_key)
+    cost = compute_cost(tokens)
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        parsed = {}
+    return {"parsed": parsed, "tokens": tokens, "cost": cost}
 
 
 async def main() -> None:
-    print("Llamando a Claude con el prompt actual...")
-    print(f"Log max counter: {PAYLOAD['metadata']['counter_range'][1]}")
-    print()
+    results = []
+    for case in CASES:
+        print(f"\n{'='*60}")
+        print(f"  {case['name']}")
+        print(f"  Esperado → despacho: {case['expected_despacho']} | urgencia: {case['expected_urgencia']}")
+        print(f"{'='*60}")
 
-    for inc in PAYLOAD["incidents"]:
-        cr = inc.get("counter_range", [0, 0])
-        delta = PAYLOAD["metadata"]["counter_range"][1] - cr[1]
-        status = "CRÍTICO" if delta < 100 else "MODERADO" if delta <= 400 else "RESUELTO"
-        print(f"  {inc['code']:15s} counter_max={cr[1]:6d}  delta={delta:5d}  → {status}")
+        result = await run_case(case)
+        p = result["parsed"]
 
-    print()
+        despacho = p.get("despacho", "???")
+        urgencia = p.get("urgencia", "???")
+        motivo = p.get("despacho_motivo", "")
+        hw_deltas = p.get("_hw_deltas", "")
+        logica = p.get("_despacho_logica", "")
 
-    text, tokens = await call_claude(PAYLOAD, api_key)
-    cost = compute_cost(tokens)
+        ok_despacho = despacho == case["expected_despacho"]
+        ok_urgencia = urgencia == case["expected_urgencia"]
+        status = "✅ PASS" if (ok_despacho and ok_urgencia) else "❌ FAIL"
 
-    try:
-        parsed = json.loads(text)
-        print("=" * 60)
-        print(f"  despacho   : {parsed.get('despacho', '???')}")
-        print(f"  motivo     : {parsed.get('despacho_motivo', '???')}")
-        print(f"  urgencia   : {parsed.get('urgencia', '???')}")
-        print(f"  prioridad  : {parsed.get('prioridad', '???')}")
-        print("=" * 60)
-        print(f"\nDIAGNOSTICO:\n{parsed.get('diagnostico', '')}")
-        print(f"\nTAREAS:\n{parsed.get('tareas_resumen', '')}")
-        print(f"\nACCIONES:")
-        for i, a in enumerate(parsed.get("acciones", []), 1):
-            print(f"  {i}. {a}")
-    except json.JSONDecodeError:
-        print("Raw response:")
-        print(text)
+        print(f"  {status}")
+        d_mark = "✓" if ok_despacho else f"✗ (esperado: {case['expected_despacho']})"
+        u_mark = "✓" if ok_urgencia else f"✗ (esperado: {case['expected_urgencia']})"
+        print(f"  despacho : {despacho} {d_mark}")
+        print(f"  urgencia : {urgencia} {u_mark}")
+        print(f"  motivo   : {motivo}")
+        print(f"  hw_deltas: {hw_deltas}")
+        print(f"  logica   : {logica}")
+        print(f"  costo    : ${result['cost']:.5f} USD")
 
-    print(f"\nTokens: input={tokens['input']} output={tokens['output']} cache_read={tokens['cache_read']}")
-    print(f"Costo: ${cost:.5f} USD")
+        results.append({**case, "despacho": despacho, "urgencia": urgencia, "pass": ok_despacho and ok_urgencia})
+
+    print(f"\n{'='*60}")
+    passed = sum(1 for r in results if r["pass"])
+    print(f"  RESULTADO FINAL: {passed}/{len(results)} casos correctos")
+    for r in results:
+        icon = "✅" if r["pass"] else "❌"
+        print(f"  {icon} {r['name']}")
+    print(f"{'='*60}\n")
 
 
 if __name__ == "__main__":
