@@ -414,20 +414,44 @@ def search_customers(
     """
     # Discovery Mock for local development without real API keys
     if api_key == "dev" or "hp-sds-latam" not in portal_url:
-        if not query:
-            return [
-                {"customerId": 9999, "customerName": "Supermercados DIA - Central"},
-                {"customerId": 5992, "customerName": "Cartocor / Arcor"},
-                {"customerId": 139, "customerName": "Distribuidora Canal Directo"}
-            ]
-        q = query.upper()
-        if "DIA" in q:
-            return [{"customerId": 9999, "customerName": "Supermercados DIA - Central"}]
-        elif "CARTOCOR" in q or "ARCOR" in q:
-            return [{"customerId": 5992, "customerName": "Cartocor / Arcor"}]
-        elif "CANAL" in q or "DIRECTO" in q:
-            return [{"customerId": 139, "customerName": "Distribuidora Canal Directo"}]
-        return []
+        try:
+            from backend.infrastructure.repositories.fleet_repository import FleetRepository
+            repo = FleetRepository()
+            clients = repo.list_clients()
+            mock_list = []
+            for c in clients:
+                try:
+                    cust_id = int(c["id"])
+                except ValueError:
+                    if c["id"] == "dia-central":
+                        cust_id = 9999
+                    elif c["id"] == "cartocor-arcor":
+                        cust_id = 5992
+                    elif c["id"] == "canal-directo":
+                        cust_id = 139
+                    else:
+                        cust_id = hash(c["id"]) % 10000
+                mock_list.append({"customerId": cust_id, "customerName": c["name"]})
+            
+            if not query:
+                return mock_list
+            q = query.upper()
+            return [c for c in mock_list if q in c["customerName"].upper()]
+        except Exception:
+            if not query:
+                return [
+                    {"customerId": 9999, "customerName": "Supermercados DIA - Central"},
+                    {"customerId": 5992, "customerName": "Cartocor / Arcor"},
+                    {"customerId": 139, "customerName": "Distribuidora Canal Directo"}
+                ]
+            q = query.upper()
+            if "DIA" in q:
+                return [{"customerId": 9999, "customerName": "Supermercados DIA - Central"}]
+            elif "CARTOCOR" in q or "ARCOR" in q:
+                return [{"customerId": 5992, "customerName": "Cartocor / Arcor"}]
+            elif "CANAL" in q or "DIRECTO" in q:
+                return [{"customerId": 139, "customerName": "Distribuidora Canal Directo"}]
+            return []
 
     token = _get_jwt(portal_url, api_key, api_secret)
     base = portal_url.rstrip("/")
@@ -448,6 +472,39 @@ def get_devices_by_customer(
     """
     # Discovery Mock for local development without real API keys
     if api_key == "dev" or "hp-sds-latam" not in portal_url:
+        try:
+            from backend.infrastructure.repositories.fleet_repository import FleetRepository
+            repo = FleetRepository()
+            
+            client_id = None
+            if customer_id == 9999:
+                client_id = "dia-central"
+            elif customer_id == 5992:
+                client_id = "cartocor-arcor"
+            elif customer_id == 139:
+                client_id = "canal-directo"
+            else:
+                client_id = str(customer_id)
+                
+            client = repo.get_client(client_id)
+            if client:
+                if client_id == "dia-central":
+                    return _get_dia_mock_devices()
+                    
+                devices = []
+                for idx, d in enumerate(client["devices"]):
+                    devices.append({
+                        "deviceId": 20000 + idx,
+                        "serialNumber": d["serial"],
+                        "extendedFields": {
+                            "model": d.get("model") or "LaserJet Managed MFP E62655dn",
+                            "zone": d["location"],
+                        }
+                    })
+                return devices
+        except Exception:
+            pass
+            
         if customer_id == 9999:
             return _get_dia_mock_devices()
         elif customer_id == 5992:

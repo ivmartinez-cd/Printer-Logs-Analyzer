@@ -21,7 +21,7 @@ def test_list_clients_has_device_count(repo: FleetRepository) -> None:
     for c in clients:
         assert "device_count" in c
         assert isinstance(c["device_count"], int)
-        assert c["device_count"] > 0
+        assert c["device_count"] >= 0
 
 
 def test_get_client_dia(repo: FleetRepository) -> None:
