@@ -261,6 +261,7 @@ export async function aiDiagnose(
       end_time: inc.end_time,
     }
     if (firstDescEvt?.code_description) item.description = firstDescEvt.code_description
+    if (inc.counter_range) item.counter_range = inc.counter_range
     return item
   })
 

@@ -63,6 +63,8 @@ async def ai_diagnose(
         }
         if inc.description:
             item["description"] = inc.description
+        if inc.counter_range:
+            item["counter_range"] = inc.counter_range
         if inc.pattern:
             item["pattern"] = inc.pattern
 

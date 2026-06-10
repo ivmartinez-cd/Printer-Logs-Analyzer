@@ -14,6 +14,7 @@ class AiDiagnoseIncidentItem(BaseModel):
     occurrences: int
     start_time: str
     end_time: str
+    counter_range: Optional[List[int]] = None
     pattern: Optional[str] = None
 
     model_config = {
