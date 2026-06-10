@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
-import type { SavedAnalysisSummary } from '../../types/api'
+import React, { useState, useMemo, useEffect } from 'react'
+import type { SavedAnalysisSummary, FleetClientSummary, FleetDeviceSummary } from '../../types/api'
+import { listFleetClients, getFleetClient } from '../../services/api'
 
 interface WelcomeViewProps {
   onAnalyzeNew: () => void
@@ -27,11 +28,53 @@ export function WelcomeView({
   loadingQuickSearch = false
 }: WelcomeViewProps) {
   const [serial, setSerial] = useState('')
+  const [searchMode, setSearchMode] = useState<'serial' | 'client'>('serial')
+
+  const [clients, setClients] = useState<FleetClientSummary[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
+  const [selectedClientId, setSelectedClientId] = useState('')
+
+  const [devices, setDevices] = useState<FleetDeviceSummary[]>([])
+  const [loadingDevices, setLoadingDevices] = useState(false)
+  const [selectedSerial, setSelectedSerial] = useState('')
+
+  useEffect(() => {
+    if (searchMode === 'client' && clients.length === 0) {
+      setLoadingClients(true)
+      listFleetClients()
+        .then(setClients)
+        .catch((err) => console.error('Error listing clients:', err))
+        .finally(() => setLoadingClients(false))
+    }
+  }, [searchMode, clients.length])
+
+  const handleClientChange = async (clientId: string) => {
+    setSelectedClientId(clientId)
+    setSelectedSerial('')
+    setDevices([])
+    if (!clientId) return
+
+    setLoadingDevices(true)
+    try {
+      const detail = await getFleetClient(clientId)
+      setDevices(detail.devices || [])
+    } catch (err) {
+      console.error('Error fetching client devices:', err)
+    } finally {
+      setLoadingDevices(false)
+    }
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (serial.trim()) {
-      onQuickSearch(serial.trim().toUpperCase())
+    if (searchMode === 'serial') {
+      if (serial.trim()) {
+        onQuickSearch(serial.trim().toUpperCase())
+      }
+    } else {
+      if (selectedSerial) {
+        onQuickSearch(selectedSerial)
+      }
     }
   }
 
@@ -65,18 +108,74 @@ export function WelcomeView({
 
         {/* Quick Search Bar */}
         <form onSubmit={handleSearch} className="welcome-searchbox">
+          <div className="welcome-search-tabs">
+            <button
+              type="button"
+              className={`welcome-search-tab ${searchMode === 'serial' ? 'active' : ''}`}
+              onClick={() => setSearchMode('serial')}
+            >
+              Buscar por Serie
+            </button>
+            <button
+              type="button"
+              className={`welcome-search-tab ${searchMode === 'client' ? 'active' : ''}`}
+              onClick={() => setSearchMode('client')}
+            >
+              Buscar por Cliente
+            </button>
+          </div>
+
           <div className="welcome-searchbox__container">
-            <input
-              type="text"
-              placeholder="Ingrese Serie de Impresora (ej: MXBCN...)"
-              className="welcome-searchbox__input"
-              value={serial}
-              onChange={(e) => setSerial(e.target.value)}
-              disabled={loadingQuickSearch}
-            />
+            {searchMode === 'serial' ? (
+              <input
+                type="text"
+                placeholder="Ingrese Serie de Impresora (ej: MXBCN...)"
+                className="welcome-searchbox__input"
+                value={serial}
+                onChange={(e) => setSerial(e.target.value)}
+                disabled={loadingQuickSearch}
+              />
+            ) : (
+              <div className="welcome-searchbox__select-group">
+                <select
+                  className="welcome-searchbox__select"
+                  value={selectedClientId}
+                  onChange={(e) => handleClientChange(e.target.value)}
+                  disabled={loadingQuickSearch || loadingClients}
+                >
+                  <option value="">
+                    {loadingClients ? 'Cargando clientes...' : 'Seleccionar Cliente...'}
+                  </option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.device_count} equipos)
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="welcome-searchbox__select"
+                  value={selectedSerial}
+                  onChange={(e) => setSelectedSerial(e.target.value)}
+                  disabled={loadingQuickSearch || !selectedClientId || loadingDevices}
+                >
+                  <option value="">
+                    {loadingDevices ? 'Cargando equipos...' : 'Seleccionar Equipo/Serie...'}
+                  </option>
+                  {devices.map((d) => (
+                    <option key={d.serial} value={d.serial}>
+                      {d.serial} - {d.location} {d.model ? `(${d.model})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <button
               type="submit"
-              disabled={loadingQuickSearch || !serial.trim()}
+              disabled={
+                loadingQuickSearch ||
+                (searchMode === 'serial' ? !serial.trim() : !selectedSerial)
+              }
               className="welcome-searchbox__button"
             >
               {loadingQuickSearch ? (
@@ -96,7 +195,10 @@ export function WelcomeView({
             </button>
           </div>
           <p className="welcome-searchbox__tip">
-            💡 Consejo: Pega un número de serie para un diagnóstico instantáneo vía HP Insight API.
+            {searchMode === 'serial' 
+              ? '💡 Consejo: Pega un número de serie para un diagnóstico instantáneo vía HP Insight API.'
+              : '💡 Seleccioná un cliente de la flota para listar sus equipos activos y diagnosticar uno de ellos.'
+            }
           </p>
         </form>
       </section>

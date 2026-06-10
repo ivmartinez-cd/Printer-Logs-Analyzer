@@ -80,6 +80,38 @@
   animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 }
 
+/* Search Tabs styling */
+.welcome-search-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  justify-content: flex-start;
+  padding-left: 8px;
+}
+
+.welcome-search-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.welcome-search-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.welcome-search-tab.active {
+  color: var(--hp-blue-vibrant);
+  background: rgba(0, 161, 224, 0.1);
+  border: 1px solid rgba(0, 161, 224, 0.2);
+}
+
 .welcome-searchbox__container {
   position: relative;
   display: flex;
@@ -110,6 +142,54 @@
   outline: none;
 }
 
+/* Dropdown Select styles */
+.welcome-searchbox__select-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 16px;
+  min-width: 0;
+}
+
+.welcome-searchbox__select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  color: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  min-width: 0;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23888888'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
+
+.welcome-searchbox__select:hover:not(:disabled) {
+  border-color: rgba(0, 161, 224, 0.5);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.welcome-searchbox__select:focus:not(:disabled) {
+  border-color: var(--hp-blue-vibrant);
+}
+
+.welcome-searchbox__select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.welcome-searchbox__select option {
+  background: #121214;
+  color: #fff;
+}
+
 .welcome-searchbox__button {
   background: var(--hp-blue-vibrant);
   color: #fff;
@@ -135,6 +215,39 @@
   font-size: 0.85rem;
   color: var(--text-dim);
   font-weight: 500;
+}
+
+/* Responsive adjustment for searchbox */
+@media (max-width: 640px) {
+  .welcome-searchbox__container {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    border-radius: 24px;
+    padding-right: 12px;
+  }
+  
+  .welcome-searchbox__select-group {
+    flex-direction: column;
+    padding: 4px 0;
+    width: 100%;
+  }
+  
+  .welcome-searchbox__input {
+    padding: 12px 16px;
+    width: 100%;
+  }
+
+  .welcome-searchbox__button {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .welcome-searchbox__container .hiw-trigger-btn {
+    align-self: center;
+    margin-left: 0 !important;
+    margin-top: 8px;
+  }
 }
 
 /* ─── Bento Grid ──────────────────────────────────────────────────────── */
