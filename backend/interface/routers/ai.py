@@ -63,6 +63,8 @@ async def ai_diagnose(
         }
         if inc.description:
             item["description"] = inc.description
+        if inc.counter_range:
+            item["counter_range"] = inc.counter_range
         if inc.pattern:
             item["pattern"] = inc.pattern
 
@@ -128,10 +130,13 @@ async def ai_diagnose(
 
         # 3. AUTO-SAVE: Automatically save this AI diagnosis to the database
         try:
-            from backend.interface.deps import get_saved_analysis_repo
+            from backend.infrastructure.repositories.saved_analysis_repository import (
+                SavedAnalysisRepository,
+            )
+            from backend.interface.deps import _db
             from backend.interface.utils import incident_to_summary
 
-            save_repo = get_saved_analysis_repo()
+            save_repo = SavedAnalysisRepository(_db)
 
             # Metadata extraction for the record
             metadata = body.metadata
