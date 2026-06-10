@@ -130,8 +130,10 @@ async def ai_diagnose(
 
         # 3. AUTO-SAVE: Automatically save this AI diagnosis to the database
         try:
+            from backend.infrastructure.repositories.saved_analysis_repository import (
+                SavedAnalysisRepository,
+            )
             from backend.interface.deps import _db
-            from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
             from backend.interface.utils import incident_to_summary
 
             save_repo = SavedAnalysisRepository(_db)
