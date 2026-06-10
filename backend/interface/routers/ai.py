@@ -114,11 +114,15 @@ async def ai_diagnose(
         # Extraer campos del JSON de diagnóstico
         tareas_resumen: str | None = None
         urgencia: str | None = None
+        despacho: str | None = None
+        despacho_motivo: str | None = None
         try:
             import json as _json
             _parsed = _json.loads(diagnosis)
             tareas_resumen = _parsed.get("tareas_resumen") or None
             urgencia = _parsed.get("urgencia") or None
+            despacho = _parsed.get("despacho") or None
+            despacho_motivo = _parsed.get("despacho_motivo") or None
         except Exception:
             pass
 
@@ -166,6 +170,8 @@ async def ai_diagnose(
             diagnosis=diagnosis,
             tareas_resumen=tareas_resumen,
             urgencia=urgencia,
+            despacho=despacho,
+            despacho_motivo=despacho_motivo,
             model=MODEL,
             tokens_used=tokens,
             cost_usd=cost,

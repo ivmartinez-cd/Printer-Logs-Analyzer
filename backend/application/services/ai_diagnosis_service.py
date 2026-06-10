@@ -44,12 +44,21 @@ SYSTEM_PROMPT = (
     "- urgente: algún error ACTIVO-CRÍTICO (delta < 100) o cluster denso en los últimos días del log.\n"
     "- programar: errores ACTIVO-MODERADO (delta 100–400) — falla real pero equipo operativo.\n"
     "- monitorear: solo errores RESUELTOS/INACTIVOS o delta > 400 sin reincidencia.\n\n"
+    "PASO 4 — DESPACHO (decisión de visita técnica):\n"
+    "Usá la clasificación de recency del PASO 1. Reglas en orden de precedencia:\n"
+    "- 'si': Existe al menos un error de hardware físico (jam, fuser, mecanismo) clasificado como ACTIVO-CRÍTICO (delta < 100) O ACTIVO-MODERADO (delta 100–400) con patrón de reincidencia en los últimos 3 días del log.\n"
+    "- 'remoto': No hay hardware físico activo, pero hay errores de firmware/config/consumibles activos (delta < 400) que el usuario o soporte remoto puede resolver.\n"
+    "- 'no': TODOS los errores de hardware físico son RESUELTOS/INACTIVOS (delta > 400). El equipo sigue operativo sin repetición del fallo. Aunque el error pasado fuera grave, si no repite → no se justifica visita ahora.\n"
+    "IMPORTANTE: Un jam que ocurrió hace 4+ días y no volvió a repetirse tiene delta > 400 → clasificar RESUELTO → despacho 'no', aunque sea un error de hardware severo.\n"
+    "El campo despacho_motivo debe explicar la razón en UNA frase corta (máx 20 palabras).\n\n"
     "Respondé ÚNICAMENTE con este JSON:\n"
     "{\n"
     '  "diagnostico": "[MÁX 120 palabras. Párrafos cortos separados por doble salto. **Negritas** en componentes críticos. Mencioná delta del error más reciente y si el equipo está operativo hoy.]",\n'
     '  "acciones": ["[Acción concreta 1]", "[Acción concreta 2]", "[Acción 3 si aplica]"],\n'
     '  "tareas_resumen": "[MÁX 46 palabras. Instrucción directa para cargar en el incidente: qué revisar, qué repuesto llevar, qué hacer en sitio. Como si se lo dijeras al técnico por teléfono.]",\n'
     '  "urgencia": "urgente/programar/monitorear",\n'
+    '  "despacho": "si/no/remoto",\n'
+    '  "despacho_motivo": "[Una frase. Por qué sí/no/remoto.]",\n'
     '  "prioridad": "alta/media/baja",\n'
     '  "impacto": "[Consecuencia técnica/operativa si no se interviene.]"\n'
     "}\n\n"
@@ -57,6 +66,8 @@ SYSTEM_PROMPT = (
     "- diagnostico: máx 120 palabras. Párrafos. Sin listas dentro del campo.\n"
     "- tareas_resumen: máx 46 palabras. Sin rodeos. Accionable.\n"
     "- urgencia: solo 'urgente', 'programar' o 'monitorear'.\n"
+    "- despacho: solo 'si', 'no' o 'remoto'.\n"
+    "- despacho_motivo: máx 20 palabras.\n"
     "- prioridad: solo 'alta', 'media' o 'baja'.\n"
     "- Sin texto fuera del JSON. Sin markdown externo al JSON."
 )

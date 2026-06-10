@@ -21,6 +21,8 @@ interface DiagnosisData {
   acciones: string[]
   tareas_resumen?: string | null
   urgencia?: 'urgente' | 'programar' | 'monitorear' | null
+  despacho?: 'si' | 'no' | 'remoto' | null
+  despacho_motivo?: string | null
   prioridad: 'alta' | 'media' | 'baja'
   impacto?: string
 }
@@ -166,6 +168,25 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
           {data && !loading && (
             <div className="ai-diagnostic-result">
+              {data.despacho && (
+                <div className={`ai-diagnostic-result__despacho ai-diagnostic-result__despacho--${data.despacho}`}>
+                  <span className="ai-diagnostic-result__despacho-icon">
+                    {data.despacho === 'si' ? '🔧' : data.despacho === 'remoto' ? '💻' : '✅'}
+                  </span>
+                  <div className="ai-diagnostic-result__despacho-content">
+                    <strong className="ai-diagnostic-result__despacho-label">
+                      {data.despacho === 'si'
+                        ? 'Requiere visita técnica'
+                        : data.despacho === 'remoto'
+                        ? 'Resoluble de forma remota'
+                        : 'Sin visita técnica necesaria'}
+                    </strong>
+                    {data.despacho_motivo && (
+                      <span className="ai-diagnostic-result__despacho-motivo">{data.despacho_motivo}</span>
+                    )}
+                  </div>
+                </div>
+              )}
               {urgencia && (
                 <div className={`ai-diagnostic-result__urgencia ai-diagnostic-result__urgencia--${urgencia}`}>
                   <span className="ai-diagnostic-result__urgencia-icon">

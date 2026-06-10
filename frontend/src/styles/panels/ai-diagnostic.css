@@ -191,6 +191,59 @@
   gap: 12px;
 }
 
+/* Banner de despacho — decisión principal */
+.ai-diagnostic-result__despacho {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 2px solid;
+}
+
+.ai-diagnostic-result__despacho--si {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.ai-diagnostic-result__despacho--remoto {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.5);
+  color: #fbbf24;
+}
+
+.ai-diagnostic-result__despacho--no {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.ai-diagnostic-result__despacho-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ai-diagnostic-result__despacho-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ai-diagnostic-result__despacho-label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ai-diagnostic-result__despacho-motivo {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+  font-weight: 400;
+}
+
 /* Banner de urgencia */
 .ai-diagnostic-result__urgencia {
   display: flex;
