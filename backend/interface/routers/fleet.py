@@ -117,8 +117,39 @@ def _compute_health(
 
 
 @router.get("/clients", response_model=list[ClientSummary], dependencies=[Depends(authenticate)])
-async def list_clients() -> list[ClientSummary]:
-    return [ClientSummary(**client) for client in _fleet_repo.list_clients()]
+async def list_clients(settings: Settings = Depends(get_settings)) -> list[ClientSummary]:
+    clients_map = {}
+    for c in _fleet_repo.list_clients():
+        clients_map[c["name"].lower()] = ClientSummary(
+            id=c["id"],
+            name=c["name"],
+            device_count=c["device_count"],
+            is_dynamic=c["is_dynamic"]
+        )
+
+    if settings.insight_portal_url and "hp-sds-latam" in settings.insight_portal_url and settings.insight_api_key and settings.insight_api_key != "dev":
+        try:
+            live_customers = await asyncio.to_thread(
+                search_customers,
+                settings.insight_portal_url,
+                settings.insight_api_key,
+                settings.insight_api_secret,
+                ""
+            )
+            for cust in live_customers:
+                cust_name = cust.get("customerName")
+                cust_id = str(cust.get("customerId"))
+                if cust_name and cust_name.lower() not in clients_map:
+                    clients_map[cust_name.lower()] = ClientSummary(
+                        id=cust_id,
+                        name=cust_name,
+                        device_count=0,
+                        is_dynamic=True
+                    )
+        except Exception as exc:
+            _logger.warning("Failed to fetch live customers from EKM: %s", exc)
+
+    return list(clients_map.values())
 
 
 @router.get(
@@ -131,26 +162,60 @@ async def get_client(
     settings: Settings = Depends(get_settings),
 ) -> ClientDetail:
     client = _fleet_repo.get_client(client_id)
-    if not client:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    devices: list[DeviceEntry] = []
+    client_name = ""
 
-    devices: list[DeviceEntry] = client["devices"]
+    is_ekm_live = settings.insight_portal_url and "hp-sds-latam" in settings.insight_portal_url and settings.insight_api_key and settings.insight_api_key != "dev"
 
-    if client.get("is_dynamic"):
-        try:
-            customers = search_customers(
-                settings.insight_portal_url or "",
-                settings.insight_api_key or "",
-                settings.insight_api_secret or "",
-                client["name"],
-            )
-            if customers:
-                customer_id = customers[0]["customerId"]
-                api_devices = get_devices_by_customer(
+    if client:
+        client_name = client["name"]
+        devices = client["devices"]
+        is_dynamic = client.get("is_dynamic", False)
+    else:
+        is_dynamic = True
+        if client_id.isdigit() and is_ekm_live:
+            try:
+                customers = await asyncio.to_thread(
+                    search_customers,
                     settings.insight_portal_url or "",
                     settings.insight_api_key or "",
                     settings.insight_api_secret or "",
-                    customer_id,
+                    ""
+                )
+                for cust in customers:
+                    if str(cust.get("customerId")) == client_id:
+                        client_name = cust.get("customerName") or f"Cliente {client_id}"
+                        break
+            except Exception as exc:
+                _logger.warning("Failed to resolve customer name for ID %s: %s", client_id, exc)
+            if not client_name:
+                client_name = f"Cliente {client_id}"
+        else:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
+    if is_dynamic and is_ekm_live:
+        try:
+            customer_id = None
+            if client_id.isdigit():
+                customer_id = int(client_id)
+            else:
+                customers = await asyncio.to_thread(
+                    search_customers,
+                    settings.insight_portal_url or "",
+                    settings.insight_api_key or "",
+                    settings.insight_api_secret or "",
+                    client_name
+                )
+                if customers:
+                    customer_id = customers[0]["customerId"]
+
+            if customer_id is not None:
+                api_devices = await asyncio.to_thread(
+                    get_devices_by_customer,
+                    settings.insight_portal_url or "",
+                    settings.insight_api_key or "",
+                    settings.insight_api_secret or "",
+                    customer_id
                 )
                 if api_devices:
                     devices = [
@@ -169,9 +234,12 @@ async def get_client(
                 exc,
             )
 
+    if not client_name and not devices:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
     return ClientDetail(
-        id=client["id"],
-        name=client["name"],
+        id=client_id,
+        name=client_name,
         devices=[DeviceSummary(**device) for device in devices],
     )
 

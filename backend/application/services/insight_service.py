@@ -414,6 +414,12 @@ def search_customers(
     """
     # Discovery Mock for local development without real API keys
     if api_key == "dev" or "hp-sds-latam" not in portal_url:
+        if not query:
+            return [
+                {"customerId": 9999, "customerName": "Supermercados DIA - Central"},
+                {"customerId": 5992, "customerName": "Cartocor / Arcor"},
+                {"customerId": 139, "customerName": "Distribuidora Canal Directo"}
+            ]
         q = query.upper()
         if "DIA" in q:
             return [{"customerId": 9999, "customerName": "Supermercados DIA - Central"}]
