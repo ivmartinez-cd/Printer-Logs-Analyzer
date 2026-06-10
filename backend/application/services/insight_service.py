@@ -432,7 +432,7 @@ def search_customers(
                     else:
                         cust_id = hash(c["id"]) % 10000
                 mock_list.append({"customerId": cust_id, "customerName": c["name"]})
-            
+
             if not query:
                 return mock_list
             q = query.upper()
@@ -475,7 +475,7 @@ def get_devices_by_customer(
         try:
             from backend.infrastructure.repositories.fleet_repository import FleetRepository
             repo = FleetRepository()
-            
+
             client_id = None
             if customer_id == 9999:
                 client_id = "dia-central"
@@ -485,12 +485,12 @@ def get_devices_by_customer(
                 client_id = "canal-directo"
             else:
                 client_id = str(customer_id)
-                
+
             client = repo.get_client(client_id)
             if client:
                 if client_id == "dia-central":
                     return _get_dia_mock_devices()
-                    
+
                 devices = []
                 for idx, d in enumerate(client["devices"]):
                     devices.append({
@@ -504,7 +504,7 @@ def get_devices_by_customer(
                 return devices
         except Exception:
             pass
-            
+
         if customer_id == 9999:
             return _get_dia_mock_devices()
         elif customer_id == 5992:
