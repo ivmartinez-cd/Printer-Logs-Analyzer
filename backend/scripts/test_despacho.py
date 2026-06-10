@@ -26,6 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from dotenv import load_dotenv
+
 load_dotenv(_REPO_ROOT / ".env")
 
 api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -33,7 +34,11 @@ if not api_key:
     print("Error: ANTHROPIC_API_KEY no definida en .env")
     sys.exit(1)
 
-from backend.application.services.ai_diagnosis_service import SYSTEM_PROMPT, call_claude, compute_cost  # noqa: E402
+from backend.application.services.ai_diagnosis_service import (  # noqa: E402
+    SYSTEM_PROMPT,
+    call_claude,
+    compute_cost,
+)
 
 # ---------------------------------------------------------------------------
 # Casos de test
