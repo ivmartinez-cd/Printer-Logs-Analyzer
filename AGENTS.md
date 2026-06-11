@@ -25,7 +25,7 @@ npm run dev
 
 # Por separado
 npm run dev:frontend     # Vite en puerto 5173 (5174 si 5173 está ocupado)
-npm run dev:backend      # Uvicorn en 0.0.0.0:8000 (mata procesos viejos automáticamente)
+npm run dev:backend      # Uvicorn en 0.0.0.0:8001 (mata procesos viejos automáticamente)
 ```
 
 `npm run dev:backend` ya incluye `taskkill` antes de arrancar uvicorn. Si el servidor responde con código viejo, matar manualmente y reiniciar.
@@ -42,7 +42,7 @@ npm run preview  # Preview del build de producción
 
 ```bash
 cd backend
-uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0
+uvicorn interface.api:app --reload --reload-dir . --host 0.0.0.0 --port 8001
 ```
 
 `--reload-dir .` es obligatorio en Windows para que hot-reload funcione.
@@ -56,7 +56,7 @@ docker compose up -d --build   # Re-build total (recomendado tras cambios en Doc
 docker compose down            # Apagar todo
 docker compose logs -f         # Ver logs en tiempo real
 
-# Backend:  http://localhost:8000 (Health: /health)
+# Backend:  http://localhost:8001 (Health: /health)
 # Frontend: http://localhost:5173
 ```
 

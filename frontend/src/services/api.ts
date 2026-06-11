@@ -27,7 +27,7 @@ import type {
 } from '../types/api'
 
 const API_BASE =
-  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8001'
 
 function normalizeEnvValue(value: string | undefined): string {
   const trimmed = (value ?? '').trim()
