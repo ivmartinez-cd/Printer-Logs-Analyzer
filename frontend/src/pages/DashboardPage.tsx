@@ -1,10 +1,11 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { Menu, Zap, Save, FileText } from 'lucide-react'
+import { Menu, Zap, Save, FileText, Router } from 'lucide-react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
   extractSdsLogs,
   generatePdfSummary,
+  getRemoteEwsAccess,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -189,6 +190,7 @@ export default function DashboardPage({
   )
  
   const insightData = useInsightData(currentSerialNumber)
+  const [loadingRemoteEws, setLoadingRemoteEws] = useState(false)
 
   const {
     exportingPdf,
@@ -635,6 +637,30 @@ export default function DashboardPage({
                           >
                             <FileText size={16} />
                             {isGeneratingAiPdf ? 'Procesando...' : exportingPdf ? 'Exportando...' : 'Exportar PDF'}
+                          </button>
+                          <button
+                            className="dashboard__btn dashboard__btn--secondary"
+                            onClick={async () => {
+                              if (!currentSerialNumber) return
+                              setLoadingRemoteEws(true)
+                              try {
+                                const { ews_url } = await getRemoteEwsAccess(
+                                  currentSerialNumber,
+                                  AbortSignal.timeout(25000)
+                                )
+                                window.open(ews_url, '_blank', 'noopener,noreferrer')
+                              } catch (err) {
+                                console.error('Error fetching remote EWS access:', err)
+                                toast.showError('No se pudo obtener el acceso remoto al EWS del dispositivo.')
+                              } finally {
+                                setLoadingRemoteEws(false)
+                              }
+                            }}
+                            disabled={!currentSerialNumber || loadingRemoteEws}
+                            title="Acceso remoto al EWS del dispositivo"
+                          >
+                            <Router size={16} />
+                            {loadingRemoteEws ? 'Conectando...' : 'EWS Remoto'}
                           </button>
                         </div>
                       </div>

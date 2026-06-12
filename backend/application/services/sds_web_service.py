@@ -229,6 +229,36 @@ class SDSWebSession:
 
         return resp.text
 
+    def fetch_remote_ews_url(self, device_id: str) -> Optional[str]:
+        """Fetch a temporary Remote EWS access link for a device.
+
+        Calls the portal's "Acceso remoto al EWS del dispositivo" action, which
+        returns a one-time JWT link to ews.hpjamservices.com that opens the
+        device's Embedded Web Server through HP's remote tunnel.
+        """
+        self._ensure_session()
+
+        try:
+            resp = self.session.get(
+                f"{self.base_url}/devices/{device_id}/hpsmart/ews",
+                headers={
+                    "x-ekm-usage": "dialog",
+                    "x-requested-with": "XMLHttpRequest",
+                    "Accept": "*/*",
+                },
+                timeout=20,
+            )
+        except requests.RequestException as e:
+            raise SDSWebError(f"Failed to fetch remote EWS link: {e}") from e
+
+        if resp.status_code != 200:
+            raise SDSWebError(f"Error fetching remote EWS link ({resp.status_code})")
+
+        html_content = _get_html_content(resp.text)
+        tree = html.fromstring(html_content)
+        links = tree.xpath('//div[@id="remoteEWSLaunchLink"]//a/@href')
+        return links[0] if links else None
+
 
 def html_to_tsv(raw_xml_html: str) -> str:
     """Extract table from EKM AJAX response and convert to TSV format."""

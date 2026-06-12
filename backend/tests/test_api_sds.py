@@ -109,3 +109,52 @@ def test_extract_logs_missing_serial(client):
     """Verify that serial parameter is required."""
     response = client.post("/sds/extract-logs", headers=_HEADERS)
     assert response.status_code == 422  # FastAPI validation error
+
+
+@patch("backend.interface.routers.sds.get_sds_session")
+@patch("backend.interface.routers.sds._insight_get_device_info")
+def test_remote_ews_success(mock_insight_info, mock_sds_factory, client):
+    """Test successful retrieval of the remote EWS access link."""
+    mock_insight_info.return_value = {"device_id": 239877, "model_name": "HP LaserJet", "firmware": "1.2.3"}
+
+    mock_sds = MagicMock()
+    mock_sds_factory.return_value = mock_sds
+    mock_sds.fetch_remote_ews_url.return_value = "https://ews.hpjamservices.com/connection/TOKEN"
+
+    response = client.get("/sds/devices/MXSCS7Q00Q/remote-ews", headers=_HEADERS)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["serial"] == "MXSCS7Q00Q"
+    assert data["device_id"] == "239877"
+    assert data["ews_url"] == "https://ews.hpjamservices.com/connection/TOKEN"
+    mock_sds.fetch_remote_ews_url.assert_called_once_with("239877")
+
+
+@patch("backend.interface.routers.sds.get_sds_session")
+@patch("backend.interface.routers.sds._insight_get_device_info")
+def test_remote_ews_not_available(mock_insight_info, mock_sds_factory, client):
+    """Returns 404 when the portal has no remote EWS link for the device."""
+    mock_insight_info.return_value = {"device_id": 239877, "model_name": "HP LaserJet", "firmware": "1.2.3"}
+
+    mock_sds = MagicMock()
+    mock_sds_factory.return_value = mock_sds
+    mock_sds.fetch_remote_ews_url.return_value = None
+
+    response = client.get("/sds/devices/MXSCS7Q00Q/remote-ews", headers=_HEADERS)
+    assert response.status_code == 404
+
+
+@patch("backend.interface.routers.sds._insight_get_device_info")
+def test_remote_ews_device_not_found(mock_insight_info, client):
+    """Returns 404 when the device is not found in the Insight Portal."""
+    mock_insight_info.return_value = {"device_id": None, "model_name": None, "firmware": None}
+
+    response = client.get("/sds/devices/UNKNOWN/remote-ews", headers=_HEADERS)
+    assert response.status_code == 404
+
+
+def test_remote_ews_unauthorized(client):
+    """Verify that the endpoint requires a valid API key."""
+    response = client.get("/sds/devices/MXSCS7Q00Q/remote-ews", headers={"x-api-key": "wrong"})
+    assert response.status_code == 401

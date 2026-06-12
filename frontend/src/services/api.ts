@@ -10,6 +10,7 @@ import type {
   ErrorSolution,
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
+  RemoteEwsResponse,
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
@@ -426,6 +427,18 @@ export async function resolveDevice(
     15_000
   )
   return handleResponse<ResolveDeviceResponse>(res)
+}
+
+export async function getRemoteEwsAccess(
+  serial: string,
+  signal?: AbortSignal
+): Promise<RemoteEwsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/devices/${encodeURIComponent(serial)}/remote-ews`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    25_000
+  )
+  return handleResponse<RemoteEwsResponse>(res)
 }
 
 export async function extractSdsLogs(
