@@ -40,6 +40,14 @@
         {
           "cameraPermission": "Permitir acceso a la cámara para escanear números de serie y códigos de barras de impresoras."
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "printer-logs-analyzer",
+          "project": "printer-logs-analyzer-mobile",
+          "uploadSourceMaps": false
+        }
       ]
     ],
     "extra": {
