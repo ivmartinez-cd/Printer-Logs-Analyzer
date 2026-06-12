@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, Dimensions, Platform } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
+import { StyleSheet, View } from 'react-native'
 import { AppText } from './AppText'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -7,27 +7,33 @@ import { CheckCircle2, AlertTriangle, AlertCircle, Info } from 'lucide-react-nat
 import { ToastMessage, addToastListener } from '../hooks/useToast'
 import { theme } from '../theme'
 
-const { width } = Dimensions.get('window')
-
 export function ToastOverlay() {
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const insets = useSafeAreaInsets()
   const translateY = useSharedValue(-100)
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const unsubscribe = addToastListener((msg) => {
       setToast(msg)
-      
+
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current)
+      }
+
       // Animar hacia abajo (Spring)
       translateY.value = withSpring(insets.top + 10)
-      
+
       // Auto ocultar tras 3.5 segundos
-      setTimeout(() => {
+      hideTimeoutRef.current = setTimeout(() => {
         translateY.value = withTiming(-100, { duration: 300 })
       }, 3500)
     })
 
-    return unsubscribe
+    return () => {
+      unsubscribe()
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
+    }
   }, [insets, translateY])
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -55,7 +61,11 @@ export function ToastOverlay() {
   }
 
   return (
-    <Animated.View style={[styles.container, animatedStyle, { borderColor: border }]}>
+    <Animated.View
+      style={[styles.container, animatedStyle, { borderColor: border }]}
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+    >
       <View style={styles.iconContainer}>{icon}</View>
       <AppText style={styles.text}>{toast.text}</AppText>
     </Animated.View>

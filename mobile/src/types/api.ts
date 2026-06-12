@@ -218,6 +218,10 @@ export interface ExtractSdsLogsResponse {
   realtime_consumables: RealtimeConsumable[]
 }
 
+export interface RemoteEwsResponse {
+  ews_url: string
+}
+
 export interface FleetClientSummary {
   id: string
   name: string

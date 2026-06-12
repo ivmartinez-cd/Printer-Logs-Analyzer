@@ -12,6 +12,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true)
 }
 
+const MAX_EVENTS = 30
+
 interface IncidentCardProps {
   incident: Incident
   onPressSolution?: (code: string) => void
@@ -34,80 +36,80 @@ export function IncidentCard({ incident, onPressSolution }: IncidentCardProps) {
     setExpanded(!expanded)
   }
 
-  const startDate = new Date(incident.start_time).toLocaleDateString()
-  const endDate = new Date(incident.end_time).toLocaleDateString()
+  const startDate = new Date(incident.start_time).toLocaleDateString('es-AR')
+  const endDate = new Date(incident.end_time).toLocaleDateString('es-AR')
 
   return (
-    <View style={[styles.glowWrapper, { shadowColor: severityColor }]}>
-      <GlassCard style={[styles.card, { borderLeftWidth: 3, borderLeftColor: severityColor }]}>
-        <TouchableOpacity onPress={toggleExpand} activeOpacity={0.7} style={styles.header}>
-          <View style={styles.headerLeft}>
-            <AppText style={styles.code}>{incident.code}</AppText>
-            <AppText style={styles.classification} numberOfLines={1}>{incident.classification}</AppText>
-          </View>
-          <View style={styles.headerRight}>
-            <SeverityBadge severity={incident.severity} />
-            {expanded ? <ChevronUp size={18} color={theme.colors.textMuted} /> : <ChevronDown size={18} color={theme.colors.textMuted} />}
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <AlertCircle size={14} color={theme.colors.textDim} />
-            <AppText style={styles.metaText}>{incident.occurrences} ocurrencias</AppText>
-          </View>
-          <View style={styles.metaItem}>
-            <Calendar size={14} color={theme.colors.textDim} />
-            <AppText style={styles.metaText}>{startDate} - {endDate}</AppText>
-          </View>
+    <GlassCard style={[styles.card, { borderLeftWidth: 3, borderLeftColor: severityColor }]}>
+      <TouchableOpacity onPress={toggleExpand} activeOpacity={0.7} style={styles.header}>
+        <View style={styles.headerLeft}>
+          <AppText style={styles.code}>{incident.code}</AppText>
+          <AppText style={styles.classification} numberOfLines={1}>{incident.classification}</AppText>
         </View>
+        <View style={styles.headerRight}>
+          <SeverityBadge severity={incident.severity} />
+          {expanded ? <ChevronUp size={18} color={theme.colors.textMuted} /> : <ChevronDown size={18} color={theme.colors.textMuted} />}
+        </View>
+      </TouchableOpacity>
 
-        {expanded && (
-          <View style={styles.expandableContent}>
-            <View style={styles.divider} />
-            <AppText style={styles.subtitle}>Detalle del Rango de Contadores:</AppText>
-            <AppText style={styles.detailText}>
-              Páginas: {incident.counter_range[0].toLocaleString()} – {incident.counter_range[1].toLocaleString()}
+      <View style={styles.metaRow}>
+        <View style={styles.metaItem}>
+          <AlertCircle size={14} color={theme.colors.textDim} />
+          <AppText style={styles.metaText}>{incident.occurrences} ocurrencias</AppText>
+        </View>
+        <View style={styles.metaItem}>
+          <Calendar size={14} color={theme.colors.textDim} />
+          <AppText style={styles.metaText}>{startDate} - {endDate}</AppText>
+        </View>
+      </View>
+
+      {expanded && (
+        <View style={styles.expandableContent}>
+          <View style={styles.divider} />
+          <AppText style={styles.subtitle}>Detalle del Rango de Contadores:</AppText>
+          <AppText style={styles.detailText}>
+            Páginas: {incident.counter_range[0].toLocaleString()} – {incident.counter_range[1].toLocaleString()}
+          </AppText>
+
+          {onPressSolution && (
+            <TouchableOpacity
+              style={styles.solutionButton}
+              onPress={() => onPressSolution(incident.code)}
+            >
+              <AppText style={styles.solutionButtonText}>Ver Procedimiento Técnico</AppText>
+            </TouchableOpacity>
+          )}
+
+          <AppText style={styles.subtitle}>Eventos en el Log ({incident.events.length}):</AppText>
+          {incident.events.slice(0, MAX_EVENTS).map((evt, idx) => (
+            <View key={idx} style={styles.eventItem}>
+              <AppText style={styles.eventTime}>
+                {new Date(evt.timestamp).toLocaleString('es-AR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                })} · Cnt: {evt.counter.toLocaleString()}
+              </AppText>
+              {evt.firmware && <AppText style={styles.eventFw}>FW: {evt.firmware}</AppText>}
+            </View>
+          ))}
+          {incident.events.length > MAX_EVENTS && (
+            <AppText style={styles.moreEventsText}>
+              + {incident.events.length - MAX_EVENTS} eventos más...
             </AppText>
-
-            {onPressSolution && (
-              <TouchableOpacity
-                style={styles.solutionButton}
-                onPress={() => onPressSolution(incident.code)}
-              >
-                <AppText style={styles.solutionButtonText}>Ver Procedimiento Técnico</AppText>
-              </TouchableOpacity>
-            )}
-
-            <AppText style={styles.subtitle}>Eventos en el Log ({incident.events.length}):</AppText>
-            {incident.events.slice(0, 5).map((evt, idx) => (
-              <View key={idx} style={styles.eventItem}>
-                <AppText style={styles.eventTime}>
-                  {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · Cnt: {evt.counter.toLocaleString()}
-                </AppText>
-                {evt.firmware && <AppText style={styles.eventFw}>FW: {evt.firmware}</AppText>}
-              </View>
-            ))}
-            {incident.events.length > 5 && (
-              <AppText style={styles.moreEventsText}>+ {incident.events.length - 5} eventos adicionales...</AppText>
-            )}
-          </View>
-        )}
-      </GlassCard>
-    </View>
+          )}
+        </View>
+      )}
+    </GlassCard>
   )
 }
 
 const styles = StyleSheet.create({
-  glowWrapper: {
-    marginBottom: theme.spacing.md,
-    borderRadius: theme.radius.xl,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-  },
   card: {
-    marginBottom: 0,
+    marginBottom: theme.spacing.md,
   },
   header: {
     flexDirection: 'row',

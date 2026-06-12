@@ -25,6 +25,7 @@ export function SeverityFilter({ active, onToggle }: SeverityFilterProps) {
             <Pressable
               key={key}
               onPress={() => onToggle(key)}
+              hitSlop={{ top: 9, bottom: 9, left: 4, right: 4 }}
               style={[
                 styles.chip,
                 isActive

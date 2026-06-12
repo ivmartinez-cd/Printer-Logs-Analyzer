@@ -27,25 +27,18 @@ export function AIDiagnosticResult({ result, loading, error }: AIDiagnosticResul
   if (loading) {
     return (
       <GlassCard style={styles.card}>
-        <LinearGradient
-          colors={['rgba(0, 161, 224, 0.06)', 'rgba(99, 102, 241, 0.06)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          <View style={styles.loadingContainer}>
-            <Sparkles size={20} color={theme.colors.warning} />
-            <AppText style={styles.loadingText}>Consultando Copiloto Técnico...</AppText>
-            <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 12 }} />
-          </View>
-        </LinearGradient>
+        <View style={styles.loadingContainer}>
+          <Sparkles size={20} color={theme.colors.warning} />
+          <AppText style={styles.loadingText}>Consultando Copiloto Técnico...</AppText>
+          <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 12 }} />
+        </View>
       </GlassCard>
     )
   }
 
   if (error) {
     return (
-      <GlassCard style={[styles.card, { borderColor: 'rgba(255,82,82,0.2)' }]}>
+      <GlassCard style={styles.card}>
         <View style={styles.errorContainer}>
           <AlertTriangle size={18} color={theme.colors.error} />
           <AppText style={styles.errorText}>{error}</AppText>
@@ -61,42 +54,35 @@ export function AIDiagnosticResult({ result, loading, error }: AIDiagnosticResul
   const recommendations = parseSection(text, '(?:Recomendaci|Acciones|Plan)')
 
   return (
-    <GlassCard style={[styles.card, { borderColor: 'rgba(245, 158, 11, 0.15)' }]}>
-      <LinearGradient
-        colors={['rgba(0, 161, 224, 0.06)', 'rgba(99, 102, 241, 0.06)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        <View style={styles.header}>
-          <Sparkles size={16} color={theme.colors.warning} />
-          <AppText style={styles.title}>Diagnóstico IA</AppText>
-          {result.urgencia && (
-            <View style={[styles.severityBadge, { backgroundColor: severityBg(result.urgencia) }]}>
-              <AppText style={styles.severityText}>{result.urgencia}</AppText>
-            </View>
-          )}
-        </View>
-
-        {/* Full diagnosis text */}
-        <AppText style={styles.bodyText}>{text}</AppText>
-
-        {/* Parsed recommendations if any */}
-        {recommendations.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Lightbulb size={14} color={theme.colors.primary} />
-              <AppText style={styles.sectionTitle}>Acciones Recomendadas</AppText>
-            </View>
-            {recommendations.slice(0, 5).map((r, i) => (
-              <View key={i} style={styles.bulletRow}>
-                <CheckCircle size={12} color={theme.colors.success} />
-                <AppText style={styles.bulletText}>{r}</AppText>
-              </View>
-            ))}
+    <GlassCard style={styles.card}>
+      <View style={styles.header}>
+        <Sparkles size={16} color={theme.colors.warning} />
+        <AppText style={styles.title}>Diagnóstico IA</AppText>
+        {result.urgencia && (
+          <View style={[styles.severityBadge, { backgroundColor: severityBg(result.urgencia) }]}>
+            <AppText style={styles.severityText}>{result.urgencia}</AppText>
           </View>
         )}
-      </LinearGradient>
+      </View>
+
+      {/* Full diagnosis text */}
+      <AppText style={styles.bodyText}>{text}</AppText>
+
+      {/* Parsed recommendations if any */}
+      {recommendations.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Lightbulb size={14} color={theme.colors.primary} />
+            <AppText style={styles.sectionTitle}>Acciones Recomendadas</AppText>
+          </View>
+          {recommendations.slice(0, 5).map((r, i) => (
+            <View key={i} style={styles.bulletRow}>
+              <CheckCircle size={12} color={theme.colors.success} />
+              <AppText style={styles.bulletText}>{r}</AppText>
+            </View>
+          ))}
+        </View>
+      )}
     </GlassCard>
   )
 }
@@ -111,10 +97,6 @@ function severityBg(sev: string): string {
 const styles = StyleSheet.create({
   card: {
     marginBottom: theme.spacing.lg,
-  },
-  gradient: {
-    margin: -theme.spacing.lg,
-    padding: theme.spacing.lg,
   },
   loadingContainer: {
     alignItems: 'center',

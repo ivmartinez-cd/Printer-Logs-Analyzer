@@ -187,6 +187,12 @@ async def extract_sds_logs(
                 "insight_configured": True,
             }
 
+        if not info or info.get("device_id") is None:
+            raise HTTPException(
+                status_code=404,
+                detail="El equipo no se encuentra en la base del SDS",
+            )
+
         device_id = str(info["device_id"])
         tsv_text = ""
         realtime_consumables = []
