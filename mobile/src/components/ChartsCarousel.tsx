@@ -8,7 +8,8 @@ import { Activity, BarChart2, Grid } from 'lucide-react-native'
 
 const { width: screenWidth } = Dimensions.get('window')
 const CARD_PADDING = 16
-const CHART_WIDTH = screenWidth - (CARD_PADDING * 2) - 24
+const PAGE_WIDTH = screenWidth - 32 - (CARD_PADDING * 2)
+const CHART_WIDTH = PAGE_WIDTH - 16
 const CHART_HEIGHT = 160
 
 interface ApiEvent {
@@ -211,10 +212,10 @@ export function ChartsCarousel({ events, topCodes, activeSeverities, onPressErro
           setActiveIndex(index)
         }}
         scrollEventThrottle={16}
-        contentContainerStyle={{ width: (screenWidth - 32) * 3 }}
+        style={{ width: PAGE_WIDTH }}
       >
         {/* GRÁFICO 1: Volumen de Incidencias */}
-        <View style={[styles.chartPage, { width: screenWidth - 32 - (CARD_PADDING * 2) }]}>
+        <View style={[styles.chartPage, { width: PAGE_WIDTH }]}>
           <View style={styles.chartTitleRow}>
             <Activity size={16} color={theme.colors.primary} />
             <AppText style={styles.chartTitle}>Volumen de Incidencias (Tendencia)</AppText>
@@ -325,7 +326,7 @@ export function ChartsCarousel({ events, topCodes, activeSeverities, onPressErro
         </View>
 
         {/* GRÁFICO 2: Errores más Frecuentes (Detalle) */}
-        <View style={[styles.chartPage, { width: screenWidth - 32 - (CARD_PADDING * 2) }]}>
+        <View style={[styles.chartPage, { width: PAGE_WIDTH }]}>
           <View style={styles.chartTitleRow}>
             <BarChart2 size={16} color={theme.colors.primary} />
             <AppText style={styles.chartTitle}>Errores Frecuentes (Top 5)</AppText>
@@ -366,7 +367,7 @@ export function ChartsCarousel({ events, topCodes, activeSeverities, onPressErro
         </View>
 
         {/* GRÁFICO 3: Distribución Temporal (Heatmap) */}
-        <View style={[styles.chartPage, { width: screenWidth - 32 - (CARD_PADDING * 2) }]}>
+        <View style={[styles.chartPage, { width: PAGE_WIDTH }]}>
           <View style={styles.chartTitleRow}>
             <Grid size={16} color={theme.colors.primary} />
             <AppText style={styles.chartTitle}>Frecuencia de Errores por Hora y Día</AppText>
@@ -416,6 +417,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: theme.spacing.lg,
     padding: CARD_PADDING,
+    overflow: 'hidden',
   },
   headerRow: {
     flexDirection: 'row',
@@ -443,7 +445,7 @@ const styles = StyleSheet.create({
     width: 14,
   },
   chartPage: {
-    marginRight: CARD_PADDING * 2,
+    alignItems: 'center',
   },
   chartTitleRow: {
     flexDirection: 'row',

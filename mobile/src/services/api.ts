@@ -12,6 +12,7 @@ import type {
   ExtractSdsLogsResponse,
   ResolveDeviceResponse,
   InsightMeter,
+  RemoteEwsResponse,
   RealtimeConsumable,
   FleetClientSummary,
   FleetClientDetail,
@@ -394,5 +395,21 @@ export async function getSolutionProxy(
     20_000
   )
   return handleResponse<{ content: string | null; source: 'cache' | 'live'; url: string | null }>(res)
+}
+
+export async function getRemoteEwsAccess(
+  serial: string,
+  signal?: AbortSignal
+): Promise<RemoteEwsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/devices/${encodeURIComponent(serial)}/remote-ews`,
+    {
+      method: 'GET',
+      headers: apiHeaders(),
+      signal,
+    },
+    15_000
+  )
+  return handleResponse<RemoteEwsResponse>(res)
 }
 

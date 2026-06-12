@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, TouchableOpacity, Linking } from 'react-native'
 import { AppText } from '../components/AppText'
-import { Camera, FileText, Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle, Calendar, X } from 'lucide-react-native'
+import { Camera, FileText, Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle, Calendar, X, Globe } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
@@ -19,7 +19,7 @@ import { EventsList } from '../components/EventsList'
 import { AIDiagnosticResult } from '../components/AIDiagnosticResult'
 import { ConsumableBar } from '../components/ConsumableBar'
 import { InsightAlertsPanel } from '../components/InsightAlertsPanel'
-import { extractSdsLogs, aiDiagnose, listFleetClients, getFleetClient, getSolutionProxy, getInsightAlerts } from '../services/api'
+import { extractSdsLogs, aiDiagnose, listFleetClients, getFleetClient, getSolutionProxy, getInsightAlerts, getRemoteEwsAccess } from '../services/api'
 import { theme } from '../theme'
 import type { AIDiagnosisResponse, RealtimeConsumable, FleetClientSummary, FleetDeviceSummary, DeviceAlertsResponse } from '../types/api'
 import { SelectionBottomSheet } from '../components/SelectionBottomSheet'
@@ -96,6 +96,7 @@ export function AnalyzerScreen() {
   const [selectedDevice, setSelectedDevice] = useState<FleetDeviceSummary | null>(null)
   const [clientSheetOpen, setClientSheetOpen] = useState(false)
   const [deviceSheetOpen, setDeviceSheetOpen] = useState(false)
+  const [loadingRemoteEws, setLoadingRemoteEws] = useState(false)
 
   // Text search filter inside detailed analysis
   const [textFilter, setTextFilter] = useState('')
@@ -287,6 +288,23 @@ export function AnalyzerScreen() {
       setAiError(err.message || 'Error al consultar la IA')
     } finally {
       setAiLoading(false)
+    }
+  }
+
+  const handleRemoteEws = async () => {
+    if (!currentSerial) return
+    setLoadingRemoteEws(true)
+    try {
+      const res = await getRemoteEwsAccess(currentSerial)
+      if (res.ews_url) {
+        await Linking.openURL(res.ews_url)
+      } else {
+        toast.showError('No se recibió la URL de EWS Remoto.')
+      }
+    } catch (err: any) {
+      toast.showError(err.message || 'Error al obtener acceso a EWS Remoto')
+    } finally {
+      setLoadingRemoteEws(false)
     }
   }
 
@@ -670,12 +688,31 @@ export function AnalyzerScreen() {
           <View style={styles.resultsContainer}>
 
             {/* Header del Panel */}
-            <View style={styles.panelHeader}>
-              <AppText style={styles.panelTitle}>Panel de errores</AppText>
-              {(currentModelName || currentSerial) && (
-                <AppText style={styles.panelMeta}>
-                  {currentModelName}{currentSerial ? ` · ${currentSerial}` : ''}
-                </AppText>
+            <View style={styles.panelHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <AppText style={styles.panelTitle}>Panel de errores</AppText>
+                {(currentModelName || currentSerial) && (
+                  <AppText style={styles.panelMeta}>
+                    {currentModelName}{currentSerial ? ` · ${currentSerial}` : ''}
+                  </AppText>
+                )}
+              </View>
+              {currentSerial && (
+                <TouchableOpacity
+                  onPress={handleRemoteEws}
+                  disabled={loadingRemoteEws}
+                  style={styles.ewsButton}
+                  activeOpacity={0.7}
+                >
+                  {loadingRemoteEws ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Globe size={14} color="#fff" />
+                      <AppText style={styles.ewsButtonText}>EWS Remoto</AppText>
+                    </>
+                  )}
+                </TouchableOpacity>
               )}
             </View>
 
@@ -1071,6 +1108,26 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontSize: 12,
     marginTop: 2,
+  },
+  panelHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  ewsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: theme.radius.md,
+    gap: 6,
+  },
+  ewsButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontFamily: theme.fontFamily.bold,
   },
   kpiScroll: {
     paddingBottom: theme.spacing.md,
