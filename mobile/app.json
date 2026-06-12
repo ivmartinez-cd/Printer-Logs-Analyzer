@@ -2,6 +2,7 @@
   "expo": {
     "name": "Printer Logs Analyzer",
     "slug": "printer-logs-analyzer-mobile",
+    "scheme": "hplogs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

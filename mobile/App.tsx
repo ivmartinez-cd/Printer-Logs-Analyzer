@@ -38,6 +38,16 @@ const AppTheme = {
   },
 }
 
+// Configuración de Deep Linking para abrir la app desde otras aplicaciones
+const linking = {
+  prefixes: ['hplogs://'],
+  config: {
+    screens: {
+      Analyzer: 'analyze/:serial',
+    },
+  },
+}
+
 function App() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -57,7 +67,7 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={AppTheme}>
+        <NavigationContainer theme={AppTheme} linking={linking}>
           <StatusBar style="light" />
           <RootNavigator />
           <ToastOverlay />
