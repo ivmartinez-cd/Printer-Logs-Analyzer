@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
-import { StyleSheet, View, TextInput, TouchableOpacity, Modal, KeyboardAvoidingView, Platform, FlatList, ActivityIndicator } from 'react-native'
+import { StyleSheet, View, TextInput, TouchableOpacity, Modal, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
 import { AppText } from './AppText'
 import { X, Search } from 'lucide-react-native'
 import { theme } from '../theme'
@@ -103,10 +104,11 @@ export function SelectionBottomSheet({
                 <AppText style={styles.emptyText}>No se encontraron elementos.</AppText>
               </View>
             ) : (
-              <FlatList
+              <FlashList
                 data={filteredItems}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
+                estimatedItemSize={60}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     style={styles.itemRow}

@@ -61,7 +61,7 @@ function ScalePressable({ onPress, disabled, style, children, accessibilityLabel
   )
 }
 
-export function AnalyzerScreen() {
+export function AnalyzerScreen({ route }: any) {
   const isOnline = useOnlineStatus()
   const toast = useToast()
   const insets = useSafeAreaInsets()
@@ -76,6 +76,19 @@ export function AnalyzerScreen() {
   const [serial, setSerial] = useState('')
   const [extracting, setExtracting] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
+
+  // Autodisparar búsqueda si se ingresa por Deep Link (ej: hplogs://analyze/CNB1H23456)
+  const routeSerial = route?.params?.serial
+  useEffect(() => {
+    if (routeSerial) {
+      const trimmed = routeSerial.trim().toUpperCase()
+      setSerial(trimmed)
+      const timer = setTimeout(() => {
+        handleSdsSearchWithSerial(trimmed)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [routeSerial])
 
   // Barcode scanner states
   const [scannerOpen, setScannerOpen] = useState(false)

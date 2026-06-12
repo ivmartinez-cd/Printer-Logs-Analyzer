@@ -11,9 +11,19 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter'
+import * as Sentry from '@sentry/react-native'
 import { RootNavigator } from './src/navigation/RootNavigator'
 import { ToastOverlay } from './src/components/ToastOverlay'
 import { theme } from './src/theme'
+
+// Inicializar Sentry para reportar errores en producción
+Sentry.init({
+  dsn: 'https://placeholder@o0.ingest.sentry.io/0', // Reemplazar con el DSN real del proyecto
+  tracesSampleRate: 1.0,
+  _experiments: {
+    profilesSampleRate: 1.0,
+  },
+})
 
 // Forzar el tema oscuro por defecto basado en los tokens premium
 const AppTheme = {
@@ -28,7 +38,17 @@ const AppTheme = {
   },
 }
 
-export default function App() {
+// Configuración de Deep Linking para abrir la app desde otras aplicaciones
+const linking = {
+  prefixes: ['hplogs://'],
+  config: {
+    screens: {
+      Analyzer: 'analyze/:serial',
+    },
+  },
+}
+
+function App() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -47,7 +67,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={AppTheme}>
+        <NavigationContainer theme={AppTheme} linking={linking}>
           <StatusBar style="light" />
           <RootNavigator />
           <ToastOverlay />
@@ -56,3 +76,5 @@ export default function App() {
     </GestureHandlerRootView>
   )
 }
+
+export default Sentry.wrap(App)
