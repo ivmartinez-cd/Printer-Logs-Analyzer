@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native'
 import { AppText } from '../components/AppText'
-import { Camera, FileText, Search, ShieldAlert, Cpu, Sparkles } from 'lucide-react-native'
+import { Camera, FileText, Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
@@ -12,8 +12,15 @@ import { GlassCard } from '../components/GlassCard'
 import { KPICard } from '../components/KPICard'
 import { IncidentCard } from '../components/IncidentCard'
 import { LogImportSheet } from '../components/LogImportSheet'
-import { extractSdsLogs } from '../services/api'
+import { SeverityFilter } from '../components/SeverityFilter'
+import { TopErrorsBar } from '../components/TopErrorsBar'
+import { CollapsibleSection } from '../components/CollapsibleSection'
+import { EventsList } from '../components/EventsList'
+import { AIDiagnosticResult } from '../components/AIDiagnosticResult'
+import { ConsumableBar } from '../components/ConsumableBar'
+import { extractSdsLogs, aiDiagnose } from '../services/api'
 import { theme } from '../theme'
+import type { AIDiagnosisResponse, RealtimeConsumable } from '../types/api'
 
 // Botón con micro-animación de escala al presionar
 function ScalePressable({ onPress, disabled, style, children }: {
@@ -55,6 +62,29 @@ export function AnalyzerScreen() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
+  const [consumables, setConsumables] = useState<RealtimeConsumable[]>([])
+  const [currentModelName, setCurrentModelName] = useState<string | null>(null)
+  const [currentSerial, setCurrentSerial] = useState<string | null>(null)
+
+  // Severity filter state
+  const [activeSeverities, setActiveSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
+
+  // AI diagnosis state
+  const [aiResult, setAiResult] = useState<AIDiagnosisResponse | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+
+  const handleSeverityToggle = useCallback((sev: string) => {
+    setActiveSeverities(prev => {
+      const next = new Set(prev)
+      if (next.has(sev)) {
+        if (next.size > 1) next.delete(sev)
+      } else {
+        next.add(sev)
+      }
+      return next
+    })
+  }, [])
 
   // Búsqueda automática vía SDS
   const handleSdsSearch = async () => {
@@ -66,11 +96,16 @@ export function AnalyzerScreen() {
     }
 
     setExtracting(true)
+    setAiResult(null)
+    setAiError(null)
     try {
       const sdsRes = await extractSdsLogs(trimmed)
+      setConsumables(sdsRes.realtime_consumables || [])
+      setCurrentModelName(sdsRes.model_name_sds || null)
+      setCurrentSerial(trimmed)
       if (sdsRes.logs_text) {
         await handleAnalyze(sdsRes.logs_text, `Portal_SDS_${trimmed}.tsv`, sdsRes.suggested_model_id)
-        toast.showSuccess(`Logs extraídos para el serial ${trimmed}`)
+        toast.showSuccess(`Logs extraídos para ${trimmed}`)
       } else {
         toast.showWarning('No se encontraron logs para este número de serie.')
       }
@@ -83,11 +118,36 @@ export function AnalyzerScreen() {
 
   // Pegar logs manualmente
   const handleImportText = async (text: string) => {
+    setAiResult(null)
+    setAiError(null)
+    setConsumables([])
+    setCurrentModelName(null)
+    setCurrentSerial(null)
     try {
       await handleAnalyze(text, 'Texto Pegado.tsv')
       toast.showSuccess('Logs importados correctamente')
     } catch (err: any) {
       toast.showError(err.message || 'Error al procesar logs')
+    }
+  }
+
+  // AI Diagnosis
+  const handleAiDiagnose = async () => {
+    if (!result) return
+    setAiLoading(true)
+    setAiError(null)
+    setAiResult(null)
+    try {
+      const res = await aiDiagnose(result, {
+        consumables,
+        serialNumber: currentSerial,
+        modelName: currentModelName,
+      })
+      setAiResult(res)
+    } catch (err: any) {
+      setAiError(err.message || 'Error al consultar la IA')
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -102,6 +162,59 @@ export function AnalyzerScreen() {
 
   const incidents = result?.incidents ?? []
   const events = result?.events ?? []
+
+  // Filtered data based on severity
+  const filteredIncidents = useMemo(
+    () => incidents.filter(i => activeSeverities.has(i.severity.toUpperCase())),
+    [incidents, activeSeverities]
+  )
+  const filteredEvents = useMemo(
+    () => events.filter(e => activeSeverities.has(e.type.toUpperCase())),
+    [events, activeSeverities]
+  )
+
+  // KPI computations
+  const errorIncidents = useMemo(
+    () => incidents.filter(i => i.severity.toUpperCase() === 'ERROR'),
+    [incidents]
+  )
+  const lastErrorIncident = useMemo(
+    () => errorIncidents.length > 0
+      ? errorIncidents.reduce((latest, inc) =>
+          new Date(inc.end_time) > new Date(latest.end_time) ? inc : latest
+        )
+      : null,
+    [errorIncidents]
+  )
+
+  // Top error codes
+  const topCodes = useMemo(() => {
+    const map = new Map<string, { count: number; severity: string }>()
+    for (const inc of incidents) {
+      const existing = map.get(inc.code)
+      if (existing) {
+        existing.count += inc.occurrences
+      } else {
+        map.set(inc.code, { count: inc.occurrences, severity: inc.severity })
+      }
+    }
+    return Array.from(map.entries())
+      .map(([name, { count, severity }]) => ({ name, count, severity }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+  }, [incidents])
+
+  // Error rate
+  const errorRate = useMemo(() => {
+    if (!result || events.length === 0) return null
+    const errorEvents = events.filter(e => e.type.toUpperCase() === 'ERROR')
+    if (errorEvents.length === 0) return null
+    const counters = events.map(e => e.counter).filter(c => c > 0)
+    if (counters.length < 2) return null
+    const totalPages = Math.max(...counters) - Math.min(...counters)
+    if (totalPages <= 0) return null
+    return Math.round(totalPages / errorEvents.length)
+  }, [result, events])
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -163,77 +276,141 @@ export function AnalyzerScreen() {
         {result && !loading && (
           <View style={styles.resultsContainer}>
 
+            {/* Header del Panel */}
+            <View style={styles.panelHeader}>
+              <AppText style={styles.panelTitle}>Panel de errores</AppText>
+              {(currentModelName || currentSerial) && (
+                <AppText style={styles.panelMeta}>
+                  {currentModelName}{currentSerial ? ` · ${currentSerial}` : ''}
+                </AppText>
+              )}
+            </View>
+
             {/* KPIs en horizontal */}
-            <AppText style={styles.sectionTitle}>Métricas del Log</AppText>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.kpiScroll}
             >
               <KPICard
-                title="Eventos Totales"
-                value={events.length}
-                icon={<FileText size={16} color={theme.colors.info} />}
-                accentColor={theme.colors.info}
+                title="ÚLTIMO ERROR CRÍTICO"
+                value={lastErrorIncident?.code ?? '—'}
+                icon={<AlertTriangle size={16} color={theme.colors.error} />}
+                accentColor={theme.colors.error}
               />
               <KPICard
-                title="Críticos"
-                value={incidents.filter(i => i.severity === 'ERROR').length}
+                title="ERRORES CRÍTICOS"
+                value={errorIncidents.length}
                 icon={<ShieldAlert size={16} color={theme.colors.error} />}
                 accentColor={theme.colors.error}
               />
               <KPICard
-                title="Líneas procesadas"
-                value={result.total_lines}
-                icon={<Cpu size={16} color={theme.colors.success} />}
-                accentColor={theme.colors.success}
+                title="INCIDENCIAS ACTIVAS"
+                value={incidents.length}
+                icon={<Cpu size={16} color={theme.colors.warning} />}
+                accentColor={theme.colors.warning}
+              />
+              <KPICard
+                title="TASA DE ERRORES"
+                value={errorRate ? `1 c/${errorRate} pág` : '—'}
+                icon={<TrendingDown size={16} color={theme.colors.info} />}
+                accentColor={theme.colors.info}
               />
             </ScrollView>
 
-            {/* Panel de Diagnóstico IA */}
-            <GlassCard style={styles.iaCard}>
-              <LinearGradient
-                colors={['rgba(0, 161, 224, 0.08)', 'rgba(99, 102, 241, 0.08)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.iaGradient}
-              >
-                <View style={styles.iaHeader}>
-                  <Sparkles size={18} color={theme.colors.warning} />
-                  <AppText style={styles.iaTitle}>Asistente de IA (Diagnóstico)</AppText>
-                </View>
-                <AppText style={styles.iaText}>
-                  Presiona "Ver Diagnóstico IA" para solicitar una explicación inteligente de las fallas detectadas y un plan de acción sugerido.
-                </AppText>
-                <ScalePressable onPress={() => {}} style={styles.iaButtonPressable}>
-                  <LinearGradient
-                    colors={[theme.colors.primary, theme.colors.accentSecondary]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.iaButton}
-                  >
-                    <AppText style={styles.iaButtonText}>Consultar Copiloto Técnico</AppText>
-                  </LinearGradient>
-                </ScalePressable>
-              </LinearGradient>
-            </GlassCard>
+            {/* Filtros de severidad */}
+            <SeverityFilter active={activeSeverities} onToggle={handleSeverityToggle} />
 
-            {/* Lista de Incidentes */}
-            <AppText style={styles.sectionTitle}>Incidentes Detectados ({incidents.length})</AppText>
-            {incidents.length === 0 ? (
-              <AppText style={styles.emptyText}>No se detectaron fallas críticas en este log.</AppText>
-            ) : (
-              incidents.map((inc, idx) => (
-                <Animated.View key={inc.id} entering={FadeInDown.delay(idx * 60).duration(350)}>
-                  <IncidentCard
-                    incident={inc}
-                    onPressSolution={(code) => {
-                      Alert.alert('Solución Técnica', `Buscando guía técnica para el código ${code}...`)
-                    }}
-                  />
-                </Animated.View>
-              ))
+            {/* Top errores más frecuentes */}
+            <Animated.View entering={FadeInDown.delay(100).duration(350)}>
+              <TopErrorsBar topCodes={topCodes} activeSeverities={activeSeverities} />
+            </Animated.View>
+
+            {/* Panel de Diagnóstico IA */}
+            {!aiResult && !aiLoading && (
+              <GlassCard style={styles.iaCard}>
+                <LinearGradient
+                  colors={['rgba(0, 161, 224, 0.08)', 'rgba(99, 102, 241, 0.08)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.iaGradient}
+                >
+                  <View style={styles.iaHeader}>
+                    <View style={styles.iaDot} />
+                    <AppText style={styles.iaTitle}>✨ Diagnóstico con IA (Recomendado)</AppText>
+                  </View>
+                  <ScalePressable onPress={handleAiDiagnose} style={styles.iaButtonPressable}>
+                    <LinearGradient
+                      colors={[theme.colors.primary, theme.colors.accentSecondary]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.iaButton}
+                    >
+                      <AppText style={styles.iaButtonText}>Consultar Copiloto Técnico</AppText>
+                    </LinearGradient>
+                  </ScalePressable>
+                </LinearGradient>
+              </GlassCard>
             )}
+
+            {/* AI Diagnosis Result */}
+            {(aiLoading || aiResult || aiError) && (
+              <Animated.View entering={FadeInDown.duration(350)}>
+                <AIDiagnosticResult result={aiResult} loading={aiLoading} error={aiError} />
+              </Animated.View>
+            )}
+
+            {/* ANÁLISIS DETALLADO - Paneles colapsables */}
+            <AppText style={styles.sectionLabel}>ANÁLISIS DETALLADO</AppText>
+
+            {/* Incidencias detectadas */}
+            <CollapsibleSection
+              title="Incidencias detectadas"
+              icon="📋"
+              badge={`${filteredIncidents.length} incidencias`}
+            >
+              {filteredIncidents.length === 0 ? (
+                <AppText style={styles.emptyText}>No se detectaron fallas en este filtro.</AppText>
+              ) : (
+                filteredIncidents.map((inc, idx) => (
+                  <Animated.View key={inc.id} entering={FadeInDown.delay(idx * 40).duration(300)}>
+                    <IncidentCard
+                      incident={inc}
+                      onPressSolution={(code) => {
+                        Alert.alert('Solución Técnica', `Buscando guía técnica para el código ${code}...`)
+                      }}
+                    />
+                  </Animated.View>
+                ))
+              )}
+            </CollapsibleSection>
+
+            {/* Eventos del período */}
+            <CollapsibleSection
+              title="Eventos del período"
+              icon="📊"
+              badge={`${filteredEvents.length} eventos`}
+            >
+              <EventsList events={filteredEvents} />
+            </CollapsibleSection>
+
+            {/* Consumibles en tiempo real */}
+            {consumables.length > 0 && (
+              <CollapsibleSection
+                title={`Estado de consumibles en tiempo real (${consumables.length})`}
+                icon="⚙️"
+              >
+                {consumables.map((c, i) => (
+                  <ConsumableBar
+                    key={i}
+                    label={c.description || c.type}
+                    percentage={c.percentLeft}
+                    subtitle={c.sku}
+                  />
+                ))}
+              </CollapsibleSection>
+            )}
+
           </View>
         )}
       </ScrollView>
@@ -351,19 +528,34 @@ const styles = StyleSheet.create({
   resultsContainer: {
     marginTop: theme.spacing.sm,
   },
-  sectionTitle: {
-    color: theme.colors.text,
-    fontSize: 16,
-    fontFamily: theme.fontFamily.bold,
+  panelHeader: {
     marginBottom: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+  },
+  panelTitle: {
+    color: theme.colors.text,
+    fontSize: 18,
+    fontFamily: theme.fontFamily.bold,
+  },
+  panelMeta: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    marginTop: 2,
   },
   kpiScroll: {
     paddingBottom: theme.spacing.md,
+    gap: 10,
+  },
+  sectionLabel: {
+    color: theme.colors.textDim,
+    fontSize: 10,
+    fontFamily: theme.fontFamily.bold,
+    letterSpacing: 1.5,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   iaCard: {
-    marginBottom: theme.spacing.xl,
-    borderColor: 'rgba(245, 158, 11, 0.2)',
+    marginBottom: theme.spacing.lg,
+    borderColor: 'rgba(99, 102, 241, 0.2)',
   },
   iaGradient: {
     margin: -theme.spacing.lg,
@@ -373,18 +565,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  iaDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.colors.primary,
   },
   iaTitle: {
     color: theme.colors.text,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: theme.fontFamily.bold,
-  },
-  iaText: {
-    color: theme.colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: theme.spacing.md,
+    flex: 1,
   },
   iaButtonPressable: {
     borderRadius: theme.radius.md,
@@ -403,5 +596,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textDim,
     fontSize: 13,
     fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 12,
   },
 })
