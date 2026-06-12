@@ -209,6 +209,12 @@ export interface ResolveDeviceResponse {
   suggested_model_name: string | null
 }
 
+export interface RemoteEwsResponse {
+  serial: string
+  device_id: string
+  ews_url: string
+}
+
 export interface ExtractSdsLogsResponse {
   serial: string
   device_id: string

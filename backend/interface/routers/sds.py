@@ -15,6 +15,7 @@ from backend.application.services.insight_service import (
     get_device_meters as _insight_get_device_meters,
 )
 from backend.application.services.sds_web_service import (
+    SDSWebError,
     extract_help_urls,
     html_to_tsv,
 )
@@ -30,6 +31,7 @@ from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.sds import (
     ExtractSdsLogsRequest,
     ExtractSdsLogsResponse,
+    RemoteEwsResponse,
     ResolveDeviceResponse,
 )
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -78,6 +80,62 @@ async def resolve_device_endpoint(
         suggested_model_id=None,
         suggested_model_name=info["model_name"] or "Unknown",
     )
+
+
+@router.get(
+    "/sds/devices/{serial}/remote-ews",
+    response_model=RemoteEwsResponse,
+    dependencies=[Depends(authenticate)],
+    summary="Get a temporary Remote EWS access link for a device",
+    response_description="A one-time link to the device's Embedded Web Server via HP's remote tunnel.",
+)
+@limiter.limit("10/minute")
+async def get_remote_ews_endpoint(
+    request: Request,
+    serial: str,
+    settings: Settings = Depends(get_settings),
+) -> RemoteEwsResponse:
+    if not (settings.sds_web_username and settings.sds_web_password):
+        raise HTTPException(status_code=503, detail="Integración SDS Web no configurada")
+    if not (
+        settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret
+    ):
+        raise HTTPException(status_code=503, detail="Integración Insight API no configurada")
+
+    serial = serial.strip().upper()
+    if not serial:
+        raise HTTPException(status_code=400, detail="Número de serie inválido")
+
+    info = await asyncio.to_thread(
+        _insight_get_device_info,
+        settings.insight_portal_url,
+        settings.insight_api_key,
+        settings.insight_api_secret,
+        serial,
+    )
+    if not info["device_id"]:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado en el Portal")
+
+    device_id = str(info["device_id"])
+
+    def _do_fetch():
+        return get_sds_session(settings).fetch_remote_ews_url(device_id)
+
+    try:
+        ews_url = await asyncio.wait_for(asyncio.to_thread(_do_fetch), timeout=20.0)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504, detail="La solicitud de acceso remoto tardó demasiado."
+        ) from None
+    except SDSWebError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    if not ews_url:
+        raise HTTPException(
+            status_code=404, detail="Acceso remoto EWS no disponible para este dispositivo"
+        )
+
+    return RemoteEwsResponse(serial=serial, device_id=device_id, ews_url=ews_url)
 
 
 @router.post(

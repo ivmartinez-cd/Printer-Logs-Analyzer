@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from backend.application.services.sds_web_service import (
     SDSWebAuthError,
+    SDSWebError,
     SDSWebSession,
     html_to_tsv,
 )
@@ -176,6 +177,51 @@ def test_fetch_kaas_content_expired_returns_none(mock_session_cls, sds_session):
         "https://kaas.hpcloud.hp.com/PROD/v2/render/EXPIRED/ish_111-222-3"
     )
     assert result is None
+
+
+@patch("requests.Session")
+def test_fetch_remote_ews_url_success(mock_session_cls, sds_session):
+    """Extracts the remote EWS launch link from the hpsmart/ews AJAX response."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    raw_xml = """
+    <ekm-ajax-response reload="false">
+        <content><![CDATA[
+            <div id="remoteEWSLaunchLink">
+                <p><a href="https://ews.hpjamservices.com/connection/TOKEN" target="_blank">Iniciar conexion</a></p>
+            </div>
+        ]]></content>
+    </ekm-ajax-response>
+    """
+    sds_session.session.get.return_value = MagicMock(status_code=200, text=raw_xml)
+
+    url = sds_session.fetch_remote_ews_url("239877")
+    assert url == "https://ews.hpjamservices.com/connection/TOKEN"
+
+
+@patch("requests.Session")
+def test_fetch_remote_ews_url_missing_link(mock_session_cls, sds_session):
+    """Returns None when the portal response has no remote EWS link."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    raw_xml = '<ekm-ajax-response><content><![CDATA[<div>No disponible</div>]]></content></ekm-ajax-response>'
+    sds_session.session.get.return_value = MagicMock(status_code=200, text=raw_xml)
+
+    assert sds_session.fetch_remote_ews_url("239877") is None
+
+
+@patch("requests.Session")
+def test_fetch_remote_ews_url_error_status(mock_session_cls, sds_session):
+    """Raises SDSWebError when the portal returns a non-200 status."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    sds_session.session.get.return_value = MagicMock(status_code=500, text="error")
+
+    with pytest.raises(SDSWebError):
+        sds_session.fetch_remote_ews_url("239877")
 
 
 def test_ensure_session_lazy_login(sds_session):

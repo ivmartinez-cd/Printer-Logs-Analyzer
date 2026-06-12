@@ -1,0 +1,574 @@
+[
+  {
+    "id": "1e8010a1-3c28-44c6-bfe8-3c67d4a62fba",
+    "name": "AI - Desconocido - 11/06 16:38",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-11T19:39:01.142221+00:00"
+  },
+  {
+    "id": "a297c6ab-7d9a-41d4-ba40-6e01b82685c9",
+    "name": "AI - Desconocido - 11/06 16:38",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-11T19:38:54.925473+00:00"
+  },
+  {
+    "id": "35849d8e-4704-4489-86af-eecbaaa8a621",
+    "name": "AI - Desconocido - 11/06 10:08",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-11T13:08:47.305478+00:00"
+  },
+  {
+    "id": "d9307653-a074-4175-a94c-2632905c64bc",
+    "name": "AI - Desconocido - 11/06 10:08",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-11T13:08:41.110177+00:00"
+  },
+  {
+    "id": "c16f4a00-6128-47b9-80ec-b9e5f242912a",
+    "name": "AI - Desconocido - 10/06 15:08",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:08:05.082085+00:00"
+  },
+  {
+    "id": "f48e1982-06a1-4f20-8e9e-c2ae9708ed33",
+    "name": "AI - Desconocido - 10/06 15:07",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:07:58.914193+00:00"
+  },
+  {
+    "id": "35430f28-69c2-4542-aac3-7ccfedebf41c",
+    "name": "AI - Desconocido - 10/06 15:06",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:06:59.012888+00:00"
+  },
+  {
+    "id": "ef5b3c52-b529-4bff-80f6-4f63fd52449a",
+    "name": "AI - Desconocido - 10/06 15:06",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:06:52.774881+00:00"
+  },
+  {
+    "id": "f19b54e6-5b37-41f3-9626-34337b92c683",
+    "name": "AI - Desconocido - 10/06 15:05",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:05:44.793763+00:00"
+  },
+  {
+    "id": "5e5e8417-2e03-42c3-b952-1388e7b26626",
+    "name": "AI - Desconocido - 10/06 15:05",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:05:38.587148+00:00"
+  },
+  {
+    "id": "2728474a-abcf-4ced-a64a-ba2b59745ba2",
+    "name": "AI - Desconocido - 10/06 15:04",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:04:51.893923+00:00"
+  },
+  {
+    "id": "7bbf3834-b1dc-478b-b7a1-cd77e5a14bda",
+    "name": "AI - Desconocido - 10/06 15:04",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T18:04:45.685350+00:00"
+  },
+  {
+    "id": "f41268b7-1026-4734-a548-3ab9c9db50c7",
+    "name": "AI - Desconocido - 10/06 14:59",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T17:59:29.911762+00:00"
+  },
+  {
+    "id": "b4578d3f-9f9c-4050-b48f-d9c0129edf64",
+    "name": "AI - Desconocido - 10/06 14:59",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T17:59:23.661999+00:00"
+  },
+  {
+    "id": "c491eb25-cc44-4dae-91c5-fe9605a1d9ca",
+    "name": "AI - Desconocido - 10/06 14:58",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T17:58:03.425261+00:00"
+  },
+  {
+    "id": "4a11b752-b3fb-4466-8d27-8e7ff6192725",
+    "name": "AI - Desconocido - 10/06 14:57",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T17:57:57.242432+00:00"
+  },
+  {
+    "id": "bb51b65d-1a53-4e1f-ace1-93c1dfba005d",
+    "name": "AI - Desconocido - 10/06 14:47",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T17:47:20.664748+00:00"
+  },
+  {
+    "id": "622d88a7-9b81-4210-809f-c96a407d0fdb",
+    "name": "AI - Desconocido - 10/06 14:47",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T17:47:14.475440+00:00"
+  },
+  {
+    "id": "5c9ea072-8de9-4390-abb6-f744e2569fd9",
+    "name": "AI - Desconocido - 10/06 13:48",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T16:49:00.451287+00:00"
+  },
+  {
+    "id": "4da4e89e-477b-40f1-9f53-42b722d22d06",
+    "name": "AI - Desconocido - 10/06 13:48",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T16:48:54.287252+00:00"
+  },
+  {
+    "id": "4a2bbfce-09f4-4404-b207-78e5eb8c490a",
+    "name": "AI - Desconocido - 10/06 13:41",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T16:41:10.094957+00:00"
+  },
+  {
+    "id": "0992323d-2d2c-471d-9df5-c8b1fc26d0fc",
+    "name": "AI - Desconocido - 10/06 13:41",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T16:41:03.880053+00:00"
+  },
+  {
+    "id": "050eeab7-9f39-4b6d-80a3-dff2e9710e72",
+    "name": "AI - Desconocido - 10/06 09:05",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T12:05:05.678446+00:00"
+  },
+  {
+    "id": "246c7abc-f378-418b-abad-fd6430134a7c",
+    "name": "AI - Desconocido - 10/06 09:04",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T12:04:59.551688+00:00"
+  },
+  {
+    "id": "52900605-9455-4d42-b1d0-17d0a66499c2",
+    "name": "AI - Desconocido - 10/06 09:01",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T12:02:01.429764+00:00"
+  },
+  {
+    "id": "7cf68d71-d163-4ce2-a64f-f4123f5e49c5",
+    "name": "AI - Desconocido - 10/06 09:01",
+    "equipment_identifier": "Desconocido",
+    "incidents": [
+      {
+        "code": "53.B0.02",
+        "classification": "Fuser error",
+        "severity": "ERROR",
+        "occurrences": 15,
+        "start_time": "2024-03-14T10:00:00",
+        "end_time": "2024-03-14T12:00:00",
+        "counter_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "global_severity": "ERROR",
+    "ai_diagnosis": "DIAGNÓSTICO: El código 53.B0.02 domina con 15 ocurrencias en ráfagas.\nACCIÓN: Reemplazar la unidad fusora.\nPRIORIDAD: alta",
+    "created_at": "2026-06-10T12:01:55.280042+00:00"
+  }
+]

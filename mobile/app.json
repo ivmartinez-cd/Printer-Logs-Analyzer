@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Printer Logs Analyzer",
+    "slug": "printer-logs-analyzer-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#06080c"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.printerlogs.analyzer"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#06080c"
+      },
+      "package": "com.printerlogs.analyzer",
+      "permissions": [
+        "CAMERA",
+        "INTERNET",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir acceso a la cámara para escanear números de serie y códigos de barras de impresoras."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "07e4da5a-e439-4529-b459-e0c4f896b960"
+      }
+    }
+  }
+}

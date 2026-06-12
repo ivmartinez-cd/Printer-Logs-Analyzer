@@ -10,6 +10,7 @@ import type {
   ErrorSolution,
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
+  RemoteEwsResponse,
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
@@ -27,7 +28,7 @@ import type {
 } from '../types/api'
 
 const API_BASE =
-  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8001'
 
 function normalizeEnvValue(value: string | undefined): string {
   const trimmed = (value ?? '').trim()
@@ -426,6 +427,18 @@ export async function resolveDevice(
     15_000
   )
   return handleResponse<ResolveDeviceResponse>(res)
+}
+
+export async function getRemoteEwsAccess(
+  serial: string,
+  signal?: AbortSignal
+): Promise<RemoteEwsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/devices/${encodeURIComponent(serial)}/remote-ews`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    25_000
+  )
+  return handleResponse<RemoteEwsResponse>(res)
 }
 
 export async function extractSdsLogs(

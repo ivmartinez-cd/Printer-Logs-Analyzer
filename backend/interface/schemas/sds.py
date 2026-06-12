@@ -26,6 +26,14 @@ class ResolveDeviceResponse(BaseModel):
     suggested_model_name: Optional[str] = None
 
 
+class RemoteEwsResponse(BaseModel):
+    """Response of GET /sds/devices/{serial}/remote-ews."""
+
+    serial: str
+    device_id: str
+    ews_url: str
+
+
 class ExtractSdsLogsResponse(BaseModel):
     """Full response for SDS extraction including model info."""
 
