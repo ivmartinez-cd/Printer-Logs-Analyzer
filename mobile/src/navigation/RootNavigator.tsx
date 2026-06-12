@@ -3,13 +3,10 @@ import { Platform, StyleSheet, View } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { AppText } from '../components/AppText'
 import { BlurView } from 'expo-blur'
-import { Activity, Radar, Wrench, Bookmark } from 'lucide-react-native'
+import { Activity } from 'lucide-react-native'
 
 // Pantallas
 import { AnalyzerScreen } from '../screens/AnalyzerScreen'
-import { MonitorScreen } from '../screens/MonitorScreen'
-import { MaintenanceScreen } from '../screens/MaintenanceScreen'
-import { SavedScreen } from '../screens/SavedScreen'
 import { theme } from '../theme'
 
 const Tab = createBottomTabNavigator()
@@ -65,31 +62,8 @@ export function RootNavigator() {
               </AppText>
             </View>
           ),
+          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ color, size }) => <Activity size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="Monitor"
-        component={MonitorScreen}
-        options={{
-          title: 'Monitor de Flota',
-          tabBarIcon: ({ color, size }) => <Radar size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="Maintenance"
-        component={MaintenanceScreen}
-        options={{
-          title: 'Mantenimiento',
-          tabBarIcon: ({ color, size }) => <Wrench size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="Saved"
-        component={SavedScreen}
-        options={{
-          title: 'Guardados',
-          tabBarIcon: ({ color, size }) => <Bookmark size={size} color={color} />,
         }}
       />
     </Tab.Navigator>
