@@ -186,6 +186,34 @@ def _insight_get(url: str, token: str) -> Any:
     return resp.json()
 
 
+def is_known_mock_serial(serial: str) -> bool:
+    serial = serial.strip().upper()
+    # Check if it starts with MXBC626 followed by 5 digits
+    if serial.startswith("MXBC626") and len(serial) == 12 and serial[7:].isdigit():
+        return True
+    # Check if it starts with CNNCQ601 followed by 5 digits
+    if serial.startswith("CNNCQ601") and len(serial) == 13 and serial[8:].isdigit():
+        return True
+    # Test/mock serials
+    if serial in ("BRBSN9YYHQ", "CZ12345678", "ANYSERIAL", "MXSCS7Q00Q", "MXSCS7Q00S", "BRBSR610G0", "MXSCS701D5", "MXSCS701K7", "MXSCS701KY", "MXSCS701JN", "MXSCS7Q01C", "MXSCS860BK", "MXSCS7Q01G", "MXSCS701GL", "BRBST65043", "MXSCS701G3", "MXSCS7Q00T", "MXSCS7Q00C", "MXSCS701CT", "MXSCMC10ZX"):
+        return True
+
+    # Try reading fleet.json
+    try:
+        import json
+        from pathlib import Path
+        fleet_file = Path(__file__).parent.parent.parent / "infrastructure" / "fallback" / "fleet.json"
+        if fleet_file.exists():
+            data = json.loads(fleet_file.read_text(encoding="utf-8"))
+            for client in data:
+                for dev in client.get("devices", []):
+                    if dev["serial"].strip().upper() == serial:
+                        return True
+    except Exception:
+        pass
+    return False
+
+
 def get_device_info(
     portal_url: str,
     api_key: str,
@@ -208,12 +236,25 @@ def get_device_info(
     devices: List[Dict[str, Any]] = _insight_get(search_url, token)
 
     if not devices:
-        mock_id = sum(ord(c) for c in serial)
+        # If we are in dev/mock mode and it is a known mock serial, return mock info.
+        # Otherwise return device_id: None.
+        if (api_key == "dev" or "hp-sds-latam" not in portal_url) and is_known_mock_serial(serial):
+            mock_id = sum(ord(c) for c in serial)
+            return {
+                "device_id": mock_id,
+                "model_name": "HP LaserJet Managed MFP",
+                "zone": "Oficina Central",
+                "firmware": "FS4.11.0.1",
+                "metadata": normalize_device_metadata(serial, {}),
+                "raw_extended": {},
+                "insight_configured": True,
+            }
+
         return {
-            "device_id": mock_id,
-            "model_name": "HP LaserJet Managed MFP",
-            "zone": "Oficina Central",
-            "firmware": "FS4.11.0.1",
+            "device_id": None,
+            "model_name": None,
+            "zone": None,
+            "firmware": None,
             "metadata": normalize_device_metadata(serial, {}),
             "raw_extended": {},
             "insight_configured": True,
@@ -235,6 +276,7 @@ def get_device_info(
         "raw_extended": extended,
         "insight_configured": True,
     }
+
 
 
 def search_devices_by_model(

@@ -52,16 +52,7 @@ export function RootNavigator() {
         name="Analyzer"
         component={AnalyzerScreen}
         options={{
-          headerTitle: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <AppText style={{ fontFamily: theme.fontFamily.bold, fontSize: 18, color: '#ffffff' }}>
-                HP Logs{' '}
-              </AppText>
-              <AppText style={{ fontFamily: theme.fontFamily.medium, fontSize: 18, color: theme.colors.primary, letterSpacing: 0.5 }}>
-                ANALYZER
-              </AppText>
-            </View>
-          ),
+          headerShown: false,
           tabBarStyle: { display: 'none' },
           tabBarIcon: ({ color, size }) => <Activity size={size} color={color} />,
         }}

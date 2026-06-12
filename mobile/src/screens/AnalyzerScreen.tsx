@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useCallback } from 'react'
-import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, TouchableOpacity, Linking } from 'react-native'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, TouchableOpacity, Linking, BackHandler, Modal, Dimensions } from 'react-native'
 import { AppText } from '../components/AppText'
-import { Camera, FileText, Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle, Calendar, X, Globe } from 'lucide-react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { FileText, Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle, Calendar, X, Globe, ArrowLeft, ScanLine } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { CameraView, useCameraPermissions } from 'expo-camera'
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
 import { useAnalysisStore } from '../store/useAnalysisStore'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
@@ -32,11 +33,13 @@ const formatYMD = (d: Date) => {
 }
 
 // Botón con micro-animación de escala al presionar
-function ScalePressable({ onPress, disabled, style, children }: {
+function ScalePressable({ onPress, disabled, style, children, accessibilityLabel, accessibilityRole }: {
   onPress: () => void
   disabled?: boolean
   style?: any
   children: React.ReactNode
+  accessibilityLabel?: string
+  accessibilityRole?: 'button'
 }) {
   const scale = useSharedValue(1)
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
@@ -49,6 +52,8 @@ function ScalePressable({ onPress, disabled, style, children }: {
         onPress={onPress}
         disabled={disabled}
         style={style}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
       >
         {children}
       </Pressable>
@@ -57,19 +62,25 @@ function ScalePressable({ onPress, disabled, style, children }: {
 }
 
 export function AnalyzerScreen() {
-  const insets = useSafeAreaInsets()
   const isOnline = useOnlineStatus()
   const toast = useToast()
+  const insets = useSafeAreaInsets()
 
   const {
     result,
     loading,
     handleAnalyze,
+    setResult,
   } = useAnalysisStore()
 
   const [serial, setSerial] = useState('')
   const [extracting, setExtracting] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
+
+  // Barcode scanner states
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const scanProcessed = useRef(false)
   const [consumables, setConsumables] = useState<RealtimeConsumable[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
   const [currentSerial, setCurrentSerial] = useState<string | null>(null)
@@ -104,6 +115,38 @@ export function AnalyzerScreen() {
   // Date filter states
   const [selectedDate, setSelectedDate] = useState<string | { start: string; end: string } | null>(null)
   const [dateSheetOpen, setDateSheetOpen] = useState(false)
+
+  const handleGoBack = useCallback(() => {
+    setResult(null)
+    setSearchCollapsed(false)
+    return true
+  }, [setResult])
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (result) {
+        handleGoBack()
+        return true
+      } else {
+        Alert.alert(
+          'Salir de la app',
+          '¿Estás seguro de que quieres salir?',
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => {} },
+            { text: 'Salir', style: 'destructive', onPress: () => BackHandler.exitApp() }
+          ]
+        )
+        return true
+      }
+    }
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress
+    )
+
+    return () => backHandler.remove()
+  }, [result, handleGoBack])
 
   const loadClientsIfNeeded = async () => {
     if (clients.length > 0) return
@@ -271,6 +314,66 @@ export function AnalyzerScreen() {
     }
   }
 
+  // Barcode scanner handlers
+  const handleOpenScanner = async () => {
+    if (!cameraPermission?.granted) {
+      const result = await requestCameraPermission()
+      if (!result.granted) {
+        toast.showError('Se necesita permiso de cámara para escanear códigos de barras.')
+        return
+      }
+    }
+    scanProcessed.current = false
+    setScannerOpen(true)
+  }
+
+  const handleBarCodeScanned = ({ data }: { data: string }) => {
+    if (scanProcessed.current) return
+    scanProcessed.current = true
+    const scanned = data.trim().toUpperCase()
+    setScannerOpen(false)
+    setSerial(scanned)
+    // Auto-trigger search after a small delay to let state settle
+    setTimeout(() => {
+      setSerial(scanned)
+      handleSdsSearchWithSerial(scanned)
+    }, 100)
+  }
+
+  const handleSdsSearchWithSerial = async (serialOverride: string) => {
+    const trimmed = serialOverride.trim().toUpperCase()
+    if (!trimmed) return
+    if (!isOnline) {
+      toast.showError('No hay conexión a internet para sincronizar con SDS.')
+      return
+    }
+
+    setExtracting(true)
+    setAiResult(null)
+    setAiError(null)
+    setTextFilter('')
+    setSelectedDate(null)
+    void fetchInsightData(trimmed)
+
+    try {
+      const sdsRes = await extractSdsLogs(trimmed)
+      setConsumables(sdsRes.realtime_consumables || [])
+      setCurrentModelName(sdsRes.model_name_sds || null)
+      setCurrentSerial(trimmed)
+      if (sdsRes.logs_text) {
+        await handleAnalyze(sdsRes.logs_text, `Portal_SDS_${trimmed}.tsv`, sdsRes.suggested_model_id)
+        toast.showSuccess(`Logs extraídos para ${trimmed}`)
+        setSearchCollapsed(true)
+      } else {
+        toast.showWarning('No se encontraron logs para este número de serie.')
+      }
+    } catch (err: any) {
+      toast.showError(err.message || 'Error al buscar en SDS')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
   // AI Diagnosis
   const handleAiDiagnose = async () => {
     if (!result) return
@@ -308,14 +411,7 @@ export function AnalyzerScreen() {
     }
   }
 
-  // Mock de cámara OCR / Escáner
-  const handleCameraScan = () => {
-    Alert.alert(
-      'Escáner Táctil',
-      'El motor de cámara OCR requiere un dispositivo físico. Escribe el serial manualmente para pruebas.',
-      [{ text: 'Entendido' }]
-    )
-  }
+
 
   const incidents = result?.incidents ?? []
   const events = result?.events ?? []
@@ -349,7 +445,7 @@ export function AnalyzerScreen() {
       items.push({ id: 'divider', name: '— Días Específicos del Log —', detail: undefined })
       for (const d of uniqueDates) {
         const [y, m, dayNum] = d.split('-').map(Number)
-        const formatted = new Date(y, m - 1, dayNum).toLocaleDateString('es-ES', {
+        const formatted = new Date(y, m - 1, dayNum).toLocaleDateString('es-AR', {
           day: 'numeric',
           month: 'long',
           year: 'numeric',
@@ -364,11 +460,11 @@ export function AnalyzerScreen() {
     if (!selectedDate) return 'Todo el período'
     if (typeof selectedDate === 'string') {
       const [y, m, d] = selectedDate.split('-').map(Number)
-      return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+      return new Date(y, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
     }
     const fmtShort = (s: string) => {
       const [y, m, d] = s.split('-').map(Number)
-      return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+      return new Date(y, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
     }
     return `${fmtShort(selectedDate.start)} – ${fmtShort(selectedDate.end)}`
   }, [selectedDate])
@@ -552,10 +648,15 @@ export function AnalyzerScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          !result && { flexGrow: 1, justifyContent: 'center' }
+        ]}
+      >
 
         {/* Barra de Búsqueda */}
-        {result && searchCollapsed ? (
+        {!loading && (result && searchCollapsed ? (
           <TouchableOpacity
             onPress={() => setSearchCollapsed(false)}
             activeOpacity={0.7}
@@ -575,7 +676,15 @@ export function AnalyzerScreen() {
             </GlassCard>
           </TouchableOpacity>
         ) : (
-          <GlassCard style={styles.searchCard}>
+          <>
+            {!result && (
+              <View style={styles.initialHeaderContainer}>
+                <AppText style={styles.initialHeaderMain}>HP Logs </AppText>
+                <AppText style={styles.initialHeaderSuffix}>ANALYZER</AppText>
+              </View>
+            )}
+
+            <GlassCard style={styles.searchCard}>
             <View style={styles.tabContainer}>
               <TouchableOpacity
                 onPress={() => setSearchMode('serial')}
@@ -610,13 +719,23 @@ export function AnalyzerScreen() {
                   onBlur={() => setInputFocused(false)}
                   autoCapitalize="characters"
                 />
-                <ScalePressable onPress={handleCameraScan} style={styles.iconBtn}>
-                  <Camera size={20} color={theme.colors.text} />
+
+                <ScalePressable
+                  onPress={handleOpenScanner}
+                  style={styles.scanBtn}
+                  disabled={extracting || loading}
+                  accessibilityLabel="Escanear código de barras"
+                  accessibilityRole="button"
+                >
+                  <ScanLine size={20} color={theme.colors.primary} />
                 </ScalePressable>
+
                 <ScalePressable
                   onPress={handleSdsSearch}
                   style={styles.searchBtn}
                   disabled={extracting || loading || !serial}
+                  accessibilityLabel="Buscar"
+                  accessibilityRole="button"
                 >
                   {extracting ? (
                     <ActivityIndicator size="small" color="#fff" />
@@ -659,6 +778,8 @@ export function AnalyzerScreen() {
                   onPress={handleSdsSearch}
                   style={[styles.searchBtn, { height: 96 }]}
                   disabled={extracting || loading || !serial}
+                  accessibilityLabel="Buscar"
+                  accessibilityRole="button"
                 >
                   {extracting ? (
                     <ActivityIndicator size="small" color="#fff" />
@@ -669,7 +790,8 @@ export function AnalyzerScreen() {
               </View>
             )}
           </GlassCard>
-        )}
+          </>
+        ))}
 
         {/* Estado de carga */}
         {loading && (
@@ -687,6 +809,24 @@ export function AnalyzerScreen() {
         {result && !loading && (
           <View style={styles.resultsContainer}>
 
+            {/* Custom Top Bar for Navigation */}
+            <View style={styles.resultsHeaderBar}>
+              <TouchableOpacity
+                onPress={handleGoBack}
+                style={styles.backBtn}
+                accessibilityLabel="Volver al buscador"
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <ArrowLeft size={20} color={theme.colors.text} />
+              </TouchableOpacity>
+              <View style={styles.resultsHeaderTitleRow}>
+                <AppText style={styles.resultsLogoMain}>HP Logs </AppText>
+                <AppText style={styles.resultsLogoSuffix}>ANALYZER</AppText>
+              </View>
+              <View style={{ width: 32 }} />
+            </View>
+
             {/* Header del Panel */}
             <View style={styles.panelHeaderRow}>
               <View style={{ flex: 1 }}>
@@ -703,6 +843,7 @@ export function AnalyzerScreen() {
                   disabled={loadingRemoteEws}
                   style={styles.ewsButton}
                   activeOpacity={0.7}
+                  hitSlop={{ top: 9, bottom: 9, left: 6, right: 6 }}
                 >
                   {loadingRemoteEws ? (
                     <ActivityIndicator size="small" color="#fff" />
@@ -803,7 +944,13 @@ export function AnalyzerScreen() {
                     autoCorrect={false}
                   />
                   {textFilter.length > 0 && (
-                    <TouchableOpacity onPress={() => setTextFilter('')} style={styles.clearBtn}>
+                    <TouchableOpacity
+                      onPress={() => setTextFilter('')}
+                      style={styles.clearBtn}
+                      hitSlop={{ top: 11, bottom: 11, left: 11, right: 11 }}
+                      accessibilityLabel="Limpiar búsqueda"
+                      accessibilityRole="button"
+                    >
                       <X size={14} color={theme.colors.textDim} />
                     </TouchableOpacity>
                   )}
@@ -960,6 +1107,49 @@ export function AnalyzerScreen() {
         loading={loadingDevices}
       />
 
+      {/* Scanner Modal */}
+      <Modal
+        visible={scannerOpen}
+        animationType="slide"
+        onRequestClose={() => setScannerOpen(false)}
+      >
+        <View style={styles.scannerContainer}>
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            barcodeScannerSettings={{
+              barcodeTypes: ['code128', 'code39', 'code93', 'ean13', 'ean8', 'upc_a', 'upc_e', 'itf14', 'codabar', 'datamatrix', 'qr'],
+            }}
+            onBarcodeScanned={scanProcessed.current ? undefined : handleBarCodeScanned}
+          />
+          {/* Overlay UI */}
+          <View style={styles.scannerOverlay}>
+            <View style={styles.scannerHeader}>
+              <TouchableOpacity
+                onPress={() => setScannerOpen(false)}
+                style={styles.scannerCloseBtn}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <X size={24} color="#fff" />
+              </TouchableOpacity>
+              <AppText style={styles.scannerTitle}>Escanear Código de Barras</AppText>
+              <View style={{ width: 40 }} />
+            </View>
+
+            <View style={styles.scannerViewfinder}>
+              {/* Corner markers */}
+              <View style={[styles.scannerCorner, styles.scannerCornerTL]} />
+              <View style={[styles.scannerCorner, styles.scannerCornerTR]} />
+              <View style={[styles.scannerCorner, styles.scannerCornerBL]} />
+              <View style={[styles.scannerCorner, styles.scannerCornerBR]} />
+            </View>
+
+            <AppText style={styles.scannerHint}>
+              Apuntá la cámara al código de barras del equipo
+            </AppText>
+          </View>
+        </View>
+      </Modal>
+
       {/* Selector de Fecha */}
       <SelectionBottomSheet
         isOpen={dateSheetOpen}
@@ -1031,15 +1221,15 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     backgroundColor: 'rgba(0, 161, 224, 0.05)',
   },
-  iconBtn: {
+  scanBtn: {
     width: 44,
     height: 44,
     borderRadius: theme.radius.lg,
-    borderColor: theme.colors.border,
+    backgroundColor: 'rgba(0, 161, 224, 0.15)',
     borderWidth: 1,
+    borderColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.surfaceLight,
   },
   searchBtn: {
     width: 44,
@@ -1192,6 +1382,8 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 8,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     borderRadius: theme.radius.sm,
   },
@@ -1249,7 +1441,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: theme.radius.md,
     paddingHorizontal: 10,
-    height: 40,
+    height: 44,
   },
   searchFieldIcon: {
     marginRight: 6,
@@ -1273,7 +1465,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: theme.radius.md,
     paddingHorizontal: 10,
-    height: 40,
+    height: 44,
     gap: 6,
     maxWidth: 150,
   },
@@ -1298,5 +1490,128 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontFamily: theme.fontFamily.regular,
     marginTop: 1,
+  },
+  initialHeaderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  initialHeaderMain: {
+    fontFamily: theme.fontFamily.bold,
+    fontSize: 28,
+    color: '#ffffff',
+  },
+  initialHeaderSuffix: {
+    fontFamily: theme.fontFamily.medium,
+    fontSize: 28,
+    color: theme.colors.primary,
+    letterSpacing: 0.5,
+  },
+  resultsHeaderBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backBtn: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resultsHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resultsLogoMain: {
+    fontFamily: theme.fontFamily.bold,
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  resultsLogoSuffix: {
+    fontFamily: theme.fontFamily.medium,
+    fontSize: 16,
+    color: theme.colors.primary,
+  },
+  // Scanner styles
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  scannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  scannerCloseBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+  },
+  scannerTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: theme.fontFamily.bold,
+  },
+  scannerViewfinder: {
+    width: 260,
+    height: 160,
+    position: 'relative',
+  },
+  scannerCorner: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderColor: theme.colors.primary,
+  },
+  scannerCornerTL: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderTopLeftRadius: 8,
+  },
+  scannerCornerTR: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderTopRightRadius: 8,
+  },
+  scannerCornerBL: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderBottomLeftRadius: 8,
+  },
+  scannerCornerBR: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderBottomRightRadius: 8,
+  },
+  scannerHint: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    fontFamily: theme.fontFamily.medium,
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 })

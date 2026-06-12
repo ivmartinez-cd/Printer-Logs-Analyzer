@@ -43,3 +43,20 @@ allprojects {
 def expoCameraMavenPath = new File(["node", "--print", "require.resolve('expo-camera/package.json')"].execute(null, rootDir).text.trim(), "../android/maven")
 allprojects { repositories { maven { url(expoCameraMavenPath) } } }
 // @generated end expo-camera-import
+
+subprojects {
+    def configureProject = { proj ->
+        if (proj.hasProperty("android")) {
+            proj.android.defaultConfig.externalNativeBuild {
+                cmake {
+                    arguments "-DCMAKE_SUPPRESS_REGENERATION=ON"
+                }
+            }
+        }
+    }
+    if (project.state.executed) {
+        configureProject(project)
+    } else {
+        project.afterEvaluate { configureProject(project) }
+    }
+}
