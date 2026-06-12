@@ -27,7 +27,7 @@ import type {
   MaintenanceSyncStatus,
 } from '../types/api'
 
-const API_BASE = 'https://34.63.48.46.sslip.io'
+const API_BASE = __DEV__ ? 'http://10.0.2.2:8001' : 'https://34.63.48.46.sslip.io'
 const API_KEY = 'test123'
 
 export function getApiBase(): string {
@@ -378,5 +378,21 @@ export async function listFleetClients(): Promise<FleetClientSummary[]> {
 export async function getFleetClient(clientId: string): Promise<FleetClientDetail> {
   const res = await apiFetch(`${API_BASE}/fleet/clients/${encodeURIComponent(clientId)}`, { method: 'GET', headers: apiHeaders() }, 10_000)
   return handleResponse<FleetClientDetail>(res)
+}
+
+export async function getSolutionProxy(
+  code: string,
+  signal?: AbortSignal
+): Promise<{ content: string | null; source: 'cache' | 'live'; url: string | null }> {
+  const res = await apiFetch(
+    `${API_BASE}/error-codes/${encodeURIComponent(code)}/solution-proxy`,
+    {
+      method: 'GET',
+      headers: apiHeaders(),
+      signal,
+    },
+    20_000
+  )
+  return handleResponse<{ content: string | null; source: 'cache' | 'live'; url: string | null }>(res)
 }
 
