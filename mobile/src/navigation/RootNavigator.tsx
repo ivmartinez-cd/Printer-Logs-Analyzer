@@ -3,10 +3,11 @@ import { Platform, StyleSheet, View } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { AppText } from '../components/AppText'
 import { BlurView } from 'expo-blur'
-import { Activity } from 'lucide-react-native'
+import { Activity, Search } from 'lucide-react-native'
 
 // Pantallas
 import { AnalyzerScreen } from '../screens/AnalyzerScreen'
+import { ErrorSearchScreen } from '../screens/ErrorSearchScreen'
 import { theme } from '../theme'
 
 const Tab = createBottomTabNavigator()
@@ -53,8 +54,17 @@ export function RootNavigator() {
         component={AnalyzerScreen}
         options={{
           headerShown: false,
-          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ color, size }) => <Activity size={size} color={color} />,
+          tabBarLabel: 'Analizador',
+        }}
+      />
+      <Tab.Screen
+        name="ErrorSearch"
+        component={ErrorSearchScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
+          tabBarLabel: 'Catálogo',
         }}
       />
     </Tab.Navigator>

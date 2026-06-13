@@ -28,7 +28,7 @@ import type {
   MaintenanceSyncStatus,
 } from '../types/api'
 
-const API_BASE = __DEV__ ? 'http://10.0.2.2:8001' : 'https://34.63.48.46.sslip.io'
+const API_BASE = __DEV__ ? 'http://192.168.0.166:8001' : 'https://34.63.48.46.sslip.io'
 const API_KEY = 'test123'
 
 export function getApiBase(): string {

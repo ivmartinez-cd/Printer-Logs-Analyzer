@@ -15,6 +15,7 @@ import * as Sentry from '@sentry/react-native'
 import { RootNavigator } from './src/navigation/RootNavigator'
 import { ToastOverlay } from './src/components/ToastOverlay'
 import { theme } from './src/theme'
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 
 // Inicializar Sentry para reportar errores en producción
 Sentry.init({
@@ -67,11 +68,13 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={AppTheme} linking={linking}>
-          <StatusBar style="light" />
-          <RootNavigator />
-          <ToastOverlay />
-        </NavigationContainer>
+        <BottomSheetModalProvider>
+          <NavigationContainer theme={AppTheme} linking={linking}>
+            <StatusBar style="light" />
+            <RootNavigator />
+            <ToastOverlay />
+          </NavigationContainer>
+        </BottomSheetModalProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   )

@@ -97,7 +97,7 @@ export function AnalyzerScreen({ route }: any) {
   const [consumables, setConsumables] = useState<RealtimeConsumable[]>([])
   const [currentModelName, setCurrentModelName] = useState<string | null>(null)
   const [currentSerial, setCurrentSerial] = useState<string | null>(null)
-  
+
   // Collapse search card state
   const [searchCollapsed, setSearchCollapsed] = useState(false)
 
@@ -145,7 +145,7 @@ export function AnalyzerScreen({ route }: any) {
           'Salir de la app',
           '¿Estás seguro de que quieres salir?',
           [
-            { text: 'Cancelar', style: 'cancel', onPress: () => {} },
+            { text: 'Cancelar', style: 'cancel', onPress: () => { } },
             { text: 'Salir', style: 'destructive', onPress: () => BackHandler.exitApp() }
           ]
         )
@@ -205,7 +205,7 @@ export function AnalyzerScreen({ route }: any) {
 
   const handleDateSelect = (item: { id: string }) => {
     if (item.id === 'divider') return
-    
+
     if (item.id === 'all') {
       setSelectedDate(null)
     } else if (item.id === 'today') {
@@ -304,7 +304,7 @@ export function AnalyzerScreen({ route }: any) {
     setAiError(null)
     setTextFilter('')
     setSelectedDate(null)
-    
+
     // Consultar telemetría del portal HP Insight en paralelo
     void fetchInsightData(trimmed)
 
@@ -499,7 +499,7 @@ export function AnalyzerScreen({ route }: any) {
       endTs = new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime()
     }
 
-    return incidents.filter(i => 
+    return incidents.filter(i =>
       i.events.some(e => {
         if (!e.timestamp) return false
         const t = new Date(e.timestamp).getTime()
@@ -698,111 +698,111 @@ export function AnalyzerScreen({ route }: any) {
             )}
 
             <GlassCard style={styles.searchCard}>
-            <View style={styles.tabContainer}>
-              <TouchableOpacity
-                onPress={() => setSearchMode('serial')}
-                style={[styles.tab, searchMode === 'serial' && styles.tabActive]}
-              >
-                <AppText style={[styles.tabText, searchMode === 'serial' && styles.tabTextActive]}>
-                  Buscar por Serie
-                </AppText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchMode('client')
-                  loadClientsIfNeeded()
-                }}
-                style={[styles.tab, searchMode === 'client' && styles.tabActive]}
-              >
-                <AppText style={[styles.tabText, searchMode === 'client' && styles.tabTextActive]}>
-                  Buscar por Cliente
-                </AppText>
-              </TouchableOpacity>
-            </View>
-
-            {searchMode === 'serial' ? (
-              <View style={styles.searchRow}>
-                <TextInput
-                  style={[styles.input, inputFocused && styles.inputFocused]}
-                  placeholder="Ej: CNB1H23456"
-                  placeholderTextColor={theme.colors.textDim}
-                  value={serial}
-                  onChangeText={setSerial}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
-                  autoCapitalize="characters"
-                />
-
-                <ScalePressable
-                  onPress={handleOpenScanner}
-                  style={styles.scanBtn}
-                  disabled={extracting || loading}
-                  accessibilityLabel="Escanear código de barras"
-                  accessibilityRole="button"
+              <View style={styles.tabContainer}>
+                <TouchableOpacity
+                  onPress={() => setSearchMode('serial')}
+                  style={[styles.tab, searchMode === 'serial' && styles.tabActive]}
                 >
-                  <ScanLine size={20} color={theme.colors.primary} />
-                </ScalePressable>
-
-                <ScalePressable
-                  onPress={handleSdsSearch}
-                  style={styles.searchBtn}
-                  disabled={extracting || loading || !serial}
-                  accessibilityLabel="Buscar"
-                  accessibilityRole="button"
+                  <AppText style={[styles.tabText, searchMode === 'serial' && styles.tabTextActive]}>
+                    Buscar por Serie
+                  </AppText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchMode('client')
+                    loadClientsIfNeeded()
+                  }}
+                  style={[styles.tab, searchMode === 'client' && styles.tabActive]}
                 >
-                  {extracting ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Search size={20} color="#fff" />
-                  )}
-                </ScalePressable>
+                  <AppText style={[styles.tabText, searchMode === 'client' && styles.tabTextActive]}>
+                    Buscar por Cliente
+                  </AppText>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.searchRow}>
-                <View style={{ flex: 1, gap: 8 }}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setClientSheetOpen(true)
-                      loadClientsIfNeeded()
-                    }}
-                    style={styles.pickerButton}
-                  >
-                    <AppText style={selectedClient ? styles.pickerButtonTextActive : styles.pickerButtonText} numberOfLines={1}>
-                      {selectedClient ? `${selectedClient.name} (${selectedClient.device_count} eq.)` : 'Seleccionar Cliente...'}
-                    </AppText>
-                  </TouchableOpacity>
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (selectedClient) setDeviceSheetOpen(true)
-                    }}
-                    style={[styles.pickerButton, !selectedClient && styles.pickerButtonDisabled]}
-                    disabled={!selectedClient}
+              {searchMode === 'serial' ? (
+                <View style={styles.searchRow}>
+                  <TextInput
+                    style={[styles.input, inputFocused && styles.inputFocused]}
+                    placeholder="Ej: CNB1H23456"
+                    placeholderTextColor={theme.colors.textDim}
+                    value={serial}
+                    onChangeText={setSerial}
+                    onFocus={() => setInputFocused(true)}
+                    onBlur={() => setInputFocused(false)}
+                    autoCapitalize="characters"
+                  />
+
+                  <ScalePressable
+                    onPress={handleOpenScanner}
+                    style={styles.scanBtn}
+                    disabled={extracting || loading}
+                    accessibilityLabel="Escanear código de barras"
+                    accessibilityRole="button"
                   >
-                    <AppText style={selectedDevice ? styles.pickerButtonTextActive : styles.pickerButtonText} numberOfLines={1}>
-                      {selectedDevice
-                        ? `${selectedDevice.serial}${selectedDevice.model ? ` - ${selectedDevice.model}` : ''}`
-                        : 'Seleccionar Equipo/Serie...'}
-                    </AppText>
-                  </TouchableOpacity>
+                    <ScanLine size={20} color={theme.colors.primary} />
+                  </ScalePressable>
+
+                  <ScalePressable
+                    onPress={handleSdsSearch}
+                    style={styles.searchBtn}
+                    disabled={extracting || loading || !serial}
+                    accessibilityLabel="Buscar"
+                    accessibilityRole="button"
+                  >
+                    {extracting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Search size={20} color="#fff" />
+                    )}
+                  </ScalePressable>
                 </View>
+              ) : (
+                <View style={styles.searchRow}>
+                  <View style={{ flex: 1, gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setClientSheetOpen(true)
+                        loadClientsIfNeeded()
+                      }}
+                      style={styles.pickerButton}
+                    >
+                      <AppText style={selectedClient ? styles.pickerButtonTextActive : styles.pickerButtonText} numberOfLines={1}>
+                        {selectedClient ? `${selectedClient.name} (${selectedClient.device_count} eq.)` : 'Seleccionar Cliente...'}
+                      </AppText>
+                    </TouchableOpacity>
 
-                <ScalePressable
-                  onPress={handleSdsSearch}
-                  style={[styles.searchBtn, { height: 96 }]}
-                  disabled={extracting || loading || !serial}
-                  accessibilityLabel="Buscar"
-                  accessibilityRole="button"
-                >
-                  {extracting ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Search size={20} color="#fff" />
-                  )}
-                </ScalePressable>
-              </View>
-            )}
-          </GlassCard>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (selectedClient) setDeviceSheetOpen(true)
+                      }}
+                      style={[styles.pickerButton, !selectedClient && styles.pickerButtonDisabled]}
+                      disabled={!selectedClient}
+                    >
+                      <AppText style={selectedDevice ? styles.pickerButtonTextActive : styles.pickerButtonText} numberOfLines={1}>
+                        {selectedDevice
+                          ? `${selectedDevice.serial}${selectedDevice.model ? ` - ${selectedDevice.model}` : ''}`
+                          : 'Seleccionar Equipo/Serie...'}
+                      </AppText>
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScalePressable
+                    onPress={handleSdsSearch}
+                    style={[styles.searchBtn, { height: 96 }]}
+                    disabled={extracting || loading || !serial}
+                    accessibilityLabel="Buscar"
+                    accessibilityRole="button"
+                  >
+                    {extracting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Search size={20} color="#fff" />
+                    )}
+                  </ScalePressable>
+                </View>
+              )}
+            </GlassCard>
           </>
         ))}
 
@@ -968,7 +968,7 @@ export function AnalyzerScreen({ route }: any) {
                     </TouchableOpacity>
                   )}
                 </View>
-                
+
                 <TouchableOpacity
                   onPress={() => setDateSheetOpen(true)}
                   style={styles.dateFilterBtn}
