@@ -16,7 +16,7 @@ function typeColor(type: string): string {
   return theme.colors.info
 }
 
-export function EventsList({ events, maxItems = 30 }: EventsListProps) {
+function EventsListComponent({ events, maxItems = 30 }: EventsListProps) {
   const display = events.slice(0, maxItems)
   if (display.length === 0) {
     return <AppText style={styles.empty}>Sin eventos en este período.</AppText>
@@ -66,6 +66,8 @@ export function EventsList({ events, maxItems = 30 }: EventsListProps) {
     </View>
   )
 }
+
+export const EventsList = React.memo(EventsListComponent)
 
 const styles = StyleSheet.create({
   container: {

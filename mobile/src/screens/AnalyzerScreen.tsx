@@ -1,14 +1,16 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, TouchableOpacity, Linking, BackHandler, Modal, Dimensions } from 'react-native'
+import { StyleSheet, View, ScrollView, TextInput, ActivityIndicator, Alert, TouchableOpacity, Linking, BackHandler, Share } from 'react-native'
 import { AppText } from '../components/AppText'
-import { FileText, Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle, Calendar, X, Globe, ArrowLeft, ScanLine } from 'lucide-react-native'
+import { Search, ShieldAlert, Cpu, TrendingDown, AlertTriangle, Calendar, X, Globe, ArrowLeft, ScanLine, Share2 } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { CameraView, useCameraPermissions } from 'expo-camera'
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
+import { useCameraPermissions } from 'expo-camera'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useAnalysisStore } from '../store/useAnalysisStore'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useToast } from '../hooks/useToast'
+import { useDateFilter } from '../hooks/useDateFilter'
+import { useAnalyzerKpis } from '../hooks/useAnalyzerKpis'
 import { GlassCard } from '../components/GlassCard'
 import { KPICard } from '../components/KPICard'
 import { IncidentCard } from '../components/IncidentCard'
@@ -20,75 +22,25 @@ import { EventsList } from '../components/EventsList'
 import { AIDiagnosticResult } from '../components/AIDiagnosticResult'
 import { ConsumableBar } from '../components/ConsumableBar'
 import { InsightAlertsPanel } from '../components/InsightAlertsPanel'
-import { extractSdsLogs, aiDiagnose, listFleetClients, getFleetClient, getSolutionProxy, getInsightAlerts, getRemoteEwsAccess } from '../services/api'
+import { ScalePressable } from '../components/ScalePressable'
+import { BarcodeScannerModal } from '../components/BarcodeScannerModal'
+import { SelectionBottomSheet } from '../components/SelectionBottomSheet'
+import { extractSdsLogs, aiDiagnose, listFleetClients, getFleetClient, getInsightAlerts, getRemoteEwsAccess } from '../services/api'
 import { theme } from '../theme'
 import type { AIDiagnosisResponse, RealtimeConsumable, FleetClientSummary, FleetDeviceSummary, DeviceAlertsResponse } from '../types/api'
-import { SelectionBottomSheet } from '../components/SelectionBottomSheet'
-
-const formatYMD = (d: Date) => {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-// Botón con micro-animación de escala al presionar
-function ScalePressable({ onPress, disabled, style, children, accessibilityLabel, accessibilityRole }: {
-  onPress: () => void
-  disabled?: boolean
-  style?: any
-  children: React.ReactNode
-  accessibilityLabel?: string
-  accessibilityRole?: 'button'
-}) {
-  const scale = useSharedValue(1)
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <Pressable
-        onPressIn={() => { scale.value = withSpring(0.92) }}
-        onPressOut={() => { scale.value = withSpring(1) }}
-        onPress={onPress}
-        disabled={disabled}
-        style={style}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole={accessibilityRole}
-      >
-        {children}
-      </Pressable>
-    </Animated.View>
-  )
-}
+import { useFocusEffect } from '@react-navigation/native'
+import { styles } from './AnalyzerScreen.styles'
 
 export function AnalyzerScreen({ route }: any) {
   const isOnline = useOnlineStatus()
   const toast = useToast()
   const insets = useSafeAreaInsets()
 
-  const {
-    result,
-    loading,
-    handleAnalyze,
-    setResult,
-  } = useAnalysisStore()
+  const { result, loading, handleAnalyze, setResult } = useAnalysisStore()
 
   const [serial, setSerial] = useState('')
   const [extracting, setExtracting] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
-
-  // Autodisparar búsqueda si se ingresa por Deep Link (ej: hplogs://analyze/CNB1H23456)
-  const routeSerial = route?.params?.serial
-  useEffect(() => {
-    if (routeSerial) {
-      const trimmed = routeSerial.trim().toUpperCase()
-      setSerial(trimmed)
-      const timer = setTimeout(() => {
-        handleSdsSearchWithSerial(trimmed)
-      }, 300)
-      return () => clearTimeout(timer)
-    }
-  }, [routeSerial])
 
   // Barcode scanner states
   const [scannerOpen, setScannerOpen] = useState(false)
@@ -110,6 +62,11 @@ export function AnalyzerScreen({ route }: any) {
   const [insightLoading, setInsightLoading] = useState(false)
   const [insightError, setInsightError] = useState<string | null>(null)
 
+  // AI diagnosis state
+  const [aiResult, setAiResult] = useState<AIDiagnosisResponse | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+
   // Fleet search states
   const [searchMode, setSearchMode] = useState<'serial' | 'client'>('serial')
   const [clients, setClients] = useState<FleetClientSummary[]>([])
@@ -125,41 +82,151 @@ export function AnalyzerScreen({ route }: any) {
   // Text search filter inside detailed analysis
   const [textFilter, setTextFilter] = useState('')
 
-  // Date filter states
-  const [selectedDate, setSelectedDate] = useState<string | { start: string; end: string } | null>(null)
+  // Severity filter state
+  const [activeSeverities, setActiveSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
+
+  const incidents = result?.incidents ?? []
+  const events = result?.events ?? []
+
+  // Filtro de fecha (estado + presets + datos filtrados por rango)
+  const {
+    selectedDate,
+    setSelectedDate,
+    handleDateSelect,
+    dateItems,
+    dateButtonLabel,
+    dateFilteredIncidents,
+    dateFilteredEvents,
+  } = useDateFilter(incidents, events)
+
   const [dateSheetOpen, setDateSheetOpen] = useState(false)
+
+  const handleSeverityToggle = useCallback((sev: string) => {
+    setActiveSeverities(prev => {
+      const next = new Set(prev)
+      if (next.has(sev)) {
+        if (next.size > 1) next.delete(sev)
+      } else {
+        next.add(sev)
+      }
+      return next
+    })
+  }, [])
+
+  const fetchInsightData = async (serialNo: string) => {
+    setInsightLoading(true)
+    setInsightError(null)
+    setInsightData(null)
+    try {
+      const res = await getInsightAlerts(serialNo)
+      setInsightData(res)
+    } catch (err: any) {
+      setInsightError(err.message || 'Error al obtener alertas de Insight')
+    } finally {
+      setInsightLoading(false)
+    }
+  }
+
+  // Búsqueda automática vía SDS (única implementación para input, scanner y deep-link)
+  const runSdsSearch = useCallback(async (rawSerial: string) => {
+    const trimmed = rawSerial.trim().toUpperCase()
+    if (!trimmed) return
+    if (!isOnline) {
+      toast.showError('No hay conexión a internet para sincronizar con SDS.')
+      return
+    }
+
+    setExtracting(true)
+    setAiResult(null)
+    setAiError(null)
+    setTextFilter('')
+    setSelectedDate(null)
+
+    // Consultar telemetría del portal HP Insight en paralelo
+    void fetchInsightData(trimmed)
+
+    try {
+      const sdsRes = await extractSdsLogs(trimmed)
+      setConsumables(sdsRes.realtime_consumables || [])
+      setCurrentModelName(sdsRes.model_name_sds || null)
+      setCurrentSerial(trimmed)
+      if (sdsRes.logs_text) {
+        await handleAnalyze(sdsRes.logs_text, `Portal_SDS_${trimmed}.tsv`, sdsRes.suggested_model_id)
+        toast.showSuccess(`Logs extraídos para ${trimmed}`)
+        setSearchCollapsed(true)
+      } else {
+        toast.showWarning('No se encontraron logs para este número de serie.')
+      }
+    } catch (err: any) {
+      toast.showError(err.message || 'Error al buscar en SDS')
+    } finally {
+      setExtracting(false)
+    }
+  }, [isOnline, toast, handleAnalyze, setSelectedDate])
+
+  const handleSdsSearch = useCallback(() => { void runSdsSearch(serial) }, [runSdsSearch, serial])
+
+  // Autodisparar búsqueda si se ingresa por Deep Link (ej: hplogs://analyze/CNB1H23456)
+  const routeSerial = route?.params?.serial
+  useEffect(() => {
+    if (routeSerial) {
+      const trimmed = routeSerial.trim().toUpperCase()
+      setSerial(trimmed)
+      const timer = setTimeout(() => { void runSdsSearch(trimmed) }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [routeSerial, runSdsSearch])
 
   const handleGoBack = useCallback(() => {
     setResult(null)
     setSearchCollapsed(false)
+    setSerial('')
+    setSelectedClient(null)
+    setSelectedDevice(null)
+    setDevices([])
+    setConsumables([])
+    setCurrentModelName(null)
+    setCurrentSerial(null)
+    setInsightData(null)
+    setInsightError(null)
+    setAiResult(null)
+    setAiError(null)
+    setTextFilter('')
+    setSelectedDate(null)
     return true
-  }, [setResult])
+  }, [setResult, setSelectedDate])
 
-  useEffect(() => {
-    const onBackPress = () => {
-      if (result) {
-        handleGoBack()
-        return true
-      } else {
-        Alert.alert(
-          'Salir de la app',
-          '¿Estás seguro de que quieres salir?',
-          [
-            { text: 'Cancelar', style: 'cancel', onPress: () => { } },
-            { text: 'Salir', style: 'destructive', onPress: () => BackHandler.exitApp() }
-          ]
-        )
-        return true
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (result) {
+          handleGoBack()
+          return true
+        } else {
+          Alert.alert(
+            'Salir de la app',
+            '¿Estás seguro de que quieres salir?',
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => { } },
+              {
+                text: 'Salir',
+                style: 'destructive',
+                onPress: () => {
+                  setTimeout(() => {
+                    BackHandler.exitApp()
+                  }, 100)
+                }
+              }
+            ]
+          )
+          return true
+        }
       }
-    }
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      onBackPress
-    )
-
-    return () => backHandler.remove()
-  }, [result, handleGoBack])
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress)
+      return () => backHandler.remove()
+    }, [result, handleGoBack])
+  )
 
   const loadClientsIfNeeded = async () => {
     if (clients.length > 0) return
@@ -196,142 +263,14 @@ export function AnalyzerScreen({ route }: any) {
   const handleDeviceChange = (deviceItem: { id: string }) => {
     const device = devices.find(d => d.serial === deviceItem.id) || null
     setSelectedDevice(device)
-    if (device) {
-      setSerial(device.serial)
-    } else {
-      setSerial('')
-    }
-  }
-
-  const handleDateSelect = (item: { id: string }) => {
-    if (item.id === 'divider') return
-
-    if (item.id === 'all') {
-      setSelectedDate(null)
-    } else if (item.id === 'today') {
-      const today = new Date()
-      const s = formatYMD(today)
-      setSelectedDate({ start: s, end: s })
-    } else if (item.id === 'this_week') {
-      const now = new Date()
-      const day = now.getDay()
-      const diff = day === 0 ? -6 : 1 - day
-      const monday = new Date(now)
-      monday.setDate(now.getDate() + diff)
-      const sunday = new Date(monday)
-      sunday.setDate(monday.getDate() + 6)
-      setSelectedDate({ start: formatYMD(monday), end: formatYMD(sunday) })
-    } else if (item.id === 'last_week') {
-      const now = new Date()
-      const day = now.getDay()
-      const diff = day === 0 ? -13 : 1 - day - 7
-      const monday = new Date(now)
-      monday.setDate(now.getDate() + diff)
-      const sunday = new Date(monday)
-      sunday.setDate(monday.getDate() + 6)
-      setSelectedDate({ start: formatYMD(monday), end: formatYMD(sunday) })
-    } else if (item.id === 'this_month') {
-      const now = new Date()
-      const first = new Date(now.getFullYear(), now.getMonth(), 1)
-      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      setSelectedDate({ start: formatYMD(first), end: formatYMD(last) })
-    } else if (item.id === 'last_month') {
-      const now = new Date()
-      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const last = new Date(now.getFullYear(), now.getMonth(), 0)
-      setSelectedDate({ start: formatYMD(first), end: formatYMD(last) })
-    } else if (item.id === 'last_7_days') {
-      const today = new Date()
-      const start = new Date(today)
-      start.setDate(today.getDate() - 6)
-      setSelectedDate({ start: formatYMD(start), end: formatYMD(today) })
-    } else if (item.id === 'last_30_days') {
-      const today = new Date()
-      const start = new Date(today)
-      start.setDate(today.getDate() - 29)
-      setSelectedDate({ start: formatYMD(start), end: formatYMD(today) })
-    } else if (item.id.startsWith('day:')) {
-      const dayStr = item.id.substring(4)
-      setSelectedDate(dayStr)
-    }
-  }
-
-  // Severity filter state
-  const [activeSeverities, setActiveSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
-
-  // AI diagnosis state
-  const [aiResult, setAiResult] = useState<AIDiagnosisResponse | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiError, setAiError] = useState<string | null>(null)
-
-  const handleSeverityToggle = useCallback((sev: string) => {
-    setActiveSeverities(prev => {
-      const next = new Set(prev)
-      if (next.has(sev)) {
-        if (next.size > 1) next.delete(sev)
-      } else {
-        next.add(sev)
-      }
-      return next
-    })
-  }, [])
-
-  const fetchInsightData = async (serialNo: string) => {
-    setInsightLoading(true)
-    setInsightError(null)
-    setInsightData(null)
-    try {
-      const res = await getInsightAlerts(serialNo)
-      setInsightData(res)
-    } catch (err: any) {
-      setInsightError(err.message || 'Error al obtener alertas de Insight')
-    } finally {
-      setInsightLoading(false)
-    }
-  }
-
-  // Búsqueda automática vía SDS
-  const handleSdsSearch = async () => {
-    const trimmed = serial.trim().toUpperCase()
-    if (!trimmed) return
-    if (!isOnline) {
-      toast.showError('No hay conexión a internet para sincronizar con SDS.')
-      return
-    }
-
-    setExtracting(true)
-    setAiResult(null)
-    setAiError(null)
-    setTextFilter('')
-    setSelectedDate(null)
-
-    // Consultar telemetría del portal HP Insight en paralelo
-    void fetchInsightData(trimmed)
-
-    try {
-      const sdsRes = await extractSdsLogs(trimmed)
-      setConsumables(sdsRes.realtime_consumables || [])
-      setCurrentModelName(sdsRes.model_name_sds || null)
-      setCurrentSerial(trimmed)
-      if (sdsRes.logs_text) {
-        await handleAnalyze(sdsRes.logs_text, `Portal_SDS_${trimmed}.tsv`, sdsRes.suggested_model_id)
-        toast.showSuccess(`Logs extraídos para ${trimmed}`)
-        setSearchCollapsed(true)
-      } else {
-        toast.showWarning('No se encontraron logs para este número de serie.')
-      }
-    } catch (err: any) {
-      toast.showError(err.message || 'Error al buscar en SDS')
-    } finally {
-      setExtracting(false)
-    }
+    setSerial(device ? device.serial : '')
   }
 
   // Barcode scanner handlers
   const handleOpenScanner = async () => {
     if (!cameraPermission?.granted) {
-      const result = await requestCameraPermission()
-      if (!result.granted) {
+      const res = await requestCameraPermission()
+      if (!res.granted) {
         toast.showError('Se necesita permiso de cámara para escanear códigos de barras.')
         return
       }
@@ -347,44 +286,7 @@ export function AnalyzerScreen({ route }: any) {
     setScannerOpen(false)
     setSerial(scanned)
     // Auto-trigger search after a small delay to let state settle
-    setTimeout(() => {
-      setSerial(scanned)
-      handleSdsSearchWithSerial(scanned)
-    }, 100)
-  }
-
-  const handleSdsSearchWithSerial = async (serialOverride: string) => {
-    const trimmed = serialOverride.trim().toUpperCase()
-    if (!trimmed) return
-    if (!isOnline) {
-      toast.showError('No hay conexión a internet para sincronizar con SDS.')
-      return
-    }
-
-    setExtracting(true)
-    setAiResult(null)
-    setAiError(null)
-    setTextFilter('')
-    setSelectedDate(null)
-    void fetchInsightData(trimmed)
-
-    try {
-      const sdsRes = await extractSdsLogs(trimmed)
-      setConsumables(sdsRes.realtime_consumables || [])
-      setCurrentModelName(sdsRes.model_name_sds || null)
-      setCurrentSerial(trimmed)
-      if (sdsRes.logs_text) {
-        await handleAnalyze(sdsRes.logs_text, `Portal_SDS_${trimmed}.tsv`, sdsRes.suggested_model_id)
-        toast.showSuccess(`Logs extraídos para ${trimmed}`)
-        setSearchCollapsed(true)
-      } else {
-        toast.showWarning('No se encontraron logs para este número de serie.')
-      }
-    } catch (err: any) {
-      toast.showError(err.message || 'Error al buscar en SDS')
-    } finally {
-      setExtracting(false)
-    }
+    setTimeout(() => { void runSdsSearch(scanned) }, 100)
   }
 
   // AI Diagnosis
@@ -424,243 +326,94 @@ export function AnalyzerScreen({ route }: any) {
     }
   }
 
+  const handleShareReport = async () => {
+    if (!result) return
 
+    let shareText = `📋 REPORTE DE ANÁLISIS DE IMPRESORA HP\n`
+    if (currentSerial) shareText += `Número de Serie: ${currentSerial}\n`
+    if (currentModelName) shareText += `Modelo: ${currentModelName}\n`
+    shareText += `------------------------------------\n`
+    shareText += `Severidad Global: ${result.global_severity}\n`
+    shareText += `Eventos Analizados: ${result.events.length}\n`
+    shareText += `Incidencias Detectadas: ${result.incidents.length}\n\n`
 
-  const incidents = result?.incidents ?? []
-  const events = result?.events ?? []
-
-  // Unique dates from logs (YYYY-MM-DD)
-  const uniqueDates = useMemo(() => {
-    if (!result || events.length === 0) return []
-    const datesSet = new Set<string>()
-    for (const e of events) {
-      if (e.timestamp) {
-        const dateStr = e.timestamp.split('T')[0]
-        if (dateStr) datesSet.add(dateStr)
-      }
-    }
-    return Array.from(datesSet).sort((a, b) => b.localeCompare(a))
-  }, [result, events])
-
-  // Date items for SelectionBottomSheet
-  const dateItems = useMemo(() => {
-    const items: Array<{ id: string; name: string; detail?: string }> = [
-      { id: 'all', name: 'Todo el período', detail: 'Mostrar todos los eventos' },
-      { id: 'today', name: 'Hoy', detail: 'Filtrar por el día de hoy' },
-      { id: 'this_week', name: 'Esta semana', detail: 'De lunes a domingo' },
-      { id: 'last_week', name: 'Semana anterior', detail: 'Semana pasada completa' },
-      { id: 'this_month', name: 'Este mes', detail: 'Mes en curso' },
-      { id: 'last_month', name: 'Mes anterior', detail: 'Mes pasado completo' },
-      { id: 'last_7_days', name: 'Últimos 7 días', detail: 'Últimos 7 días corridos' },
-      { id: 'last_30_days', name: 'Últimos 30 días', detail: 'Últimos 30 días corridos' },
-    ]
-    if (uniqueDates.length > 0) {
-      items.push({ id: 'divider', name: '— Días Específicos del Log —', detail: undefined })
-      for (const d of uniqueDates) {
-        const [y, m, dayNum] = d.split('-').map(Number)
-        const formatted = new Date(y, m - 1, dayNum).toLocaleDateString('es-AR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
+    if (aiResult) {
+      shareText += `✨ DIAGNÓSTICO COPILOTO IA:\n`
+      shareText += `${aiResult.diagnosis || 'Sin diagnóstico detallado.'}\n\n`
+    } else {
+      shareText += `Incidencias Críticas:\n`
+      const criticals = result.incidents.filter(i => i.severity.toUpperCase() === 'ERROR')
+      if (criticals.length > 0) {
+        criticals.forEach((c) => {
+          shareText += `- Código: ${c.code} (${c.occurrences} veces)\n`
         })
-        items.push({ id: `day:${d}`, name: formatted, detail: `Filtrar por el día ${formatted}` })
+      } else {
+        shareText += `- Ningún error crítico detectado.\n`
       }
     }
-    return items
-  }, [uniqueDates])
 
-  const dateButtonLabel = useMemo(() => {
-    if (!selectedDate) return 'Todo el período'
-    if (typeof selectedDate === 'string') {
-      const [y, m, d] = selectedDate.split('-').map(Number)
-      return new Date(y, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-    }
-    const fmtShort = (s: string) => {
-      const [y, m, d] = s.split('-').map(Number)
-      return new Date(y, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-    }
-    return `${fmtShort(selectedDate.start)} – ${fmtShort(selectedDate.end)}`
-  }, [selectedDate])
-
-  // Date filtered data (acts as the base for KPIs and detailed views)
-  const dateFilteredIncidents = useMemo(() => {
-    if (!selectedDate) return incidents
-
-    let startTs = 0
-    let endTs = Infinity
-    if (typeof selectedDate === 'string') {
-      const [y, m, d] = selectedDate.split('-').map(Number)
-      startTs = new Date(y, m - 1, d, 0, 0, 0, 0).getTime()
-      endTs = new Date(y, m - 1, d, 23, 59, 59, 999).getTime()
-    } else {
-      const [sy, sm, sd] = selectedDate.start.split('-').map(Number)
-      const [ey, em, ed] = selectedDate.end.split('-').map(Number)
-      startTs = new Date(sy, sm - 1, sd, 0, 0, 0, 0).getTime()
-      endTs = new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime()
-    }
-
-    return incidents.filter(i =>
-      i.events.some(e => {
-        if (!e.timestamp) return false
-        const t = new Date(e.timestamp).getTime()
-        return t >= startTs && t <= endTs
+    try {
+      await Share.share({
+        message: shareText,
+        title: `Reporte Analizador HP - ${currentSerial || 'Impresora'}`
       })
-    )
-  }, [incidents, selectedDate])
-
-  const dateFilteredEvents = useMemo(() => {
-    if (!selectedDate) return events
-
-    let startTs = 0
-    let endTs = Infinity
-    if (typeof selectedDate === 'string') {
-      const [y, m, d] = selectedDate.split('-').map(Number)
-      startTs = new Date(y, m - 1, d, 0, 0, 0, 0).getTime()
-      endTs = new Date(y, m - 1, d, 23, 59, 59, 999).getTime()
-    } else {
-      const [sy, sm, sd] = selectedDate.start.split('-').map(Number)
-      const [ey, em, ed] = selectedDate.end.split('-').map(Number)
-      startTs = new Date(sy, sm - 1, sd, 0, 0, 0, 0).getTime()
-      endTs = new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime()
+    } catch (err: any) {
+      toast.showError('Error al compartir el reporte: ' + err.message)
     }
+  }
 
-    return events.filter(e => {
-      if (!e.timestamp) return false
-      const t = new Date(e.timestamp).getTime()
-      return t >= startTs && t <= endTs
-    })
-  }, [events, selectedDate])
-
-  // Filtered data based on severity and text search
+  // Filtros por severidad y texto (sobre los datos ya filtrados por fecha)
   const filteredIncidents = useMemo(() => {
     return dateFilteredIncidents.filter(i => {
-      // 1. Severity filter
       if (!activeSeverities.has(i.severity.toUpperCase())) return false
-
-      // 2. Text search filter
       if (textFilter.trim()) {
         const q = textFilter.toLowerCase().trim()
         const code = (i.code ?? '').toLowerCase()
         const classification = (i.classification ?? '').toLowerCase()
         if (!code.includes(q) && !classification.includes(q)) return false
       }
-
       return true
     })
   }, [dateFilteredIncidents, activeSeverities, textFilter])
 
   const filteredEvents = useMemo(() => {
     return dateFilteredEvents.filter(e => {
-      // 1. Severity filter
       if (!activeSeverities.has(e.type.toUpperCase())) return false
-
-      // 2. Text search filter
       if (textFilter.trim()) {
         const q = textFilter.toLowerCase().trim()
         const code = (e.code ?? '').toLowerCase()
         const desc = (e.code_description ?? '').toLowerCase()
         if (!code.includes(q) && !desc.includes(q)) return false
       }
-
       return true
     })
   }, [dateFilteredEvents, activeSeverities, textFilter])
 
-  // KPI computations
-  const errorIncidents = useMemo(
-    () => dateFilteredIncidents.filter(i => i.severity.toUpperCase() === 'ERROR'),
-    [dateFilteredIncidents]
-  )
+  // KPIs del panel de errores
+  const {
+    errorIncidents,
+    warningCount,
+    infoCount,
+    lastErrorEvent,
+    lastErrorLabel,
+    topCodes,
+    errorRateData,
+  } = useAnalyzerKpis(dateFilteredIncidents, dateFilteredEvents)
 
-  const warningCount = useMemo(
-    () => dateFilteredIncidents.filter(i => i.severity.toUpperCase() === 'WARNING').length,
-    [dateFilteredIncidents]
-  )
-
-  const infoCount = useMemo(
-    () => dateFilteredIncidents.filter(i => i.severity.toUpperCase() === 'INFO').length,
-    [dateFilteredIncidents]
-  )
-
-  const lastErrorEvent = useMemo(() => {
-    const errorEvents = dateFilteredEvents.filter(e => e.type.toUpperCase() === 'ERROR')
-    if (errorEvents.length === 0) return null
-    return [...errorEvents].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
-  }, [dateFilteredEvents])
-
-  const lastErrorLabel = useMemo(() => {
-    if (!lastErrorEvent) return null
-    return new Date(lastErrorEvent.timestamp).toLocaleString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    })
-  }, [lastErrorEvent])
-
-  // Top error codes
-  const topCodes = useMemo(() => {
-    const map = new Map<string, { count: number; severity: string }>()
-    for (const inc of dateFilteredIncidents) {
-      const existing = map.get(inc.code)
-      if (existing) {
-        existing.count += inc.occurrences
-      } else {
-        map.set(inc.code, { count: inc.occurrences, severity: inc.severity })
-      }
-    }
-    return Array.from(map.entries())
-      .map(([name, { count, severity }]) => ({ name, count, severity }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5)
-  }, [dateFilteredIncidents])
-
-  // Error rate
-  const errorRateData = useMemo(() => {
-    const errorEvents = dateFilteredEvents.filter((e) => e.type.toUpperCase() === 'ERROR')
-    const errorCount = errorEvents.length
-
-    const counters = dateFilteredEvents
-      .map((e) => e.counter)
-      .filter((c) => typeof c === 'number' && c > 0)
-
-    if (counters.length < 2) {
-      return { label: '—', sub: 'sin datos', totalIntervalPages: 0, maxCounter: 0 }
-    }
-
-    const minC = counters.reduce((a, b) => Math.min(a, b))
-    const maxC = counters.reduce((a, b) => Math.max(a, b))
-    const counterRange = maxC - minC
-
-    if (counterRange === 0) {
-      return { label: '—', sub: 'sin rango', totalIntervalPages: 0, maxCounter: maxC }
-    }
-
-    if (errorCount === 0) {
-      return {
-        label: 'Sin err.',
-        sub: 'no hay errores',
-        totalIntervalPages: counterRange,
-        maxCounter: maxC,
-      }
-    }
-
-    const freq: Record<string, number> = {}
-    for (const e of errorEvents) {
-      freq[e.code] = (freq[e.code] ?? 0) + 1
-    }
-    const topCode = Object.entries(freq).reduce((a, b) => (b[1] > a[1] ? b : a))[0]
-
-    const pagesPerError = Math.round(counterRange / errorCount)
-    const label = pagesPerError >= 1 ? `1 c/${pagesPerError.toLocaleString('es-AR')} pág.` : `${errorCount} err.`
-
-    return { label, sub: topCode, totalIntervalPages: counterRange, maxCounter: maxC }
-  }, [dateFilteredEvents])
+  // Callback estable: abrir la solución de un código (memoizado para no romper React.memo)
+  const handleOpenSolution = useCallback((code: string) => {
+    setSelectedErrorCode(code)
+    setSolutionSheetOpen(true)
+  }, [])
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <LinearGradient
+        colors={['#081c30', '#06080c', '#030508']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.85 }}
+      />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -692,8 +445,13 @@ export function AnalyzerScreen({ route }: any) {
           <>
             {!result && (
               <View style={styles.initialHeaderContainer}>
-                <AppText style={styles.initialHeaderMain}>HP Logs </AppText>
-                <AppText style={styles.initialHeaderSuffix}>ANALYZER</AppText>
+                <View style={styles.initialLogoRow}>
+                  <AppText style={styles.initialHeaderMain}>HP Logs </AppText>
+                  <AppText style={styles.initialHeaderSuffix}>ANALYZER</AppText>
+                </View>
+                <AppText style={styles.initialSubtitle}>
+                  Análisis técnico avanzado de logs HP con detección inteligente de errores y estado de hardware en tiempo real.
+                </AppText>
               </View>
             )}
 
@@ -837,7 +595,15 @@ export function AnalyzerScreen({ route }: any) {
                 <AppText style={styles.resultsLogoMain}>HP Logs </AppText>
                 <AppText style={styles.resultsLogoSuffix}>ANALYZER</AppText>
               </View>
-              <View style={{ width: 32 }} />
+              <TouchableOpacity
+                onPress={handleShareReport}
+                style={styles.backBtn}
+                accessibilityLabel="Compartir reporte"
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Share2 size={20} color={theme.colors.primary} />
+              </TouchableOpacity>
             </View>
 
             {/* Header del Panel */}
@@ -987,10 +753,7 @@ export function AnalyzerScreen({ route }: any) {
                 events={dateFilteredEvents}
                 topCodes={topCodes}
                 activeSeverities={activeSeverities}
-                onPressError={(code) => {
-                  setSelectedErrorCode(code)
-                  setSolutionSheetOpen(true)
-                }}
+                onPressError={handleOpenSolution}
               />
             </Animated.View>
 
@@ -1032,10 +795,7 @@ export function AnalyzerScreen({ route }: any) {
                   <Animated.View key={inc.id} entering={FadeInDown.delay(idx * 40).duration(300)}>
                     <IncidentCard
                       incident={inc}
-                      onPressSolution={(code) => {
-                        setSelectedErrorCode(code)
-                        setSolutionSheetOpen(true)
-                      }}
+                      onPressSolution={handleOpenSolution}
                     />
                   </Animated.View>
                 ))
@@ -1121,47 +881,12 @@ export function AnalyzerScreen({ route }: any) {
       />
 
       {/* Scanner Modal */}
-      <Modal
+      <BarcodeScannerModal
         visible={scannerOpen}
-        animationType="slide"
-        onRequestClose={() => setScannerOpen(false)}
-      >
-        <View style={styles.scannerContainer}>
-          <CameraView
-            style={StyleSheet.absoluteFill}
-            barcodeScannerSettings={{
-              barcodeTypes: ['code128', 'code39', 'code93', 'ean13', 'ean8', 'upc_a', 'upc_e', 'itf14', 'codabar', 'datamatrix', 'qr'],
-            }}
-            onBarcodeScanned={scanProcessed.current ? undefined : handleBarCodeScanned}
-          />
-          {/* Overlay UI */}
-          <View style={styles.scannerOverlay}>
-            <View style={styles.scannerHeader}>
-              <TouchableOpacity
-                onPress={() => setScannerOpen(false)}
-                style={styles.scannerCloseBtn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <X size={24} color="#fff" />
-              </TouchableOpacity>
-              <AppText style={styles.scannerTitle}>Escanear Código de Barras</AppText>
-              <View style={{ width: 40 }} />
-            </View>
-
-            <View style={styles.scannerViewfinder}>
-              {/* Corner markers */}
-              <View style={[styles.scannerCorner, styles.scannerCornerTL]} />
-              <View style={[styles.scannerCorner, styles.scannerCornerTR]} />
-              <View style={[styles.scannerCorner, styles.scannerCornerBL]} />
-              <View style={[styles.scannerCorner, styles.scannerCornerBR]} />
-            </View>
-
-            <AppText style={styles.scannerHint}>
-              Apuntá la cámara al código de barras del equipo
-            </AppText>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setScannerOpen(false)}
+        onScanned={handleBarCodeScanned}
+        paused={scanProcessed.current}
+      />
 
       {/* Selector de Fecha */}
       <SelectionBottomSheet
@@ -1175,456 +900,3 @@ export function AnalyzerScreen({ route }: any) {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  scrollContent: {
-    padding: theme.spacing.lg,
-    paddingBottom: 100,
-  },
-  searchCard: {
-    marginBottom: theme.spacing.md,
-  },
-  searchCardCollapsed: {
-    marginBottom: theme.spacing.md,
-  },
-  collapsedSearchContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  collapsedSearchText: {
-    color: theme.colors.text,
-    fontSize: 13,
-    fontFamily: theme.fontFamily.semibold,
-    flex: 1,
-  },
-  collapsedSearchAction: {
-    color: theme.colors.primary,
-    fontSize: 12,
-    fontFamily: theme.fontFamily.bold,
-    textTransform: 'uppercase',
-  },
-  cardTitle: {
-    color: theme.colors.textMuted,
-    fontSize: 12,
-    fontFamily: theme.fontFamily.bold,
-    marginBottom: 8,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.lg,
-    color: theme.colors.text,
-    fontFamily: theme.fontFamily.regular,
-    paddingHorizontal: theme.spacing.md,
-    height: 44,
-  },
-  inputFocused: {
-    borderColor: theme.colors.primary,
-    backgroundColor: 'rgba(0, 161, 224, 0.05)',
-  },
-  scanBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radius.lg,
-    backgroundColor: 'rgba(0, 161, 224, 0.15)',
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  importBtn: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surfaceLight,
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.lg,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: theme.spacing.xl,
-  },
-  importBtnText: {
-    color: '#fff',
-    fontFamily: theme.fontFamily.bold,
-  },
-  loadingContainer: {
-    paddingVertical: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  logoTextMain: {
-    color: '#ffffff',
-    fontSize: 26,
-    fontFamily: theme.fontFamily.bold,
-  },
-  logoTextSuffix: {
-    color: theme.colors.primary,
-    fontSize: 26,
-    fontFamily: theme.fontFamily.regular,
-    letterSpacing: 1,
-  },
-  loadingSpinner: {
-    marginBottom: theme.spacing.md,
-  },
-  loadingText: {
-    color: theme.colors.textMuted,
-    fontSize: 13,
-  },
-  resultsContainer: {
-    marginTop: theme.spacing.sm,
-  },
-  panelHeader: {
-    marginBottom: theme.spacing.md,
-  },
-  panelTitle: {
-    color: theme.colors.text,
-    fontSize: 18,
-    fontFamily: theme.fontFamily.bold,
-  },
-  panelMeta: {
-    color: theme.colors.textMuted,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  panelHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  ewsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: theme.radius.md,
-    gap: 6,
-  },
-  ewsButtonText: {
-    color: '#fff',
-    fontSize: 11,
-    fontFamily: theme.fontFamily.bold,
-  },
-  kpiScroll: {
-    paddingBottom: theme.spacing.md,
-    gap: 10,
-  },
-  sectionLabel: {
-    color: theme.colors.textDim,
-    fontSize: 10,
-    fontFamily: theme.fontFamily.bold,
-    letterSpacing: 1.5,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-  },
-  iaCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  iaHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  iaDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.primary,
-  },
-  iaTitle: {
-    color: theme.colors.text,
-    fontSize: 13,
-    fontFamily: theme.fontFamily.bold,
-    flex: 1,
-  },
-  iaButtonPressable: {
-    borderRadius: theme.radius.md,
-    overflow: 'hidden',
-  },
-  iaButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  iaButtonText: {
-    color: '#fff',
-    fontFamily: theme.fontFamily.bold,
-    fontSize: 13,
-  },
-  emptyText: {
-    color: theme.colors.textDim,
-    fontSize: 13,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderRadius: theme.radius.md,
-    padding: 3,
-    marginBottom: theme.spacing.md,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: theme.radius.sm,
-  },
-  tabActive: {
-    backgroundColor: theme.colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  tabText: {
-    fontSize: 12,
-    fontFamily: theme.fontFamily.medium,
-    color: theme.colors.textMuted,
-  },
-  tabTextActive: {
-    color: theme.colors.primary,
-    fontFamily: theme.fontFamily.bold,
-  },
-  pickerButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: theme.spacing.md,
-    height: 44,
-    justifyContent: 'center',
-  },
-  pickerButtonDisabled: {
-    opacity: 0.4,
-  },
-  pickerButtonText: {
-    color: theme.colors.textDim,
-    fontSize: 13,
-    fontFamily: theme.fontFamily.regular,
-  },
-  pickerButtonTextActive: {
-    color: theme.colors.text,
-    fontSize: 13,
-    fontFamily: theme.fontFamily.semibold,
-  },
-  detailedFiltersCard: {
-    marginBottom: theme.spacing.md,
-    padding: theme.spacing.sm,
-  },
-  detailedSearchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  searchFieldWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: 10,
-    height: 44,
-  },
-  searchFieldIcon: {
-    marginRight: 6,
-  },
-  detailedSearchInput: {
-    flex: 1,
-    color: theme.colors.text,
-    fontFamily: theme.fontFamily.regular,
-    fontSize: 13,
-    height: '100%',
-    padding: 0,
-  },
-  clearBtn: {
-    padding: 4,
-  },
-  dateFilterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surfaceLight,
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: 10,
-    height: 44,
-    gap: 6,
-    maxWidth: 150,
-  },
-  dateFilterBtnText: {
-    color: theme.colors.text,
-    fontSize: 12,
-    fontFamily: theme.fontFamily.semibold,
-  },
-  kpiSubtext: {
-    color: theme.colors.textMuted,
-    fontSize: 9,
-    fontFamily: theme.fontFamily.regular,
-    marginBottom: 2,
-  },
-  kpiTimestamp: {
-    color: theme.colors.textDim,
-    fontSize: 9,
-    fontFamily: theme.fontFamily.regular,
-  },
-  kpiInterval: {
-    color: theme.colors.textDim,
-    fontSize: 8.5,
-    fontFamily: theme.fontFamily.regular,
-    marginTop: 1,
-  },
-  initialHeaderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  initialHeaderMain: {
-    fontFamily: theme.fontFamily.bold,
-    fontSize: 28,
-    color: '#ffffff',
-  },
-  initialHeaderSuffix: {
-    fontFamily: theme.fontFamily.medium,
-    fontSize: 28,
-    color: theme.colors.primary,
-    letterSpacing: 0.5,
-  },
-  resultsHeaderBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  backBtn: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resultsHeaderTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  resultsLogoMain: {
-    fontFamily: theme.fontFamily.bold,
-    fontSize: 16,
-    color: '#ffffff',
-  },
-  resultsLogoSuffix: {
-    fontFamily: theme.fontFamily.medium,
-    fontSize: 16,
-    color: theme.colors.primary,
-  },
-  // Scanner styles
-  scannerContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  scannerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 16,
-  },
-  scannerCloseBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-  },
-  scannerTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: theme.fontFamily.bold,
-  },
-  scannerViewfinder: {
-    width: 260,
-    height: 160,
-    position: 'relative',
-  },
-  scannerCorner: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    borderColor: theme.colors.primary,
-  },
-  scannerCornerTL: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderTopLeftRadius: 8,
-  },
-  scannerCornerTR: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderTopRightRadius: 8,
-  },
-  scannerCornerBL: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: 8,
-  },
-  scannerCornerBR: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: 8,
-  },
-  scannerHint: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
-    fontFamily: theme.fontFamily.medium,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
-})

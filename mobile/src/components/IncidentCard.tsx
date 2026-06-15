@@ -27,7 +27,7 @@ function getSeverityColor(severity: string): string {
   return theme.colors.info
 }
 
-export function IncidentCard({ incident, onPressSolution }: IncidentCardProps) {
+function IncidentCardComponent({ incident, onPressSolution }: IncidentCardProps) {
   const [expanded, setExpanded] = useState(false)
   const severityColor = getSeverityColor(incident.severity)
 
@@ -106,6 +106,8 @@ export function IncidentCard({ incident, onPressSolution }: IncidentCardProps) {
     </GlassCard>
   )
 }
+
+export const IncidentCard = React.memo(IncidentCardComponent)
 
 const styles = StyleSheet.create({
   card: {

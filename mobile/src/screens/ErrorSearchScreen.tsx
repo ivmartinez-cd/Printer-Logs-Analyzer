@@ -1,39 +1,21 @@
-import React, { useState, useRef } from 'react'
-import { StyleSheet, View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { StyleSheet, View, ScrollView, TextInput, TouchableOpacity } from 'react-native'
 import { AppText } from '../components/AppText'
-import { Search } from 'lucide-react-native'
+import { Search, Trash2, Clock } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { GlassCard } from '../components/GlassCard'
+import { ScalePressable } from '../components/ScalePressable'
 import { SolutionBottomSheet } from '../components/SolutionBottomSheet'
 import { theme } from '../theme'
+import { LinearGradient } from 'expo-linear-gradient'
 
-function ScalePressable({ onPress, disabled, style, children, accessibilityLabel, accessibilityRole }: {
-  onPress: () => void
-  disabled?: boolean
-  style?: any
-  children: React.ReactNode
-  accessibilityLabel?: string
-  accessibilityRole?: 'button'
-}) {
-  const scale = useSharedValue(1)
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <Pressable
-        onPressIn={() => { scale.value = withSpring(0.92) }}
-        onPressOut={() => { scale.value = withSpring(1) }}
-        onPress={onPress}
-        disabled={disabled}
-        style={style}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole={accessibilityRole}
-      >
-        {children}
-      </Pressable>
-    </Animated.View>
-  )
+// Formatea el código a MAYÚSCULAS y agrupa de a 2 caracteres con puntos.
+// Ej: "13b2d2" -> "13.B2.D2"
+function formatErrorCode(raw: string): string {
+  const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)
+  const groups = clean.match(/.{1,2}/g)
+  return groups ? groups.join('.') : ''
 }
 
 export function ErrorSearchScreen() {
@@ -42,25 +24,81 @@ export function ErrorSearchScreen() {
   const [inputFocused, setInputFocused] = useState(false)
   const [selectedErrorCode, setSelectedErrorCode] = useState<string | null>(null)
   const [solutionSheetOpen, setSolutionSheetOpen] = useState(false)
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+
+  // Cargar búsquedas recientes al montar la pantalla
+  useEffect(() => {
+    const loadRecents = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('recent_error_codes')
+        if (stored) {
+          setRecentSearches(JSON.parse(stored))
+        }
+      } catch {
+        // Ignorar fallas al cargar
+      }
+    }
+    loadRecents()
+  }, [])
+
+  const saveRecentSearch = async (newCode: string) => {
+    const trimmed = newCode.trim().toUpperCase()
+    if (!trimmed) return
+    const updated = [trimmed, ...recentSearches.filter((c) => c !== trimmed)].slice(0, 8)
+    setRecentSearches(updated)
+    try {
+      await AsyncStorage.setItem('recent_error_codes', JSON.stringify(updated))
+    } catch {
+      // Ignorar fallas al guardar
+    }
+  }
 
   const handleSearch = () => {
     const trimmed = code.trim()
     if (!trimmed) return
+    saveRecentSearch(trimmed)
     setSelectedErrorCode(trimmed)
     setSolutionSheetOpen(true)
   }
 
+  const handlePressRecent = (recentCode: string) => {
+    const formatted = formatErrorCode(recentCode)
+    setCode(formatted)
+    setSelectedErrorCode(formatted)
+    setSolutionSheetOpen(true)
+  }
+
+  const handleClearRecents = async () => {
+    setRecentSearches([])
+    try {
+      await AsyncStorage.removeItem('recent_error_codes')
+    } catch {
+      // Ignorar
+    }
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <LinearGradient
+        colors={['#081c30', '#06080c', '#030508']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.85 }}
+      />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { flexGrow: 1, justifyContent: 'center' }
+          recentSearches.length === 0 && { flexGrow: 1, justifyContent: 'center' }
         ]}
       >
         <View style={styles.initialHeaderContainer}>
-          <AppText style={styles.initialHeaderMain}>HP Logs </AppText>
-          <AppText style={styles.initialHeaderSuffix}>CATALOG</AppText>
+          <View style={styles.initialLogoRow}>
+            <AppText style={styles.initialHeaderMain}>HP Logs </AppText>
+            <AppText style={styles.initialHeaderSuffix}>CATALOG</AppText>
+          </View>
+          <AppText style={styles.initialSubtitle}>
+            Búsqueda rápida en el catálogo de códigos de error de impresoras HP para encontrar soluciones técnicas instantáneas.
+          </AppText>
         </View>
 
         <GlassCard style={styles.searchCard}>
@@ -71,10 +109,11 @@ export function ErrorSearchScreen() {
               placeholder="Ej: 41.03.02"
               placeholderTextColor={theme.colors.textDim}
               value={code}
-              onChangeText={setCode}
+              onChangeText={(t) => setCode(formatErrorCode(t))}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
-              autoCapitalize="none"
+              autoCapitalize="characters"
+              autoCorrect={false}
               onSubmitEditing={handleSearch}
             />
 
@@ -89,6 +128,34 @@ export function ErrorSearchScreen() {
             </ScalePressable>
           </View>
         </GlassCard>
+
+        {/* Búsquedas recientes */}
+        {recentSearches.length > 0 && (
+          <GlassCard style={styles.recentsCard}>
+            <View style={styles.recentsHeader}>
+              <View style={styles.recentsTitleRow}>
+                <Clock size={14} color={theme.colors.textDim} />
+                <AppText style={styles.recentsTitle}>Búsquedas Recientes</AppText>
+              </View>
+              <TouchableOpacity onPress={handleClearRecents} style={styles.clearBtn}>
+                <Trash2 size={14} color={theme.colors.error} />
+                <AppText style={styles.clearText}>Limpiar</AppText>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.chipsContainer}>
+              {recentSearches.map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  onPress={() => handlePressRecent(item)}
+                  style={styles.chip}
+                  activeOpacity={0.7}
+                >
+                  <AppText style={styles.chipText}>{item}</AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </GlassCard>
+        )}
       </ScrollView>
 
       <SolutionBottomSheet
@@ -135,7 +202,8 @@ const styles = StyleSheet.create({
   },
   inputFocused: {
     borderColor: theme.colors.primary,
-    backgroundColor: 'rgba(0, 161, 224, 0.05)',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(0, 161, 224, 0.08)',
   },
   searchBtn: {
     width: 44,
@@ -146,10 +214,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   initialHeaderContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.md,
+  },
+  initialLogoRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: 6,
   },
   initialHeaderMain: {
     fontFamily: theme.fontFamily.bold,
@@ -161,5 +234,63 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: theme.colors.primary,
     letterSpacing: 0.5,
+  },
+  initialSubtitle: {
+    color: theme.colors.textMuted,
+    fontSize: 13,
+    fontFamily: theme.fontFamily.medium,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: 6,
+    opacity: 0.8,
+  },
+  // Recientes styles
+  recentsCard: {
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.md,
+  },
+  recentsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  recentsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  recentsTitle: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    fontFamily: theme.fontFamily.bold,
+  },
+  clearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  clearText: {
+    color: theme.colors.error,
+    fontSize: 11,
+    fontFamily: theme.fontFamily.semibold,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  chipText: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontFamily: theme.fontFamily.medium,
   },
 })

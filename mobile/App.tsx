@@ -1,9 +1,10 @@
-import React from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { ActivityIndicator, View, Text, StyleSheet } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { NavigationContainer, DarkTheme } from '@react-navigation/native'
+import { LinearGradient } from 'expo-linear-gradient'
 import {
   useFonts,
   Inter_400Regular,
@@ -49,6 +50,10 @@ const linking = {
   },
 }
 
+// Tiempo mínimo (ms) que la pantalla de carga permanece visible. Sin esto, en
+// release las fuentes cargan tan rápido que el splash apenas parpadea.
+const MIN_SPLASH_MS = 1600
+
 function App() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -57,10 +62,30 @@ function App() {
     Inter_700Bold,
   })
 
-  if (!fontsLoaded) {
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const appReady = fontsLoaded && minTimeElapsed
+
+  if (!appReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={styles.loadingContainer}>
+        <LinearGradient
+          colors={['#081c30', '#06080c', '#030508']}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.85 }}
+        />
+        <View style={styles.loadingContent}>
+          <View style={styles.logoRow}>
+            <Text style={styles.logoMain}>HP Logs </Text>
+            <Text style={styles.logoSuffix}>ANALYZER</Text>
+          </View>
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 28 }} />
+        </View>
       </View>
     )
   }
@@ -79,5 +104,35 @@ function App() {
     </GestureHandlerRootView>
   )
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // La fuente Inter puede no estar cargada aún: fontWeight asegura el peso con la fuente del sistema.
+  logoMain: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '700',
+    fontFamily: theme.fontFamily.bold,
+  },
+  logoSuffix: {
+    color: theme.colors.primary,
+    fontSize: 30,
+    fontWeight: '500',
+    fontFamily: theme.fontFamily.medium,
+    letterSpacing: 0.5,
+  },
+})
 
 export default Sentry.wrap(App)
