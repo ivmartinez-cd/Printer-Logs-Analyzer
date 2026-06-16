@@ -69,6 +69,13 @@ class TelemetryRepository:
         except DatabaseUnavailableError:
             return self._get_events_local(device_serial)
 
+    def delete_events_by_analysis(self, saved_analysis_id: UUID) -> int:
+        """Delete telemetry events associated with a specific saved analysis ID."""
+        try:
+            return self._delete_events_db(saved_analysis_id)
+        except DatabaseUnavailableError:
+            return self._delete_events_local(saved_analysis_id)
+
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
@@ -116,6 +123,17 @@ class TelemetryRepository:
                 rows = cur.fetchall()
         return [self._row_to_event(r) for r in rows]
 
+    def _delete_events_db(self, saved_analysis_id: UUID) -> int:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM device_telemetry_events WHERE saved_analysis_id = %s",
+                    (str(saved_analysis_id),),
+                )
+                deleted = cur.rowcount
+            conn.commit()
+        return deleted
+
     # ------------------------------------------------------------------
     # Local JSON fallback helpers
     # ------------------------------------------------------------------
@@ -161,6 +179,16 @@ class TelemetryRepository:
         events = [self._dict_to_event(i) for i in items]
         events.sort(key=lambda e: (e.event_time, e.counter))
         return events
+
+    def _delete_events_local(self, saved_analysis_id: UUID) -> int:
+        with _local_write_lock:
+            items = self._load_local()
+            target_id_str = str(saved_analysis_id)
+            filtered = [i for i in items if i.get("saved_analysis_id") != target_id_str]
+            deleted = len(items) - len(filtered)
+            self._save_local(filtered)
+        return deleted
+
 
     # ------------------------------------------------------------------
     # Shared helpers

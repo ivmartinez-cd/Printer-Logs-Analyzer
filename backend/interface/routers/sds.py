@@ -34,6 +34,7 @@ from backend.interface.schemas.sds import (
     RemoteEwsResponse,
     ResolveDeviceResponse,
 )
+from backend.interface.utils import extract_serial_number
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 router = APIRouter(tags=["SDS & Insight"])
@@ -58,9 +59,10 @@ async def resolve_device_endpoint(
     ):
         raise HTTPException(status_code=503, detail="Integración Insight API no configurada")
 
-    serial = serial.strip().upper()
+    serial = extract_serial_number(serial)
     if not serial:
         raise HTTPException(status_code=400, detail="Número de serie es requerido")
+
 
     info = await asyncio.to_thread(
         _insight_get_device_info,
@@ -102,9 +104,10 @@ async def get_remote_ews_endpoint(
     ):
         raise HTTPException(status_code=503, detail="Integración Insight API no configurada")
 
-    serial = serial.strip().upper()
+    serial = extract_serial_number(serial)
     if not serial:
         raise HTTPException(status_code=400, detail="Número de serie inválido")
+
 
     info = await asyncio.to_thread(
         _insight_get_device_info,
@@ -159,9 +162,10 @@ async def extract_sds_logs(
     ):
         raise HTTPException(status_code=503, detail="Integración Insight API no configurada")
 
-    serial = body.serial.strip().upper()
+    serial = extract_serial_number(body.serial)
     if not serial:
         raise HTTPException(status_code=400, detail="Número de serie inválido")
+
 
     def _do_extract():
         info = None
@@ -266,8 +270,11 @@ async def insight_device_alerts(
     ):
         return {"insight_configured": False}
 
-    serial = serial.strip().upper()
+    serial = extract_serial_number(serial)
+    if not serial:
+        return {"insight_configured": False}
     return await asyncio.to_thread(
+
         _insight_get_device_alerts,
         settings.insight_portal_url,
         settings.insight_api_key,
@@ -286,13 +293,17 @@ async def insight_device_alerts(
 async def get_insight_meters(
     request: Request, serial: str, settings: Settings = Depends(get_settings)
 ) -> List[Dict[str, Any]]:
+    clean_serial = extract_serial_number(serial)
+    if not clean_serial:
+        return []
     info = await asyncio.to_thread(
         _insight_get_device_info,
         settings.insight_portal_url,
         settings.insight_api_key,
         settings.insight_api_secret,
-        serial,
+        clean_serial,
     )
+
     if not info["device_id"]:
         return []
 

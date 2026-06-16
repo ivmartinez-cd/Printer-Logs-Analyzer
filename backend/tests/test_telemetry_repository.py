@@ -61,7 +61,32 @@ class TestTelemetryRepository(unittest.TestCase):
             self.repo.get_events_by_serial("S1")
             local_get.assert_called_once()
 
+    def test_delete_events_by_analysis(self):
+        aid = uuid4()
+        self.mock_cur.rowcount = 3
+        deleted = self.repo.delete_events_by_analysis(aid)
+        self.assertEqual(deleted, 3)
+        self.mock_cur.execute.assert_called_once()
+        self.mock_conn.commit.assert_called_once()
+
+    def test_delete_events_local(self):
+        aid1 = uuid4()
+        aid2 = uuid4()
+        stored = [
+            {"id": "1", "device_serial": "S1", "saved_analysis_id": str(aid1), "code": "42.01", "event_time": "2026-06-10T00:00:00+00:00"},
+            {"id": "2", "device_serial": "S1", "saved_analysis_id": str(aid2), "code": "42.01", "event_time": "2026-06-10T00:00:00+00:00"},
+        ]
+        self.mock_db.connect.side_effect = DatabaseUnavailableError("down")
+        with patch.object(self.repo, "_load_local", return_value=stored), patch.object(self.repo, "_save_local") as save:
+            deleted = self.repo.delete_events_by_analysis(aid1)
+            self.assertEqual(deleted, 1)
+            save.assert_called_once()
+            saved_items = save.call_args[0][0]
+            self.assertEqual(len(saved_items), 1)
+            self.assertEqual(saved_items[0]["id"], "2")
+
     def test_local_roundtrip_sorted(self):
+
         with patch.object(self.repo, "_load_local", return_value=[]) as _, patch.object(
             self.repo, "_save_local"
         ) as save:
@@ -102,5 +127,15 @@ class TestTelemetryRepository(unittest.TestCase):
         self.assertEqual(events[1].counter, 500)
 
 
+    def test_extract_serial_number(self):
+        from backend.interface.utils import extract_serial_number
+        self.assertEqual(extract_serial_number("HP LaserJet Managed MFP (BRBSN9YYHQ)"), "BRBSN9YYHQ")
+        self.assertEqual(extract_serial_number("CNNCQ60100001"), "CNNCQ60100001")
+        self.assertEqual(extract_serial_number("  MXBC62600005  "), "MXBC62600005")
+        self.assertEqual(extract_serial_number(None), None)
+        self.assertEqual(extract_serial_number(""), None)
+
+
 if __name__ == "__main__":
     unittest.main()
+

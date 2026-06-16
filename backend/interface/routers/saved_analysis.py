@@ -32,6 +32,7 @@ from backend.interface.schemas.saved_analysis import (
 )
 from backend.interface.utils import (
     enrich_events_with_catalog,
+    extract_serial_number,
     incident_to_summary,
     normalize_log_text,
 )
@@ -99,10 +100,11 @@ def create_saved_analysis(
     # Fan out each incident into the per-device telemetry history so the
     # degradation engine can evaluate the device's health over time.
     if body.equipment_identifier:
+        clean_serial = extract_serial_number(body.equipment_identifier)
         telemetry_repo.add_events(
             [
                 TelemetryEvent(
-                    device_serial=body.equipment_identifier,
+                    device_serial=clean_serial,
                     saved_analysis_id=snap.id,
                     code=inc.code,
                     classification=inc.classification,
@@ -114,6 +116,7 @@ def create_saved_analysis(
                 for inc in body.incidents
             ]
         )
+
     return {
         "id": str(snap.id),
         "name": snap.name,
@@ -200,9 +203,10 @@ def get_device_health(
             "events_count": 0,
         }
 
-    events = telemetry_repo.get_events_by_serial(serial)
+    clean_serial = extract_serial_number(serial)
+    events = telemetry_repo.get_events_by_serial(clean_serial)
     try:
-        maintenance = maintenance_repo.get_history(serial)
+        maintenance = maintenance_repo.get_history(clean_serial)
     except Exception:
         maintenance = []
 
@@ -217,6 +221,7 @@ def get_device_health(
     }
 
 
+
 @router.delete(
     "/{id}",
     status_code=204,
@@ -225,7 +230,9 @@ def get_device_health(
     response_description="No content upon successful deletion.",
 )
 def delete_saved_analysis(
-    id: str, repo: SavedAnalysisRepository = Depends(get_saved_analysis_repo)
+    id: str,
+    repo: SavedAnalysisRepository = Depends(get_saved_analysis_repo),
+    telemetry_repo: TelemetryRepository = Depends(get_telemetry_repo),
 ) -> None:
     try:
         uid = UUID(id)
@@ -233,6 +240,8 @@ def delete_saved_analysis(
         raise HTTPException(status_code=400, detail="Invalid id") from None
     if not repo.delete(uid):
         raise HTTPException(status_code=404, detail="Saved analysis not found")
+    telemetry_repo.delete_events_by_analysis(uid)
+
 
 
 @router.post(
@@ -311,11 +320,15 @@ def update_saved_analysis(
     if not snap:
         raise HTTPException(status_code=404, detail="Saved analysis not found")
 
+    # Clean up old telemetry events before appending new ones to prevent duplication
+    telemetry_repo.delete_events_by_analysis(uid)
+
     if body.equipment_identifier:
+        clean_serial = extract_serial_number(body.equipment_identifier)
         telemetry_repo.add_events(
             [
                 TelemetryEvent(
-                    device_serial=body.equipment_identifier,
+                    device_serial=clean_serial,
                     saved_analysis_id=snap.id,
                     code=inc.code,
                     classification=inc.classification,
@@ -327,6 +340,7 @@ def update_saved_analysis(
                 for inc in body.incidents
             ]
         )
+
 
     return {
         "id": str(snap.id),
