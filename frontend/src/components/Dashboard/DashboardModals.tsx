@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useUIStore } from '../../store/useUIStore'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
 import { useToast } from '../../contexts/ToastContext'
-import { deleteSavedAnalysis, compareSavedAnalysis } from '../../services/api'
+import { deleteSavedAnalysis, compareSavedAnalysis, listSavedAnalyses } from '../../services/api'
 import type { SavedAnalysisSummary, SavedAnalysisFull, CompareResponse } from '../../types/api'
 import type { ViewMode } from '../ui/Navigation'
 
@@ -137,7 +137,17 @@ export function DashboardModals({
 
       {saveIncidentModalOpen && result && (
         <SaveIncidentModal
-          onSave={handleSaveIncident}
+          onSave={async (name, equipmentIdentifier) => {
+            try {
+              await handleSaveIncident(name, equipmentIdentifier)
+              setSaveIncidentModalOpen(false)
+              toast.showSuccess('Incidente guardado')
+              const list = await listSavedAnalyses()
+              setSavedList(list)
+            } catch (e) {
+              toast.showError(e instanceof Error ? e.message : 'Error al guardar el incidente')
+            }
+          }}
           onClose={() => !savingIncident && setSaveIncidentModalOpen(false)}
           saving={savingIncident}
           initialEquipment={
