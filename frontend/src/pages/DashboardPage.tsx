@@ -259,7 +259,14 @@ export default function DashboardPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, initialIsAvisos, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
 
+  // Tracks the analysis id last seen in the URL. We only load from the URL on a
+  // genuine URL change (deep link / back-forward). Internal selection changes
+  // sync the URL asynchronously, so without this guard the transient mismatch
+  // would revert selectedSavedId and ping-pong into an infinite fetch loop.
+  const lastUrlAnalysisId = useRef<string | null>(null)
   useEffect(() => {
+    if (initialAnalysisId === lastUrlAnalysisId.current) return
+    lastUrlAnalysisId.current = initialAnalysisId ?? null
     if (initialAnalysisId && initialAnalysisId !== selectedSavedId) {
       setViewMode('saved-detail')
       setSelectedSavedId(initialAnalysisId)
