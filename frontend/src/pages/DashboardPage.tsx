@@ -8,6 +8,7 @@ import {
   getRemoteEwsAccess,
 } from '../services/api'
 import { useHpCacheRefresh } from '../hooks/useHpCacheRefresh'
+import { NotificationsBell } from '../components/ui/NotificationsBell'
 import type { HealthStatus } from '../services/api'
 import type {
   ParseLogsResponse,
@@ -381,6 +382,8 @@ export default function DashboardPage({
       <button className="dashboard__mobile-menu-btn" onClick={() => setMobileMenuOpen(true)}>
         <Menu size={24} />
       </button>
+
+      <NotificationsBell />
       
       <div 
         className={dashboardClass} 

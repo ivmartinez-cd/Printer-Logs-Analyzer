@@ -14,6 +14,7 @@ import type {
   RemoteEwsResponse,
   RefreshHpCacheResponse,
   HpOperationsResponse,
+  NotificationsResponse,
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
@@ -492,6 +493,35 @@ export async function getHpOperations(
     25_000
   )
   return handleResponse<HpOperationsResponse>(res)
+}
+
+// --- Notifications ---
+
+export async function getNotifications(signal?: AbortSignal): Promise<NotificationsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/notifications`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    15_000
+  )
+  return handleResponse<NotificationsResponse>(res)
+}
+
+export async function markNotificationRead(id: string, signal?: AbortSignal): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/notifications/${encodeURIComponent(id)}/read`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    signal,
+  })
+  if (!res.ok) throw new Error(res.statusText || 'Request failed')
+}
+
+export async function markAllNotificationsRead(signal?: AbortSignal): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/notifications/read-all`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    signal,
+  })
+  if (!res.ok) throw new Error(res.statusText || 'Request failed')
 }
 
 export async function extractSdsLogs(

@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List
 
+from backend.application.services.hp_cache_notifier import start_cache_refresh_watch
 from backend.application.services.insight_service import (
     get_device_alerts as _insight_get_device_alerts,
 )
@@ -25,8 +26,14 @@ from backend.application.services.sds_web_service import (
 from backend.infrastructure.config import Settings
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
+from backend.infrastructure.repositories.notification_repository import NotificationRepository
 from backend.interface.auth import authenticate
-from backend.interface.deps import get_error_code_repo, get_error_solution_repo, get_settings
+from backend.interface.deps import (
+    get_error_code_repo,
+    get_error_solution_repo,
+    get_notification_repo,
+    get_settings,
+)
 from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.sds import (
     ExtractSdsLogsRequest,
@@ -156,6 +163,7 @@ async def refresh_hp_cache_endpoint(
     request: Request,
     serial: str,
     settings: Settings = Depends(get_settings),
+    notification_repo: NotificationRepository = Depends(get_notification_repo),
 ) -> RefreshHpCacheResponse:
     if not (settings.sds_web_username and settings.sds_web_password):
         raise HTTPException(status_code=503, detail="Integración SDS Web no configurada")
@@ -192,11 +200,29 @@ async def refresh_hp_cache_endpoint(
     except SDSWebError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+    # Track completion server-side so the user is notified even if they leave the
+    # page: create an in-progress notification and poll the portal in the background.
+    notification = notification_repo.create(
+        type="hp_cache_refresh",
+        title=f"Caché de HP — {serial}",
+        message="Actualización de la caché de datos de HP solicitada. Procesando…",
+        status="in_progress",
+        device_serial=serial,
+    )
+    start_cache_refresh_watch(
+        settings=settings,
+        repo=notification_repo,
+        notification_id=notification.id,
+        device_id=device_id,
+        serial=serial,
+        baseline={b["operation"]: b.get("sent", "") for b in baseline},
+    )
+
     return RefreshHpCacheResponse(
         serial=serial,
         device_id=device_id,
         status="requested",
-        message="Se solicitó la actualización de la caché de datos de HP. Puede tardar unos minutos.",
+        message="Se solicitó la actualización de la caché de datos de HP. Te avisamos en la campanita cuando termine.",
         baseline=baseline,
     )
 
