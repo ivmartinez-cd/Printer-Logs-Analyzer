@@ -41,6 +41,28 @@ class RefreshHpCacheResponse(BaseModel):
     device_id: str
     status: str = "requested"
     message: str
+    # Pre-refresh "sent" timestamps of the cache operations, so the client can
+    # poll /hp-operations and detect when a newer run completes.
+    baseline: List[Dict[str, str]] = Field(default_factory=list)
+
+
+class HpOperation(BaseModel):
+    """One row of the device's HP Smart operations table."""
+
+    operation: str
+    sent: Optional[str] = None
+    sent_by: Optional[str] = None
+    last_known_state: Optional[str] = None
+    last_state_updated: Optional[str] = None
+    last_state_requested: Optional[str] = None
+
+
+class HpOperationsResponse(BaseModel):
+    """Response of GET /sds/devices/{serial}/hp-operations."""
+
+    serial: str
+    device_id: str
+    operations: List[HpOperation] = Field(default_factory=list)
 
 
 class ExtractSdsLogsResponse(BaseModel):

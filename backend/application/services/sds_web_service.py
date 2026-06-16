@@ -18,6 +18,13 @@ _logger = logging.getLogger(__name__)
 _login_lock = threading.Lock()
 _PORTAL_ORIGIN = "https://hp-sds-latam.insightportal.net"
 
+# HP Smart operations triggered by "Actualizar la caché de datos de HP".
+CACHE_OP_TYPES = {
+    "RefreshHPCloudDeviceActionCache",
+    "RefreshHPCloudDeviceEventLogCache",
+    "RefreshHPCloudDeviceConfigCache",
+}
+
 
 class SDSWebError(Exception):
     """Base exception for SDS Web service."""
@@ -260,15 +267,9 @@ class SDSWebSession:
         links = tree.xpath('//div[@id="remoteEWSLaunchLink"]//a/@href')
         return links[0] if links else None
 
-    def refresh_hp_data_cache(self, device_id: str) -> bool:
-        """Trigger the portal's "Actualizar la caché de datos de HP" action.
-
-        Scrapes the device's hpsmart panel for the refresh-cache form (its action
-        URL + CSRF token) and POSTs it, asking HP to re-collect this device's data
-        into its cloud cache. Returns True on success.
-        """
+    def _fetch_hpsmart_panel(self, device_id: str) -> str:
+        """Fetch the device's hpsmart panel HTML (actions + HP metadata)."""
         self._ensure_session()
-
         try:
             page = self.session.get(
                 f"{self.base_url}/devices/{device_id}/hpsmart",
@@ -283,8 +284,53 @@ class SDSWebSession:
             raise SDSWebError(f"Failed to load device panel: {e}") from e
         if page.status_code != 200:
             raise SDSWebError(f"Error loading device panel ({page.status_code})")
+        return page.text
 
-        tree = html.fromstring(page.text)
+    def get_hp_operations(self, device_id: str) -> list[dict]:
+        """Return the device's HP Smart operations table (status of each action).
+
+        Each row: operation, sent, sent_by, last_known_state, last_state_updated,
+        last_state_requested. The cache-refresh actions surface here as
+        Refresh*Cache rows whose last_known_state ends in a terminal value
+        (Success / PartialSuccess / FinishedWithErrors / ...).
+        """
+        self._ensure_session()
+        try:
+            resp = self.session.get(
+                f"{self.base_url}/devices/{device_id}/hpsmart/operations/refresh",
+                headers={
+                    "x-ekm-usage": "dialog",
+                    "x-requested-with": "XMLHttpRequest",
+                    "Accept": "*/*",
+                },
+                timeout=20,
+            )
+        except requests.RequestException as e:
+            raise SDSWebError(f"Failed to load operations: {e}") from e
+        if resp.status_code != 200:
+            raise SDSWebError(f"Error loading operations ({resp.status_code})")
+        return _parse_hp_operations(resp.text)
+
+    def refresh_hp_data_cache(self, device_id: str) -> list[dict]:
+        """Trigger the portal's "Actualizar la caché de datos de HP" action.
+
+        Scrapes the device's hpsmart panel for the refresh-cache form (its action
+        URL + CSRF token) and POSTs it, asking HP to re-collect this device's data
+        into its cloud cache. Returns the *baseline* (pre-refresh) "sent" timestamps
+        of the cache operations so callers can poll until a newer run completes.
+        """
+        try:
+            baseline_ops = self.get_hp_operations(device_id)
+        except SDSWebError:
+            baseline_ops = []
+        baseline = [
+            {"operation": o["operation"], "sent": o.get("sent", "")}
+            for o in baseline_ops
+            if o.get("operation") in CACHE_OP_TYPES
+        ]
+
+        page_text = self._fetch_hpsmart_panel(device_id)
+        tree = html.fromstring(page_text)
         forms = tree.xpath('//form[contains(@action, "/hpsmart/refresh/hpcache")]')
         if not forms:
             raise SDSWebError(
@@ -311,7 +357,7 @@ class SDSWebSession:
             raise SDSWebError(f"Failed to request cache refresh: {e}") from e
         if resp.status_code not in (200, 204):
             raise SDSWebError(f"Error requesting cache refresh ({resp.status_code})")
-        return True
+        return baseline
 
 
 def html_to_tsv(raw_xml_html: str) -> str:
@@ -384,6 +430,34 @@ def _get_html_content(raw_xml_html: str) -> str:
         pass
     cdatas = re.findall(r"<!\[CDATA\[(.*?)\]\]>", raw_xml_html, re.DOTALL)
     return max(cdatas, key=len) if cdatas else raw_xml_html
+
+
+_HP_OP_FIELDS = (
+    "operation",
+    "sent",
+    "sent_by",
+    "last_known_state",
+    "last_state_updated",
+    "last_state_requested",
+)
+
+
+def _parse_hp_operations(page_text: str) -> list[dict]:
+    """Parse the HP Smart operations table (one dict per operation row)."""
+    out: list[dict] = []
+    try:
+        tree = html.fromstring(page_text)
+        for tr in tree.xpath("//table//tr"):
+            tds = tr.xpath("./td")
+            if len(tds) < 4:  # header (th) rows and empties are skipped
+                continue
+            cells = [" ".join(td.text_content().split()) for td in tds]
+            row = dict(zip(_HP_OP_FIELDS, cells, strict=False))
+            if row.get("operation"):
+                out.append(row)
+    except Exception as e:
+        _logger.warning("Failed to parse HP operations: %s", e)
+    return out
 
 
 def extract_help_urls(raw_xml_html: str) -> Dict[str, Dict[str, str]]:

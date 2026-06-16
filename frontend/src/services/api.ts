@@ -13,6 +13,7 @@ import type {
   ExtractSdsLogsResponse,
   RemoteEwsResponse,
   RefreshHpCacheResponse,
+  HpOperationsResponse,
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
@@ -479,6 +480,18 @@ export async function refreshHpDataCache(
     30_000
   )
   return handleResponse<RefreshHpCacheResponse>(res)
+}
+
+export async function getHpOperations(
+  serial: string,
+  signal?: AbortSignal
+): Promise<HpOperationsResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/devices/${encodeURIComponent(serial)}/hp-operations`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    25_000
+  )
+  return handleResponse<HpOperationsResponse>(res)
 }
 
 export async function extractSdsLogs(
