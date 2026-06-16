@@ -3,8 +3,8 @@
     "id": "1",
     "code": "10.00.15",
     "severity": "ERROR",
-    "description": null,
-    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=truey has been removed or installed incorrectly."
+    "description": "Supply has been removed or installed incorrectly.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
   },
   {
     "id": "2",

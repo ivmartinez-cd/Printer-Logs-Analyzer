@@ -22,11 +22,11 @@ Este directorio contiene el código base móvil desarrollado con **React Native*
    npm install
    ```
 
-2. Ejecuta el servidor de desarrollo local:
+2. Ejecuta la aplicación de forma nativa en un dispositivo Android o emulador:
    ```bash
-   npx expo start
+   npm run android
    ```
-   *Puedes escanear el código QR con la app **Expo Go** en tu dispositivo Android para probar en tiempo real.*
+   *Este comando compilará el código nativo e instalará la aplicación directamente en el dispositivo o emulador conectado.*
 
 ## Cómo generar el archivo APK (Android)
 

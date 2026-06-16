@@ -42,3 +42,7 @@ scripts/internal/
 scripts/poc/
 *.pyc
 __pycache__/
+
+# Antigravity IDE
+.gemini/
+.gemini*

@@ -29,13 +29,6 @@ export interface Incident {
   sds_solution_content?: string | null
 }
 
-export interface AIPdfSummaryResponse {
-  narrative_summary: string
-  tone: 'critical' | 'watch' | 'ok'
-  action_plan: string[]
-  error_translations: Record<string, string>
-}
-
 export interface ParserError {
   line_number: number
   raw_line: string
@@ -68,13 +61,6 @@ export interface ValidateLogsResponse {
   errors: ParserError[]
 }
 
-export interface ErrorCodeUpsertBody {
-  code: string
-  severity?: string | null
-  description?: string | null
-  solution_url?: string | null
-}
-
 // --- Saved analyses (incidents) ---
 
 export interface SavedAnalysisIncidentItem {
@@ -102,52 +88,6 @@ export interface SavedAnalysisSummary {
   equipment_identifier: string | null
   global_severity: string
   created_at: string
-}
-
-export interface SavedAnalysisFull {
-  id: string
-  name: string
-  equipment_identifier: string | null
-  incidents: SavedAnalysisIncidentItem[]
-  global_severity: string
-  created_at: string
-}
-
-export interface CompareDiff {
-  codigos_nuevos: string[]
-  codigos_desaparecidos: string[]
-  cambios_ocurrencias: Array<{
-    code: string
-    saved_occurrences: number
-    current_occurrences: number
-    delta: number
-  }>
-  diferencia_dias: number
-  tendencia: 'mejoro' | 'estable' | 'empeoro'
-}
-
-export interface CompareResponse {
-  saved: SavedAnalysisFull
-  current: ParseLogsResponse
-  diff: CompareDiff
-}
-
-export interface ErrorSolutionFru {
-  part_number: string
-  description: string
-}
-
-export interface ErrorSolution {
-  id: number | null
-  model_id: string
-  code: string
-  title: string | null
-  cause: string | null
-  technician_steps: string[]
-  frus: ErrorSolutionFru[]
-  source_audience: string | null
-  source_page: number | null
-  cpmd_hash: string | null
 }
 
 // --- Diagnóstico con IA ---
@@ -198,15 +138,6 @@ export interface InsightMeter {
   value: number
 }
 
-export interface ResolveDeviceResponse {
-  serial: string
-  device_id: string
-  model_name_sds: string
-  firmware: string | null
-  suggested_model_id: string | null
-  suggested_model_name: string | null
-}
-
 export interface ExtractSdsLogsResponse {
   serial: string
   device_id: string
@@ -221,6 +152,8 @@ export interface ExtractSdsLogsResponse {
 export interface RemoteEwsResponse {
   ews_url: string
 }
+
+// --- Fleet ---
 
 export interface FleetClientSummary {
   id: string
@@ -238,109 +171,4 @@ export interface FleetClientDetail {
   id: string
   name: string
   devices: FleetDeviceSummary[]
-}
-
-export interface RollerComponent {
-  label: string
-  percent: number
-}
-
-export interface FleetTopError {
-  code: string
-  count: number
-}
-
-export interface FleetTimelinePoint {
-  date: string
-  errors: number
-  warnings: number
-}
-
-export interface FleetScanResult {
-  serial: string
-  location: string
-  status: 'ok' | 'warning' | 'critical' | 'unreachable'
-  error_count: number
-  warning_count: number
-  model_name: string | null
-  firmware: string | null
-  last_event_date: string | null
-  fuser_life_percent?: number | null
-  black_toner_percent?: number | null
-  roller_components?: RollerComponent[]
-  active_alerts_count?: number
-  active_alerts_max_severity?: string | null
-  error_message?: string | null
-  top_errors?: FleetTopError[]
-  timeline_data?: FleetTimelinePoint[]
-}
-
-export interface FleetScanStatusResponse {
-  status: string
-  processed: number
-  total: number
-  results?: FleetScanResult[]
-}
-
-export interface MaintenanceDevice {
-  serial: string
-  model_family: string | null
-  last_sync_counter: number
-  last_sync_at?: string | null
-  is_active: boolean
-}
-
-export interface MaintenanceModelRule {
-  id?: number | null
-  model_family: string
-  component_type: string
-  expected_life: number
-  alert_margin: number
-  email_recipients?: string | null
-}
-
-export interface MaintenanceDeviceState {
-  id?: number | null
-  device_serial: string
-  component_type: string
-  last_change_counter: number
-}
-
-export interface MaintenanceHistory {
-  id?: number | null
-  device_serial: string
-  component_type: string
-  change_counter: number
-  incident_number?: string | null
-  technician_notes?: string | null
-  changed_at?: string | null
-}
-
-export interface MaintenanceIncident {
-  id?: string | null
-  device_serial: string
-  component_type: string
-  incident_number: string
-  notes?: string | null
-  status: string
-  opened_at?: string | null
-  closed_at?: string | null
-}
-
-export interface MaintenanceCheckJob {
-  job_id: string
-  total: number
-  status: string
-}
-
-export interface MaintenanceSyncStatus {
-  status: string
-  processed: number
-  total: number
-  errors: number
-}
-
-export interface MaintenanceMutationResponse {
-  status: string
-  history_id?: number | null
 }

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
+import { AppState } from 'react-native'
 import * as Network from 'expo-network'
+
+const POLL_INTERVAL_MS = 15_000
 
 export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState<boolean>(true)
 
   useEffect(() => {
     let isMounted = true
+    let interval: ReturnType<typeof setInterval> | null = null
 
     async function checkStatus() {
       try {
@@ -18,14 +22,34 @@ export function useOnlineStatus() {
       }
     }
 
-    checkStatus()
+    function startPolling() {
+      if (interval) return
+      checkStatus()
+      interval = setInterval(checkStatus, POLL_INTERVAL_MS)
+    }
 
-    // Polling cada 5 segundos para actualización rápida de red en movilidad
-    const interval = setInterval(checkStatus, 5000)
+    function stopPolling() {
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+      }
+    }
+
+    // Solo sondear con la app en primer plano (ahorro de batería)
+    if (AppState.currentState === 'active') startPolling()
+
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') {
+        startPolling()
+      } else {
+        stopPolling()
+      }
+    })
 
     return () => {
       isMounted = false
-      clearInterval(interval)
+      stopPolling()
+      sub.remove()
     }
   }, [])
 

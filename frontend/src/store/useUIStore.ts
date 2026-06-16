@@ -25,7 +25,7 @@ interface UIState {
 
   // Actions
   setLogModalOpen: (open: boolean) => void
-  setSdsModalOpen: (open: boolean, incident?: SdsIncidentData | null) => void
+  setSdsModalOpen: (open: boolean) => void
   setSdsIncident: (incident: SdsIncidentData | null) => void
   setAddCodeModalCode: (code: string | null) => void
   setEditCodeInitial: (data: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
@@ -52,7 +52,7 @@ export const useUIStore = create<UIState>((set) => ({
   monitorWizardOpen: false,
 
   setLogModalOpen: (logModalOpen) => set({ logModalOpen }),
-  setSdsModalOpen: (sdsModalOpen, sdsIncident = null) => set({ sdsModalOpen, sdsIncident }),
+  setSdsModalOpen: (sdsModalOpen) => set({ sdsModalOpen }),
   setSdsIncident: (sdsIncident) => set({ sdsIncident }),
   setAddCodeModalCode: (addCodeModalCode) => set({ addCodeModalCode }),
   setEditCodeInitial: (editCodeInitial) => set({ editCodeInitial }),

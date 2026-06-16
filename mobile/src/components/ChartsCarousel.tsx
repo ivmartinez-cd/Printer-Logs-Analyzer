@@ -30,7 +30,7 @@ interface ChartsCarouselProps {
   onPressError?: (code: string) => void
 }
 
-export function ChartsCarousel({ events, topCodes, activeSeverities, onPressError }: ChartsCarouselProps) {
+function ChartsCarouselComponent({ events, topCodes, activeSeverities, onPressError }: ChartsCarouselProps) {
   const { width: screenWidth } = useWindowDimensions()
   const PAGE_WIDTH = screenWidth - 32 - (CARD_PADDING * 2)
   const CHART_WIDTH = PAGE_WIDTH - 16
@@ -523,6 +523,8 @@ export function ChartsCarousel({ events, topCodes, activeSeverities, onPressErro
     </GlassCard>
   )
 }
+
+export const ChartsCarousel = React.memo(ChartsCarouselComponent)
 
 const styles = StyleSheet.create({
   card: {
