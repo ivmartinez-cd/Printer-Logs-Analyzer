@@ -31,6 +31,7 @@ from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.sds import (
     ExtractSdsLogsRequest,
     ExtractSdsLogsResponse,
+    RefreshHpCacheResponse,
     RemoteEwsResponse,
     ResolveDeviceResponse,
 )
@@ -139,6 +140,62 @@ async def get_remote_ews_endpoint(
         )
 
     return RemoteEwsResponse(serial=serial, device_id=device_id, ews_url=ews_url)
+
+
+@router.post(
+    "/sds/devices/{serial}/refresh-cache",
+    response_model=RefreshHpCacheResponse,
+    dependencies=[Depends(authenticate)],
+    summary="Trigger HP data cache refresh for a device",
+    response_description="Confirmation that the HP data cache refresh was requested.",
+)
+@limiter.limit("10/minute")
+async def refresh_hp_cache_endpoint(
+    request: Request,
+    serial: str,
+    settings: Settings = Depends(get_settings),
+) -> RefreshHpCacheResponse:
+    if not (settings.sds_web_username and settings.sds_web_password):
+        raise HTTPException(status_code=503, detail="Integración SDS Web no configurada")
+    if not (
+        settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret
+    ):
+        raise HTTPException(status_code=503, detail="Integración Insight API no configurada")
+
+    serial = extract_serial_number(serial)
+    if not serial:
+        raise HTTPException(status_code=400, detail="Número de serie inválido")
+
+    info = await asyncio.to_thread(
+        _insight_get_device_info,
+        settings.insight_portal_url,
+        settings.insight_api_key,
+        settings.insight_api_secret,
+        serial,
+    )
+    if not info["device_id"]:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado en el Portal")
+
+    device_id = str(info["device_id"])
+
+    def _do_refresh():
+        return get_sds_session(settings).refresh_hp_data_cache(device_id)
+
+    try:
+        await asyncio.wait_for(asyncio.to_thread(_do_refresh), timeout=25.0)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504, detail="La actualización de caché tardó demasiado."
+        ) from None
+    except SDSWebError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return RefreshHpCacheResponse(
+        serial=serial,
+        device_id=device_id,
+        status="requested",
+        message="Se solicitó la actualización de la caché de datos de HP. Puede tardar unos minutos.",
+    )
 
 
 @router.post(

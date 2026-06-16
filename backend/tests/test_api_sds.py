@@ -145,6 +145,41 @@ def test_remote_ews_not_available(mock_insight_info, mock_sds_factory, client):
     assert response.status_code == 404
 
 
+@patch("backend.interface.routers.sds.get_sds_session")
+@patch("backend.interface.routers.sds._insight_get_device_info")
+def test_refresh_hp_cache_success(mock_insight_info, mock_sds_factory, client):
+    """Test successful request of the HP data cache refresh."""
+    mock_insight_info.return_value = {"device_id": 239877, "model_name": "HP LaserJet", "firmware": "1.2.3"}
+
+    mock_sds = MagicMock()
+    mock_sds_factory.return_value = mock_sds
+    mock_sds.refresh_hp_data_cache.return_value = True
+
+    response = client.post("/sds/devices/MXSCS7Q00Q/refresh-cache", headers=_HEADERS)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["serial"] == "MXSCS7Q00Q"
+    assert data["device_id"] == "239877"
+    assert data["status"] == "requested"
+    mock_sds.refresh_hp_data_cache.assert_called_once_with("239877")
+
+
+@patch("backend.interface.routers.sds._insight_get_device_info")
+def test_refresh_hp_cache_device_not_found(mock_insight_info, client):
+    """Returns 404 when the device is not found in the Insight Portal."""
+    mock_insight_info.return_value = {"device_id": None, "model_name": None, "firmware": None}
+
+    response = client.post("/sds/devices/UNKNOWN/refresh-cache", headers=_HEADERS)
+    assert response.status_code == 404
+
+
+def test_refresh_hp_cache_unauthorized(client):
+    """Verify that the endpoint requires a valid API key."""
+    response = client.post("/sds/devices/MXSCS7Q00Q/refresh-cache", headers={"x-api-key": "wrong"})
+    assert response.status_code == 401
+
+
 @patch("backend.interface.routers.sds._insight_get_device_info")
 def test_remote_ews_device_not_found(mock_insight_info, client):
     """Returns 404 when the device is not found in the Insight Portal."""

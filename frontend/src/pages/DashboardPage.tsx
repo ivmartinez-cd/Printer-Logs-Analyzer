@@ -1,11 +1,12 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { Menu, Zap, Save, FileText, Router } from 'lucide-react'
+import { Menu, Zap, Save, FileText, Router, DatabaseBackup } from 'lucide-react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
   extractSdsLogs,
   generatePdfSummary,
   getRemoteEwsAccess,
+  refreshHpDataCache,
 } from '../services/api'
 import type { HealthStatus } from '../services/api'
 import type {
@@ -191,6 +192,7 @@ export default function DashboardPage({
  
   const insightData = useInsightData(currentSerialNumber)
   const [loadingRemoteEws, setLoadingRemoteEws] = useState(false)
+  const [refreshingHpCache, setRefreshingHpCache] = useState(false)
 
   const {
     exportingPdf,
@@ -676,6 +678,30 @@ export default function DashboardPage({
                           >
                             <Router size={16} />
                             {loadingRemoteEws ? 'Conectando...' : 'EWS Remoto'}
+                          </button>
+                          <button
+                            className="dashboard__btn dashboard__btn--secondary"
+                            onClick={async () => {
+                              if (!currentSerialNumber) return
+                              setRefreshingHpCache(true)
+                              try {
+                                const { message } = await refreshHpDataCache(
+                                  currentSerialNumber,
+                                  AbortSignal.timeout(30000)
+                                )
+                                toast.showSuccess(message)
+                              } catch (err) {
+                                console.error('Error refreshing HP data cache:', err)
+                                toast.showError('No se pudo solicitar la actualización de la caché de datos de HP.')
+                              } finally {
+                                setRefreshingHpCache(false)
+                              }
+                            }}
+                            disabled={!currentSerialNumber || refreshingHpCache}
+                            title="Solicitar al portal SDS que actualice la caché de datos de HP del dispositivo"
+                          >
+                            <DatabaseBackup size={16} />
+                            {refreshingHpCache ? 'Actualizando...' : 'Actualizar caché HP'}
                           </button>
                         </div>
                       </div>

@@ -226,6 +226,13 @@ export interface RemoteEwsResponse {
   ews_url: string
 }
 
+export interface RefreshHpCacheResponse {
+  serial: string
+  device_id: string
+  status: string
+  message: string
+}
+
 export interface ExtractSdsLogsResponse {
   serial: string
   device_id: string

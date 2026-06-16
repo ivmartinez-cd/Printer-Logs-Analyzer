@@ -12,6 +12,7 @@ import type {
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
   RemoteEwsResponse,
+  RefreshHpCacheResponse,
   ResolveDeviceResponse,
   InsightMeter,
   RealtimeConsumable,
@@ -466,6 +467,18 @@ export async function getRemoteEwsAccess(
     25_000
   )
   return handleResponse<RemoteEwsResponse>(res)
+}
+
+export async function refreshHpDataCache(
+  serial: string,
+  signal?: AbortSignal
+): Promise<RefreshHpCacheResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/devices/${encodeURIComponent(serial)}/refresh-cache`,
+    { method: 'POST', headers: apiHeaders(), signal },
+    30_000
+  )
+  return handleResponse<RefreshHpCacheResponse>(res)
 }
 
 export async function extractSdsLogs(
