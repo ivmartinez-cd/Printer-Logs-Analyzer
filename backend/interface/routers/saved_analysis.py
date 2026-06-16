@@ -301,7 +301,7 @@ def update_saved_analysis(
         uid = UUID(id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid id") from None
-    
+
     incidents_payload = [incident_to_summary(i) for i in body.incidents]
     snap = repo.update(
         id=uid,
@@ -310,7 +310,7 @@ def update_saved_analysis(
     )
     if not snap:
         raise HTTPException(status_code=404, detail="Saved analysis not found")
-        
+
     if body.equipment_identifier:
         telemetry_repo.add_events(
             [
@@ -327,7 +327,7 @@ def update_saved_analysis(
                 for inc in body.incidents
             ]
         )
-        
+
     return {
         "id": str(snap.id),
         "name": snap.name,
