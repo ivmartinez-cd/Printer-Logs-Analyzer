@@ -6,9 +6,33 @@ from backend.application.services.sds_web_service import (
     SDSWebAuthError,
     SDSWebError,
     SDSWebSession,
+    _parse_hp_operations,
     html_to_tsv,
 )
 from backend.infrastructure.config import Settings
+
+
+def test_parse_hp_operations_strips_state_link():
+    """The state column embeds a "Ver datos en bruto..." link; only the real
+    state token must be kept (regression: it polluted last_known_state)."""
+    html = """
+    <table><tbody>
+      <tr><th>Tipo</th><th>Enviado</th><th>Por</th><th>Estado</th><th>Act</th><th>Sol</th></tr>
+      <tr>
+        <td>RefreshHPCloudDeviceActionCache</td>
+        <td>16-jun-2026 16:03:06</td>
+        <td>ilmartinez</td>
+        <td><a href="/x">Ver datos en bruto del JAMC de HP</a> PartialSuccess</td>
+        <td>16-jun-2026 16:05:13</td>
+        <td>16-jun-2026 16:13:28</td>
+      </tr>
+    </tbody></table>
+    """
+    rows = _parse_hp_operations(html)
+    assert len(rows) == 1
+    assert rows[0]["operation"] == "RefreshHPCloudDeviceActionCache"
+    assert rows[0]["last_known_state"] == "PartialSuccess"
+    assert rows[0]["last_state_updated"] == "16-jun-2026 16:05:13"
 
 
 @pytest.fixture

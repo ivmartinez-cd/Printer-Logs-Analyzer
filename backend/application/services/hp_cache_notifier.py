@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from datetime import datetime, timezone
 from typing import Dict, List
 from uuid import UUID
 
@@ -37,8 +38,8 @@ _TERMINAL_STATES = {
     "cancelled",
 }
 
-_POLL_INTERVAL_S = 20
-_MAX_WAIT_S = 240  # ~4 minutes
+_POLL_INTERVAL_S = 30
+_MAX_WAIT_S = 900  # ~15 minutes (HP can take ~10 min to finish a cache refresh)
 
 
 def _norm(state: str | None) -> str:
@@ -133,3 +134,49 @@ def start_cache_refresh_watch(
         daemon=True,
     )
     thread.start()
+
+
+def resume_pending_watches(settings: Settings, repo: NotificationRepository) -> None:
+    """Re-attach watchers to recent in-progress cache notifications.
+
+    A backend restart (e.g. a deploy) kills the watcher threads, leaving their
+    notifications stuck "in_progress". On startup we resume watching the recent
+    ones so they still get resolved.
+    """
+
+    def _run() -> None:
+        from backend.application.services.insight_service import get_device_info
+
+        if not (
+            settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret
+        ):
+            return
+        try:
+            notifs = repo.list(limit=100)
+        except Exception as exc:
+            _logger.warning("Could not list notifications to resume watches: %s", exc)
+            return
+
+        now = datetime.now(timezone.utc)
+        for n in notifs:
+            if n.type != "hp_cache_refresh" or n.status != "in_progress" or not n.device_serial:
+                continue
+            created = n.created_at if n.created_at.tzinfo else n.created_at.replace(tzinfo=timezone.utc)
+            if (now - created).total_seconds() > 2 * 3600:  # skip ancient stuck ones
+                continue
+            try:
+                info = get_device_info(
+                    settings.insight_portal_url,
+                    settings.insight_api_key,
+                    settings.insight_api_secret,
+                    n.device_serial,
+                )
+                device_id = str(info["device_id"]) if info.get("device_id") else None
+            except Exception:
+                device_id = None
+            if not device_id:
+                continue
+            _logger.info("Resuming HP cache watch for notification %s (%s)", n.id, n.device_serial)
+            start_cache_refresh_watch(settings, repo, n.id, device_id, n.device_serial, baseline={})
+
+    threading.Thread(target=_run, name="hp-cache-resume", daemon=True).start()
