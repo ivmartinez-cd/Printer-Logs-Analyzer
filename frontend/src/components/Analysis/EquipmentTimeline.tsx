@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LineChart,
   Line,
@@ -34,9 +34,11 @@ function formatShortDate(iso: string): string {
 interface EquipmentTimelineProps {
   equipmentId: string
   snapshots: SavedAnalysisSummary[]
+  /** Render the chart inline (auto-loaded, no collapsible toggle). */
+  embedded?: boolean
 }
 
-export function EquipmentTimeline({ equipmentId, snapshots }: EquipmentTimelineProps) {
+export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: EquipmentTimelineProps) {
   const [expanded, setExpanded] = useState(false)
   const [data, setData] = useState<TimelinePoint[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -71,9 +73,80 @@ export function EquipmentTimeline({ equipmentId, snapshots }: EquipmentTimelineP
     setExpanded((e) => !e)
   }
 
+  // Embedded mode: auto-load the chart on mount (no toggle).
+  useEffect(() => {
+    if (embedded && data === null && !loading) {
+      fetchData()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embedded])
+
   const sorted = [...snapshots].sort((a, b) => a.created_at.localeCompare(b.created_at))
   const first = sorted[0]?.created_at
   const last = sorted[sorted.length - 1]?.created_at
+
+  const body = (
+    <div className="equipment-timeline__body">
+      {loading && <p className="dashboard__muted">Cargando evolución…</p>}
+      {fetchError && <p className="dashboard__error">{fetchError}</p>}
+      {data && (
+        <ResponsiveContainer width="100%" height={220}>
+          <LineChart data={data} margin={{ top: 8, right: 20, left: -10, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#2d3544" />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9aa3b2' }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9aa3b2' }} />
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null
+                const point = data.find((p) => p.date === label)
+                return (
+                  <div className="equipment-timeline__tooltip">
+                    {point && <p className="equipment-timeline__tooltip-name">{point.name}</p>}
+                    <p className="equipment-timeline__tooltip-date">{label}</p>
+                    {payload.map((p) => (
+                      <p key={String(p.dataKey)} style={{ color: p.color as string }}>
+                        {p.name}: {p.value}
+                      </p>
+                    ))}
+                  </div>
+                )
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Line
+              type="monotone"
+              dataKey="errors"
+              name="Errores"
+              stroke="#e53e3e"
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              activeDot={{ r: 5 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="warnings"
+              name="Advertencias"
+              stroke="#d97706"
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              activeDot={{ r: 5 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  )
+
+  if (embedded) {
+    return (
+      <div className="equipment-timeline equipment-timeline--embedded">
+        <span className="equipment-timeline__meta" style={{ display: 'block', marginBottom: '8px' }}>
+          📈 Evolución · {snapshots.length} snapshots · {formatShortDate(first)} → {formatShortDate(last)}
+        </span>
+        {body}
+      </div>
+    )
+  }
 
   return (
     <div className="equipment-timeline">
@@ -84,57 +157,7 @@ export function EquipmentTimeline({ equipmentId, snapshots }: EquipmentTimelineP
         </span>
         <span className="equipment-timeline__arrow">{expanded ? '▲' : '▼'}</span>
       </button>
-      {expanded && (
-        <div className="equipment-timeline__body">
-          {loading && <p className="dashboard__muted">Cargando evolución…</p>}
-          {fetchError && <p className="dashboard__error">{fetchError}</p>}
-          {data && (
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={data} margin={{ top: 8, right: 20, left: -10, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3544" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9aa3b2' }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9aa3b2' }} />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null
-                    const point = data.find((p) => p.date === label)
-                    return (
-                      <div className="equipment-timeline__tooltip">
-                        {point && <p className="equipment-timeline__tooltip-name">{point.name}</p>}
-                        <p className="equipment-timeline__tooltip-date">{label}</p>
-                        {payload.map((p) => (
-                          <p key={String(p.dataKey)} style={{ color: p.color as string }}>
-                            {p.name}: {p.value}
-                          </p>
-                        ))}
-                      </div>
-                    )
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line
-                  type="monotone"
-                  dataKey="errors"
-                  name="Errores"
-                  stroke="#e53e3e"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="warnings"
-                  name="Advertencias"
-                  stroke="#d97706"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      )}
+      {expanded && body}
     </div>
   )
 }
