@@ -33,7 +33,9 @@ export function SavedAnalysisList({
     const byEquipment = new Map<string, SavedAnalysisSummary[]>()
     for (const s of savedList) {
       const key = (s.equipment_identifier ?? '').trim()
-      if (!key) continue
+      // Skip records without a real equipment: empty or the "Desconocido"
+      // placeholder would otherwise lump unrelated devices into one timeline.
+      if (!key || key.toLowerCase() === 'desconocido') continue
       const group = byEquipment.get(key) ?? []
       group.push(s)
       byEquipment.set(key, group)

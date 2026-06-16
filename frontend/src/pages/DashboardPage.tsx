@@ -493,6 +493,9 @@ export default function DashboardPage({
                   setCompareModalOpen(true)
                 }}
                 onUpdateDetail={(updated) => {
+                  // A log update now creates a new dated snapshot: point the
+                  // detail view (and selection) at it and refresh the list.
+                  setSelectedSavedId(updated.id)
                   setSavedDetail(updated)
                   listSavedAnalyses().then(setSavedList).catch(() => {})
                 }}
