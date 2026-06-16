@@ -1,66 +1,92 @@
-# Despliegue de Producción (Render + Vercel)
+# Despliegue de Producción (VM Google Cloud + Vercel)
 
-Esta guía detalla los pasos para desplegar el Printer-Logs-Analyzer en entornos de producción y la configuración de variables necesaria.
+Arquitectura actual. **No se usa Neon ni Render** (legado, descartado).
 
-## Variables de Entorno Requeridas
-
-| Variable | Requerida | Descripción | Ejemplo |
-|----------|-----------|-------------|---------|
-| `DB_URL` | ✅ SÍ | String de conexión a PostgreSQL (Neon) | `postgresql://user:pass@host:5432/db` |
-| `ANTHROPIC_API_KEY` | ❌ No | API key de Anthropic para diagnóstico con IA | `sk-ant-api03-...` |
-| `SDS_WEB_USERNAME` | ❌ No | Usuario del portal HP SDS (para extracción automática) | `your-username` |
-| `SDS_WEB_PASSWORD` | ❌ No | Contraseña del portal HP SDS | `your-password` |
-| `INSIGHT_PORTAL_URL` | ❌ No | URL base de la API HP Insight | `https://hp-sds-latam.insightportal.net` |
-| `INSIGHT_API_KEY` | ❌ No | API key de HP Insight | `...` |
-| `INSIGHT_API_SECRET` | ❌ No | API secret de HP Insight | `...` |
-| `API_KEY` | ❌ No | API key interna de la aplicación (default: "dev") | `dev` |
-
-## Despliegue en Render (Backend + DB)
-
-1. **Crear base de datos PostgreSQL:**
-   - Render Dashboard → Databases → **Create new database**.
-   - Nombre: `printer-logs-db`.
-   - Copiar la **External Database URL** para usarla como `DB_URL`.
-
-2. **Crear servicio Web Backend:**
-   - New Web Service → Conectar repositorio GitHub.
-   - **Build Command:** `pip install -r backend/requirements.txt && npm run lint && npm run typecheck && npm run test:backend`
-   - **Start Command:** `uvicorn backend.interface.api:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables:** Configurar todas las variables listadas en la tabla superior (puedes basarte en `.env.example`).
-
-## Despliegue en Vercel (Frontend)
-
-1. **Crear nuevo proyecto:**
-   - Importar repositorio desde GitHub.
-   - **Framework Preset:** Vite.
-   - **Build Command:** `npm run build`.
-   - **Output Directory:** `frontend/dist`.
-2. **Environment Variables:**
-   - `VITE_API_BASE`: URL de tu servicio de Render (ej: `https://printer-logs-analyzer.onrender.com`).
-   - `VITE_API_KEY`: El mismo valor de `API_KEY` configurado en el backend.
-
-## Ejecución con Docker (Local)
-
-Para probar el entorno de producción de forma local:
-
-```bash
-# 1. Copiar plantilla de variables
-cp .env.example .env
-
-# 2. Editar .env con tus credenciales reales
-
-# 3. Compilar e iniciar contenedores
-docker compose up --build
-
-# Endpoints locales:
-# Backend:  http://localhost:8000
-# Frontend: http://localhost:5173
+```
+┌─────────────────────────┐         ┌──────────────────────────────────────────┐
+│  Vercel                 │  HTTPS  │  VM Google Cloud  (34.63.48.46)            │
+│  Frontend (Vite/React)  │ ──────► │  Docker Compose                            │
+│  auto-deploy en `main`  │         │   ├── backend  → :8000  (FastAPI/uvicorn)  │
+└─────────────────────────┘         │   └── db       → :5432  (Postgres 17)      │
+                                     │  data/*.json  = fallback offline           │
+                                     └──────────────────────────────────────────┘
 ```
 
----
+## Infraestructura (dónde está todo)
+
+| Componente | Ubicación |
+|------------|-----------|
+| **Frontend** | Vercel — proyecto `printer-logs-analyzer` (org `ivmartinezcd-8237s-projects`). Auto-deploy en push a `main`. |
+| **Backend** | VM Google Cloud, contenedor `printer-logs-analyzer-backend-1` → `http://34.63.48.46:8000` |
+| **Base de datos** | VM Google Cloud, contenedor `printer-logs-analyzer-db-1` (Postgres 17). Host interno `db:5432`. **Puerto 5432 NO expuesto al exterior** (firewall GCP). |
+| **VM** | IP `34.63.48.46` · hostname `instance-20260529-143249` · proyecto en `/home/ivmartinez_cd/Printer-Logs-Analyzer` |
+| **SSH** | `ssh -i ~/.ssh/google_compute_engine imartinez@34.63.48.46` (Docker requiere `sudo`) |
+
+> En la misma VM convive otro proyecto: `helpdesk-backend` (`:8010`). No tocar.
+
+## Variables de Entorno
+
+| Variable | Requerida | Descripción |
+|----------|-----------|-------------|
+| `DB_URL` | ✅ | Conexión Postgres. En la VM: `postgresql://printerapp:***@db:5432/printer_logs` (definido en `docker-compose.yml`). |
+| `ANTHROPIC_API_KEY` | ❌ | API key Anthropic para diagnóstico IA. |
+| `API_KEY` / `VITE_API_KEY` | ❌ | API key interna (backend / frontend). Deben coincidir. |
+| `SDS_WEB_USERNAME` / `SDS_WEB_PASSWORD` | ❌ | Portal HP SDS (extracción automática de logs). |
+| `INSIGHT_PORTAL_URL` / `INSIGHT_API_KEY` / `INSIGHT_API_SECRET` | ❌ | API HP Insight (alertas y consumibles en tiempo real). |
+| `SMTP_*` / `MAINTENANCE_EMAILS_ENABLED` | ❌ | Envío de mails de mantenimiento (Brevo). |
+
+Plantilla en `.env.example`. Si la DB no responde, el backend cae automáticamente a **JSON local** en `data/` (`saved_analyses_local.json`, `telemetry_events_local.json`).
+
+## Despliegue automático (CI/CD)
+
+Push/merge a **`main`** dispara **dos** despliegues en paralelo:
+
+1. **Backend** → `.github/workflows/deploy.yml` (acción `appleboy/ssh-action`):
+   ```bash
+   cd /home/ivmartinez_cd/Printer-Logs-Analyzer
+   git reset --hard && git clean -fd && git checkout main && git pull origin main
+   sudo docker compose down backend
+   sudo docker compose up -d --build backend
+   sudo docker exec printer-logs-analyzer-backend-1 python backend/scripts/run_migrations.py || true
+   ```
+   ⚠️ **Solo rebuildea el backend.** No toca el frontend ni la DB.
+2. **Frontend** → Vercel detecta el push a `main` y publica automáticamente.
+
+> **Branch protection en `main`:** requiere CI en verde (`Backend pytest` + `Frontend lint+typecheck+test+build`). El auto-merge NO está habilitado: mergear el PR a mano una vez que pasan los checks. Pushear a una rama feature **no** despliega nada.
+
+Secrets del workflow (en GitHub): `VM_IP`, `VM_USER`, `SSH_PRIVATE_KEY`.
+
+## Operación manual en la VM
+
+```bash
+ssh -i ~/.ssh/google_compute_engine imartinez@34.63.48.46
+
+cd /home/ivmartinez_cd/Printer-Logs-Analyzer       # (requiere el dueño ivmartinez_cd / sudo)
+sudo docker ps                                       # estado de contenedores
+sudo docker compose logs -f backend                  # logs backend
+sudo docker compose up -d --build backend            # redeploy backend manual
+
+# Consultar la DB (Postgres en contenedor):
+sudo docker exec printer-logs-analyzer-db-1 psql -U printerapp -d printer_logs -c "SELECT count(*) FROM saved_analyses;"
+```
+
+## Desarrollo local
+
+```bash
+# Opción A: DB local en Docker (recomendado)
+docker compose up -d db            # Postgres en localhost:5432 (mismas credenciales)
+npm run dev                        # frontend (5173) + backend (8000)
+
+# Opción B: contra la DB real de la VM, vía túnel SSH (5432 no está expuesto)
+ssh -i ~/.ssh/google_compute_engine -L 5432:localhost:5432 imartinez@34.63.48.46
+# ...y dejar DB_URL apuntando a localhost:5432
+
+# Opción C: sin DB → el backend usa el fallback JSON en data/ automáticamente
+```
 
 ## Verificaciones Post-Deploy
 
-- **Healthcheck:** Acceder a `https://tu-backend.onrender.com/health`.
-- **Documentación API:** Acceder a `https://tu-backend.onrender.com/docs` (Swagger).
-- **Tests CI:** Verificar que todos los checks de GitHub Actions estén en verde.
+- **Backend health:** `http://34.63.48.46:8000/health`
+- **Swagger:** `http://34.63.48.46:8000/docs`
+- **Frontend:** deployment de Vercel en verde para el commit de `main`.
+- **CI:** todos los checks de GitHub Actions en verde.

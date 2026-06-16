@@ -184,3 +184,25 @@ Switch automático a JSON local (`backend/data/`) cuando PostgreSQL no está dis
 - **`--reload-dir .` en uvicorn:** Obligatorio en Windows.
 - **Migration Runner:** Usar `python backend/scripts/run_migrations.py` — tiene seguimiento de estado en la tabla `schema_migrations`.
 - **Zero-Failure Policy:** `npm run typecheck` + `test:backend` + `test:frontend` antes de cada commit.
+
+---
+
+## Infraestructura y Despliegue (dónde está todo)
+
+**NO se usa Neon ni Render** (legado descartado). Producción:
+
+- **Frontend:** Vercel — proyecto `printer-logs-analyzer` (org `ivmartinezcd-8237s-projects`). Auto-deploy en push a `main`.
+- **Backend + DB:** VM de Google Cloud, vía Docker Compose.
+  - VM: IP `34.63.48.46`, host `instance-20260529-143249`. Proyecto en `/home/ivmartinez_cd/Printer-Logs-Analyzer`.
+  - SSH: `ssh -i ~/.ssh/google_compute_engine imartinez@34.63.48.46` (Docker requiere `sudo`).
+  - Contenedores: `printer-logs-analyzer-backend-1` (`:8000`), `printer-logs-analyzer-db-1` (Postgres 17, interno `db:5432`, **puerto NO expuesto al exterior**). Convive `helpdesk-backend` (`:8010`, otro proyecto, no tocar).
+  - DB: `postgresql://printerapp:***@db:5432/printer_logs` (credenciales en `docker-compose.yml`).
+
+**Deploy:** push/merge a **`main`** dispara dos cosas:
+- `.github/workflows/deploy.yml` → SSH a la VM → `git pull` + `docker compose up -d --build backend` (**solo rebuildea el backend**) + migraciones.
+- Vercel → publica el frontend.
+- Branch protection en `main`: requiere CI en verde; **auto-merge deshabilitado** → mergear el PR a mano tras los checks. Pushear a una rama feature **no** despliega nada.
+
+**Dev local:** `docker compose up -d db` (Postgres local, mismas creds) o túnel SSH `-L 5432:localhost:5432`. Sin DB accesible → fallback automático a JSON en `data/`.
+
+Detalle completo y comandos de operación en `docs/deploy.md`.

@@ -93,4 +93,4 @@ El proyecto mantiene una política de **Zero-Failure**.
 
 ---
 
-**Producción:** [Vercel (Frontend)](https://printer-logs-analyzer.vercel.app) · [Render (Backend)](https://printer-logs-analyzer.onrender.com)
+**Producción:** [Vercel (Frontend)](https://printer-logs-analyzer.vercel.app) · Backend + Postgres en **VM Google Cloud** (`34.63.48.46:8000`, Docker). Ver [`docs/deploy.md`](docs/deploy.md).
