@@ -142,6 +142,24 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* Confirm dialog: narrower than the log modal and with proper body padding
+   (the message was flush to the left edge because it had no horizontal padding). */
+.log-modal.confirm-modal {
+  max-width: 460px;
+}
+
+.confirm-modal__message {
+  margin: 0;
+  padding: 24px 32px;
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.log-modal.confirm-modal .log-modal__actions {
+  justify-content: flex-end;
+}
+
 .manual-toggle-btn {
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.03);
