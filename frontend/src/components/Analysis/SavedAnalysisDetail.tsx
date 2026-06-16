@@ -1,5 +1,57 @@
+import { useEffect, useState } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
-import type { SavedAnalysisFull, CompareResponse } from '../../types/api'
+import { getDeviceHealth } from '../../services/api'
+import type { SavedAnalysisFull, CompareResponse, DeviceHealth } from '../../types/api'
+
+const HEALTH_ICON: Record<DeviceHealth['status'], string> = {
+  RED: '🔴',
+  YELLOW: '🟡',
+  GREEN: '🟢',
+}
+
+function DeviceHealthBar({ id }: { id: string }) {
+  const [health, setHealth] = useState<DeviceHealth | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    getDeviceHealth(id, ctrl.signal)
+      .then((h) => setHealth(h))
+      .catch(() => {
+        if (!ctrl.signal.aborted) setHealth(null)
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoading(false)
+      })
+    return () => ctrl.abort()
+  }, [id])
+
+  if (loading) {
+    return <div className="device-health device-health--loading">Evaluando salud del equipo…</div>
+  }
+  if (!health) return null
+
+  const modifier = health.status.toLowerCase()
+  return (
+    <div
+      className={`device-health device-health--${modifier}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="device-health__pulse" aria-hidden="true" />
+      <span className="device-health__icon" aria-hidden="true">
+        {HEALTH_ICON[health.status]}
+      </span>
+      <div className="device-health__body">
+        <p className="device-health__title">
+          Estado del Dispositivo: {health.label}
+          <span className="device-health__reco"> — {health.recommendation}</span>
+        </p>
+        <p className="device-health__reason">{health.reason}</p>
+      </div>
+    </div>
+  )
+}
 
 interface SavedAnalysisDetailProps {
   savedDetail: SavedAnalysisFull | null
@@ -26,6 +78,7 @@ export function SavedAnalysisDetail({
 
   return (
     <div className="dashboard__saved-section">
+      <DeviceHealthBar key={savedDetail.id} id={savedDetail.id} />
       {savedDetail.equipment_identifier && (
         <p className="dashboard__muted">Equipo: {savedDetail.equipment_identifier}</p>
       )}

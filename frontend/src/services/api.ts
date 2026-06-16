@@ -5,6 +5,7 @@ import type {
   SavedAnalysisCreateBody,
   SavedAnalysisSummary,
   SavedAnalysisFull,
+  DeviceHealth,
   CompareResponse,
   AIDiagnosisResponse,
   ErrorSolution,
@@ -191,6 +192,18 @@ export async function getSavedAnalysis(
     signal,
   })
   return handleResponse<SavedAnalysisFull>(res)
+}
+
+export async function getDeviceHealth(
+  id: string,
+  signal?: AbortSignal
+): Promise<DeviceHealth> {
+  const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}/health`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<DeviceHealth>(res)
 }
 
 export async function compareSavedAnalysis(
