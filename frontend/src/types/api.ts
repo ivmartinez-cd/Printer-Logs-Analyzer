@@ -124,25 +124,6 @@ export interface DeviceHealth {
   events_count: number
 }
 
-export interface CompareDiff {
-  codigos_nuevos: string[]
-  codigos_desaparecidos: string[]
-  cambios_ocurrencias: Array<{
-    code: string
-    saved_occurrences: number
-    current_occurrences: number
-    delta: number
-  }>
-  diferencia_dias: number
-  tendencia: 'mejoro' | 'estable' | 'empeoro'
-}
-
-export interface CompareResponse {
-  saved: SavedAnalysisFull
-  current: ParseLogsResponse
-  diff: CompareDiff
-}
-
 export interface ErrorSolutionFru {
   part_number: string
   description: string

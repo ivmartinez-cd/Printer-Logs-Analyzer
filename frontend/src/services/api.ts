@@ -6,7 +6,6 @@ import type {
   SavedAnalysisSummary,
   SavedAnalysisFull,
   DeviceHealth,
-  CompareResponse,
   AIDiagnosisResponse,
   ErrorSolution,
   DeviceAlertsResponse,
@@ -223,19 +222,6 @@ export async function getDeviceHealth(
   return handleResponse<DeviceHealth>(res)
 }
 
-export async function compareSavedAnalysis(
-  id: string,
-  logs: string,
-  signal?: AbortSignal
-): Promise<CompareResponse> {
-  const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}/compare`, {
-    method: 'POST',
-    headers: apiHeaders(),
-    body: JSON.stringify({ logs }),
-    signal,
-  })
-  return handleResponse<CompareResponse>(res)
-}
 
 export async function deleteSavedAnalysis(id: string, signal?: AbortSignal): Promise<void> {
   const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {

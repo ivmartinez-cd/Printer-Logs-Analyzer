@@ -14,7 +14,6 @@ import type {
   ParseLogsResponse,
   SavedAnalysisSummary,
   SavedAnalysisFull,
-  CompareResponse,
   ErrorCodeUpsertBody,
   RealtimeConsumable,
   AIPdfSummaryResponse,
@@ -98,7 +97,6 @@ export default function DashboardPage({
     editCodeInitial,
     setEditCodeInitial,
     setSaveIncidentModalOpen,
-    setCompareModalOpen,
     setDeleteConfirm,
     setSolutionModal,
     setHelpModalOpen,
@@ -110,7 +108,6 @@ export default function DashboardPage({
   const [savedListSearch, setSavedListSearch] = useState('')
   const [savedDetail, setSavedDetail] = useState<SavedAnalysisFull | null>(null)
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
-  const [compareResult, setCompareResult] = useState<CompareResponse | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [currentModelId, setCurrentModelId] = useState<string | null>(null)
   const [navCollapsed, setNavCollapsed] = useState(true)
@@ -485,7 +482,6 @@ export default function DashboardPage({
                 onOpen={(id) => {
                   setSelectedSavedId(id)
                   setSavedDetail(null)
-                  setCompareResult(null)
                   setViewMode('saved-detail')
                   getSavedAnalysis(id)
                     .then(setSavedDetail)
@@ -499,11 +495,7 @@ export default function DashboardPage({
               <SavedAnalysisDetail
                 savedDetail={savedDetail}
                 deletingId={deletingId}
-                compareResult={compareResult}
                 onDelete={setDeleteConfirm}
-                onCompare={() => {
-                  setCompareModalOpen(true)
-                }}
                 onUpdateDetail={(updated) => {
                   // A log update now creates a new dated snapshot: point the
                   // detail view (and selection) at it and refresh the list.
@@ -511,7 +503,6 @@ export default function DashboardPage({
                   setSavedDetail(updated)
                   listSavedAnalyses().then(setSavedList).catch(() => {})
                 }}
-                onClearCompare={() => setCompareResult(null)}
               />
             )}
 
@@ -736,7 +727,6 @@ export default function DashboardPage({
         setViewMode={setViewMode}
         setSavedDetail={setSavedDetail}
         setSelectedSavedId={setSelectedSavedId}
-        setCompareResult={setCompareResult}
         exportingPdf={exportingPdf}
         isAiPdfReady={isAiPdfReady}
         setIsAiPdfReady={setIsAiPdfReady}

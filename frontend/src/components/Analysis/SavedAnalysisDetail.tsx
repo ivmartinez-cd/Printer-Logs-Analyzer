@@ -3,9 +3,9 @@ import { formatDateTime } from '../../hooks/useDateFilter'
 import { getDeviceHealth, createSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
 import { useHpCacheRefresh } from '../../hooks/useHpCacheRefresh'
-import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive, CheckCircle, DatabaseBackup } from 'lucide-react'
+import { Activity, AlertTriangle, RefreshCw, Calendar, HardDrive, CheckCircle, DatabaseBackup } from 'lucide-react'
 import { Portal } from '../ui/Portal'
-import type { SavedAnalysisFull, CompareResponse, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
+import type { SavedAnalysisFull, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
 
 const HEALTH_ICON: Record<DeviceHealth['status'], string> = {
   RED: '🔴',
@@ -107,21 +107,15 @@ function DeviceHealthBar({ id }: { id: string }) {
 interface SavedAnalysisDetailProps {
   savedDetail: SavedAnalysisFull | null
   deletingId: string | null
-  compareResult: CompareResponse | null
   onDelete: (item: { id: string; name: string }) => void
-  onCompare: () => void
   onUpdateDetail?: (updated: SavedAnalysisFull) => void
-  onClearCompare?: () => void
 }
 
 export function SavedAnalysisDetail({
   savedDetail,
   deletingId,
-  compareResult,
   onDelete,
-  onCompare,
   onUpdateDetail,
-  onClearCompare,
 }: SavedAnalysisDetailProps) {
   const [updatingLog, setUpdatingLog] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -146,19 +140,11 @@ export function SavedAnalysisDetail({
     )
   }
 
-  // Unify update diff and manual comparison modes
-  const isComparing = !!compareResult;
+  // "Update mode": showing diffs after a new dated snapshot was created.
   const isUpdating = !!updateDiff && !!previousIncidents;
 
-  const beforeIncidents = isComparing 
-    ? compareResult.saved.incidents 
-    : isUpdating 
-      ? previousIncidents 
-      : null;
-
-  const afterIncidents = isComparing 
-    ? compareResult.current.incidents 
-    : savedDetail.incidents;
+  const beforeIncidents = isUpdating ? previousIncidents : null;
+  const afterIncidents = savedDetail.incidents;
 
   const getIncidentsOccurrences = (incidentsList: SavedAnalysisIncidentItem[]) => {
     return incidentsList.reduce((acc, inc) => acc + (inc.occurrences || 0), 0);
@@ -416,8 +402,8 @@ export function SavedAnalysisDetail({
   return (
     <div className="dashboard__saved-section animate-in fade-in-50 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Comparison/Update Banner */}
-      {(isComparing || isUpdating) && (
+      {/* Update Banner */}
+      {isUpdating && (
         <div style={{
           background: 'rgba(56, 189, 248, 0.08)',
           border: '1px solid rgba(56, 189, 248, 0.25)',
@@ -434,10 +420,7 @@ export function SavedAnalysisDetail({
             <Activity className="text-sky-400 animate-pulse" size={20} />
             <div>
               <p style={{ margin: 0, fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
-                {isComparing 
-                  ? 'Modo Comparación Activo — Visualizando diferencias con el log seleccionado.'
-                  : 'Log Actualizado — Visualizando variaciones respecto al log original.'
-                }
+                Log Actualizado — Visualizando variaciones respecto al log original.
               </p>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>
                 Los KPIs, gráficos y la lista de incidentes reflejan las diferencias y deltas.
@@ -455,12 +438,8 @@ export function SavedAnalysisDetail({
               fontSize: '0.85rem'
             }}
             onClick={() => {
-              if (isComparing && onClearCompare) {
-                onClearCompare();
-              } else {
-                setUpdateDiff(null);
-                setPreviousIncidents(null);
-              }
+              setUpdateDiff(null);
+              setPreviousIncidents(null);
             }}
           >
             Volver a Vista Normal
@@ -524,14 +503,6 @@ export function SavedAnalysisDetail({
             </button>
           )}
 
-          <button
-            type="button"
-            className="dashboard__btn dashboard__btn--primary"
-            onClick={onCompare}
-          >
-            <BarChart2 size={15} /> Comparar con log
-          </button>
-          
           <button
             type="button"
             className="dashboard__btn dashboard__btn--danger"
@@ -842,180 +813,6 @@ export function SavedAnalysisDetail({
         </div>
       </div>
 
-      {/* Comparison Blocks */}
-      {compareResult && (
-        <div className="dashboard__compare-block animate-in fade-in slide-in-from-bottom-6 duration-400" style={{
-          background: 'rgba(15, 23, 42, 0.3)',
-          border: '1px solid rgba(56, 189, 248, 0.15)',
-          padding: '24px',
-          borderRadius: '16px',
-          marginTop: '8px',
-          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.25)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <Activity className="text-sky-400 animate-pulse" size={20} />
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#f1f5f9' }}>
-              Comparación de Variaciones en Log Actualizado
-            </h3>
-          </div>
-          
-          <div className="dashboard__diff-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px'
-          }}>
-            <div style={{ background: 'rgba(30, 41, 59, 0.3)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>DÍAS DESDE GUARDADO</span>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc', marginTop: '4px' }}>
-                {compareResult.diff.diferencia_dias} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>días</span>
-              </div>
-            </div>
-            
-            <div style={{ background: 'rgba(30, 41, 59, 0.3)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>TENDENCIA DE FLOTA</span>
-              <div style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: compareResult.diff.tendencia.includes('Estable') ? '#34d399' : compareResult.diff.tendencia.includes('Mejora') ? '#60a5fa' : '#f87171',
-                marginTop: '4px'
-              }}>
-                {compareResult.diff.tendencia}
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(30, 41, 59, 0.3)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>CÓDIGOS NUEVOS</span>
-              <div style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: compareResult.diff.codigos_nuevos.length > 0 ? '#f87171' : '#34d399',
-                marginTop: '4px'
-              }}>
-                {compareResult.diff.codigos_nuevos.length > 0 ? (
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                    {compareResult.diff.codigos_nuevos.join(', ')}
-                  </span>
-                ) : (
-                  'Ninguno'
-                )}
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(30, 41, 59, 0.3)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>CÓDIGOS RESUELTOS</span>
-              <div style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: '#34d399',
-                marginTop: '4px'
-              }}>
-                {compareResult.diff.codigos_desaparecidos.length > 0 ? (
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                    {compareResult.diff.codigos_desaparecidos.join(', ')}
-                  </span>
-                ) : (
-                  'Ninguno'
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* SVG Multi-bar comparison chart */}
-          {compareResult.diff.cambios_ocurrencias.length > 0 && (
-            <div style={{
-              background: 'rgba(30, 41, 59, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.04)',
-              padding: '20px',
-              borderRadius: '12px',
-              marginBottom: '24px'
-            }}>
-              <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: '#e2e8f0' }}>
-                Comparación de Ocurrencias (Guardado vs. Actual)
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {compareResult.diff.cambios_ocurrencias.map((c) => {
-                  const maxVal = Math.max(c.saved_occurrences, c.current_occurrences)
-                  const pctSaved = maxVal > 0 ? (c.saved_occurrences / maxVal) * 80 : 0
-                  const pctCurr = maxVal > 0 ? (c.current_occurrences / maxVal) * 80 : 0
-                  return (
-                    <div key={c.code} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                        <span style={{ fontWeight: 700, color: '#f8fafc', fontFamily: 'monospace' }}>{c.code}</span>
-                        <span style={{
-                          fontWeight: 700,
-                          color: c.delta > 0 ? '#f87171' : '#34d399'
-                        }}>
-                          {c.delta > 0 ? `+${c.delta}` : c.delta} ocur.
-                        </span>
-                      </div>
-                      
-                      {/* Saved Bar */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ width: '60px', fontSize: '0.75rem', color: '#64748b' }}>Guardado</span>
-                        <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px' }}>
-                          <div style={{ width: `${pctSaved}%`, height: '100%', background: '#64748b', borderRadius: '3px' }} />
-                        </div>
-                        <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: '#64748b' }}>{c.saved_occurrences}</span>
-                      </div>
-
-                      {/* Current Bar */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ width: '60px', fontSize: '0.75rem', color: '#38bdf8' }}>Nuevo</span>
-                        <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px' }}>
-                          <div style={{ width: `${pctCurr}%`, height: '100%', background: '#38bdf8', borderRadius: '3px' }} />
-                        </div>
-                        <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>{c.current_occurrences}</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          <h4 style={{ margin: '24px 0 16px 0', fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9' }}>
-            Lista de incidentes del log comparado
-          </h4>
-          <div className="table-wrap" style={{ border: '1px solid rgba(255,255,255,0.03)', borderRadius: '12px', overflow: 'hidden' }}>
-            <table className="dashboard-table" style={{ margin: 0 }}>
-              <thead>
-                <tr>
-                  <th scope="col" style={{ padding: '14px 20px' }}>Código</th>
-                  <th scope="col" style={{ padding: '14px 20px' }}>Clasificación</th>
-                  <th scope="col" style={{ padding: '14px 20px' }}>Severidad</th>
-                  <th scope="col" style={{ padding: '14px 20px' }}>Ocurrencias</th>
-                  <th scope="col" style={{ padding: '14px 20px' }}>Último evento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {compareResult.current.incidents.map((inc) => (
-                  <tr key={inc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <td style={{ padding: '12px 20px', fontWeight: 700, fontFamily: 'monospace', color: '#f8fafc' }}>{inc.code}</td>
-                    <td style={{ padding: '12px 20px', color: '#cbd5e1' }}>{inc.classification}</td>
-                    <td style={{ padding: '12px 20px' }}>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        background: inc.severity.toUpperCase() === 'ERROR' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.15)',
-                        color: inc.severity.toUpperCase() === 'ERROR' ? '#f87171' : '#38bdf8',
-                      }}>
-                        {inc.severity}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 20px', fontWeight: 600, color: '#f8fafc' }}>{inc.occurrences}</td>
-                    <td style={{ padding: '12px 20px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                      {inc.end_time ? formatDateTime(inc.end_time) : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
       {updateDiff && (
         <Portal>
           <div

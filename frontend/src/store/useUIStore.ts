@@ -13,7 +13,6 @@ interface UIState {
     solutionUrl: string
   } | null
   saveIncidentModalOpen: boolean
-  compareModalOpen: boolean
   deleteConfirm: { id: string; name: string } | null
   solutionModal: {
     code: string
@@ -30,7 +29,6 @@ interface UIState {
   setAddCodeModalCode: (code: string | null) => void
   setEditCodeInitial: (data: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
   setSaveIncidentModalOpen: (open: boolean) => void
-  setCompareModalOpen: (open: boolean) => void
   setDeleteConfirm: (data: { id: string; name: string } | null) => void
   setSolutionModal: (data: { code: string; sdsContent?: string | null; sdsUrl?: string | null } | null) => void
   setHelpModalOpen: (open: boolean) => void
@@ -45,7 +43,6 @@ export const useUIStore = create<UIState>((set) => ({
   addCodeModalCode: null,
   editCodeInitial: null,
   saveIncidentModalOpen: false,
-  compareModalOpen: false,
   deleteConfirm: null,
   solutionModal: null,
   helpModalOpen: false,
@@ -57,7 +54,6 @@ export const useUIStore = create<UIState>((set) => ({
   setAddCodeModalCode: (addCodeModalCode) => set({ addCodeModalCode }),
   setEditCodeInitial: (editCodeInitial) => set({ editCodeInitial }),
   setSaveIncidentModalOpen: (saveIncidentModalOpen) => set({ saveIncidentModalOpen }),
-  setCompareModalOpen: (compareModalOpen) => set({ compareModalOpen }),
   setDeleteConfirm: (deleteConfirm) => set({ deleteConfirm }),
   setSolutionModal: (solutionModal) => set({ solutionModal }),
   setHelpModalOpen: (helpModalOpen) => set({ helpModalOpen }),
@@ -66,7 +62,6 @@ export const useUIStore = create<UIState>((set) => ({
     logModalOpen: false,
     sdsModalOpen: false,
     saveIncidentModalOpen: false,
-    compareModalOpen: false,
     deleteConfirm: null,
     solutionModal: null,
     helpModalOpen: false,
