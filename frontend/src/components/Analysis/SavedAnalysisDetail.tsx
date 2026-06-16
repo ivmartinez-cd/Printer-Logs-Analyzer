@@ -841,7 +841,7 @@ export function SavedAnalysisDetail({
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px 32px' }}>
                 {updateDiff.newCodes.length === 0 &&
                  updateDiff.resolvedCodes.length === 0 &&
                  updateDiff.occurrenceChanges.length === 0 ? (
