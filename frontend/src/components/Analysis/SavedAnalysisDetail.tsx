@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
-import { getDeviceHealth, updateSavedAnalysis, previewLogs } from '../../services/api'
+import { getDeviceHealth, updateSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
-import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive } from 'lucide-react'
+import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive, CheckCircle } from 'lucide-react'
+import { Portal } from '../ui/Portal'
 import type { SavedAnalysisFull, CompareResponse, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
 
 const HEALTH_ICON: Record<DeviceHealth['status'], string> = {
@@ -123,6 +124,12 @@ export function SavedAnalysisDetail({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
+  const [updateDiff, setUpdateDiff] = useState<{
+    newCodes: string[]
+    resolvedCodes: string[]
+    occurrenceChanges: Array<{ code: string; before: number; after: number; delta: number }>
+  } | null>(null)
+
   if (!savedDetail) {
     return (
       <div className="dashboard__saved-section" style={{ padding: '40px', textAlign: 'center' }}>
@@ -138,6 +145,41 @@ export function SavedAnalysisDetail({
   const criticalCount = savedDetail.incidents.filter(i => i.severity.toUpperCase() === 'ERROR').length
   const warningCount = savedDetail.incidents.filter(i => i.severity.toUpperCase() === 'WARNING').length
 
+  function calculateUpdateDiff(before: SavedAnalysisIncidentItem[], after: SavedAnalysisIncidentItem[]) {
+    const beforeMap = new Map(before.map(i => [i.code, i]))
+    const afterMap = new Map(after.map(i => [i.code, i]))
+
+    const newCodes: string[] = []
+    const resolvedCodes: string[] = []
+    const occurrenceChanges: Array<{ code: string; before: number; after: number; delta: number }> = []
+
+    for (const [code, inc] of afterMap.entries()) {
+      if (!beforeMap.has(code)) {
+        newCodes.push(code)
+      } else {
+        const beforeInc = beforeMap.get(code)
+        const beforeCount = beforeInc?.occurrences || 0
+        const afterCount = inc.occurrences || 0
+        if (beforeCount !== afterCount) {
+          occurrenceChanges.push({
+            code,
+            before: beforeCount,
+            after: afterCount,
+            delta: afterCount - beforeCount
+          })
+        }
+      }
+    }
+
+    for (const code of beforeMap.keys()) {
+      if (!afterMap.has(code)) {
+        resolvedCodes.push(code)
+      }
+    }
+
+    return { newCodes, resolvedCodes, occurrenceChanges }
+  }
+
   const handleUpdateLog = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -147,10 +189,7 @@ export function SavedAnalysisDetail({
     reader.onload = async (ev) => {
       try {
         const text = (ev.target?.result as string) ?? ''
-        // Parse the new log
         const parseRes = await previewLogs(text, null)
-        
-        // Convert to payload items
         const items: SavedAnalysisIncidentItem[] = parseRes.incidents.map((inc) => ({
           code: inc.code,
           classification: inc.classification,
@@ -163,7 +202,6 @@ export function SavedAnalysisDetail({
           last_event_time: inc.end_time,
         }))
 
-        // Call the new PUT endpoint
         await updateSavedAnalysis(savedDetail.id, {
           name: savedDetail.name,
           equipment_identifier: savedDetail.equipment_identifier,
@@ -171,9 +209,11 @@ export function SavedAnalysisDetail({
           global_severity: parseRes.global_severity,
         })
 
+        const diff = calculateUpdateDiff(savedDetail.incidents, items)
+        setUpdateDiff(diff)
+
         toast.showSuccess('El log guardado y la telemetría se han actualizado exitosamente.')
         if (onUpdateDetail) {
-          // Re-fetch or pass details
           onUpdateDetail({
             ...savedDetail,
             incidents: items,
@@ -188,6 +228,59 @@ export function SavedAnalysisDetail({
       }
     }
     reader.readAsText(file)
+  }
+
+  const triggerLogUpdate = async () => {
+    const serial = savedDetail.equipment_identifier?.trim()
+    if (!serial) {
+      fileInputRef.current?.click()
+      return
+    }
+
+    setUpdatingLog(true)
+    try {
+      const sdsRes = await extractSdsLogs(serial)
+      if (!sdsRes.logs_text) {
+        throw new Error('No se encontraron logs para este número de serie en el portal SDS.')
+      }
+
+      const parseRes = await previewLogs(sdsRes.logs_text, null)
+      const items: SavedAnalysisIncidentItem[] = parseRes.incidents.map((inc) => ({
+        code: inc.code,
+        classification: inc.classification,
+        severity: inc.severity,
+        occurrences: inc.occurrences,
+        start_time: inc.start_time,
+        end_time: inc.end_time,
+        counter_range: inc.counter_range,
+        sds_link: inc.sds_link ?? null,
+        last_event_time: inc.end_time,
+      }))
+
+      await updateSavedAnalysis(savedDetail.id, {
+        name: savedDetail.name,
+        equipment_identifier: savedDetail.equipment_identifier,
+        incidents: items,
+        global_severity: parseRes.global_severity,
+      })
+
+      const diff = calculateUpdateDiff(savedDetail.incidents, items)
+      setUpdateDiff(diff)
+
+      toast.showSuccess(`Los logs de ${serial} se han actualizado automáticamente desde el portal SDS.`)
+      if (onUpdateDetail) {
+        onUpdateDetail({
+          ...savedDetail,
+          incidents: items,
+          global_severity: parseRes.global_severity,
+        })
+      }
+    } catch (err) {
+      toast.showWarning(err instanceof Error ? err.message : 'Error al conectar con el portal. Seleccione archivo manual.')
+      fileInputRef.current?.click()
+    } finally {
+      setUpdatingLog(false)
+    }
   }
 
   return (
@@ -229,7 +322,7 @@ export function SavedAnalysisDetail({
           <button
             type="button"
             className={`dashboard__btn ${updatingLog ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'}`}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={triggerLogUpdate}
             disabled={updatingLog}
           >
             <RefreshCw size={15} className={updatingLog ? 'animate-spin' : ''} />
@@ -609,6 +702,126 @@ export function SavedAnalysisDetail({
             </table>
           </div>
         </div>
+      )}
+      {updateDiff && (
+        <Portal>
+          <div
+            className="log-modal-overlay animate-in fade-in"
+            role="dialog"
+            aria-modal="true"
+            style={{ zIndex: 110000 }}
+          >
+            <div className="log-modal add-code-modal" style={{ maxWidth: '500px' }}>
+              <div className="log-modal__header">
+                <div className="log-modal__header-content">
+                  <h2 className="log-modal__title">
+                    Cambios en la Actualización
+                  </h2>
+                  <p className="log-modal__subtitle">
+                    Resumen de variaciones detectadas en esta lectura de logs.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="log-modal__close"
+                  onClick={() => setUpdateDiff(null)}
+                  aria-label="Cerrar"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px 0' }}>
+                {updateDiff.newCodes.length === 0 &&
+                 updateDiff.resolvedCodes.length === 0 &&
+                 updateDiff.occurrenceChanges.length === 0 ? (
+                  <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px 0' }}>
+                    <CheckCircle className="text-emerald-400" size={32} style={{ margin: '0 auto 12px' }} />
+                    <p style={{ margin: 0, fontWeight: 600 }}>Sin cambios en esta versión</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>No se registraron nuevas ocurrencias ni alertas de error.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* New Codes */}
+                    {updateDiff.newCodes.length > 0 && (
+                      <div style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '16px', borderRadius: '12px' }}>
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#ef4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <AlertTriangle size={15} /> Códigos Nuevos Detectados ({updateDiff.newCodes.length})
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {updateDiff.newCodes.map(c => (
+                            <span key={c} style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Resolved Codes */}
+                    {updateDiff.resolvedCodes.length > 0 && (
+                      <div style={{ background: 'rgba(34, 197, 94, 0.06)', border: '1px solid rgba(34, 197, 94, 0.15)', padding: '16px', borderRadius: '12px' }}>
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <CheckCircle size={15} /> Códigos Resueltos / Desaparecidos ({updateDiff.resolvedCodes.length})
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {updateDiff.resolvedCodes.map(c => (
+                            <span key={c} style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Occurrence Changes */}
+                    {updateDiff.occurrenceChanges.length > 0 && (
+                      <div>
+                        <h4 style={{ margin: '0 0 10px 0', fontSize: '0.95rem', color: '#e2e8f0', fontWeight: 700 }}>
+                          Variación de Ocurrencias
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {updateDiff.occurrenceChanges.map(change => {
+                            const isIncrease = change.delta > 0
+                            return (
+                              <div key={change.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#f8fafc' }}>{change.code}</span>
+                                <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ color: '#64748b' }}>{change.before} → {change.after}</span>
+                                  <span style={{
+                                    fontWeight: 700,
+                                    color: isIncrease ? '#f87171' : '#34d399',
+                                    background: isIncrease ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem'
+                                  }}>
+                                    {isIncrease ? `+${change.delta}` : change.delta}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="log-modal__actions" style={{ marginTop: '10px' }}>
+                <button
+                  type="button"
+                  className="dashboard__btn dashboard__btn--primary"
+                  onClick={() => setUpdateDiff(null)}
+                  style={{ width: '100%' }}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
       )}
     </div>
   )

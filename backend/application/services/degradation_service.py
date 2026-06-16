@@ -133,8 +133,8 @@ def evaluate_device_health(
                 status=STATUS_RED,
                 label="En degradación",
                 reason=(
-                    f"El error crítico {code} se repitió {total} veces en "
-                    f"{RECURRENCE_PAGES:,} páginas o {RECURRENCE_DAYS} días."
+                    f"El error crítico {code} se repitió {total} veces en el historial de telemetría "
+                    f"(dentro de {RECURRENCE_PAGES:,} páginas o {RECURRENCE_DAYS} días)."
                 ),
                 recommendation="Se recomienda Técnico.",
                 triggered_rule="recurrence",
