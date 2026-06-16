@@ -496,6 +496,7 @@ export default function DashboardPage({
                   setSavedDetail(updated)
                   listSavedAnalyses().then(setSavedList).catch(() => {})
                 }}
+                onClearCompare={() => setCompareResult(null)}
               />
             )}
 
