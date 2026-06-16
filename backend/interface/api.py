@@ -15,6 +15,7 @@ from backend.interface.routers import (
     error_codes,
     fleet,
     maintenance,
+    notifications,
     saved_analysis,
     sds,
 )
@@ -86,6 +87,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(error_codes.router)
     app.include_router(fleet.router)
     app.include_router(maintenance.router)
+    app.include_router(notifications.router)
 
     return app
 

@@ -249,6 +249,25 @@ export interface HpOperationsResponse {
   operations: HpOperation[]
 }
 
+export type NotificationStatus = 'in_progress' | 'success' | 'warning' | 'error'
+
+export interface AppNotification {
+  id: string
+  type: string
+  title: string
+  message: string
+  status: NotificationStatus
+  device_serial: string | null
+  is_read: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationsResponse {
+  notifications: AppNotification[]
+  unread_count: number
+}
+
 export interface ExtractSdsLogsResponse {
   serial: string
   device_id: string
