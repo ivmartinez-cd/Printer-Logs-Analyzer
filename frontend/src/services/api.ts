@@ -173,6 +173,20 @@ export async function createSavedAnalysis(
   return handleResponse<SavedAnalysisSummary>(res)
 }
 
+export async function updateSavedAnalysis(
+  id: string,
+  body: SavedAnalysisCreateBody,
+  signal?: AbortSignal
+): Promise<SavedAnalysisSummary> {
+  const res = await apiFetch(`${API_BASE}/saved-analyses/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: apiHeaders(),
+    body: JSON.stringify(body),
+    signal,
+  })
+  return handleResponse<SavedAnalysisSummary>(res)
+}
+
 export async function listSavedAnalyses(signal?: AbortSignal): Promise<SavedAnalysisSummary[]> {
   const res = await apiFetch(`${API_BASE}/saved-analyses`, {
     method: 'GET',
