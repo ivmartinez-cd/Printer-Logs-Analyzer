@@ -87,6 +87,37 @@ def test_recurrence_outside_window_does_not_trigger():
     assert health.triggered_rule == "stable"
 
 
+def test_same_event_reimported_across_snapshots_counts_once():
+    # Cumulative log re-saved 6 times: the SAME physical event (same event_time,
+    # unknown counter) must count ONCE, not six times.
+    et = NOW - timedelta(days=8)
+    events = [Ev("13.A7.D5", "ERROR", 1, 0, et) for _ in range(6)]
+    health = evaluate_device_health(events, now=NOW)
+    assert health.status != STATUS_RED
+    assert health.triggered_rule != "recurrence"
+
+
+def test_zero_counter_does_not_bypass_time_window():
+    # Distinct OLD events (>7 days) with unknown counter (0). The page window must
+    # not rescue them (regression: latest - 0 <= 5000 was always true).
+    events = [Ev("13.A7.D5", "ERROR", 1, 0, NOW - timedelta(days=d)) for d in (30, 25, 20, 15, 10, 8)]
+    health = evaluate_device_health(events, now=NOW)
+    assert health.triggered_rule != "recurrence"
+
+
+def test_recent_recurrent_code_flagged_not_old_one():
+    # An old single error and a recent recurrent one: must flag the RECENT code.
+    events = [
+        Ev("13.A7.D5", "ERROR", 1, 0, NOW - timedelta(days=8)),  # old, single read
+        Ev("60.00.03", "ERROR", 6, 0, NOW - timedelta(days=2)),  # recent, 6 occurrences
+    ]
+    health = evaluate_device_health(events, now=NOW)
+    assert health.status == STATUS_RED
+    assert health.triggered_rule == "recurrence"
+    assert "60.00.03" in health.reason
+    assert "13.A7.D5" not in health.reason
+
+
 # ---------------------------------------------------------------------------
 # Rule 2 — Post-repair failure
 # ---------------------------------------------------------------------------
