@@ -34,6 +34,15 @@ class RemoteEwsResponse(BaseModel):
     ews_url: str
 
 
+class RefreshHpCacheResponse(BaseModel):
+    """Response of POST /sds/devices/{serial}/refresh-cache."""
+
+    serial: str
+    device_id: str
+    status: str = "requested"
+    message: str
+
+
 class ExtractSdsLogsResponse(BaseModel):
     """Full response for SDS extraction including model info."""
 

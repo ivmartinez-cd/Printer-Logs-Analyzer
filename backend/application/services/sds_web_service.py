@@ -16,6 +16,7 @@ from lxml import html
 
 _logger = logging.getLogger(__name__)
 _login_lock = threading.Lock()
+_PORTAL_ORIGIN = "https://hp-sds-latam.insightportal.net"
 
 
 class SDSWebError(Exception):
@@ -258,6 +259,59 @@ class SDSWebSession:
         tree = html.fromstring(html_content)
         links = tree.xpath('//div[@id="remoteEWSLaunchLink"]//a/@href')
         return links[0] if links else None
+
+    def refresh_hp_data_cache(self, device_id: str) -> bool:
+        """Trigger the portal's "Actualizar la caché de datos de HP" action.
+
+        Scrapes the device's hpsmart panel for the refresh-cache form (its action
+        URL + CSRF token) and POSTs it, asking HP to re-collect this device's data
+        into its cloud cache. Returns True on success.
+        """
+        self._ensure_session()
+
+        try:
+            page = self.session.get(
+                f"{self.base_url}/devices/{device_id}/hpsmart",
+                headers={
+                    "x-ekm-usage": "dialog",
+                    "x-requested-with": "XMLHttpRequest",
+                    "Accept": "*/*",
+                },
+                timeout=20,
+            )
+        except requests.RequestException as e:
+            raise SDSWebError(f"Failed to load device panel: {e}") from e
+        if page.status_code != 200:
+            raise SDSWebError(f"Error loading device panel ({page.status_code})")
+
+        tree = html.fromstring(page.text)
+        forms = tree.xpath('//form[contains(@action, "/hpsmart/refresh/hpcache")]')
+        if not forms:
+            raise SDSWebError(
+                "La acción de actualización de caché no está disponible para este dispositivo"
+            )
+        action = forms[0].get("action") or ""
+        tokens = forms[0].xpath('.//input[@name="__csrftoken"]/@value')
+        action_url = action if action.startswith("http") else f"{_PORTAL_ORIGIN}{action}"
+        data = {"__csrftoken": tokens[0]} if tokens else {}
+
+        try:
+            resp = self.session.post(
+                action_url,
+                data=data,
+                headers={
+                    "x-requested-with": "XMLHttpRequest",
+                    "Accept": "*/*",
+                    "Origin": _PORTAL_ORIGIN,
+                    "Referer": f"{self.base_url}/devices/{device_id}/hpsmart",
+                },
+                timeout=20,
+            )
+        except requests.RequestException as e:
+            raise SDSWebError(f"Failed to request cache refresh: {e}") from e
+        if resp.status_code not in (200, 204):
+            raise SDSWebError(f"Error requesting cache refresh ({resp.status_code})")
+        return True
 
 
 def html_to_tsv(raw_xml_html: str) -> str:
