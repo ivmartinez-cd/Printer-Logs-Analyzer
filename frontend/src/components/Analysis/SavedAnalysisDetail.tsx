@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
-import { getDeviceHealth, updateSavedAnalysis, previewLogs } from '../../services/api'
+import { getDeviceHealth, updateSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
 import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive } from 'lucide-react'
 import type { SavedAnalysisFull, CompareResponse, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
@@ -147,10 +147,7 @@ export function SavedAnalysisDetail({
     reader.onload = async (ev) => {
       try {
         const text = (ev.target?.result as string) ?? ''
-        // Parse the new log
         const parseRes = await previewLogs(text, null)
-        
-        // Convert to payload items
         const items: SavedAnalysisIncidentItem[] = parseRes.incidents.map((inc) => ({
           code: inc.code,
           classification: inc.classification,
@@ -163,7 +160,6 @@ export function SavedAnalysisDetail({
           last_event_time: inc.end_time,
         }))
 
-        // Call the new PUT endpoint
         await updateSavedAnalysis(savedDetail.id, {
           name: savedDetail.name,
           equipment_identifier: savedDetail.equipment_identifier,
@@ -173,7 +169,6 @@ export function SavedAnalysisDetail({
 
         toast.showSuccess('El log guardado y la telemetría se han actualizado exitosamente.')
         if (onUpdateDetail) {
-          // Re-fetch or pass details
           onUpdateDetail({
             ...savedDetail,
             incidents: items,
@@ -188,6 +183,56 @@ export function SavedAnalysisDetail({
       }
     }
     reader.readAsText(file)
+  }
+
+  const triggerLogUpdate = async () => {
+    const serial = savedDetail.equipment_identifier?.trim()
+    if (!serial) {
+      fileInputRef.current?.click()
+      return
+    }
+
+    setUpdatingLog(true)
+    try {
+      const sdsRes = await extractSdsLogs(serial)
+      if (!sdsRes.logs_text) {
+        throw new Error('No se encontraron logs para este número de serie en el portal SDS.')
+      }
+
+      const parseRes = await previewLogs(sdsRes.logs_text, null)
+      const items: SavedAnalysisIncidentItem[] = parseRes.incidents.map((inc) => ({
+        code: inc.code,
+        classification: inc.classification,
+        severity: inc.severity,
+        occurrences: inc.occurrences,
+        start_time: inc.start_time,
+        end_time: inc.end_time,
+        counter_range: inc.counter_range,
+        sds_link: inc.sds_link ?? null,
+        last_event_time: inc.end_time,
+      }))
+
+      await updateSavedAnalysis(savedDetail.id, {
+        name: savedDetail.name,
+        equipment_identifier: savedDetail.equipment_identifier,
+        incidents: items,
+        global_severity: parseRes.global_severity,
+      })
+
+      toast.showSuccess(`Los logs de ${serial} se han actualizado automáticamente desde el portal SDS.`)
+      if (onUpdateDetail) {
+        onUpdateDetail({
+          ...savedDetail,
+          incidents: items,
+          global_severity: parseRes.global_severity,
+        })
+      }
+    } catch (err) {
+      toast.showWarning(err instanceof Error ? err.message : 'Error al conectar con el portal. Seleccione archivo manual.')
+      fileInputRef.current?.click()
+    } finally {
+      setUpdatingLog(false)
+    }
   }
 
   return (
@@ -229,7 +274,7 @@ export function SavedAnalysisDetail({
           <button
             type="button"
             className={`dashboard__btn ${updatingLog ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'}`}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={triggerLogUpdate}
             disabled={updatingLog}
           >
             <RefreshCw size={15} className={updatingLog ? 'animate-spin' : ''} />
