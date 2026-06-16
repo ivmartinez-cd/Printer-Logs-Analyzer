@@ -5,18 +5,26 @@ from uuid import UUID
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
 from backend.application.services.compare_service import calculate_trend
+from backend.application.services.degradation_service import evaluate_device_health
 from backend.domain.entities import Incident
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
+from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
 from backend.infrastructure.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
     SavedAnalysisSnapshot,
+)
+from backend.infrastructure.repositories.telemetry_repository import (
+    TelemetryEvent,
+    TelemetryRepository,
 )
 from backend.interface.auth import authenticate
 from backend.interface.deps import (
     get_analysis_service,
     get_error_code_repo,
     get_log_parser,
+    get_maintenance_repo,
     get_saved_analysis_repo,
+    get_telemetry_repo,
 )
 from backend.interface.schemas.saved_analysis import (
     CompareLogsRequest,
@@ -79,6 +87,7 @@ def _compute_diff(saved: SavedAnalysisSnapshot, current_incidents: List[Incident
 def create_saved_analysis(
     body: SavedAnalysisCreateRequest,
     repo: SavedAnalysisRepository = Depends(get_saved_analysis_repo),
+    telemetry_repo: TelemetryRepository = Depends(get_telemetry_repo),
 ) -> dict:
     incidents_payload = [incident_to_summary(i) for i in body.incidents]
     snap = repo.create(
@@ -87,6 +96,24 @@ def create_saved_analysis(
         incidents=incidents_payload,
         global_severity=body.global_severity,
     )
+    # Fan out each incident into the per-device telemetry history so the
+    # degradation engine can evaluate the device's health over time.
+    if body.equipment_identifier:
+        telemetry_repo.add_events(
+            [
+                TelemetryEvent(
+                    device_serial=body.equipment_identifier,
+                    saved_analysis_id=snap.id,
+                    code=inc.code,
+                    classification=inc.classification,
+                    severity=inc.severity,
+                    occurrences=inc.occurrences,
+                    counter=inc.counter_range[-1] if inc.counter_range else 0,
+                    event_time=inc.last_event_time or inc.end_time,
+                )
+                for inc in body.incidents
+            ]
+        )
     return {
         "id": str(snap.id),
         "name": snap.name,
@@ -139,6 +166,54 @@ def get_saved_analysis(
         "incidents": snap.incidents,
         "global_severity": snap.global_severity,
         "created_at": snap.created_at.isoformat(),
+    }
+
+
+@router.get(
+    "/{id}/health",
+    dependencies=[Depends(authenticate)],
+    summary="Evaluate device health/degradation from telemetry history",
+    response_description="Device health status, reason and recommendation.",
+)
+def get_device_health(
+    id: str,
+    repo: SavedAnalysisRepository = Depends(get_saved_analysis_repo),
+    telemetry_repo: TelemetryRepository = Depends(get_telemetry_repo),
+    maintenance_repo: MaintenanceRepository = Depends(get_maintenance_repo),
+) -> dict:
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid id") from None
+    snap = repo.get_by_id(uid)
+    if not snap:
+        raise HTTPException(status_code=404, detail="Saved analysis not found")
+
+    serial = snap.equipment_identifier
+    if not serial:
+        return {
+            "status": "GREEN",
+            "label": "Sin equipo asociado",
+            "reason": "El análisis no tiene un identificador de equipo.",
+            "recommendation": "Sin acciones requeridas.",
+            "triggered_rule": None,
+            "events_count": 0,
+        }
+
+    events = telemetry_repo.get_events_by_serial(serial)
+    try:
+        maintenance = maintenance_repo.get_history(serial)
+    except Exception:
+        maintenance = []
+
+    health = evaluate_device_health(events, maintenance)
+    return {
+        "status": health.status,
+        "label": health.label,
+        "reason": health.reason,
+        "recommendation": health.recommendation,
+        "triggered_rule": health.triggered_rule,
+        "events_count": len(events),
     }
 
 

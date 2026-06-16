@@ -4,7 +4,9 @@ from backend.infrastructure.config import get_settings
 from backend.infrastructure.database import Database
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
+from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
 from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
+from backend.infrastructure.repositories.telemetry_repository import TelemetryRepository
 from fastapi import Depends
 
 __all__ = [
@@ -12,6 +14,8 @@ __all__ = [
     "get_error_code_repo",
     "get_saved_analysis_repo",
     "get_error_solution_repo",
+    "get_telemetry_repo",
+    "get_maintenance_repo",
     "get_log_parser",
     "get_analysis_service",
     "get_settings",
@@ -35,6 +39,14 @@ def get_saved_analysis_repo(db: Database = Depends(get_db)) -> SavedAnalysisRepo
 
 def get_error_solution_repo(db: Database = Depends(get_db)) -> ErrorSolutionRepository:
     return ErrorSolutionRepository(db)
+
+
+def get_telemetry_repo(db: Database = Depends(get_db)) -> TelemetryRepository:
+    return TelemetryRepository(db)
+
+
+def get_maintenance_repo(db: Database = Depends(get_db)) -> MaintenanceRepository:
+    return MaintenanceRepository(db)
 
 
 def get_log_parser() -> LogParser:

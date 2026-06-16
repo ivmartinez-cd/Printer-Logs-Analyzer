@@ -113,6 +113,17 @@ export interface SavedAnalysisFull {
   created_at: string
 }
 
+export type DeviceHealthStatus = 'RED' | 'YELLOW' | 'GREEN'
+
+export interface DeviceHealth {
+  status: DeviceHealthStatus
+  label: string
+  reason: string
+  recommendation: string
+  triggered_rule: 'recurrence' | 'post_repair' | 'stable' | null
+  events_count: number
+}
+
 export interface CompareDiff {
   codigos_nuevos: string[]
   codigos_desaparecidos: string[]
