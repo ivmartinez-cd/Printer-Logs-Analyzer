@@ -93,7 +93,14 @@ def _watch(
             _logger.debug("HP operations poll failed for %s: %s", serial, exc)
             continue
 
-        cache_ops = [o for o in ops if o.get("operation") in CACHE_OP_TYPES]
+        # The table lists every past run; keep only the newest row per cache op
+        # type (the table is ordered newest-first) to avoid stale/duplicate rows.
+        latest_by_op: dict[str, dict] = {}
+        for o in ops:
+            op = o.get("operation")
+            if op in CACHE_OP_TYPES and op not in latest_by_op:
+                latest_by_op[op] = o
+        cache_ops = list(latest_by_op.values())
         if not cache_ops:
             continue
         # Prefer ops whose "sent" changed vs baseline (our new run).
