@@ -158,7 +158,7 @@ export function SavedAnalysisDetail({
         newCodes.push(code)
       } else {
         const beforeInc = beforeMap.get(code)
-        const beforeCount = beforeInc.occurrences || 0
+        const beforeCount = beforeInc?.occurrences || 0
         const afterCount = inc.occurrences || 0
         if (beforeCount !== afterCount) {
           occurrenceChanges.push({
