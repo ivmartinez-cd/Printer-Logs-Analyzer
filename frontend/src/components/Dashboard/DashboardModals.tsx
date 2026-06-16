@@ -161,10 +161,11 @@ export function DashboardModals({
 
       {deleteConfirm && (
         <ConfirmModal
-          title="Borrar incidente"
-          message={`¿Borrar el incidente "${deleteConfirm.name}"? Esta acción no se puede deshacer.`}
+          title="Borrar análisis"
+          message={`¿Borrar el análisis "${deleteConfirm.name}"? Esta acción no se puede deshacer.`}
           confirmLabel="Borrar"
           cancelLabel="Cancelar"
+          variant="danger"
           loading={deletingId === deleteConfirm.id}
           onConfirm={async () => {
             setDeletingId(deleteConfirm.id)
@@ -177,7 +178,7 @@ export function DashboardModals({
                 setSelectedSavedId(null)
                 setCompareResult(null)
               }
-              toast.showSuccess('Incidente borrado')
+              toast.showSuccess('Análisis borrado')
             } catch (e) {
               toast.showError(e instanceof Error ? e.message : 'Error al borrar')
             } finally {

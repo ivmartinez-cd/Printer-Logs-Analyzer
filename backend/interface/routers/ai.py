@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Any, Dict
 
 from backend.infrastructure.config import Settings
@@ -128,48 +127,9 @@ async def ai_diagnose(
         except Exception:
             pass
 
-        # 3. AUTO-SAVE: Automatically save this AI diagnosis to the database
-        try:
-            from backend.infrastructure.repositories.saved_analysis_repository import (
-                SavedAnalysisRepository,
-            )
-            from backend.interface.deps import _db
-            from backend.interface.utils import incident_to_summary
-
-            save_repo = SavedAnalysisRepository(_db)
-
-            # Metadata extraction for the record
-            metadata = body.metadata
-            serial = (
-                metadata.serial_number if metadata and metadata.serial_number else "Desconocido"
-            )
-
-            analysis_name = f"AI - {serial} - {datetime.now().strftime('%d/%m %H:%M')}"
-
-            # Simple conversion of request incidents for persistence
-            persistence_incidents = [
-                {
-                    "code": inc.code,
-                    "classification": inc.description or inc.code,
-                    "severity": inc.severity,
-                    "occurrences": inc.occurrences,
-                    "start_time": inc.start_time,
-                    "end_time": inc.end_time,
-                    "counter_range": [0, 0],
-                }
-                for inc in body.incidents
-            ]
-
-            save_repo.create(
-                name=analysis_name,
-                incidents=persistence_incidents,
-                global_severity=body.global_severity,
-                equipment_identifier=serial,
-                ai_diagnosis=diagnosis,
-            )
-            _logger.info("Auto-saved AI diagnosis for %s", serial)
-        except Exception as save_exc:
-            _logger.warning("Failed to auto-save AI diagnosis: %s", save_exc)
+        # NOTE: This diagnosis is intentionally NOT auto-persisted. Saving a
+        # snapshot is an explicit user action (POST /saved-analyses). Auto-saving
+        # on every call flooded the history with duplicates.
 
         return AiDiagnoseResponse(
             diagnosis=diagnosis,

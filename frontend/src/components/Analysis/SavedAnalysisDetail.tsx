@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
-import { getDeviceHealth, updateSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
+import { getDeviceHealth, createSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
 import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive, CheckCircle } from 'lucide-react'
 import { Portal } from '../ui/Portal'
@@ -319,7 +319,9 @@ export function SavedAnalysisDetail({
           last_event_time: inc.end_time,
         }))
 
-        await updateSavedAnalysis(savedDetail.id, {
+        // Create a NEW dated snapshot (don't overwrite) so the equipment keeps
+        // a day-by-day history that feeds the timeline and degradation engine.
+        const newSnap = await createSavedAnalysis({
           name: savedDetail.name,
           equipment_identifier: savedDetail.equipment_identifier,
           incidents: items,
@@ -330,12 +332,15 @@ export function SavedAnalysisDetail({
         setPreviousIncidents(savedDetail.incidents)
         setUpdateDiff(diff)
 
-        toast.showSuccess('El log guardado y la telemetría se han actualizado exitosamente.')
+        toast.showSuccess('Nuevo snapshot guardado. Mostrando diferencias vs la lectura anterior.')
         if (onUpdateDetail) {
           onUpdateDetail({
-            ...savedDetail,
+            id: newSnap.id,
+            name: newSnap.name,
+            equipment_identifier: newSnap.equipment_identifier,
             incidents: items,
-            global_severity: parseRes.global_severity,
+            global_severity: newSnap.global_severity,
+            created_at: newSnap.created_at,
           })
         }
       } catch (err) {
@@ -375,7 +380,8 @@ export function SavedAnalysisDetail({
         last_event_time: inc.end_time,
       }))
 
-      await updateSavedAnalysis(savedDetail.id, {
+      // New dated snapshot (see handleUpdateLog) instead of overwriting.
+      const newSnap = await createSavedAnalysis({
         name: savedDetail.name,
         equipment_identifier: savedDetail.equipment_identifier,
         incidents: items,
@@ -386,12 +392,15 @@ export function SavedAnalysisDetail({
       setPreviousIncidents(savedDetail.incidents)
       setUpdateDiff(diff)
 
-      toast.showSuccess(`Los logs de ${serial} se han actualizado automáticamente desde el portal SDS.`)
+      toast.showSuccess(`Nuevo snapshot de ${serial} guardado desde el portal SDS. Mostrando diferencias.`)
       if (onUpdateDetail) {
         onUpdateDetail({
-          ...savedDetail,
+          id: newSnap.id,
+          name: newSnap.name,
+          equipment_identifier: newSnap.equipment_identifier,
           incidents: items,
-          global_severity: parseRes.global_severity,
+          global_severity: newSnap.global_severity,
+          created_at: newSnap.created_at,
         })
       }
     } catch (err) {

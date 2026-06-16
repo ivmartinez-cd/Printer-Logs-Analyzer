@@ -156,6 +156,19 @@ body {
   border-color: var(--color-error);
 }
 
+.dashboard__btn--danger {
+  background: var(--color-error);
+  color: #fff;
+  border-color: var(--color-error);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.dashboard__btn--danger:hover:not(:disabled) {
+  background: #f87171;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
 .dashboard__btn--small {
   padding: 6px 12px;
   font-size: 0.8125rem;
