@@ -182,7 +182,7 @@ export function SavedAnalysisList({
                           <td>{renderActions(s)}</td>
                         </tr>
                       ))}
-                    {open && g.equipment && g.snapshots.length >= 3 && (
+                    {open && g.equipment && g.snapshots.length >= 2 && (
                       <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
                         <td colSpan={5} style={{ padding: '4px 16px 16px 32px' }}>
                           <EquipmentTimeline
