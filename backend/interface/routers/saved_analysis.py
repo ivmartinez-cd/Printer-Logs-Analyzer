@@ -283,3 +283,57 @@ def compare_saved_analysis(
         },
         "diff": diff,
     }
+
+
+@router.put(
+    "/{id}",
+    dependencies=[Depends(authenticate)],
+    summary="Update a saved analysis snapshot with a new log/incidents list",
+    response_description="The updated analysis metadata.",
+)
+def update_saved_analysis(
+    id: str,
+    body: SavedAnalysisCreateRequest,
+    repo: SavedAnalysisRepository = Depends(get_saved_analysis_repo),
+    telemetry_repo: TelemetryRepository = Depends(get_telemetry_repo),
+) -> dict:
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid id") from None
+    
+    incidents_payload = [incident_to_summary(i) for i in body.incidents]
+    snap = repo.update(
+        id=uid,
+        incidents=incidents_payload,
+        global_severity=body.global_severity,
+    )
+    if not snap:
+        raise HTTPException(status_code=404, detail="Saved analysis not found")
+        
+    if body.equipment_identifier:
+        telemetry_repo.add_events(
+            [
+                TelemetryEvent(
+                    device_serial=body.equipment_identifier,
+                    saved_analysis_id=snap.id,
+                    code=inc.code,
+                    classification=inc.classification,
+                    severity=inc.severity,
+                    occurrences=inc.occurrences,
+                    counter=inc.counter_range[-1] if inc.counter_range else 0,
+                    event_time=inc.last_event_time or inc.end_time,
+                )
+                for inc in body.incidents
+            ]
+        )
+        
+    return {
+        "id": str(snap.id),
+        "name": snap.name,
+        "equipment_identifier": snap.equipment_identifier,
+        "incidents": snap.incidents,
+        "global_severity": snap.global_severity,
+        "created_at": snap.created_at.isoformat(),
+    }
+

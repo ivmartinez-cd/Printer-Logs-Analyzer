@@ -492,6 +492,10 @@ export default function DashboardPage({
                 onCompare={() => {
                   setCompareModalOpen(true)
                 }}
+                onUpdateDetail={(updated) => {
+                  setSavedDetail(updated)
+                  listSavedAnalyses().then(setSavedList).catch(() => {})
+                }}
               />
             )}
 

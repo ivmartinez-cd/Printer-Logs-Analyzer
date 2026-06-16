@@ -84,6 +84,17 @@ class SavedAnalysisRepository:
         except DatabaseUnavailableError:
             return self._delete_local(id)
 
+    def update(
+        self,
+        id: UUID,
+        incidents: List[dict],
+        global_severity: str,
+    ) -> SavedAnalysisSnapshot | None:
+        try:
+            return self._update_db(id, incidents, global_severity)
+        except DatabaseUnavailableError:
+            return self._update_local(id, incidents, global_severity)
+
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
@@ -150,6 +161,27 @@ class SavedAnalysisRepository:
                 deleted = cur.rowcount
             conn.commit()
         return deleted > 0
+
+    def _update_db(
+        self,
+        id: UUID,
+        incidents: List[dict],
+        global_severity: str,
+    ) -> SavedAnalysisSnapshot | None:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE saved_analyses
+                    SET incidents = %s::jsonb, global_severity = %s, ai_diagnosis = NULL
+                    WHERE id = %s
+                    RETURNING id, name, equipment_identifier, incidents, global_severity, created_at, ai_diagnosis
+                    """,
+                    (json.dumps(incidents), global_severity, str(id)),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return self._row_to_snapshot(row) if row else None
 
     # ------------------------------------------------------------------
     # Local JSON fallback helpers
@@ -221,6 +253,23 @@ class SavedAnalysisRepository:
                 return False
             self._save_local(filtered)
         return True
+
+    def _update_local(
+        self,
+        id: UUID,
+        incidents: List[dict],
+        global_severity: str,
+    ) -> SavedAnalysisSnapshot | None:
+        with _local_write_lock:
+            items = self._load_local()
+            for item in items:
+                if item["id"] == str(id):
+                    item["incidents"] = incidents
+                    item["global_severity"] = global_severity
+                    item["ai_diagnosis"] = None
+                    self._save_local(items)
+                    return self._dict_to_snapshot(item)
+        return None
 
     # ------------------------------------------------------------------
     # Shared helpers
