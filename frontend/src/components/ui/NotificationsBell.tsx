@@ -80,25 +80,25 @@ export function NotificationsBell() {
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 9000 }}>
+    <div ref={containerRef} style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9000 }}>
       <button
         type="button"
         onClick={handleOpen}
         aria-label={`Notificaciones${unread > 0 ? ` (${unread} sin leer)` : ''}`}
         style={{
           position: 'relative',
-          width: '42px',
-          height: '42px',
-          borderRadius: '12px',
-          background: 'rgba(15, 23, 42, 0.85)',
-          border: '1px solid rgba(255,255,255,0.1)',
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%',
+          background: 'rgba(15, 23, 42, 0.9)',
+          border: '1px solid rgba(255,255,255,0.12)',
           backdropFilter: 'blur(8px)',
           color: '#e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
         }}
       >
         <Bell size={20} />
@@ -131,7 +131,7 @@ export function NotificationsBell() {
         <div
           style={{
             position: 'absolute',
-            top: '52px',
+            bottom: '60px',
             right: 0,
             width: '360px',
             maxWidth: 'calc(100vw - 32px)',

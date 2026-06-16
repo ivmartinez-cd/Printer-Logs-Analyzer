@@ -1,9 +1,8 @@
-import { useState, useRef } from 'react'
 import { useUIStore } from '../../store/useUIStore'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
 import { useToast } from '../../contexts/ToastContext'
-import { deleteSavedAnalysis, compareSavedAnalysis, listSavedAnalyses } from '../../services/api'
-import type { SavedAnalysisSummary, SavedAnalysisFull, CompareResponse } from '../../types/api'
+import { deleteSavedAnalysis, listSavedAnalyses } from '../../services/api'
+import type { SavedAnalysisSummary, SavedAnalysisFull } from '../../types/api'
 import type { ViewMode } from '../ui/Navigation'
 
 import { SDSIncidentModal } from '../Monitor/SDSIncidentModal'
@@ -26,8 +25,7 @@ interface DashboardModalsProps {
   setViewMode: (mode: ViewMode) => void
   setSavedDetail: (val: SavedAnalysisFull | null) => void
   setSelectedSavedId: (val: string | null) => void
-  setCompareResult: (val: CompareResponse | null) => void
-  
+
   exportingPdf: boolean
   isAiPdfReady: boolean
   setIsAiPdfReady: (val: boolean) => void
@@ -50,7 +48,6 @@ export function DashboardModals({
   setViewMode,
   setSavedDetail,
   setSelectedSavedId,
-  setCompareResult,
   exportingPdf,
   isAiPdfReady,
   setIsAiPdfReady,
@@ -78,8 +75,6 @@ export function DashboardModals({
     setSdsIncident,
     saveIncidentModalOpen,
     setSaveIncidentModalOpen,
-    compareModalOpen,
-    setCompareModalOpen,
     deleteConfirm,
     setDeleteConfirm,
     solutionModal,
@@ -90,11 +85,6 @@ export function DashboardModals({
   } = useUIStore()
 
   const toast = useToast()
-  
-  const [comparing, setComparing] = useState(false)
-  const [compareLogText, setCompareLogText] = useState('')
-  const [compareFileName, setCompareFileName] = useState<string | undefined>(undefined)
-  const compareFileInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <>
@@ -176,7 +166,6 @@ export function DashboardModals({
                 setViewMode('saved-list')
                 setSavedDetail(null)
                 setSelectedSavedId(null)
-                setCompareResult(null)
               }
               toast.showSuccess('Análisis borrado')
             } catch (e) {
@@ -217,97 +206,6 @@ export function DashboardModals({
               Estamos conectando con el portal SDS para el equipo <strong>{currentSerialNumber}</strong>.
               Esto puede tardar hasta 30 segundos.
             </p>
-          </div>
-        </div>
-      )}
-
-      {compareModalOpen && selectedSavedId && (
-        <div
-          className="log-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="compare-modal-title"
-        >
-          <div className="log-modal">
-            <div className="log-modal__header">
-              <h2 id="compare-modal-title" className="log-modal__title">
-                Comparar con log nuevo
-              </h2>
-              <button
-                type="button"
-                className="log-modal__close"
-                onClick={() => !comparing && setCompareModalOpen(false)}
-                aria-label="Cerrar"
-                disabled={comparing}
-              >
-                ×
-              </button>
-            </div>
-            <div className="log-modal__file-row">
-              <input
-                ref={compareFileInputRef}
-                type="file"
-                accept=".log,.txt,.tsv,text/plain"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  const reader = new FileReader()
-                  reader.onload = (ev) => {
-                    setCompareLogText((ev.target?.result as string) ?? '')
-                    setCompareFileName(file.name)
-                  }
-                  reader.readAsText(file)
-                }}
-              />
-              <button
-                type="button"
-                className="dashboard__btn"
-                onClick={() => compareFileInputRef.current?.click()}
-                disabled={comparing}
-              >
-                {compareFileName ? `📄 ${compareFileName}` : '📂 Seleccionar archivo…'}
-              </button>
-            </div>
-            <textarea
-              className="log-modal__textarea"
-              placeholder="O pegar el log aquí…"
-              value={compareLogText}
-              onChange={(e) => setCompareLogText(e.target.value)}
-              rows={10}
-              disabled={comparing}
-            />
-            <div className="log-modal__footer">
-              <button
-                type="button"
-                className="dashboard__btn"
-                onClick={() => setCompareModalOpen(false)}
-                disabled={comparing}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="dashboard__btn dashboard__btn--primary"
-                disabled={!compareLogText.trim() || comparing}
-                onClick={async () => {
-                  if (!selectedSavedId || !compareLogText.trim()) return
-                  setComparing(true)
-                  try {
-                    const res = await compareSavedAnalysis(selectedSavedId, compareLogText)
-                    setCompareResult(res)
-                    setCompareModalOpen(false)
-                    setViewMode('saved-detail')
-                  } catch (e) {
-                    toast.showError(e instanceof Error ? e.message : 'Error al comparar')
-                  } finally {
-                    setComparing(false)
-                  }
-                }}
-              >
-                {comparing ? 'Comparando…' : 'Comparar'}
-              </button>
-            </div>
           </div>
         </div>
       )}
