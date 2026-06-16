@@ -72,6 +72,24 @@ def _is_critical(ev: _Event) -> bool:
     return (ev.severity or "").upper() in CRITICAL_SEVERITIES
 
 
+def _dedup_events(events: List[_Event]) -> List[_Event]:
+    """Collapse repeated re-imports of the same physical event.
+
+    Cumulative logs (e.g. the SDS portal) re-list historical events on every
+    pull, so each saved snapshot fans out the *same* incident again. Counting one
+    physical error once per snapshot would inflate the recurrence total (a single
+    error read 6 times would look like it happened 6 times). We key by
+    (code, event_time) and keep the reading with the highest occurrences.
+    """
+    best: dict[tuple, _Event] = {}
+    for e in events:
+        key = (e.code, _aware(e.event_time))
+        current = best.get(key)
+        if current is None or (e.occurrences or 0) > (current.occurrences or 0):
+            best[key] = e
+    return list(best.values())
+
+
 def evaluate_device_health(
     events: List[_Event],
     maintenance: Optional[List[_Maintenance]] = None,
@@ -80,6 +98,10 @@ def evaluate_device_health(
     """Decide the health status of a device from its telemetry history."""
     maintenance = maintenance or []
     now = _aware(now) if now else datetime.now(timezone.utc)
+
+    # Collapse cumulative-log re-imports so the same physical event isn't counted
+    # once per saved snapshot.
+    events = _dedup_events(events)
 
     if not events:
         return DeviceHealth(
@@ -121,12 +143,20 @@ def evaluate_device_health(
         by_code.setdefault(e.code, []).append(e)
 
     for code, group in by_code.items():
-        recent = [
-            e
-            for e in group
-            if (now - _aware(e.event_time)).days <= RECURRENCE_DAYS
-            or (latest_counter - e.counter) <= RECURRENCE_PAGES
-        ]
+        recent = []
+        for e in group:
+            within_days = (now - _aware(e.event_time)).days <= RECURRENCE_DAYS
+            # The page window only applies when we actually have page counters.
+            # When counters are unknown (0) — common for saved-log snapshots —
+            # "latest - 0 <= 5000" used to be always true, defeating the time
+            # bound and flagging ancient errors as recurrent.
+            within_pages = (
+                e.counter > 0
+                and latest_counter > 0
+                and (latest_counter - e.counter) <= RECURRENCE_PAGES
+            )
+            if within_days or within_pages:
+                recent.append(e)
         total = sum(max(1, e.occurrences) for e in recent)
         if total > RECURRENCE_THRESHOLD:
             return DeviceHealth(
