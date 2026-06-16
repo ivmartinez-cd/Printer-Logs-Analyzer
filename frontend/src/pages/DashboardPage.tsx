@@ -452,6 +452,7 @@ export default function DashboardPage({
             onQuickSearch={autoResolveAndAnalyze}
             loadingQuickSearch={autoExtracting || loading}
             onOpenSaved={(id) => {
+              setSelectedSavedId(id)
               setViewMode('saved-detail')
               setSavedDetail(null)
               getSavedAnalysis(id)
