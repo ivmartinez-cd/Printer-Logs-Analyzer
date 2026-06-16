@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
 import { getDeviceHealth, updateSavedAnalysis, previewLogs } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
-import { Activity, AlertTriangle, CheckCircle, RefreshCw, FileText, BarChart2, Calendar, HardDrive } from 'lucide-react'
+import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive } from 'lucide-react'
 import type { SavedAnalysisFull, CompareResponse, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
 
 const HEALTH_ICON: Record<DeviceHealth['status'], string> = {
@@ -164,7 +164,7 @@ export function SavedAnalysisDetail({
         }))
 
         // Call the new PUT endpoint
-        const updated = await updateSavedAnalysis(savedDetail.id, {
+        await updateSavedAnalysis(savedDetail.id, {
           name: savedDetail.name,
           equipment_identifier: savedDetail.equipment_identifier,
           incidents: items,
