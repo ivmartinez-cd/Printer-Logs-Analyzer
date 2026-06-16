@@ -153,7 +153,9 @@ def test_refresh_hp_cache_success(mock_insight_info, mock_sds_factory, client):
 
     mock_sds = MagicMock()
     mock_sds_factory.return_value = mock_sds
-    mock_sds.refresh_hp_data_cache.return_value = True
+    mock_sds.refresh_hp_data_cache.return_value = [
+        {"operation": "RefreshHPCloudDeviceActionCache", "sent": "16-jun-2026 10:00:00"}
+    ]
 
     response = client.post("/sds/devices/MXSCS7Q00Q/refresh-cache", headers=_HEADERS)
 
@@ -162,7 +164,37 @@ def test_refresh_hp_cache_success(mock_insight_info, mock_sds_factory, client):
     assert data["serial"] == "MXSCS7Q00Q"
     assert data["device_id"] == "239877"
     assert data["status"] == "requested"
+    assert data["baseline"][0]["operation"] == "RefreshHPCloudDeviceActionCache"
     mock_sds.refresh_hp_data_cache.assert_called_once_with("239877")
+
+
+@patch("backend.interface.routers.sds.get_sds_session")
+@patch("backend.interface.routers.sds._insight_get_device_info")
+def test_hp_operations_success(mock_insight_info, mock_sds_factory, client):
+    """Test retrieval of the HP Smart operations status table."""
+    mock_insight_info.return_value = {"device_id": 239877, "model_name": "HP LaserJet", "firmware": "1.2.3"}
+
+    mock_sds = MagicMock()
+    mock_sds_factory.return_value = mock_sds
+    mock_sds.get_hp_operations.return_value = [
+        {
+            "operation": "RefreshHPCloudDeviceActionCache",
+            "sent": "16-jun-2026 15:06:28",
+            "sent_by": "ilmartinez",
+            "last_known_state": "PartialSuccess",
+            "last_state_updated": "16-jun-2026 15:08:54",
+            "last_state_requested": "16-jun-2026 15:09:46",
+        }
+    ]
+
+    response = client.get("/sds/devices/MXSCS7Q00Q/hp-operations", headers=_HEADERS)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["device_id"] == "239877"
+    assert data["operations"][0]["operation"] == "RefreshHPCloudDeviceActionCache"
+    assert data["operations"][0]["last_known_state"] == "PartialSuccess"
+    mock_sds.get_hp_operations.assert_called_once_with("239877")
 
 
 @patch("backend.interface.routers.sds._insight_get_device_info")

@@ -6,8 +6,8 @@ import {
   extractSdsLogs,
   generatePdfSummary,
   getRemoteEwsAccess,
-  refreshHpDataCache,
 } from '../services/api'
+import { useHpCacheRefresh } from '../hooks/useHpCacheRefresh'
 import type { HealthStatus } from '../services/api'
 import type {
   ParseLogsResponse,
@@ -192,7 +192,7 @@ export default function DashboardPage({
  
   const insightData = useInsightData(currentSerialNumber)
   const [loadingRemoteEws, setLoadingRemoteEws] = useState(false)
-  const [refreshingHpCache, setRefreshingHpCache] = useState(false)
+  const { refreshing: refreshingHpCache, triggerRefresh: triggerHpCacheRefresh } = useHpCacheRefresh()
 
   const {
     exportingPdf,
@@ -681,22 +681,7 @@ export default function DashboardPage({
                           </button>
                           <button
                             className="dashboard__btn dashboard__btn--secondary"
-                            onClick={async () => {
-                              if (!currentSerialNumber) return
-                              setRefreshingHpCache(true)
-                              try {
-                                const { message } = await refreshHpDataCache(
-                                  currentSerialNumber,
-                                  AbortSignal.timeout(30000)
-                                )
-                                toast.showSuccess(message)
-                              } catch (err) {
-                                console.error('Error refreshing HP data cache:', err)
-                                toast.showError('No se pudo solicitar la actualización de la caché de datos de HP.')
-                              } finally {
-                                setRefreshingHpCache(false)
-                              }
-                            }}
+                            onClick={() => triggerHpCacheRefresh(currentSerialNumber)}
                             disabled={!currentSerialNumber || refreshingHpCache}
                             title="Solicitar al portal SDS que actualice la caché de datos de HP del dispositivo"
                           >

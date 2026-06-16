@@ -31,6 +31,8 @@ from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.sds import (
     ExtractSdsLogsRequest,
     ExtractSdsLogsResponse,
+    HpOperation,
+    HpOperationsResponse,
     RefreshHpCacheResponse,
     RemoteEwsResponse,
     ResolveDeviceResponse,
@@ -182,7 +184,7 @@ async def refresh_hp_cache_endpoint(
         return get_sds_session(settings).refresh_hp_data_cache(device_id)
 
     try:
-        await asyncio.wait_for(asyncio.to_thread(_do_refresh), timeout=25.0)
+        baseline = await asyncio.wait_for(asyncio.to_thread(_do_refresh), timeout=25.0)
     except asyncio.TimeoutError:
         raise HTTPException(
             status_code=504, detail="La actualización de caché tardó demasiado."
@@ -195,6 +197,62 @@ async def refresh_hp_cache_endpoint(
         device_id=device_id,
         status="requested",
         message="Se solicitó la actualización de la caché de datos de HP. Puede tardar unos minutos.",
+        baseline=baseline,
+    )
+
+
+@router.get(
+    "/sds/devices/{serial}/hp-operations",
+    response_model=HpOperationsResponse,
+    dependencies=[Depends(authenticate)],
+    summary="Get the device's HP Smart operations status table",
+    response_description="Status of each HP Smart operation (cache refresh, EWS, etc.).",
+)
+@limiter.limit("30/minute")
+async def get_hp_operations_endpoint(
+    request: Request,
+    serial: str,
+    settings: Settings = Depends(get_settings),
+) -> HpOperationsResponse:
+    if not (settings.sds_web_username and settings.sds_web_password):
+        raise HTTPException(status_code=503, detail="Integración SDS Web no configurada")
+    if not (
+        settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret
+    ):
+        raise HTTPException(status_code=503, detail="Integración Insight API no configurada")
+
+    serial = extract_serial_number(serial)
+    if not serial:
+        raise HTTPException(status_code=400, detail="Número de serie inválido")
+
+    info = await asyncio.to_thread(
+        _insight_get_device_info,
+        settings.insight_portal_url,
+        settings.insight_api_key,
+        settings.insight_api_secret,
+        serial,
+    )
+    if not info["device_id"]:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado en el Portal")
+
+    device_id = str(info["device_id"])
+
+    def _do_fetch():
+        return get_sds_session(settings).get_hp_operations(device_id)
+
+    try:
+        operations = await asyncio.wait_for(asyncio.to_thread(_do_fetch), timeout=20.0)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504, detail="La consulta de operaciones tardó demasiado."
+        ) from None
+    except SDSWebError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return HpOperationsResponse(
+        serial=serial,
+        device_id=device_id,
+        operations=[HpOperation(**op) for op in operations],
     )
 
 

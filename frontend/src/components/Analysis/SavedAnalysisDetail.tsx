@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
 import { getDeviceHealth, createSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
-import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive, CheckCircle } from 'lucide-react'
+import { useHpCacheRefresh } from '../../hooks/useHpCacheRefresh'
+import { Activity, AlertTriangle, RefreshCw, BarChart2, Calendar, HardDrive, CheckCircle, DatabaseBackup } from 'lucide-react'
 import { Portal } from '../ui/Portal'
 import type { SavedAnalysisFull, CompareResponse, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
 
@@ -125,6 +126,7 @@ export function SavedAnalysisDetail({
   const [updatingLog, setUpdatingLog] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
+  const { refreshing: refreshingHpCache, triggerRefresh: triggerHpCacheRefresh } = useHpCacheRefresh()
 
   const [updateDiff, setUpdateDiff] = useState<{
     newCodes: string[]
@@ -508,7 +510,20 @@ export function SavedAnalysisDetail({
             <RefreshCw size={15} className={updatingLog ? 'animate-spin' : ''} />
             {updatingLog ? 'Actualizando...' : 'Actualizar Log'}
           </button>
-          
+
+          {savedDetail.equipment_identifier && (
+            <button
+              type="button"
+              className="dashboard__btn dashboard__btn--secondary"
+              onClick={() => triggerHpCacheRefresh(savedDetail.equipment_identifier)}
+              disabled={refreshingHpCache}
+              title="Solicitar al portal SDS que actualice la caché de datos de HP del dispositivo"
+            >
+              <DatabaseBackup size={15} />
+              {refreshingHpCache ? 'Actualizando...' : 'Actualizar caché HP'}
+            </button>
+          )}
+
           <button
             type="button"
             className="dashboard__btn dashboard__btn--primary"

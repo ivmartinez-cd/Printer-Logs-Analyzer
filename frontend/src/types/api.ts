@@ -231,6 +231,22 @@ export interface RefreshHpCacheResponse {
   device_id: string
   status: string
   message: string
+  baseline: Array<{ operation: string; sent: string }>
+}
+
+export interface HpOperation {
+  operation: string
+  sent: string | null
+  sent_by: string | null
+  last_known_state: string | null
+  last_state_updated: string | null
+  last_state_requested: string | null
+}
+
+export interface HpOperationsResponse {
+  serial: string
+  device_id: string
+  operations: HpOperation[]
 }
 
 export interface ExtractSdsLogsResponse {
