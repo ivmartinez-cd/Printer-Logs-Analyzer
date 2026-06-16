@@ -40,6 +40,17 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     @app.on_event("startup")
     def startup_event():
         start_scheduler()
+        # Resume any in-progress HP cache-refresh notifications orphaned by a restart.
+        try:
+            from backend.application.services.hp_cache_notifier import resume_pending_watches
+            from backend.infrastructure.repositories.notification_repository import (
+                NotificationRepository,
+            )
+            from backend.interface.deps import _db
+
+            resume_pending_watches(get_settings(), NotificationRepository(_db))
+        except Exception as exc:  # never block startup on this
+            logging.getLogger(__name__).warning("Could not resume cache watches: %s", exc)
 
     @app.on_event("shutdown")
     def shutdown_event():

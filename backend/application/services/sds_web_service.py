@@ -442,6 +442,14 @@ _HP_OP_FIELDS = (
 )
 
 
+def _cell_text(td) -> str:
+    """Cell text excluding any nested <a> labels (e.g. the "Ver datos en bruto del
+    JAMC de HP" link that the portal injects next to the state), falling back to the
+    full text when stripping links would leave the cell empty."""
+    without_links = " ".join("".join(td.xpath(".//text()[not(ancestor::a)]")).split())
+    return without_links or " ".join(td.text_content().split())
+
+
 def _parse_hp_operations(page_text: str) -> list[dict]:
     """Parse the HP Smart operations table (one dict per operation row)."""
     out: list[dict] = []
@@ -451,7 +459,7 @@ def _parse_hp_operations(page_text: str) -> list[dict]:
             tds = tr.xpath("./td")
             if len(tds) < 4:  # header (th) rows and empties are skipped
                 continue
-            cells = [" ".join(td.text_content().split()) for td in tds]
+            cells = [_cell_text(td) for td in tds]
             row = dict(zip(_HP_OP_FIELDS, cells, strict=False))
             if row.get("operation"):
                 out.append(row)
