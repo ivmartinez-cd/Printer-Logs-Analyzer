@@ -110,6 +110,7 @@ interface SavedAnalysisDetailProps {
   onDelete: (item: { id: string; name: string }) => void
   onCompare: () => void
   onUpdateDetail?: (updated: SavedAnalysisFull) => void
+  onClearCompare?: () => void
 }
 
 export function SavedAnalysisDetail({
@@ -119,6 +120,7 @@ export function SavedAnalysisDetail({
   onDelete,
   onCompare,
   onUpdateDetail,
+  onClearCompare,
 }: SavedAnalysisDetailProps) {
   const [updatingLog, setUpdatingLog] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -130,6 +132,9 @@ export function SavedAnalysisDetail({
     occurrenceChanges: Array<{ code: string; before: number; after: number; delta: number }>
   } | null>(null)
 
+  const [previousIncidents, setPreviousIncidents] = useState<SavedAnalysisIncidentItem[] | null>(null)
+
+
   if (!savedDetail) {
     return (
       <div className="dashboard__saved-section" style={{ padding: '40px', textAlign: 'center' }}>
@@ -139,11 +144,123 @@ export function SavedAnalysisDetail({
     )
   }
 
-  // Calculate stats
-  const totalOccurrences = savedDetail.incidents.reduce((acc, inc) => acc + (inc.occurrences || 0), 0)
-  const uniqueCodesCount = savedDetail.incidents.length
-  const criticalCount = savedDetail.incidents.filter(i => i.severity.toUpperCase() === 'ERROR').length
-  const warningCount = savedDetail.incidents.filter(i => i.severity.toUpperCase() === 'WARNING').length
+  // Unify update diff and manual comparison modes
+  const isComparing = !!compareResult;
+  const isUpdating = !!updateDiff && !!previousIncidents;
+
+  const beforeIncidents = isComparing 
+    ? compareResult.saved.incidents 
+    : isUpdating 
+      ? previousIncidents 
+      : null;
+
+  const afterIncidents = isComparing 
+    ? compareResult.current.incidents 
+    : savedDetail.incidents;
+
+  const getIncidentsOccurrences = (incidentsList: SavedAnalysisIncidentItem[]) => {
+    return incidentsList.reduce((acc, inc) => acc + (inc.occurrences || 0), 0);
+  };
+
+  const getCriticalCount = (incidentsList: SavedAnalysisIncidentItem[]) => {
+    return incidentsList.filter(i => i.severity.toUpperCase() === 'ERROR').length;
+  };
+
+  const getWarningCount = (incidentsList: SavedAnalysisIncidentItem[]) => {
+    return incidentsList.filter(i => i.severity.toUpperCase() === 'WARNING').length;
+  };
+
+  // Calculate active stats
+  const totalOccurrences = getIncidentsOccurrences(afterIncidents);
+  const uniqueCodesCount = afterIncidents.length;
+  const criticalCount = getCriticalCount(afterIncidents);
+  const warningCount = getWarningCount(afterIncidents);
+
+  // Calculate previous stats (for deltas)
+  const prevTotalOccurrences = beforeIncidents ? getIncidentsOccurrences(beforeIncidents) : 0;
+  const prevUniqueCodesCount = beforeIncidents ? beforeIncidents.length : 0;
+  const prevCriticalCount = beforeIncidents ? getCriticalCount(beforeIncidents) : 0;
+  const prevWarningCount = beforeIncidents ? getWarningCount(beforeIncidents) : 0;
+
+  const renderKPIDelta = (beforeVal: number, afterVal: number, label: string = '') => {
+    if (!beforeIncidents) return null;
+    const delta = afterVal - beforeVal;
+    if (delta === 0) {
+      return (
+        <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '6px', fontWeight: 600 }}>
+          (sin cambios)
+        </span>
+      );
+    }
+    const isPositive = delta > 0;
+    const color = isPositive ? '#f87171' : '#34d399';
+    const sign = isPositive ? '+' : '';
+    return (
+      <span style={{ fontSize: '0.8rem', color, fontWeight: 700, marginLeft: '6px' }}>
+        ({sign}{delta}{label})
+      </span>
+    );
+  };
+
+  interface MergedIncidentInfo {
+    code: string;
+    classification: string;
+    severity: string;
+    beforeCount: number;
+    afterCount: number;
+    delta: number;
+    last_event_time: string | null;
+  }
+
+  const getMergedIncidentsForChart = (): MergedIncidentInfo[] => {
+    const afterMap = new Map(afterIncidents.map(i => [i.code, i]));
+    const beforeMap = beforeIncidents ? new Map(beforeIncidents.map(i => [i.code, i])) : new Map<string, SavedAnalysisIncidentItem>();
+
+    const allCodes = new Set([...afterMap.keys(), ...beforeMap.keys()]);
+    const merged: MergedIncidentInfo[] = [];
+
+    for (const code of allCodes) {
+      const beforeInc = beforeMap.get(code);
+      const afterInc = afterMap.get(code);
+
+      const beforeCount = beforeInc?.occurrences || 0;
+      const afterCount = afterInc?.occurrences || 0;
+      const classification = afterInc?.classification || beforeInc?.classification || 'Desconocido';
+      const severity = afterInc?.severity || beforeInc?.severity || 'INFO';
+      const afterLastEvent = afterInc && 'last_event_time' in afterInc ? afterInc.last_event_time : undefined;
+      const beforeLastEvent = beforeInc && 'last_event_time' in beforeInc ? beforeInc.last_event_time : undefined;
+      const last_event_time = afterLastEvent || afterInc?.end_time || beforeLastEvent || beforeInc?.end_time || null;
+
+      merged.push({
+        code,
+        classification,
+        severity,
+        beforeCount,
+        afterCount,
+        delta: afterCount - beforeCount,
+        last_event_time
+      });
+    }
+
+    return merged.sort((a, b) => {
+      const scoreA = a.afterCount || a.beforeCount;
+      const scoreB = b.afterCount || b.beforeCount;
+      return scoreB - scoreA;
+    });
+  };
+
+  const listToRender = beforeIncidents 
+    ? getMergedIncidentsForChart() 
+    : savedDetail.incidents.map(inc => ({
+        code: inc.code,
+        classification: inc.classification,
+        severity: inc.severity,
+        beforeCount: 0,
+        afterCount: inc.occurrences || 0,
+        delta: 0,
+        last_event_time: inc.last_event_time || inc.end_time
+      }));
+
 
   function calculateUpdateDiff(before: SavedAnalysisIncidentItem[], after: SavedAnalysisIncidentItem[]) {
     const beforeMap = new Map(before.map(i => [i.code, i]))
@@ -210,6 +327,7 @@ export function SavedAnalysisDetail({
         })
 
         const diff = calculateUpdateDiff(savedDetail.incidents, items)
+        setPreviousIncidents(savedDetail.incidents)
         setUpdateDiff(diff)
 
         toast.showSuccess('El log guardado y la telemetría se han actualizado exitosamente.')
@@ -265,6 +383,7 @@ export function SavedAnalysisDetail({
       })
 
       const diff = calculateUpdateDiff(savedDetail.incidents, items)
+      setPreviousIncidents(savedDetail.incidents)
       setUpdateDiff(diff)
 
       toast.showSuccess(`Los logs de ${serial} se han actualizado automáticamente desde el portal SDS.`)
@@ -286,6 +405,58 @@ export function SavedAnalysisDetail({
   return (
     <div className="dashboard__saved-section animate-in fade-in-50 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
+      {/* Comparison/Update Banner */}
+      {(isComparing || isUpdating) && (
+        <div style={{
+          background: 'rgba(56, 189, 248, 0.08)',
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          padding: '16px 20px',
+          borderRadius: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Activity className="text-sky-400 animate-pulse" size={20} />
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
+                {isComparing 
+                  ? 'Modo Comparación Activo — Visualizando diferencias con el log seleccionado.'
+                  : 'Log Actualizado — Visualizando variaciones respecto al log original.'
+                }
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>
+                Los KPIs, gráficos y la lista de incidentes reflejan las diferencias y deltas.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="dashboard__btn"
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              color: '#f8fafc',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              padding: '6px 14px',
+              fontSize: '0.85rem'
+            }}
+            onClick={() => {
+              if (isComparing && onClearCompare) {
+                onClearCompare();
+              } else {
+                setUpdateDiff(null);
+                setPreviousIncidents(null);
+              }
+            }}
+          >
+            Volver a Vista Normal
+          </button>
+        </div>
+      )}
+
       {/* Header Info & Actions */}
       <div style={{
         display: 'flex',
@@ -372,9 +543,10 @@ export function SavedAnalysisDetail({
           <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Eventos Totales
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            {totalOccurrences}
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
+            <span>{totalOccurrences}</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>ocurrencias</span>
+            {renderKPIDelta(prevTotalOccurrences, totalOccurrences)}
           </div>
         </div>
 
@@ -388,9 +560,10 @@ export function SavedAnalysisDetail({
           <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Códigos de Error
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            {uniqueCodesCount}
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
+            <span>{uniqueCodesCount}</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>únicos</span>
+            {renderKPIDelta(prevUniqueCodesCount, uniqueCodesCount)}
           </div>
         </div>
 
@@ -404,11 +577,12 @@ export function SavedAnalysisDetail({
           <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Severidades Críticas
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f87171', marginTop: '6px', display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-            {criticalCount}
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f87171', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '12px' }}>
+            <span>{criticalCount}</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <AlertTriangle size={14} className="text-red-400" /> ERRORES
             </span>
+            {renderKPIDelta(prevCriticalCount, criticalCount)}
           </div>
         </div>
 
@@ -422,11 +596,12 @@ export function SavedAnalysisDetail({
           <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Alertas / Advertencias
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fbbf24', marginTop: '6px', display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-            {warningCount}
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fbbf24', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '12px' }}>
+            <span>{warningCount}</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <AlertTriangle size={14} className="text-amber-400" /> WARNINGS
             </span>
+            {renderKPIDelta(prevWarningCount, warningCount)}
           </div>
         </div>
       </div>
@@ -440,31 +615,90 @@ export function SavedAnalysisDetail({
         boxShadow: '0 4px 25px rgba(0, 0, 0, 0.1)'
       }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9' }}>
-          Distribución de Ocurrencias por Código
+          {beforeIncidents 
+            ? 'Comparación de Ocurrencias por Código (Antes vs. Ahora)' 
+            : 'Distribución de Ocurrencias por Código'
+          }
         </h3>
         
-        {savedDetail.incidents.length === 0 ? (
+        {listToRender.length === 0 ? (
           <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>No hay incidentes para graficar.</p>
+        ) : beforeIncidents ? (
+          /* Dual-bar comparison mode */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {(() => {
+              const maxVal = Math.max(...listToRender.slice(0, 5).map(m => Math.max(m.beforeCount, m.afterCount)), 1)
+              return listToRender.slice(0, 5).map((m, index) => {
+                const pctBefore = (m.beforeCount / maxVal) * 100
+                const pctAfter = (m.afterCount / maxVal) * 100
+                const color = m.severity.toUpperCase() === 'ERROR' ? '#f87171' : m.severity.toUpperCase() === 'WARNING' ? '#fbbf24' : '#38bdf8'
+                const deltaSign = m.delta > 0 ? '+' : ''
+                const deltaColor = m.delta > 0 ? '#f87171' : m.delta < 0 ? '#34d399' : '#64748b'
+                
+                return (
+                  <div key={m.code + String(index)} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#f8fafc', fontWeight: 700 }}>
+                          {m.code}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                          {m.classification}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: deltaColor }}>
+                        {m.delta === 0 ? 'sin cambios' : `${deltaSign}${m.delta} ocur.`}
+                      </div>
+                    </div>
+                    
+                    {/* Before bar */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ width: '50px', fontSize: '0.75rem', color: '#64748b' }}>Antes</span>
+                      <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${pctBefore}%`, height: '100%', background: 'rgba(100, 116, 139, 0.4)', borderRadius: '3px' }} />
+                      </div>
+                      <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: '#64748b' }}>{m.beforeCount}</span>
+                    </div>
+
+                    {/* After bar */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ width: '50px', fontSize: '0.75rem', color: color, fontWeight: 600 }}>Ahora</span>
+                      <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${pctAfter}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.6s ease-out' }} />
+                      </div>
+                      <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: color, fontWeight: 700 }}>{m.afterCount}</span>
+                    </div>
+                  </div>
+                )
+              })
+            })()}
+            {listToRender.length > 5 && (
+              <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: '#64748b', textAlign: 'right' }}>
+                * Mostrando los 5 códigos con mayores variaciones.
+              </p>
+            )}
+          </div>
         ) : (
+          /* Normal distribution mode */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {savedDetail.incidents.slice(0, 5).map((inc, index) => {
-              const pct = totalOccurrences > 0 ? ((inc.occurrences || 0) / totalOccurrences) * 100 : 0
-              const color = inc.severity.toUpperCase() === 'ERROR' ? '#f87171' : inc.severity.toUpperCase() === 'WARNING' ? '#fbbf24' : '#38bdf8'
+            {listToRender.slice(0, 5).map((m, index) => {
+              const pct = totalOccurrences > 0 ? (m.afterCount / totalOccurrences) * 100 : 0
+              const color = m.severity.toUpperCase() === 'ERROR' ? '#f87171' : m.severity.toUpperCase() === 'WARNING' ? '#fbbf24' : '#38bdf8'
               return (
-                <div key={inc.code + String(index)} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div key={m.code + String(index)} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{ width: '80px', fontFamily: 'monospace', fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600 }}>
-                    {inc.code}
+                    {m.code}
                   </div>
                   <div style={{ flex: 1, height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '4px', transition: 'width 0.6s ease-out' }} />
                   </div>
                   <div style={{ width: '80px', textAlign: 'right', fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
-                    {inc.occurrences} ({Math.round(pct)}%)
+                    {m.afterCount} ({Math.round(pct)}%)
                   </div>
                 </div>
               )
             })}
-            {savedDetail.incidents.length > 5 && (
+            {listToRender.length > 5 && (
               <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: '#64748b', textAlign: 'right' }}>
                 * Mostrando los 5 códigos con mayores ocurrencias.
               </p>
@@ -493,15 +727,54 @@ export function SavedAnalysisDetail({
               </tr>
             </thead>
             <tbody>
-              {savedDetail.incidents.map((inc, i) => {
-                const isCrit = inc.severity.toUpperCase() === 'ERROR'
-                const isWarn = inc.severity.toUpperCase() === 'WARNING'
+              {listToRender.map((m, i) => {
+                const isCrit = m.severity.toUpperCase() === 'ERROR'
+                const isWarn = m.severity.toUpperCase() === 'WARNING'
+                const isResolved = beforeIncidents && m.afterCount === 0 && m.beforeCount > 0
+                const isNew = beforeIncidents && m.beforeCount === 0 && m.afterCount > 0
+                const hasChanged = beforeIncidents && m.beforeCount !== m.afterCount
+
                 return (
-                  <tr key={inc.code + String(i)} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <td style={{ padding: '14px 20px', fontWeight: 700, fontFamily: 'monospace', color: isCrit ? '#f87171' : isWarn ? '#fbbf24' : '#f8fafc' }}>
-                      {inc.code}
+                  <tr key={m.code + String(i)} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', opacity: isResolved ? 0.5 : 1 }}>
+                    <td style={{
+                      padding: '14px 20px',
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      color: isCrit ? '#f87171' : isWarn ? '#fbbf24' : '#f8fafc',
+                      textDecoration: isResolved ? 'line-through' : 'none'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{m.code}</span>
+                        {isResolved && (
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            background: 'rgba(52, 211, 153, 0.15)',
+                            color: '#34d399',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            textDecoration: 'none',
+                            display: 'inline-block'
+                          }}>
+                            RESUELTO
+                          </span>
+                        )}
+                        {isNew && (
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            color: '#f87171',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            display: 'inline-block'
+                          }}>
+                            NUEVO
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td style={{ padding: '14px 20px', color: '#cbd5e1' }}>{inc.classification}</td>
+                    <td style={{ padding: '14px 20px', color: '#cbd5e1' }}>{m.classification}</td>
                     <td style={{ padding: '14px 20px' }}>
                       <span style={{
                         padding: '3px 8px',
@@ -512,13 +785,29 @@ export function SavedAnalysisDetail({
                         color: isCrit ? '#f87171' : isWarn ? '#fbbf24' : '#38bdf8',
                         textTransform: 'uppercase'
                       }}>
-                        {inc.severity}
+                        {m.severity}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 20px', fontWeight: 600, color: '#f8fafc' }}>{inc.occurrences}</td>
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: '#f8fafc' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{m.afterCount}</span>
+                        {beforeIncidents && hasChanged && (
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: m.delta > 0 ? '#f87171' : '#34d399',
+                            background: m.delta > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            {m.delta > 0 ? `+${m.delta}` : m.delta}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                      {inc.last_event_time || inc.end_time
-                        ? formatDateTime(inc.last_event_time || inc.end_time)
+                      {m.last_event_time
+                        ? formatDateTime(m.last_event_time)
                         : '—'}
                     </td>
                   </tr>
