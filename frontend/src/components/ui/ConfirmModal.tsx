@@ -15,6 +15,8 @@ export interface ConfirmModalProps {
   onCancel: () => void
   /** Si está en curso una acción async (deshabilita botones) */
   loading?: boolean
+  /** Variante de estilo para el botón de confirmar */
+  variant?: 'primary' | 'danger'
 }
 
 export function ConfirmModal({
@@ -25,6 +27,7 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
   loading = false,
+  variant = 'primary',
 }: ConfirmModalProps) {
   async function handleConfirm() {
     await onConfirm()
@@ -69,7 +72,7 @@ export function ConfirmModal({
             </button>
             <button
               type="button"
-              className="dashboard__btn dashboard__btn--primary"
+              className={"dashboard__btn " + (variant === 'danger' ? 'dashboard__btn--danger' : 'dashboard__btn--primary')}
               onClick={handleConfirm}
               disabled={loading}
             >
