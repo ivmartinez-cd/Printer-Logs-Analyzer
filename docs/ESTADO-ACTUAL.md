@@ -18,7 +18,7 @@
     *   Sistema de reglas para detección de alertas críticas.
     *   Gestión de notificaciones por mail (Manual/Automática).
 3.  **Catálogo y Datos**:
-    *   Persistencia en PostgreSQL (Neon/Docker) con fallback a JSON.
+    *   Persistencia en PostgreSQL (Docker en VM Google Cloud) con fallback a JSON.
     *   Sistema de migraciones con tracking de estado (`schema_migrations`).
     *   Pipeline híbrido de ingesta de manuales de servicio.
 
