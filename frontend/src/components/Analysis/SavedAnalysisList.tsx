@@ -88,9 +88,6 @@ export function SavedAnalysisList({
     </span>
   )
 
-  // Groups with 3+ snapshots for the same real equipment feed the trend chart.
-  const timelineGroups = groups.filter((g) => g.equipment && isGroupable(g.equipment) && g.snapshots.length >= 3)
-
   return (
     <div className="dashboard__saved-section">
       {savedList !== null && savedList.length > 0 && (
@@ -185,19 +182,22 @@ export function SavedAnalysisList({
                           <td>{renderActions(s)}</td>
                         </tr>
                       ))}
+                    {open && g.equipment && g.snapshots.length >= 3 && (
+                      <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
+                        <td colSpan={5} style={{ padding: '4px 16px 16px 32px' }}>
+                          <EquipmentTimeline
+                            embedded
+                            equipmentId={g.equipment}
+                            snapshots={g.snapshots}
+                          />
+                        </td>
+                      </tr>
+                    )}
                   </Fragment>
                 )
               })}
             </tbody>
           </table>
-        </div>
-      )}
-      {timelineGroups.length > 0 && (
-        <div className="equipment-timeline__section">
-          <h3 className="equipment-timeline__section-title">Evolución por equipo</h3>
-          {timelineGroups.map(({ equipment, snapshots }) => (
-            <EquipmentTimeline key={equipment!} equipmentId={equipment!} snapshots={snapshots} />
-          ))}
         </div>
       )}
     </div>
