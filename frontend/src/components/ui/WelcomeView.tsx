@@ -78,9 +78,22 @@ export function WelcomeView({
     }
   }
 
-  // 1. Saved Summaries
+  // 1. Saved Summaries — one entry per equipment (newest snapshot), so grouped
+  //    day-by-day snapshots don't flood the card. Records without a real
+  //    equipment are shown individually.
   const displaySaved = useMemo(() => {
-    return (savedList || []).slice(0, 4)
+    const seen = new Set<string>()
+    const out: SavedAnalysisSummary[] = []
+    for (const item of savedList || []) {
+      const key = (item.equipment_identifier ?? '').trim().toLowerCase()
+      if (key && key !== 'desconocido') {
+        if (seen.has(key)) continue
+        seen.add(key)
+      }
+      out.push(item)
+      if (out.length >= 4) break
+    }
+    return out
   }, [savedList])
 
   // 2. Recent Searches (filtered to avoid showing if they are already in the saved list prominently)
