@@ -36,7 +36,6 @@ from backend.interface.utils import (
     incident_to_summary,
     normalize_log_text,
 )
-
 from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/saved-analyses", tags=["Saved Analyses"])

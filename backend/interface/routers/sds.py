@@ -27,15 +27,14 @@ from backend.infrastructure.repositories.error_code_repository import ErrorCodeR
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.interface.auth import authenticate
 from backend.interface.deps import get_error_code_repo, get_error_solution_repo, get_settings
-from backend.interface.utils import extract_serial_number
 from backend.interface.rate_limiter import limiter
-
 from backend.interface.schemas.sds import (
     ExtractSdsLogsRequest,
     ExtractSdsLogsResponse,
     RemoteEwsResponse,
     ResolveDeviceResponse,
 )
+from backend.interface.utils import extract_serial_number
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 router = APIRouter(tags=["SDS & Insight"])
