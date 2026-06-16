@@ -124,6 +124,12 @@ export function SavedAnalysisDetail({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
+  const [updateDiff, setUpdateDiff] = useState<{
+    newCodes: string[]
+    resolvedCodes: string[]
+    occurrenceChanges: Array<{ code: string; before: number; after: number; delta: number }>
+  } | null>(null)
+
   if (!savedDetail) {
     return (
       <div className="dashboard__saved-section" style={{ padding: '40px', textAlign: 'center' }}>
@@ -139,13 +145,7 @@ export function SavedAnalysisDetail({
   const criticalCount = savedDetail.incidents.filter(i => i.severity.toUpperCase() === 'ERROR').length
   const warningCount = savedDetail.incidents.filter(i => i.severity.toUpperCase() === 'WARNING').length
 
-  const [updateDiff, setUpdateDiff] = useState<{
-    newCodes: string[]
-    resolvedCodes: string[]
-    occurrenceChanges: Array<{ code: string; before: number; after: number; delta: number }>
-  } | null>(null)
-
-  function calculateUpdateDiff(before: any[], after: any[]) {
+  function calculateUpdateDiff(before: SavedAnalysisIncidentItem[], after: SavedAnalysisIncidentItem[]) {
     const beforeMap = new Map(before.map(i => [i.code, i]))
     const afterMap = new Map(after.map(i => [i.code, i]))
 
