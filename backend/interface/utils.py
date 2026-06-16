@@ -12,6 +12,18 @@ def normalize_log_text(text: str) -> str:
     return "\n".join(normalized)
 
 
+def extract_serial_number(value: str | None) -> str | None:
+    """Extract serial number from value, resolving formats like 'Model Name (SERIAL)'."""
+    if not value:
+        return None
+    val = value.strip()
+    match = re.search(r"\(([^)]+)\)", val)
+    if match:
+        return match.group(1).strip().upper()
+    return val.upper()
+
+
+
 def enrich_events_with_catalog(
     events: List[Event], catalog_map: Dict[str, ErrorCode]
 ) -> List[EnrichedEvent]:
