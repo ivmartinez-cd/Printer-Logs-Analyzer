@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import type { Incident, EnrichedEvent } from '../types/api'
 import {
   computeDeviceStatus,
   computeHealthScore,
@@ -8,32 +7,17 @@ import {
   computeCodeTrends,
   recentEvents,
   relativeTime,
+  type IncidentLike,
 } from '../components/Monitor/healthMetrics'
 
-function ev(partial: Partial<EnrichedEvent>): EnrichedEvent {
+function inc(partial: Partial<IncidentLike>): IncidentLike {
   return {
-    type: 'ERROR',
-    code: '00.00.00',
-    timestamp: '2026-01-01T00:00:00Z',
-    counter: 0,
-    firmware: null,
-    help_reference: null,
-    ...partial,
-  }
-}
-
-function inc(partial: Partial<Incident>): Incident {
-  return {
-    id: 'x',
     code: '60.00.03',
     classification: 'Bandeja opcional',
     severity: 'ERROR',
-    severity_weight: 3,
     occurrences: 1,
     start_time: '2026-01-01T00:00:00Z',
     end_time: '2026-01-01T01:00:00Z',
-    counter_range: [0, 0],
-    events: [],
     ...partial,
   }
 }
@@ -55,9 +39,8 @@ describe('computeHealthScore', () => {
     expect(computeHealthScore([])).toBe(100)
   })
   it('penaliza errores', () => {
-    const score = computeHealthScore([inc({ severity: 'ERROR', occurrences: 4 })])
     // 100 - (12 + 4*0.5) = 86
-    expect(score).toBe(86)
+    expect(computeHealthScore([inc({ severity: 'ERROR', occurrences: 4 })])).toBe(86)
   })
   it('clamp a 0', () => {
     const many = Array.from({ length: 20 }, () => inc({ severity: 'ERROR', occurrences: 10 }))
@@ -66,20 +49,19 @@ describe('computeHealthScore', () => {
 })
 
 describe('computeAvailability', () => {
-  it('100% sin errores', () => {
-    expect(computeAvailability([], '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')).toBe(100)
+  it('100% sin incidentes', () => {
+    expect(computeAvailability([])).toBe(100)
   })
-  it('descuenta duración de errores', () => {
-    // ventana 24h, error de 1h => ~95.8%
-    const a = computeAvailability(
-      [inc({ severity: 'ERROR', start_time: '2026-01-01T00:00:00Z', end_time: '2026-01-01T01:00:00Z' })],
-      '2026-01-01T00:00:00Z',
-      '2026-01-02T00:00:00Z'
-    )
+  it('descuenta duración de errores sobre la ventana observada', () => {
+    // ventana 0..24h (warning marca el fin), error de 1h => ~95.8%
+    const a = computeAvailability([
+      inc({ severity: 'ERROR', start_time: '2026-01-01T00:00:00Z', end_time: '2026-01-01T01:00:00Z' }),
+      inc({ severity: 'WARNING', start_time: '2026-01-01T00:00:00Z', end_time: '2026-01-02T00:00:00Z' }),
+    ])
     expect(a).toBeCloseTo(95.8, 1)
   })
-  it('fallback 100 si ventana inválida', () => {
-    expect(computeAvailability([inc({})], 'bad', 'bad')).toBe(100)
+  it('fallback 100 si fechas inválidas', () => {
+    expect(computeAvailability([inc({ start_time: 'bad', end_time: 'bad' })])).toBe(100)
   })
 })
 
@@ -97,17 +79,17 @@ describe('computeActiveAlerts', () => {
 })
 
 describe('computeCodeTrends', () => {
-  it('detecta aumento por mitad de período', () => {
-    const events = [
-      ev({ timestamp: '2026-01-01T00:10:00Z' }),
-      ev({ timestamp: '2026-01-01T00:50:00Z' }),
-      ev({ timestamp: '2026-01-01T00:55:00Z' }),
-    ]
-    const trends = computeCodeTrends([
-      inc({ severity: 'ERROR', start_time: '2026-01-01T00:00:00Z', end_time: '2026-01-01T01:00:00Z', events }),
-    ])
-    expect(trends[0].trend).toBe('up')
+  it('sin lectura previa => estable, impacto por severidad', () => {
+    const trends = computeCodeTrends([inc({ severity: 'ERROR' })])
+    expect(trends[0].trend).toBe('stable')
     expect(trends[0].impact).toBe('high')
+  })
+  it('detecta aumento vs lectura previa', () => {
+    const trends = computeCodeTrends(
+      [inc({ code: 'E1', severity: 'ERROR', occurrences: 5 })],
+      { E1: 2 }
+    )
+    expect(trends[0].trend).toBe('up')
   })
   it('warning con muchas ocurrencias => impacto medio', () => {
     const trends = computeCodeTrends([inc({ severity: 'WARNING', occurrences: 6 })])
@@ -119,9 +101,9 @@ describe('recentEvents', () => {
   it('ordena descendente y limita', () => {
     const r = recentEvents(
       [
-        ev({ code: 'A', timestamp: '2026-01-01T00:00:00Z' }),
-        ev({ code: 'B', timestamp: '2026-01-03T00:00:00Z' }),
-        ev({ code: 'C', timestamp: '2026-01-02T00:00:00Z' }),
+        { timestamp: '2026-01-01T00:00:00Z', code: 'A' },
+        { timestamp: '2026-01-03T00:00:00Z', code: 'B' },
+        { timestamp: '2026-01-02T00:00:00Z', code: 'C' },
       ],
       2
     )

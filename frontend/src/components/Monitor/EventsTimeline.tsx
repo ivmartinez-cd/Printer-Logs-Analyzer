@@ -1,12 +1,19 @@
-import type { EnrichedEvent as ApiEvent } from '../../types/api'
 import { recentEvents } from './healthMetrics'
 
-interface EventsTimelineProps {
-  events: ApiEvent[]
+export interface TimelineItem {
+  timestamp: string
+  code: string
+  /** ERROR | WARNING | INFO */
+  severity: string
+  description: string
 }
 
-function sevClass(type: string): 'error' | 'warn' | 'info' {
-  const t = (type || '').toUpperCase()
+interface EventsTimelineProps {
+  items: TimelineItem[]
+}
+
+function sevClass(severity: string): 'error' | 'warn' | 'info' {
+  const t = (severity || '').toUpperCase()
   if (t === 'ERROR') return 'error'
   if (t === 'WARNING') return 'warn'
   return 'info'
@@ -23,21 +30,21 @@ function formatTime(iso: string): string {
   })
 }
 
-export function EventsTimeline({ events }: EventsTimelineProps) {
-  const items = recentEvents(events, 12)
+export function EventsTimeline({ items }: EventsTimelineProps) {
+  const sorted = recentEvents(items, 12)
 
   return (
     <section className="noc-timeline">
       <div className="noc-timeline__head">
         <h3 className="noc-timeline__title">Timeline de eventos</h3>
-        <span className="noc-timeline__count">Últimos {items.length}</span>
+        <span className="noc-timeline__count">Últimos {sorted.length}</span>
       </div>
-      {items.length === 0 ? (
+      {sorted.length === 0 ? (
         <p className="noc-timeline__empty">Sin eventos en el período.</p>
       ) : (
         <ol className="noc-timeline__list">
-          {items.map((e, i) => {
-            const sev = sevClass(e.type)
+          {sorted.map((e, i) => {
+            const sev = sevClass(e.severity)
             const itemClass = 'noc-timeline__item noc-timeline__item--' + sev
             return (
               <li key={i} className={itemClass}>
@@ -45,7 +52,7 @@ export function EventsTimeline({ events }: EventsTimelineProps) {
                 <time className="noc-timeline__time">{formatTime(e.timestamp)}</time>
                 <span className="noc-timeline__body">
                   <span className="noc-timeline__code">{e.code}</span>
-                  <span className="noc-timeline__desc">{e.code_description || e.type}</span>
+                  <span className="noc-timeline__desc">{e.description}</span>
                 </span>
               </li>
             )
