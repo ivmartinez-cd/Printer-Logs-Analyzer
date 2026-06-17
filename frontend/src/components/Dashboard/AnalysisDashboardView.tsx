@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
-import type { 
-  ParseLogsResponse, 
-  EnrichedEvent as ApiEvent, 
-  Incident as ApiIncident, 
+import type {
+  ParseLogsResponse,
+  EnrichedEvent as ApiEvent,
+  Incident as ApiIncident,
   RealtimeConsumable,
   DeviceAlertsResponse,
   InsightMeter
@@ -18,7 +18,6 @@ interface InsightDataResult {
   error: string | null
 }
 
-import { KPICards } from '../Monitor/KPICards'
 import { IncidentsChart } from '../Monitor/IncidentsChart'
 import { TopErrorsChart } from '../Monitor/TopErrorsChart'
 import { AIDiagnosticPanel } from '../Analysis/AIDiagnosticPanel'
@@ -31,6 +30,21 @@ import { SDSIncidentPanel } from '../Monitor/SDSIncidentPanel'
 import { ErrorHeatmap } from '../Analysis/ErrorHeatmap'
 import { SeverityFilters } from '../ui/SeverityFilters'
 import { Portal } from '../ui/Portal'
+
+import { DeviceStatusHeader } from '../Monitor/DeviceStatusHeader'
+import { HealthScoreGauge } from '../Monitor/HealthScoreGauge'
+import { NocKpiCards } from '../Monitor/NocKpiCards'
+import { EventsTimeline } from '../Monitor/EventsTimeline'
+import { ActiveAlertsPanel } from '../Monitor/ActiveAlertsPanel'
+import { CodeTrendTable } from '../Monitor/CodeTrendTable'
+import {
+  computeDeviceStatus,
+  computeHealthScore,
+  computeAvailability,
+  computeActiveAlerts,
+  computeCodeTrends,
+  recentEvents,
+} from '../Monitor/healthMetrics'
 
 interface AnalysisDashboardViewProps {
   result: ParseLogsResponse
@@ -47,7 +61,7 @@ interface AnalysisDashboardViewProps {
   currentModelName: string | null
   incidentRows: IncidentRow[]
   sdsIncident: SdsIncidentData | null
-  
+
   onSetEditCodeInitial: (val: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
   onSetSolutionModal: (val: { code: string; sdsContent?: string | null; sdsUrl?: string | null } | null) => void
 }
@@ -57,8 +71,6 @@ export function AnalysisDashboardView({
   filteredIncidents,
   filteredEvents,
   events,
-  lastErrorEvent,
-  lastErrorLabel,
   activeFilter,
   topCodes,
   realtimeConsumables,
@@ -72,12 +84,35 @@ export function AnalysisDashboardView({
 }: AnalysisDashboardViewProps) {
   const [visibleSeverities, setVisibleSeverities] = useState<Set<string>>(new Set(['ERROR', 'WARNING', 'INFO']))
   const [incidentsCollapsed, setIncidentsCollapsed] = useState(true)
+  const [detailCollapsed, setDetailCollapsed] = useState(true)
   const [drillCode, setDrillCode] = useState<string | null>(null)
 
   const drillEvents = useMemo(() => {
     if (!drillCode) return []
     return filteredEvents.filter(e => e.code === drillCode)
   }, [drillCode, filteredEvents])
+
+  // ── Métricas NOC (estimaciones derivadas de logs) ──────────────────
+  const status = useMemo(() => computeDeviceStatus(filteredIncidents), [filteredIncidents])
+  const healthScore = useMemo(() => computeHealthScore(filteredIncidents), [filteredIncidents])
+  const availability = useMemo(
+    () => computeAvailability(filteredIncidents, result.log_start_date, result.log_end_date),
+    [filteredIncidents, result.log_start_date, result.log_end_date]
+  )
+  const activeAlerts = useMemo(() => computeActiveAlerts(filteredIncidents), [filteredIncidents])
+  const codeTrends = useMemo(() => computeCodeTrends(filteredIncidents), [filteredIncidents])
+  const lastUpdateIso = useMemo(
+    () => recentEvents(filteredEvents, 1)[0]?.timestamp ?? result.log_end_date,
+    [filteredEvents, result.log_end_date]
+  )
+  const errorCount = useMemo(
+    () => filteredIncidents.filter((i) => i.severity.toUpperCase() === 'ERROR').length,
+    [filteredIncidents]
+  )
+  const warningCount = useMemo(
+    () => filteredIncidents.filter((i) => i.severity.toUpperCase() === 'WARNING').length,
+    [filteredIncidents]
+  )
 
   const handleSeverityToggle = (sev: string) => {
     setVisibleSeverities(prev => {
@@ -93,63 +128,57 @@ export function AnalysisDashboardView({
 
   return (
     <>
-      {/* ── ABOVE FOLD: KPIs + 2 gráficos siempre visibles ── */}
-      <div className="dashboard__above-fold">
-        {/* BLOQUE 1: KPIs ejecutivos */}
-        <section className="animate-in delay-1 kpis">
-          <KPICards
-            filteredIncidents={filteredIncidents}
-            filteredEvents={filteredEvents}
-            lastErrorEvent={lastErrorEvent}
-            lastErrorLabel={lastErrorLabel}
-          />
-        </section>
+      {/* ── NOC: Centro de monitoreo (above fold) ── */}
+      <div className="noc-stack">
+        {/* Header del equipo */}
+        <DeviceStatusHeader
+          modelName={currentModelName}
+          serialNumber={currentSerialNumber}
+          status={status}
+          lastUpdateIso={lastUpdateIso}
+          availability={availability}
+          errorCount={errorCount}
+          warningCount={warningCount}
+        />
 
-        {/* FILTROS GLOBALES: Control centralizado para todos los gráficos */}
-        <div className="animate-in delay-2" style={{ 
-          margin: '8px 0 32px 0', 
-          display: 'flex', 
-          justifyContent: 'center',
-          padding: '0 4px'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '16px', 
-            background: 'rgba(255, 255, 255, 0.02)', 
-            padding: '8px 24px', 
-            borderRadius: '14px', 
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+        {/* Health Score + KPIs */}
+        <div className="noc-row">
+          <HealthScoreGauge score={healthScore} />
+          <NocKpiCards
+            errorCount={errorCount}
+            warningCount={warningCount}
+            incidentCount={filteredIncidents.length}
+            availability={availability}
+          />
+        </div>
+
+        {/* Filtros globales para los gráficos */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '16px',
+            background: 'rgba(255, 255, 255, 0.02)', padding: '8px 24px',
+            borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.05)',
           }}>
-            <span style={{ 
-              fontSize: '0.7rem', 
-              color: 'var(--text-dim)', 
-              fontWeight: 700, 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.1em' 
+            <span style={{
+              fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.1em',
             }}>
               Filtrar Análisis:
             </span>
-            <SeverityFilters 
-              activeSeverities={visibleSeverities} 
-              onToggle={handleSeverityToggle} 
-            />
+            <SeverityFilters activeSeverities={visibleSeverities} onToggle={handleSeverityToggle} />
           </div>
         </div>
 
+        {/* Gráfico principal + top errores */}
         <div className="dashboard__above-fold__charts-row">
-          {/* BLOQUE 2a: Gráfico de volumen */}
-          <div className="animate-in delay-2 dashboard__above-fold__chart">
+          <div className="dashboard__above-fold__chart">
             <IncidentsChart
               events={events}
               activeFilter={activeFilter}
               visibleSeverities={visibleSeverities}
             />
           </div>
-
-          {/* BLOQUE 2b: Errores más frecuentes */}
-          <div className="animate-in delay-2 dashboard__above-fold__chart">
+          <div className="dashboard__above-fold__chart">
             <TopErrorsChart
               topCodes={topCodes}
               activeSeverities={visibleSeverities}
@@ -160,23 +189,27 @@ export function AnalysisDashboardView({
             />
           </div>
         </div>
-        
-        {/* BLOQUE 3: Patrones temporales */}
-        <section className="animate-in delay-2">
-          <ErrorHeatmap
-            events={events}
-            visibleSeverities={visibleSeverities}
-            onViewSolution={(code, sdsContent, sdsUrl) =>
-              onSetSolutionModal({ code, sdsContent, sdsUrl })
-            }
-            onEditCode={(code, description, severity, solutionUrl) =>
-              onSetEditCodeInitial({ code, description, severity, solutionUrl })
-            }
-          />
-        </section>
+
+        {/* Timeline de eventos + Alertas activas */}
+        <div className="noc-row">
+          <EventsTimeline events={filteredEvents} />
+          <ActiveAlertsPanel alerts={activeAlerts} />
+        </div>
+
+        {/* Patrones temporales */}
+        <ErrorHeatmap
+          events={events}
+          visibleSeverities={visibleSeverities}
+          onViewSolution={(code, sdsContent, sdsUrl) =>
+            onSetSolutionModal({ code, sdsContent, sdsUrl })
+          }
+          onEditCode={(code, description, severity, solutionUrl) =>
+            onSetEditCodeInitial({ code, description, severity, solutionUrl })
+          }
+        />
       </div>
 
-      {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}
+      {/* ── Recomendación automática (IA) ── */}
       <AIDiagnosticPanel
         className="animate-in delay-3"
         result={result}
@@ -188,91 +221,116 @@ export function AnalysisDashboardView({
         modelName={currentModelName}
       />
 
-      {/* ── BLOQUE 5: Paneles de diagnóstico (drill-down) ── */}
-      <div className="dashboard__drilldown-panels">
-        {/* Incidencias detectadas */}
-        <section className="animate-in delay-3 collapsible-panel collapsible-panel--incidents">
-          <button
-            type="button"
-            className="collapsible-panel__header"
-            onClick={() => setIncidentsCollapsed((v) => !v)}
-            aria-expanded={!incidentsCollapsed}
+      {/* ── Tendencia de códigos (tabla operacional) ── */}
+      <CodeTrendTable
+        trends={codeTrends}
+        onViewSolution={(code) => onSetSolutionModal({ code })}
+      />
+
+      {/* ── Detalle técnico (drill-down, plegado) ── */}
+      <section className="collapsible-panel" style={{ marginTop: '24px' }}>
+        <button
+          type="button"
+          className="collapsible-panel__header"
+          onClick={() => setDetailCollapsed((v) => !v)}
+          aria-expanded={!detailCollapsed}
+        >
+          <span className="collapsible-panel__title">🔍 Detalle técnico completo</span>
+          <span
+            className={'collapsible-panel__chevron' + (!detailCollapsed ? ' collapsible-panel__chevron--expanded' : '')}
+            aria-hidden="true"
           >
-            <span className="collapsible-panel__title">
-              📋 Incidencias detectadas
-            </span>
-            {incidentsCollapsed && incidentRows.length > 0 && (
-              <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
-                {incidentRows.length} incidencia{incidentRows.length !== 1 ? 's' : ''}
-              </span>
-            )}
-            <span
-              className={`collapsible-panel__chevron${!incidentsCollapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
-              aria-hidden="true"
-            >
-              ▶
-            </span>
-          </button>
-          {!incidentsCollapsed && (
-            <div className="collapsible-panel__body">
-              <IncidentsTable
-                incidentRows={incidentRows}
-                onEditCode={(code, classification, severity, solutionUrl) =>
-                  onSetEditCodeInitial({
-                    code,
-                    description: classification,
-                    severity,
-                    solutionUrl,
-                  })
-                }
+            ▶
+          </span>
+        </button>
+
+        {!detailCollapsed && (
+          <div className="collapsible-panel__body">
+            <div className="dashboard__drilldown-panels">
+              {/* Incidencias detectadas */}
+              <section className="collapsible-panel collapsible-panel--incidents">
+                <button
+                  type="button"
+                  className="collapsible-panel__header"
+                  onClick={() => setIncidentsCollapsed((v) => !v)}
+                  aria-expanded={!incidentsCollapsed}
+                >
+                  <span className="collapsible-panel__title">📋 Incidencias detectadas</span>
+                  {incidentsCollapsed && incidentRows.length > 0 && (
+                    <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
+                      {incidentRows.length} incidencia{incidentRows.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  <span
+                    className={`collapsible-panel__chevron${!incidentsCollapsed ? ' collapsible-panel__chevron--expanded' : ''}`}
+                    aria-hidden="true"
+                  >
+                    ▶
+                  </span>
+                </button>
+                {!incidentsCollapsed && (
+                  <div className="collapsible-panel__body">
+                    <IncidentsTable
+                      incidentRows={incidentRows}
+                      onEditCode={(code, classification, severity, solutionUrl) =>
+                        onSetEditCodeInitial({
+                          code,
+                          description: classification,
+                          severity,
+                          solutionUrl,
+                        })
+                      }
+                      onViewSolution={(code, sdsContent, sdsUrl) =>
+                        onSetSolutionModal({ code, sdsContent, sdsUrl })
+                      }
+                    />
+                  </div>
+                )}
+              </section>
+
+              {/* Eventos del periodo */}
+              <EventsTable
+                events={filteredEvents}
                 onViewSolution={(code, sdsContent, sdsUrl) =>
                   onSetSolutionModal({ code, sdsContent, sdsUrl })
                 }
               />
+
+              {/* Consumibles en tiempo real */}
+              <div>
+                <ConsumableWarningsPanel warnings={realtimeConsumables} />
+              </div>
+
+              {/* Alertas del portal SDS */}
+              <InsightAlertsPanel
+                serial={currentSerialNumber}
+                data={insightData?.data || null}
+                loading={insightData?.loading || false}
+                error={insightData?.error || null}
+              />
+
+              {/* SDS Engineering Incident */}
+              {sdsIncident && (
+                <SDSIncidentPanel
+                  sdsIncident={sdsIncident}
+                  incidentRows={incidentRows.map((r) => ({
+                    code: r.code,
+                    classification: r.classification || r.code,
+                  }))}
+                  incidentsFull={
+                    result?.incidents?.map((inc: ApiIncident) => ({
+                      code: inc.code,
+                      classification: inc.classification,
+                      end_time: inc.end_time,
+                      occurrences: inc.occurrences,
+                    })) ?? []
+                  }
+                />
+              )}
             </div>
-          )}
-        </section>
-
-        {/* Eventos del periodo */}
-        <EventsTable
-          events={filteredEvents}
-          onViewSolution={(code, sdsContent, sdsUrl) =>
-            onSetSolutionModal({ code, sdsContent, sdsUrl })
-          }
-        />
-
-        {/* Consumibles en tiempo real */}
-        <div>
-          <ConsumableWarningsPanel warnings={realtimeConsumables} />
-        </div>
-
-        {/* Alertas del portal SDS */}
-        <InsightAlertsPanel
-          serial={currentSerialNumber}
-          data={insightData?.data || null}
-          loading={insightData?.loading || false}
-          error={insightData?.error || null}
-        />
-
-        {/* SDS Engineering Incident */}
-        {sdsIncident && (
-          <SDSIncidentPanel
-            sdsIncident={sdsIncident}
-            incidentRows={incidentRows.map((r) => ({
-              code: r.code,
-              classification: r.classification || r.code,
-            }))}
-            incidentsFull={
-              result?.incidents?.map((inc: ApiIncident) => ({
-                code: inc.code,
-                classification: inc.classification,
-                end_time: inc.end_time,
-                occurrences: inc.occurrences,
-              })) ?? []
-            }
-          />
+          </div>
         )}
-      </div>
+      </section>
 
       {/* ── Drill-down modal: eventos por código ── */}
       {drillCode && (
