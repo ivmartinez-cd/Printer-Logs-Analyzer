@@ -135,6 +135,17 @@ export function SavedAnalysisList({
           <p className="dashboard__subheader-meta">Historial de análisis de dispositivos y diagnóstico de flota</p>
         </div>
         <div className="dashboard__subheader-actions">
+          {savedList && savedList.length > 0 && (
+            <input
+              type="search"
+              className="table-toolbar__search"
+              placeholder="Buscar por nombre o equipo..."
+              value={savedListSearch}
+              onChange={(e) => setSavedListSearch(e.target.value)}
+              aria-label="Buscar análisis guardados"
+              style={{ width: '260px', height: '40px', borderRadius: '12px', margin: 0 }}
+            />
+          )}
           <button
             type="button"
             className="dashboard__btn dashboard__btn--primary"
@@ -162,17 +173,6 @@ export function SavedAnalysisList({
                 </Badge>
               </GlassCard>
             ))}
-          </div>
-
-          <div className="table-toolbar animate-fade-in delay-1">
-            <input
-              type="search"
-              className="table-toolbar__search"
-              placeholder="Buscar por nombre o equipo..."
-              value={savedListSearch}
-              onChange={(e) => setSavedListSearch(e.target.value)}
-              aria-label="Buscar análisis guardados"
-            />
           </div>
 
           {groups.length === 0 ? (
