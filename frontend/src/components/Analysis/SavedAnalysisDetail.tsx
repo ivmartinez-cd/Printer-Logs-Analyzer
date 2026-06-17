@@ -26,6 +26,21 @@ const HEALTH_ICON: Record<DeviceHealth['status'], string> = {
   GREEN: '🟢',
 }
 
+/**
+ * Nombre para un snapshot nuevo, fechado con el día actual (local).
+ * Evita que los snapshots creados al "Actualizar Log" hereden la fecha
+ * embebida en el nombre del snapshot original (causa del desfase de día).
+ */
+function datedSnapshotName(detail: SavedAnalysisFull): string {
+  const base = detail.equipment_identifier?.trim() || detail.name
+  const today = new Date().toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+  return `Análisis - ${base} - ${today}`
+}
+
 function DeviceHealthBar({ id }: { id: string }) {
   const [health, setHealth] = useState<DeviceHealth | null>(null)
   const [loading, setLoading] = useState(true)
@@ -313,7 +328,7 @@ export function SavedAnalysisDetail({
         // Create a NEW dated snapshot (don't overwrite) so the equipment keeps
         // a day-by-day history that feeds the timeline and degradation engine.
         const newSnap = await createSavedAnalysis({
-          name: savedDetail.name,
+          name: datedSnapshotName(savedDetail),
           equipment_identifier: savedDetail.equipment_identifier,
           incidents: items,
           global_severity: parseRes.global_severity,
@@ -373,7 +388,7 @@ export function SavedAnalysisDetail({
 
       // New dated snapshot (see handleUpdateLog) instead of overwriting.
       const newSnap = await createSavedAnalysis({
-        name: savedDetail.name,
+        name: datedSnapshotName(savedDetail),
         equipment_identifier: savedDetail.equipment_identifier,
         incidents: items,
         global_severity: parseRes.global_severity,
