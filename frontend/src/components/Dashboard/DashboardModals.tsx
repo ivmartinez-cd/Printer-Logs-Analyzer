@@ -145,7 +145,7 @@ export function DashboardModals({
               ? `${currentModelName} (${currentSerialNumber})` 
               : currentSerialNumber || currentModelName || ''
           }
-          initialName={`Análisis - ${currentSerialNumber || 'Sin Serial'} - ${new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}`}
+          initialName={`Análisis - ${currentSerialNumber || 'Sin Serial'} - ${new Date().toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}`}
         />
       )}
 

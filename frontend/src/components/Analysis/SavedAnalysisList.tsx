@@ -3,6 +3,8 @@ import { formatDateTime } from '../../hooks/useDateFilter'
 import type { SavedAnalysisSummary } from '../../types/api'
 import { EquipmentTimeline } from './EquipmentTimeline'
 import { relativeTime } from '../Monitor/healthMetrics'
+import { GlassCard } from '../ui/GlassCard'
+import { Badge } from '../ui/Badge'
 
 interface SavedAnalysisListProps {
   savedList: SavedAnalysisSummary[] | null
@@ -21,6 +23,7 @@ interface EquipmentGroup {
 
 type FleetStatus = 'critical' | 'watch' | 'healthy'
 type FleetTrend = 'up' | 'down' | 'stable'
+type BadgeStatus = 'success' | 'warning' | 'error' | 'info' | 'offline' | 'default'
 
 function isGroupable(equipment: string): boolean {
   // Empty or the "Desconocido" placeholder must not lump unrelated devices.
@@ -40,16 +43,16 @@ function statusOf(sev: string): FleetStatus {
   return r >= 3 ? 'critical' : r === 2 ? 'watch' : 'healthy'
 }
 
-const STATUS_META: Record<FleetStatus, { dot: string; label: string }> = {
-  critical: { dot: '🔴', label: 'Crítico' },
-  watch: { dot: '🟡', label: 'Atención' },
-  healthy: { dot: '🟢', label: 'Saludable' },
+const STATUS_META: Record<FleetStatus, { label: string; badge: BadgeStatus }> = {
+  critical: { label: 'Crítico', badge: 'error' },
+  watch: { label: 'Atención', badge: 'warning' },
+  healthy: { label: 'Saludable', badge: 'success' },
 }
 
-const TREND_META: Record<FleetTrend, { icon: string; label: string; cls: string }> = {
-  up: { icon: '↑', label: 'Empeorando', cls: 'up' },
-  down: { icon: '↓', label: 'Mejorando', cls: 'down' },
-  stable: { icon: '↔', label: 'Estable', cls: 'stable' },
+const TREND_META: Record<FleetTrend, { icon: string; label: string; badge: BadgeStatus }> = {
+  up: { icon: '↑', label: 'Empeorando', badge: 'error' },
+  down: { icon: '↓', label: 'Mejorando', badge: 'success' },
+  stable: { icon: '↔', label: 'Estable', badge: 'default' },
 }
 
 /** Tendencia comparando la severidad de la última lectura vs la anterior. */
@@ -108,8 +111,7 @@ export function SavedAnalysisList({
   // Fleet KPIs (estado por equipo según su última lectura).
   const fleet = groups.reduce(
     (acc, g) => {
-      const st = statusOf(g.snapshots[0].global_severity)
-      acc[st]++
+      acc[statusOf(g.snapshots[0].global_severity)]++
       return acc
     },
     { critical: 0, watch: 0, healthy: 0 }
@@ -131,26 +133,25 @@ export function SavedAnalysisList({
     )
   }
 
+  const kpis: { value: number; label: string; status: BadgeStatus; key: string }[] = [
+    { key: 'total', value: groups.length, label: 'Equipos monitoreados', status: 'info' },
+    { key: 'critical', value: fleet.critical, label: 'En crítico', status: 'error' },
+    { key: 'watch', value: fleet.watch, label: 'En atención', status: 'warning' },
+    { key: 'healthy', value: fleet.healthy, label: 'Saludables', status: 'success' },
+  ]
+
   return (
     <div className="dashboard__saved-section fleet-overview">
       {/* Resumen de flota */}
       <div className="fleet-kpis">
-        <div className="fleet-kpi fleet-kpi--total">
-          <span className="fleet-kpi__value">{groups.length}</span>
-          <span className="fleet-kpi__label">Equipos monitoreados</span>
-        </div>
-        <div className="fleet-kpi fleet-kpi--critical">
-          <span className="fleet-kpi__value">{fleet.critical}</span>
-          <span className="fleet-kpi__label">🔴 En crítico</span>
-        </div>
-        <div className="fleet-kpi fleet-kpi--watch">
-          <span className="fleet-kpi__value">{fleet.watch}</span>
-          <span className="fleet-kpi__label">🟡 En atención</span>
-        </div>
-        <div className="fleet-kpi fleet-kpi--healthy">
-          <span className="fleet-kpi__value">{fleet.healthy}</span>
-          <span className="fleet-kpi__label">🟢 Saludables</span>
-        </div>
+        {kpis.map((k) => (
+          <GlassCard key={k.key} variant="secondary" className={'fleet-kpi fleet-kpi--' + k.status}>
+            <span className="fleet-kpi__value">{k.value}</span>
+            <Badge status={k.status} pulsing={k.status !== 'info'}>
+              {k.label}
+            </Badge>
+          </GlassCard>
+        ))}
       </div>
 
       <div className="table-toolbar">
@@ -178,15 +179,16 @@ export function SavedAnalysisList({
             const title = g.equipment || latest.name
             const open = expanded.has(g.key)
             const hasHistory = g.snapshots.length >= 2
-            const cardClass = 'fleet-card fleet-card--' + status
 
             return (
               <Fragment key={g.key}>
-                <article
-                  className={cardClass}
-                  onClick={() => onOpen(latest.id)}
+                <GlassCard
+                  variant="secondary"
+                  hoverEffect
+                  className={'fleet-card fleet-card--' + status}
                   role="button"
                   tabIndex={0}
+                  onClick={() => onOpen(latest.id)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
@@ -195,69 +197,69 @@ export function SavedAnalysisList({
                   }}
                 >
                   <div className="fleet-card__head">
-                    <span className="fleet-card__dot" aria-hidden="true">{sm.dot}</span>
                     <span className="fleet-card__title">{title}</span>
-                    <span className={'fleet-card__trend fleet-card__trend--' + tm.cls} title={tm.label}>
-                      {tm.icon}
-                    </span>
-                  </div>
-
-                  <div className="fleet-card__status-row">
-                    <span className={'fleet-card__status fleet-card__status--' + status}>{sm.label}</span>
-                    {hasHistory && (
-                      <span className="fleet-card__snaps">{g.snapshots.length} lecturas</span>
-                    )}
+                    <Badge status={sm.badge} pulsing>
+                      {sm.label}
+                    </Badge>
                   </div>
 
                   <div className="fleet-card__meta">
                     {g.equipment && latest.name !== g.equipment && (
                       <span className="fleet-card__name">{latest.name}</span>
                     )}
-                    <span className="fleet-card__updated">Última lectura {relativeTime(latest.created_at)}</span>
+                    <span className="fleet-card__date">{formatDateTime(latest.created_at)}</span>
+                    <span className="fleet-card__updated">
+                      Última lectura {relativeTime(latest.created_at)}
+                      {hasHistory && ` · ${g.snapshots.length} lecturas`}
+                    </span>
                   </div>
 
-                  <div className="fleet-card__actions" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      className="dashboard__btn dashboard__btn--small dashboard__btn--primary"
-                      onClick={() => onOpen(latest.id)}
-                    >
-                      Abrir
-                    </button>
-                    {hasHistory && (
+                  <div className="fleet-card__footer">
+                    <Badge status={tm.badge}>
+                      {tm.icon} {tm.label}
+                    </Badge>
+                    <span className="fleet-card__actions" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="dashboard__btn dashboard__btn--small"
-                        onClick={() => toggle(g.key)}
-                        aria-expanded={open}
+                        className="dashboard__btn dashboard__btn--small dashboard__btn--primary"
+                        onClick={() => onOpen(latest.id)}
                       >
-                        {open ? 'Ocultar histórico' : 'Ver histórico'}
+                        Abrir
                       </button>
-                    )}
-                    {!hasHistory && (
-                      <button
-                        type="button"
-                        className="dashboard__btn dashboard__btn--small"
-                        disabled={deletingId !== null}
-                        onClick={() => onDelete({ id: latest.id, name: latest.name })}
-                      >
-                        {deletingId === latest.id ? 'Borrando…' : 'Borrar'}
-                      </button>
-                    )}
+                      {hasHistory ? (
+                        <button
+                          type="button"
+                          className="dashboard__btn dashboard__btn--small"
+                          onClick={() => toggle(g.key)}
+                          aria-expanded={open}
+                        >
+                          {open ? 'Ocultar histórico' : 'Ver histórico'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="dashboard__btn dashboard__btn--small"
+                          disabled={deletingId !== null}
+                          onClick={() => onDelete({ id: latest.id, name: latest.name })}
+                        >
+                          {deletingId === latest.id ? 'Borrando…' : 'Borrar'}
+                        </button>
+                      )}
+                    </span>
                   </div>
-                </article>
+                </GlassCard>
 
                 {open && hasHistory && (
-                  <div className="fleet-history" onClick={(e) => e.stopPropagation()}>
+                  <GlassCard variant="secondary" className="fleet-history">
                     <div className="fleet-history__range">
                       {formatDateTime(oldest.created_at)} → {formatDateTime(latest.created_at)}
                     </div>
                     <ul className="fleet-history__list">
                       {g.snapshots.map((s) => (
                         <li key={s.id} className="fleet-history__item">
-                          <span className="fleet-history__dot" aria-hidden="true">
-                            {STATUS_META[statusOf(s.global_severity)].dot}
-                          </span>
+                          <Badge status={STATUS_META[statusOf(s.global_severity)].badge} pulsing>
+                            {STATUS_META[statusOf(s.global_severity)].label}
+                          </Badge>
                           <span className="fleet-history__name">{s.name}</span>
                           <span className="fleet-history__date">{formatDateTime(s.created_at)}</span>
                           <span className="fleet-history__actions">
@@ -283,7 +285,7 @@ export function SavedAnalysisList({
                     {g.equipment && (
                       <EquipmentTimeline embedded equipmentId={g.equipment} snapshots={g.snapshots} />
                     )}
-                  </div>
+                  </GlassCard>
                 )}
               </Fragment>
             )

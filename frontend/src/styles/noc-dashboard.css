@@ -235,80 +235,50 @@
 .noc-trend--stable { color: var(--text-muted); }
 
 /* ════════════════════════════════════════════════════════════════════
-   Fleet overview — pantalla principal del Historial como monitor de flota
+   Fleet overview — pantalla principal del Historial como monitor de flota.
+   Usa los componentes GlassCard + Badge de la app; aquí solo van layout
+   y el acento de estado (borde izquierdo).
    ════════════════════════════════════════════════════════════════════ */
 .fleet-overview { display: flex; flex-direction: column; gap: 20px; }
 
 .fleet-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.fleet-kpi {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 18px 20px; border-radius: var(--noc-radius);
-  background: var(--noc-panel-bg); border: var(--noc-panel-border);
-  border-left: 4px solid rgba(255, 255, 255, 0.12);
-}
-.fleet-kpi--critical { border-left-color: var(--noc-error); }
-.fleet-kpi--watch    { border-left-color: var(--noc-warn); }
-.fleet-kpi--healthy  { border-left-color: var(--noc-ok); }
-.fleet-kpi--total    { border-left-color: var(--hp-blue-vibrant); }
+.fleet-kpi.glass-card { border-left: 4px solid rgba(255, 255, 255, 0.12); }
+.fleet-kpi--error.glass-card   { border-left-color: var(--color-error); }
+.fleet-kpi--warning.glass-card { border-left-color: var(--color-warning); }
+.fleet-kpi--success.glass-card { border-left-color: var(--color-success); }
+.fleet-kpi--info.glass-card    { border-left-color: var(--hp-blue-vibrant); }
+.fleet-kpi .glass-card__content { padding: 18px 20px; gap: 10px; align-items: flex-start; }
 .fleet-kpi__value { font-size: 2.2rem; font-weight: 800; line-height: 1; color: #f1f5f9; }
-.fleet-kpi--critical .fleet-kpi__value { color: var(--noc-error); }
-.fleet-kpi--watch .fleet-kpi__value { color: var(--noc-warn); }
-.fleet-kpi--healthy .fleet-kpi__value { color: var(--noc-ok); }
-.fleet-kpi__label {
-  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--text-dim); font-weight: 700;
-}
 
 .fleet-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px;
 }
 
-.fleet-card {
-  display: flex; flex-direction: column; gap: 10px;
-  padding: 18px 20px; border-radius: var(--noc-radius);
-  background: var(--noc-panel-bg); border: var(--noc-panel-border);
-  border-left-width: 5px; cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-}
-.fleet-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32); }
-.fleet-card:focus-visible { outline: 2px solid var(--hp-blue-vibrant); outline-offset: 2px; }
-.fleet-card--critical { border-left-color: var(--noc-error); }
-.fleet-card--watch    { border-left-color: var(--noc-warn); }
-.fleet-card--healthy  { border-left-color: var(--noc-ok); }
+.fleet-card.glass-card { cursor: pointer; border-left: 4px solid rgba(255, 255, 255, 0.12); }
+.fleet-card.glass-card:focus-visible { outline: 2px solid var(--hp-blue-vibrant); outline-offset: 2px; }
+.fleet-card--critical.glass-card { border-left-color: var(--color-error); }
+.fleet-card--watch.glass-card    { border-left-color: var(--color-warning); }
+.fleet-card--healthy.glass-card  { border-left-color: var(--color-success); }
+.fleet-card .glass-card__content { padding: 18px 20px; gap: 12px; }
 
-.fleet-card__head { display: flex; align-items: center; gap: 8px; }
-.fleet-card__dot { font-size: 0.85rem; }
+.fleet-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .fleet-card__title {
   font-family: var(--font-mono, monospace); font-weight: 700; font-size: 1rem;
-  color: #f1f5f9; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.fleet-card__trend { font-size: 1.05rem; font-weight: 800; }
-.fleet-card__trend--up { color: var(--noc-error); }
-.fleet-card__trend--down { color: var(--noc-ok); }
-.fleet-card__trend--stable { color: var(--text-muted); }
-
-.fleet-card__status-row { display: flex; align-items: center; justify-content: space-between; }
-.fleet-card__status { font-size: 0.82rem; font-weight: 700; }
-.fleet-card__status--critical { color: var(--noc-error); }
-.fleet-card__status--watch { color: var(--noc-warn); }
-.fleet-card__status--healthy { color: var(--noc-ok); }
-.fleet-card__snaps { font-size: 0.72rem; color: var(--text-dim); }
-
 .fleet-card__meta { display: flex; flex-direction: column; gap: 2px; }
-.fleet-card__name { font-size: 0.8rem; color: var(--text-muted); }
+.fleet-card__name { font-size: 0.82rem; color: var(--text-muted); }
+.fleet-card__date { font-size: 0.82rem; color: #e2e8f0; font-weight: 600; }
 .fleet-card__updated { font-size: 0.72rem; color: var(--text-dim); }
+.fleet-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.fleet-card__actions { display: flex; gap: 8px; }
 
-.fleet-card__actions { display: flex; gap: 8px; margin-top: 4px; }
-
-.fleet-history {
-  grid-column: 1 / -1;
-  padding: 16px 20px; border-radius: var(--noc-radius);
-  background: rgba(255, 255, 255, 0.02); border: var(--noc-panel-border);
-}
+.fleet-history.glass-card { grid-column: 1 / -1; }
+.fleet-history .glass-card__content { padding: 16px 20px; }
 .fleet-history__range { font-size: 0.74rem; color: var(--text-dim); margin-bottom: 10px; }
 .fleet-history__list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .fleet-history__item {
-  display: grid; grid-template-columns: 18px 1fr auto auto; align-items: center; gap: 10px;
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px;
   padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.02);
 }
 .fleet-history__name { font-size: 0.82rem; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
