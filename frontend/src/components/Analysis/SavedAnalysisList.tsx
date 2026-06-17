@@ -5,6 +5,8 @@ import { EquipmentTimeline } from './EquipmentTimeline'
 import { relativeTime } from '../Monitor/healthMetrics'
 import { GlassCard } from '../ui/GlassCard'
 import { Badge } from '../ui/Badge'
+import { Plus } from 'lucide-react'
+import { useUIStore } from '../../store/useUIStore'
 
 interface SavedAnalysisListProps {
   savedList: SavedAnalysisSummary[] | null
@@ -71,6 +73,7 @@ export function SavedAnalysisList({
   onOpen,
   onDelete,
 }: SavedAnalysisListProps) {
+  const { setLogModalOpen } = useUIStore()
   // Expanded equipment groups (collapsed by default so snapshots don't mix).
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const toggle = (key: string) =>
@@ -117,22 +120,6 @@ export function SavedAnalysisList({
     { critical: 0, watch: 0, healthy: 0 }
   )
 
-  if (savedList === null) {
-    return (
-      <div className="dashboard__saved-section">
-        <p className="dashboard__muted">Cargando…</p>
-      </div>
-    )
-  }
-
-  if (savedList.length === 0) {
-    return (
-      <div className="dashboard__saved-section">
-        <p className="dashboard__muted">No hay incidentes guardados.</p>
-      </div>
-    )
-  }
-
   const kpis: { value: number; label: string; status: BadgeStatus; key: string }[] = [
     { key: 'total', value: groups.length, label: 'Equipos monitoreados', status: 'info' },
     { key: 'critical', value: fleet.critical, label: 'En crítico', status: 'error' },
@@ -141,156 +128,181 @@ export function SavedAnalysisList({
   ]
 
   return (
-    <div className="dashboard__saved-section fleet-overview">
-      {/* Resumen de flota */}
-      <div className="fleet-kpis">
-        {kpis.map((k) => (
-          <GlassCard key={k.key} variant="secondary" className={'fleet-kpi fleet-kpi--' + k.status}>
-            <span className="fleet-kpi__value">{k.value}</span>
-            <Badge status={k.status} pulsing={k.status !== 'info'}>
-              {k.label}
-            </Badge>
-          </GlassCard>
-        ))}
-      </div>
+    <div className="dashboard__saved-section fleet-overview animate-in">
+      <header className="dashboard__subheader">
+        <div className="dashboard__subheader-title-group">
+          <h2 className="dashboard__subheader-title">Historial de Incidentes</h2>
+          <p className="dashboard__subheader-meta">Historial de análisis de dispositivos y diagnóstico de flota</p>
+        </div>
+        <div className="dashboard__subheader-actions">
+          <button
+            type="button"
+            className="dashboard__btn dashboard__btn--primary"
+            onClick={() => setLogModalOpen(true)}
+          >
+            <Plus size={16} />
+            Analizar nuevo log
+          </button>
+        </div>
+      </header>
 
-      <div className="table-toolbar">
-        <input
-          type="search"
-          className="table-toolbar__search"
-          placeholder="Buscar por nombre o equipo..."
-          value={savedListSearch}
-          onChange={(e) => setSavedListSearch(e.target.value)}
-          aria-label="Buscar análisis guardados"
-        />
-      </div>
-
-      {groups.length === 0 ? (
-        <p className="dashboard__muted">Sin resultados para la búsqueda.</p>
+      {savedList === null ? (
+        <p className="dashboard__muted" style={{ padding: '20px 0' }}>Cargando…</p>
+      ) : savedList.length === 0 ? (
+        <p className="dashboard__muted" style={{ padding: '20px 0' }}>No hay incidentes guardados.</p>
       ) : (
-        <div className="fleet-grid">
-          {groups.map((g) => {
-            const latest = g.snapshots[0]
-            const oldest = g.snapshots[g.snapshots.length - 1]
-            const status = statusOf(latest.global_severity)
-            const trend = trendOf(g.snapshots)
-            const sm = STATUS_META[status]
-            const tm = TREND_META[trend]
-            const title = g.equipment || latest.name
-            const open = expanded.has(g.key)
-            const hasHistory = g.snapshots.length >= 2
+        <>
+          {/* Resumen de flota */}
+          <div className="fleet-kpis animate-fade-in">
+            {kpis.map((k) => (
+              <GlassCard key={k.key} variant="secondary" className={'fleet-kpi fleet-kpi--' + k.status}>
+                <span className="fleet-kpi__value">{k.value}</span>
+                <Badge status={k.status} pulsing={k.status !== 'info'}>
+                  {k.label}
+                </Badge>
+              </GlassCard>
+            ))}
+          </div>
 
-            return (
-              <Fragment key={g.key}>
-                <GlassCard
-                  variant="secondary"
-                  hoverEffect
-                  className={'fleet-card fleet-card--' + status}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpen(latest.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      onOpen(latest.id)
-                    }
-                  }}
-                >
-                  <div className="fleet-card__head">
-                    <span className="fleet-card__title">{title}</span>
-                    <Badge status={sm.badge} pulsing>
-                      {sm.label}
-                    </Badge>
-                  </div>
+          <div className="table-toolbar animate-fade-in delay-1">
+            <input
+              type="search"
+              className="table-toolbar__search"
+              placeholder="Buscar por nombre o equipo..."
+              value={savedListSearch}
+              onChange={(e) => setSavedListSearch(e.target.value)}
+              aria-label="Buscar análisis guardados"
+            />
+          </div>
 
-                  <div className="fleet-card__meta">
-                    {g.equipment && latest.name !== g.equipment && (
-                      <span className="fleet-card__name">{latest.name}</span>
-                    )}
-                    <span className="fleet-card__date">{formatDateTime(latest.created_at)}</span>
-                    <span className="fleet-card__updated">
-                      Última lectura {relativeTime(latest.created_at)}
-                      {hasHistory && ` · ${g.snapshots.length} lecturas`}
-                    </span>
-                  </div>
+          {groups.length === 0 ? (
+            <p className="dashboard__muted animate-fade-in delay-2" style={{ padding: '20px 0' }}>Sin resultados para la búsqueda.</p>
+          ) : (
+            <div className="fleet-grid animate-fade-in delay-2">
+              {groups.map((g) => {
+                const latest = g.snapshots[0]
+                const oldest = g.snapshots[g.snapshots.length - 1]
+                const status = statusOf(latest.global_severity)
+                const trend = trendOf(g.snapshots)
+                const sm = STATUS_META[status]
+                const tm = TREND_META[trend]
+                const title = g.equipment || latest.name
+                const open = expanded.has(g.key)
+                const hasHistory = g.snapshots.length >= 2
 
-                  <div className="fleet-card__footer">
-                    <Badge status={tm.badge}>
-                      {tm.icon} {tm.label}
-                    </Badge>
-                    <span className="fleet-card__actions" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        className="dashboard__btn dashboard__btn--small dashboard__btn--primary"
-                        onClick={() => onOpen(latest.id)}
-                      >
-                        Abrir
-                      </button>
-                      {hasHistory ? (
-                        <button
-                          type="button"
-                          className="dashboard__btn dashboard__btn--small"
-                          onClick={() => toggle(g.key)}
-                          aria-expanded={open}
-                        >
-                          {open ? 'Ocultar histórico' : 'Ver histórico'}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="dashboard__btn dashboard__btn--small"
-                          disabled={deletingId !== null}
-                          onClick={() => onDelete({ id: latest.id, name: latest.name })}
-                        >
-                          {deletingId === latest.id ? 'Borrando…' : 'Borrar'}
-                        </button>
-                      )}
-                    </span>
-                  </div>
-                </GlassCard>
+                return (
+                  <Fragment key={g.key}>
+                    <GlassCard
+                      variant="secondary"
+                      hoverEffect
+                      className={'fleet-card fleet-card--' + status}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onOpen(latest.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onOpen(latest.id)
+                        }
+                      }}
+                    >
+                      <div className="fleet-card__head">
+                        <span className="fleet-card__title">{title}</span>
+                        <Badge status={sm.badge} pulsing>
+                          {sm.label}
+                        </Badge>
+                      </div>
 
-                {open && hasHistory && (
-                  <GlassCard variant="secondary" className="fleet-history">
-                    <div className="fleet-history__range">
-                      {formatDateTime(oldest.created_at)} → {formatDateTime(latest.created_at)}
-                    </div>
-                    <ul className="fleet-history__list">
-                      {g.snapshots.map((s) => (
-                        <li key={s.id} className="fleet-history__item">
-                          <Badge status={STATUS_META[statusOf(s.global_severity)].badge} pulsing>
-                            {STATUS_META[statusOf(s.global_severity)].label}
-                          </Badge>
-                          <span className="fleet-history__name">{s.name}</span>
-                          <span className="fleet-history__date">{formatDateTime(s.created_at)}</span>
-                          <span className="fleet-history__actions">
+                      <div className="fleet-card__meta">
+                        {g.equipment && latest.name !== g.equipment && (
+                          <span className="fleet-card__name">{latest.name}</span>
+                        )}
+                        <span className="fleet-card__date">{formatDateTime(latest.created_at)}</span>
+                        <span className="fleet-card__updated">
+                          Última lectura {relativeTime(latest.created_at)}
+                          {hasHistory && ` · ${g.snapshots.length} lecturas`}
+                        </span>
+                      </div>
+
+                      <div className="fleet-card__footer">
+                        <Badge status={tm.badge}>
+                          {tm.icon} {tm.label}
+                        </Badge>
+                        <span className="fleet-card__actions" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="dashboard__btn dashboard__btn--small dashboard__btn--primary"
+                            onClick={() => onOpen(latest.id)}
+                          >
+                            Abrir
+                          </button>
+                          {hasHistory ? (
                             <button
                               type="button"
                               className="dashboard__btn dashboard__btn--small"
-                              onClick={() => onOpen(s.id)}
+                              onClick={() => toggle(g.key)}
+                              aria-expanded={open}
                             >
-                              Abrir
+                              {open ? 'Ocultar histórico' : 'Ver histórico'}
                             </button>
+                          ) : (
                             <button
                               type="button"
                               className="dashboard__btn dashboard__btn--small"
                               disabled={deletingId !== null}
-                              onClick={() => onDelete({ id: s.id, name: s.name })}
+                              onClick={() => onDelete({ id: latest.id, name: latest.name })}
                             >
-                              {deletingId === s.id ? 'Borrando…' : 'Borrar'}
+                              {deletingId === latest.id ? 'Borrando…' : 'Borrar'}
                             </button>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    {g.equipment && (
-                      <EquipmentTimeline embedded equipmentId={g.equipment} snapshots={g.snapshots} />
+                          )}
+                        </span>
+                      </div>
+                    </GlassCard>
+
+                    {open && hasHistory && (
+                      <GlassCard variant="secondary" className="fleet-history">
+                        <div className="fleet-history__range">
+                          {formatDateTime(oldest.created_at)} → {formatDateTime(latest.created_at)}
+                        </div>
+                        <ul className="fleet-history__list">
+                          {g.snapshots.map((s) => (
+                            <li key={s.id} className="fleet-history__item">
+                              <Badge status={STATUS_META[statusOf(s.global_severity)].badge} pulsing>
+                                {STATUS_META[statusOf(s.global_severity)].label}
+                              </Badge>
+                              <span className="fleet-history__name">{s.name}</span>
+                              <span className="fleet-history__date">{formatDateTime(s.created_at)}</span>
+                              <span className="fleet-history__actions">
+                                <button
+                                  type="button"
+                                  className="dashboard__btn dashboard__btn--small"
+                                  onClick={() => onOpen(s.id)}
+                                >
+                                  Abrir
+                                </button>
+                                <button
+                                  type="button"
+                                  className="dashboard__btn dashboard__btn--small"
+                                  disabled={deletingId !== null}
+                                  onClick={() => onDelete({ id: s.id, name: s.name })}
+                                >
+                                  {deletingId === s.id ? 'Borrando…' : 'Borrar'}
+                                </button>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        {g.equipment && (
+                          <EquipmentTimeline embedded equipmentId={g.equipment} snapshots={g.snapshots} />
+                        )}
+                      </GlassCard>
                     )}
-                  </GlassCard>
-                )}
-              </Fragment>
-            )
-          })}
-        </div>
+                  </Fragment>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
