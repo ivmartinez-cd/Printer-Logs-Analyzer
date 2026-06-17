@@ -6,6 +6,19 @@ import { useHpCacheRefresh } from '../../hooks/useHpCacheRefresh'
 import { Activity, AlertTriangle, RefreshCw, Calendar, HardDrive, CheckCircle, DatabaseBackup } from 'lucide-react'
 import { Portal } from '../ui/Portal'
 import type { SavedAnalysisFull, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
+import { DeviceStatusHeader } from '../Monitor/DeviceStatusHeader'
+import { HealthScoreGauge } from '../Monitor/HealthScoreGauge'
+import { NocKpiCards } from '../Monitor/NocKpiCards'
+import { EventsTimeline, type TimelineItem } from '../Monitor/EventsTimeline'
+import { ActiveAlertsPanel } from '../Monitor/ActiveAlertsPanel'
+import { CodeTrendTable } from '../Monitor/CodeTrendTable'
+import {
+  computeDeviceStatus,
+  computeHealthScore,
+  computeAvailability,
+  computeActiveAlerts,
+  computeCodeTrends,
+} from '../Monitor/healthMetrics'
 
 const HEALTH_ICON: Record<DeviceHealth['status'], string> = {
   RED: '🔴',
@@ -164,32 +177,6 @@ export function SavedAnalysisDetail({
   const criticalCount = getCriticalCount(afterIncidents);
   const warningCount = getWarningCount(afterIncidents);
 
-  // Calculate previous stats (for deltas)
-  const prevTotalOccurrences = beforeIncidents ? getIncidentsOccurrences(beforeIncidents) : 0;
-  const prevUniqueCodesCount = beforeIncidents ? beforeIncidents.length : 0;
-  const prevCriticalCount = beforeIncidents ? getCriticalCount(beforeIncidents) : 0;
-  const prevWarningCount = beforeIncidents ? getWarningCount(beforeIncidents) : 0;
-
-  const renderKPIDelta = (beforeVal: number, afterVal: number, label: string = '') => {
-    if (!beforeIncidents) return null;
-    const delta = afterVal - beforeVal;
-    if (delta === 0) {
-      return (
-        <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '6px', fontWeight: 600 }}>
-          (sin cambios)
-        </span>
-      );
-    }
-    const isPositive = delta > 0;
-    const color = isPositive ? '#f87171' : '#34d399';
-    const sign = isPositive ? '+' : '';
-    return (
-      <span style={{ fontSize: '0.8rem', color, fontWeight: 700, marginLeft: '6px' }}>
-        ({sign}{delta}{label})
-      </span>
-    );
-  };
-
   interface MergedIncidentInfo {
     code: string;
     classification: string;
@@ -249,6 +236,22 @@ export function SavedAnalysisDetail({
         last_event_time: inc.last_event_time || inc.end_time
       }));
 
+
+  // ── Métricas NOC (estimaciones derivadas de los incidentes guardados) ──
+  const nocStatus = computeDeviceStatus(afterIncidents)
+  const nocScore = computeHealthScore(afterIncidents)
+  const nocAvailability = computeAvailability(afterIncidents)
+  const nocAlerts = computeActiveAlerts(afterIncidents)
+  const prevOccByCode = beforeIncidents
+    ? Object.fromEntries(beforeIncidents.map((i) => [i.code, i.occurrences || 0]))
+    : undefined
+  const nocTrends = computeCodeTrends(afterIncidents, prevOccByCode)
+  const timelineItems: TimelineItem[] = afterIncidents.map((inc) => ({
+    timestamp: inc.last_event_time || inc.end_time,
+    code: inc.code,
+    severity: inc.severity,
+    description: inc.classification,
+  }))
 
   function calculateUpdateDiff(before: SavedAnalysisIncidentItem[], after: SavedAnalysisIncidentItem[]) {
     const beforeMap = new Map(before.map(i => [i.code, i]))
@@ -519,86 +522,35 @@ export function SavedAnalysisDetail({
         </div>
       </div>
 
-      {/* Degradation / Health Status Widget */}
+      {/* NOC: Header de estado del equipo */}
+      <DeviceStatusHeader
+        modelName={savedDetail.name}
+        serialNumber={savedDetail.equipment_identifier}
+        status={nocStatus}
+        lastUpdateIso={savedDetail.created_at}
+        availability={nocAvailability}
+        errorCount={criticalCount}
+        warningCount={warningCount}
+      />
+
+      {/* Recomendación automática (salud evaluada por backend) */}
       <DeviceHealthBar key={savedDetail.id} id={savedDetail.id} />
 
-      {/* Premium Dashboard KPI Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px'
-      }}>
-        <div style={{
-          background: 'rgba(30, 41, 59, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          padding: '20px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Eventos Totales
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
-            <span>{totalOccurrences}</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>ocurrencias</span>
-            {renderKPIDelta(prevTotalOccurrences, totalOccurrences)}
-          </div>
-        </div>
+      {/* NOC: Health Score + KPIs grandes */}
+      <div className="noc-row">
+        <HealthScoreGauge score={nocScore} />
+        <NocKpiCards
+          errorCount={criticalCount}
+          warningCount={warningCount}
+          incidentCount={uniqueCodesCount}
+          availability={nocAvailability}
+        />
+      </div>
 
-        <div style={{
-          background: 'rgba(30, 41, 59, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          padding: '20px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Códigos de Error
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
-            <span>{uniqueCodesCount}</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>únicos</span>
-            {renderKPIDelta(prevUniqueCodesCount, uniqueCodesCount)}
-          </div>
-        </div>
-
-        <div style={{
-          background: 'rgba(30, 41, 59, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          padding: '20px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Severidades Críticas
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f87171', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '12px' }}>
-            <span>{criticalCount}</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <AlertTriangle size={14} className="text-red-400" /> ERRORES
-            </span>
-            {renderKPIDelta(prevCriticalCount, criticalCount)}
-          </div>
-        </div>
-
-        <div style={{
-          background: 'rgba(30, 41, 59, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          padding: '20px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Alertas / Advertencias
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fbbf24', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '12px' }}>
-            <span>{warningCount}</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <AlertTriangle size={14} className="text-amber-400" /> WARNINGS
-            </span>
-            {renderKPIDelta(prevWarningCount, warningCount)}
-          </div>
-        </div>
+      {/* NOC: Timeline de eventos + Alertas activas */}
+      <div className="noc-row">
+        <EventsTimeline items={timelineItems} />
+        <ActiveAlertsPanel alerts={nocAlerts} />
       </div>
 
       {/* SVG Bar Chart for Incidents Distribution */}
@@ -702,116 +654,8 @@ export function SavedAnalysisDetail({
         )}
       </div>
 
-      {/* Incident List Table */}
-      <div style={{
-        background: 'rgba(30, 41, 59, 0.25)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 25px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div className="table-wrap">
-          <table className="dashboard-table" style={{ margin: 0 }}>
-            <thead>
-              <tr>
-                <th scope="col" style={{ padding: '16px 20px' }}>Código</th>
-                <th scope="col" style={{ padding: '16px 20px' }}>Clasificación</th>
-                <th scope="col" style={{ padding: '16px 20px' }}>Severidad</th>
-                <th scope="col" style={{ padding: '16px 20px' }}>Ocurrencias</th>
-                <th scope="col" style={{ padding: '16px 20px' }}>Último evento</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listToRender.map((m, i) => {
-                const isCrit = m.severity.toUpperCase() === 'ERROR'
-                const isWarn = m.severity.toUpperCase() === 'WARNING'
-                const isResolved = beforeIncidents && m.afterCount === 0 && m.beforeCount > 0
-                const isNew = beforeIncidents && m.beforeCount === 0 && m.afterCount > 0
-                const hasChanged = beforeIncidents && m.beforeCount !== m.afterCount
-
-                return (
-                  <tr key={m.code + String(i)} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', opacity: isResolved ? 0.5 : 1 }}>
-                    <td style={{
-                      padding: '14px 20px',
-                      fontWeight: 700,
-                      fontFamily: 'monospace',
-                      color: isCrit ? '#f87171' : isWarn ? '#fbbf24' : '#f8fafc',
-                      textDecoration: isResolved ? 'line-through' : 'none'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{m.code}</span>
-                        {isResolved && (
-                          <span style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            background: 'rgba(52, 211, 153, 0.15)',
-                            color: '#34d399',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            textDecoration: 'none',
-                            display: 'inline-block'
-                          }}>
-                            RESUELTO
-                          </span>
-                        )}
-                        {isNew && (
-                          <span style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            color: '#f87171',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            display: 'inline-block'
-                          }}>
-                            NUEVO
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 20px', color: '#cbd5e1' }}>{m.classification}</td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        background: isCrit ? 'rgba(239, 68, 68, 0.15)' : isWarn ? 'rgba(234, 179, 8, 0.15)' : 'rgba(56, 189, 248, 0.15)',
-                        color: isCrit ? '#f87171' : isWarn ? '#fbbf24' : '#38bdf8',
-                        textTransform: 'uppercase'
-                      }}>
-                        {m.severity}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 20px', fontWeight: 600, color: '#f8fafc' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{m.afterCount}</span>
-                        {beforeIncidents && hasChanged && (
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            color: m.delta > 0 ? '#f87171' : '#34d399',
-                            background: m.delta > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
-                            padding: '2px 6px',
-                            borderRadius: '4px'
-                          }}>
-                            {m.delta > 0 ? `+${m.delta}` : m.delta}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                      {m.last_event_time
-                        ? formatDateTime(m.last_event_time)
-                        : '—'}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* NOC: Tendencia de códigos (tabla operacional) */}
+      <CodeTrendTable trends={nocTrends} />
 
       {updateDiff && (
         <Portal>

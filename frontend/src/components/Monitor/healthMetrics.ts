@@ -1,16 +1,25 @@
 /**
- * Métricas de salud para la vista de monitoreo (NOC).
+ * Métricas de salud para la vista de monitoreo (NOC) del Historial de Incidentes.
  *
  * IMPORTANTE: el dispositivo no expone telemetría de uptime en tiempo real.
- * Estas métricas son ESTIMACIONES derivadas de los logs analizados
- * (severidad, cantidad, duración y distribución temporal de incidentes).
+ * Estas métricas son ESTIMACIONES derivadas de los incidentes analizados
+ * (severidad, cantidad, duración y variación entre lecturas).
  * Se etiquetan visualmente como estimación.
  */
-import type { Incident as ApiIncident, EnrichedEvent as ApiEvent } from '../../types/api'
 
 export type DeviceStatus = 'critical' | 'watch' | 'healthy'
 export type Trend = 'up' | 'down' | 'stable'
 export type Impact = 'high' | 'medium' | 'low'
+
+/** Forma mínima de un incidente, compatible con Incident y SavedAnalysisIncidentItem. */
+export interface IncidentLike {
+  code: string
+  classification: string
+  severity: string
+  occurrences: number
+  start_time: string
+  end_time: string
+}
 
 export interface ActiveAlert {
   code: string
@@ -43,7 +52,7 @@ function durationHours(startIso: string, endIso: string): number {
 }
 
 /** Estado general: ERROR → crítico; solo WARNING → atención; ninguno → saludable. */
-export function computeDeviceStatus(incidents: ApiIncident[]): DeviceStatus {
+export function computeDeviceStatus(incidents: IncidentLike[]): DeviceStatus {
   if (incidents.some((i) => isError(i.severity))) return 'critical'
   if (incidents.some((i) => isWarning(i.severity))) return 'watch'
   return 'healthy'
@@ -53,7 +62,7 @@ export function computeDeviceStatus(incidents: ApiIncident[]): DeviceStatus {
  * Health score 0–100. Parte de 100 y penaliza por incidentes de error
  * (y sus ocurrencias) y, en menor medida, por advertencias.
  */
-export function computeHealthScore(incidents: ApiIncident[]): number {
+export function computeHealthScore(incidents: IncidentLike[]): number {
   const errors = incidents.filter((i) => isError(i.severity))
   const warnings = incidents.filter((i) => isWarning(i.severity))
   const errorOcc = errors.reduce((acc, i) => acc + (i.occurrences || 0), 0)
@@ -63,14 +72,14 @@ export function computeHealthScore(incidents: ApiIncident[]): number {
 
 /**
  * Disponibilidad estimada: 1 − (tiempo total con incidentes de error / ventana total).
+ * La ventana se deriva del rango temporal de los propios incidentes.
  * Fallback a 100% si no hay ventana válida.
  */
-export function computeAvailability(
-  incidents: ApiIncident[],
-  logStart: string,
-  logEnd: string
-): number {
-  const windowH = durationHours(logStart, logEnd)
+export function computeAvailability(incidents: IncidentLike[]): number {
+  const starts = incidents.map((i) => new Date(i.start_time).getTime()).filter((t) => !Number.isNaN(t))
+  const ends = incidents.map((i) => new Date(i.end_time).getTime()).filter((t) => !Number.isNaN(t))
+  if (starts.length === 0 || ends.length === 0) return 100
+  const windowH = (Math.max(...ends) - Math.min(...starts)) / 3_600_000
   if (windowH <= 0) return 100
   const downtimeH = incidents
     .filter((i) => isError(i.severity))
@@ -80,7 +89,7 @@ export function computeAvailability(
 }
 
 /** Alertas activas (incidentes abiertos), ordenadas: errores primero, luego por persistencia. */
-export function computeActiveAlerts(incidents: ApiIncident[]): ActiveAlert[] {
+export function computeActiveAlerts(incidents: IncidentLike[]): ActiveAlert[] {
   return incidents
     .filter((i) => isError(i.severity) || isWarning(i.severity))
     .map((i) => {
@@ -102,53 +111,47 @@ export function computeActiveAlerts(incidents: ApiIncident[]): ActiveAlert[] {
     })
 }
 
-/** Tendencia de un incidente: 1ª mitad vs 2ª mitad de su ventana temporal. */
-function trendForIncident(inc: ApiIncident): Trend {
-  const events = inc.events ?? []
-  if (events.length < 2) return 'stable'
-  const start = new Date(inc.start_time).getTime()
-  const end = new Date(inc.end_time).getTime()
-  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return 'stable'
-  const mid = start + (end - start) / 2
-  let first = 0
-  let second = 0
-  for (const e of events) {
-    const t = new Date(e.timestamp).getTime()
-    if (Number.isNaN(t)) continue
-    if (t < mid) first++
-    else second++
-  }
-  if (second > first) return 'up'
-  if (second < first) return 'down'
-  return 'stable'
-}
-
-function impactForIncident(inc: ApiIncident): Impact {
+function impactForIncident(inc: IncidentLike): Impact {
   if (isError(inc.severity)) return 'high'
   if (isWarning(inc.severity) && (inc.occurrences || 0) >= 5) return 'medium'
   return 'low'
 }
 
-/** Tabla operacional de tendencias por código (errores y advertencias). */
-export function computeCodeTrends(incidents: ApiIncident[]): CodeTrend[] {
+/**
+ * Tabla operacional de tendencias por código (errores y advertencias).
+ * Si se pasa `prevOccByCode` (ocurrencias de la lectura anterior), la tendencia
+ * se calcula comparando contra esa lectura; si no, queda en 'stable'.
+ */
+export function computeCodeTrends(
+  incidents: IncidentLike[],
+  prevOccByCode?: Record<string, number>
+): CodeTrend[] {
   return incidents
     .filter((i) => isError(i.severity) || isWarning(i.severity))
-    .map((i) => ({
-      code: i.code,
-      description: i.classification || i.code,
-      severity: i.severity.toUpperCase(),
-      trend: trendForIncident(i),
-      impact: impactForIncident(i),
-    }))
+    .map((i) => {
+      let trend: Trend = 'stable'
+      if (prevOccByCode) {
+        const prev = prevOccByCode[i.code] ?? 0
+        const cur = i.occurrences || 0
+        trend = cur > prev ? 'up' : cur < prev ? 'down' : 'stable'
+      }
+      return {
+        code: i.code,
+        description: i.classification || i.code,
+        severity: i.severity.toUpperCase(),
+        trend,
+        impact: impactForIncident(i),
+      }
+    })
     .sort((a, b) => {
       if (a.severity !== b.severity) return a.severity === 'ERROR' ? -1 : 1
       return 0
     })
 }
 
-/** Eventos más recientes para el stream temporal (orden descendente por fecha). */
-export function recentEvents(events: ApiEvent[], limit = 12): ApiEvent[] {
-  return [...events]
+/** Ordena por fecha descendente y limita. Genérico sobre cualquier item con timestamp. */
+export function recentEvents<T extends { timestamp: string }>(items: T[], limit = 12): T[] {
+  return [...items]
     .filter((e) => !Number.isNaN(new Date(e.timestamp).getTime()))
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit)
