@@ -76,7 +76,6 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         codesNew: validateRes.codes_new ?? [],
         loading: false
       })
-      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       set({ error: msg, loading: false })
