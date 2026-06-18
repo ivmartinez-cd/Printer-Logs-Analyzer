@@ -58,7 +58,6 @@ export function useAnalysis({
       setCodesNew(newCodes)
       onAnalyzeDone?.(data, newCodes)
       setLogModalOpen(false)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
       if (newCodes.length > 0) {
         toast.showWarning(
           `Se detectaron ${newCodes.length} códigos nuevos. Agrégalos al catálogo si lo deseas.`

@@ -221,7 +221,7 @@ export default function DashboardPage({
 
       const fileName = `Portal_SDS_${serial}.tsv`
       await handleAnalyze(sdsRes.logs_text, fileName, sdsRes.suggested_model_id)
-      
+      dashboardRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       setError(msg)
