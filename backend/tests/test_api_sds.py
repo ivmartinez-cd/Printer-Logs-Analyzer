@@ -225,3 +225,47 @@ def test_remote_ews_unauthorized(client):
     """Verify that the endpoint requires a valid API key."""
     response = client.get("/sds/devices/MXSCS7Q00Q/remote-ews", headers={"x-api-key": "wrong"})
     assert response.status_code == 401
+
+
+@patch("backend.interface.routers.sds.get_cds_incidents_for_serial")
+def test_cds_incidents_success(mock_cds, client):
+    mock_cds.return_value = [
+        {
+            "id": "123",
+            "numero_incidente": "123",
+            "fecha": "01/06/2026 10:00:00",
+            "motivo": "Atasca Papel",
+            "tipo": "Correctivo",
+            "estado": "Cerrado",
+            "contador": "50000",
+            "repuestos": [{"articulo": "Pickup Roller", "cantidad": 1}],
+            "tareas_realizadas": ["Se cambia pickup roller"],
+        }
+    ]
+    response = client.get("/cds/devices/CNMCL8219P/incidents", headers=_HEADERS)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["numero_incidente"] == "123"
+    assert data[0]["repuestos"][0]["articulo"] == "Pickup Roller"
+
+
+@patch("backend.interface.routers.sds.get_cds_incidents_for_serial")
+def test_cds_incidents_empty(mock_cds, client):
+    mock_cds.return_value = []
+    response = client.get("/cds/devices/UNKNOWN123/incidents", headers=_HEADERS)
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_cds_incidents_unauthorized(client):
+    response = client.get("/cds/devices/CNMCL8219P/incidents", headers={"x-api-key": "wrong"})
+    assert response.status_code == 401
+
+
+@patch("backend.interface.routers.sds.get_cds_incidents_for_serial")
+def test_cds_incidents_soap_error_returns_empty(mock_cds, client):
+    mock_cds.return_value = []
+    response = client.get("/cds/devices/CNMCL8219P/incidents", headers=_HEADERS)
+    assert response.status_code == 200
+    assert response.json() == []

@@ -26,6 +26,7 @@ import { Skeleton } from '../components/ui/Skeleton'
 import { ExecutivePrintReport } from '../components/Analysis/ExecutivePrintReport'
 import { useExportPdf } from '../hooks/useExportPdf'
 import { useInsightData } from '../hooks/useInsightData'
+import { useCdsIncidents } from '../hooks/useCdsIncidents'
 import { useToast } from '../contexts/ToastContext'
 import { WelcomeView } from '../components/ui/WelcomeView'
 import { MonitorDashboard } from '../components/Monitor/MonitorDashboard'
@@ -189,6 +190,7 @@ export default function DashboardPage({
   )
  
   const insightData = useInsightData(currentSerialNumber)
+  const cdsIncidents = useCdsIncidents(currentSerialNumber)
   const [loadingRemoteEws, setLoadingRemoteEws] = useState(false)
   const { refreshing: refreshingHpCache, triggerRefresh: triggerHpCacheRefresh } = useHpCacheRefresh()
 
@@ -699,6 +701,7 @@ export default function DashboardPage({
                         topCodes={topCodes}
                         realtimeConsumables={realtimeConsumables}
                         insightData={insightData}
+                        cdsIncidents={cdsIncidents}
                         currentSerialNumber={currentSerialNumber}
                         currentModelName={currentModelName}
                         incidentRows={incidentRows}

@@ -7,6 +7,7 @@
 @import './panels/sds-incident.css';
 @import './panels/collapsible.css';
 @import './panels/insight-alerts.css';
+@import './panels/cds-incidents.css';
 @import './panels/ai-diagnostic.css';
 @import './kpis.css';
 @import './sds-prompt.css';
