@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import type { EnrichedEvent } from '../../types/api'
 import '../../styles/error-timeline.css'
 
@@ -50,7 +50,6 @@ const SEV_COLORS: Record<string, string> = {
 const MAX_VISIBLE_EVENTS = 200
 
 export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: ErrorTimelineProps) {
-  const [selectedDayIdx, setSelectedDayIdx] = useState(0)
   const pillsRef = useRef<HTMLDivElement>(null)
 
   const days: DayEvents[] = useMemo(() => {
@@ -82,9 +81,19 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
       })
   }, [events])
 
-  useEffect(() => {
-    if (days.length > 0) setSelectedDayIdx(days.length - 1)
-  }, [days.length])
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+
+  const selectedDayIdx = useMemo(() => {
+    if (selectedDay !== null) {
+      const idx = days.findIndex(d => d.date === selectedDay)
+      if (idx !== -1) return idx
+    }
+    return Math.max(0, days.length - 1)
+  }, [days, selectedDay])
+
+  const selectDay = useCallback((idx: number) => {
+    setSelectedDay(days[idx]?.date ?? null)
+  }, [days])
 
   useEffect(() => {
     if (!pillsRef.current) return
@@ -129,7 +138,7 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
             type="button"
             className="error-timeline__day-arrow"
             disabled={selectedDayIdx === 0}
-            onClick={() => setSelectedDayIdx(i => i - 1)}
+            onClick={() => selectDay(selectedDayIdx - 1)}
             title="Día anterior"
           >
             ‹
@@ -143,7 +152,7 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
                   key={day.date}
                   type="button"
                   className={`error-timeline__day-btn${idx === selectedDayIdx ? ' error-timeline__day-btn--active' : ''}`}
-                  onClick={() => setSelectedDayIdx(idx)}
+                  onClick={() => selectDay(idx)}
                   style={hasErrors && idx !== selectedDayIdx ? { borderColor: 'rgba(239, 68, 68, 0.3)' } : undefined}
                 >
                   {day.label}
@@ -161,7 +170,7 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
             type="button"
             className="error-timeline__day-arrow"
             disabled={selectedDayIdx === days.length - 1}
-            onClick={() => setSelectedDayIdx(i => i + 1)}
+            onClick={() => selectDay(selectedDayIdx + 1)}
             title="Día siguiente"
           >
             ›
