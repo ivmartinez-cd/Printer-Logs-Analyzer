@@ -108,20 +108,22 @@ class TestCircuitBreaker:
 
 
 class TestCache:
-    @pytest.mark.asyncio
-    async def test_returns_cached_data(self):
+    def test_returns_cached_data(self):
+        import asyncio
+
         from backend.infrastructure.config import Settings
         settings = MagicMock(spec=Settings)
         serial = "TESTSERIAL1"
         cached = [{"id": "1", "motivo": "cached"}]
         cds_service._cds_cache[serial] = (time.time() + 600, cached)
 
-        result = await cds_service.get_cds_incidents_for_serial(settings, serial)
+        result = asyncio.run(cds_service.get_cds_incidents_for_serial(settings, serial))
         assert result == cached
 
-    @pytest.mark.asyncio
-    async def test_empty_serial_returns_empty(self):
+    def test_empty_serial_returns_empty(self):
+        import asyncio
+
         from backend.infrastructure.config import Settings
         settings = MagicMock(spec=Settings)
-        result = await cds_service.get_cds_incidents_for_serial(settings, "  ")
+        result = asyncio.run(cds_service.get_cds_incidents_for_serial(settings, "  "))
         assert result == []
