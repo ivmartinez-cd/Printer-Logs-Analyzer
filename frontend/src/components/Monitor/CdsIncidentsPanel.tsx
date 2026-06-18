@@ -61,6 +61,7 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                     <thead>
                       <tr>
                         <th scope="col">Fecha</th>
+                        <th scope="col">Incidente</th>
                         <th scope="col">Detalle / Motivo</th>
                         <th scope="col">Repuesto Utilizado</th>
                         <th scope="col">Tareas Realizadas</th>
@@ -70,6 +71,7 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                     <tbody>
                       {data.map((inc) => (
                         <tr key={inc.id || inc.numero_incidente}>
+                          <td>{inc.fecha}</td>
                           <td>
                             <a
                               href={`https://webagentes.canaldirecto.com.ar/incidents/view/${inc.numero_incidente}`}
@@ -77,7 +79,7 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                               rel="noopener noreferrer"
                               className="cds-incidents-panel__link"
                             >
-                              {inc.fecha} (#{inc.numero_incidente})
+                              {inc.numero_incidente}
                             </a>
                           </td>
                           <td>{inc.motivo}</td>
