@@ -97,8 +97,18 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
 
   useEffect(() => {
     if (!pillsRef.current) return
-    const activeBtn = pillsRef.current.querySelector('.error-timeline__day-btn--active')
-    if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    const container = pillsRef.current
+    const activeBtn = container.querySelector('.error-timeline__day-btn--active') as HTMLElement
+    if (activeBtn) {
+      const containerRect = container.getBoundingClientRect()
+      const btnRect = activeBtn.getBoundingClientRect()
+      const relativeLeft = btnRect.left - containerRect.left + container.scrollLeft
+      
+      container.scrollTo({
+        left: relativeLeft - containerRect.width / 2 + btnRect.width / 2,
+        behavior: 'smooth'
+      })
+    }
   }, [selectedDayIdx])
 
   if (events.length === 0) return null
