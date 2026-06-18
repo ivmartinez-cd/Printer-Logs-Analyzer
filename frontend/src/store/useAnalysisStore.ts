@@ -71,11 +71,12 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         previewLogs(logText, modelFamily),
         validateLogs(logText).catch(() => ({ codes_new: [] as string[] })),
       ])
-      set({ 
-        result: data, 
+      set({
+        result: data,
         codesNew: validateRes.codes_new ?? [],
-        loading: false 
+        loading: false
       })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       set({ error: msg, loading: false })

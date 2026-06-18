@@ -113,7 +113,6 @@ export function DashboardModals({
             handleAnalyze(logText, fileName, modelId).then(() => {
               setLogModalOpen(false)
               onDateFilterReset()
-              window.scrollTo({ top: 0, behavior: 'smooth' })
               toast.showSuccess('Análisis completado')
             }).catch((err: unknown) => {
               toast.showError(err instanceof Error ? err.message : String(err))
