@@ -21,4 +21,5 @@
 @import './print-overrides.css';
 @import './maintenance.css';
 @import './error-heatmap.css';
+@import './error-timeline.css';
 @import './noc-dashboard.css';

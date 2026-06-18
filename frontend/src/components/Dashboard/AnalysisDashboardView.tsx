@@ -29,6 +29,7 @@ import { InsightAlertsPanel } from '../Monitor/InsightAlertsPanel'
 import { SDSIncidentPanel } from '../Monitor/SDSIncidentPanel'
 
 import { ErrorHeatmap } from '../Analysis/ErrorHeatmap'
+import { ErrorTimeline } from '../Analysis/ErrorTimeline'
 import { SeverityFilters } from '../ui/SeverityFilters'
 import { Portal } from '../ui/Portal'
 
@@ -175,6 +176,17 @@ export function AnalysisDashboardView({
           />
         </section>
       </div>
+
+      {/* ── BLOQUE 3b: Timeline cronológico de errores por día ── */}
+      <section className="animate-in delay-2">
+        <ErrorTimeline
+          events={events}
+          visibleSeverities={visibleSeverities}
+          onViewSolution={(code, sdsContent, sdsUrl) =>
+            onSetSolutionModal({ code, sdsContent, sdsUrl })
+          }
+        />
+      </section>
 
       {/* ── BLOQUE 4: Diagnóstico Inteligente (Destacado) ── */}
       <AIDiagnosticPanel
