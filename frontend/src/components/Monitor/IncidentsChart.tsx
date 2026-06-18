@@ -169,7 +169,7 @@ function CustomTooltip({
                 style={{
                   color: '#c9d1d9',
                   fontSize: 10,
-                  fontFamily: 'monospace',
+                  fontFamily: 'var(--font-mono)',
                   paddingLeft: 14,
                   lineHeight: 1.4,
                 }}

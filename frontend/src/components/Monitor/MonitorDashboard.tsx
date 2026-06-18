@@ -98,10 +98,10 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
               onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--hp-blue-vibrant)'}
               onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
             >
-              <span style={{ 
-                fontFamily: 'monospace', 
-                fontSize: '0.75rem', 
-                fontWeight: 700, 
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
                 color: 'var(--hp-blue-vibrant)',
                 textDecoration: 'underline'
               }}>{err.code}</span>
@@ -729,7 +729,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                         <td colSpan={8} style={{ padding: 0 }}>
                           <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--hp-blue-vibrant)' }}>
                             {device.error_message ? (
-                              <p style={{ color: '#ff5252', fontFamily: 'monospace', fontSize: '0.85rem' }}>{device.error_message}</p>
+                              <p style={{ color: '#ff5252', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{device.error_message}</p>
                             ) : results.length === 0 ? (
                               <p style={{ color: 'var(--text-muted)' }}>Presioná "Sincronizar Todo" para cargar los logs de este dispositivo.</p>
                             ) : (
