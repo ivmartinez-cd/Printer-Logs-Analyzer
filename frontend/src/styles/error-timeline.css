@@ -1,0 +1,325 @@
+/* ── Error Timeline ── */
+.error-timeline {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.error-timeline__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.error-timeline__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.error-timeline__subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* ── Day navigator ── */
+.error-timeline__day-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.error-timeline__day-btn {
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.error-timeline__day-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.error-timeline__day-btn--active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.error-timeline__day-arrow {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.error-timeline__day-arrow:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.error-timeline__day-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Day pills scroll container ── */
+.error-timeline__day-pills {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  max-width: 400px;
+  scrollbar-width: none;
+}
+
+.error-timeline__day-pills::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Summary bar ── */
+.error-timeline__summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.error-timeline__summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.error-timeline__summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.error-timeline__summary-count {
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+/* ── Timeline list ── */
+.error-timeline__list {
+  position: relative;
+  padding-left: 24px;
+  max-height: 480px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.error-timeline__list::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.03)
+  );
+  border-radius: 1px;
+}
+
+/* ── Hour group ── */
+.error-timeline__hour-group {
+  margin-bottom: 4px;
+}
+
+.error-timeline__hour-label {
+  position: relative;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 0 4px 12px;
+}
+
+.error-timeline__hour-label::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid var(--bg-card);
+}
+
+/* ── Individual event node ── */
+.error-timeline__event {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-left: 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  cursor: default;
+}
+
+.error-timeline__event:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.error-timeline__event::before {
+  content: '';
+  position: absolute;
+  left: -29px;
+  top: 14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.error-timeline__event--error::before {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.error-timeline__event--warning::before {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.error-timeline__event--info::before {
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+}
+
+.error-timeline__event-time {
+  flex-shrink: 0;
+  width: 48px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  padding-top: 1px;
+}
+
+.error-timeline__event-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.error-timeline__event-code:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.error-timeline__event-code--error {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.error-timeline__event-code--warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+.error-timeline__event-code--info {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.error-timeline__event-desc {
+  flex: 1;
+  font-size: 0.8rem;
+  color: #c9d1e0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error-timeline__event-counter {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* ── Empty state ── */
+.error-timeline__empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ── Truncation notice ── */
+.error-timeline__truncated {
+  text-align: center;
+  padding: 12px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 8px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .error-timeline__header {
+    flex-direction: column;
+  }
+
+  .error-timeline__day-pills {
+    max-width: 100%;
+  }
+
+  .error-timeline__event-desc {
+    display: none;
+  }
+
+  .error-timeline__summary {
+    gap: 8px;
+  }
+}
