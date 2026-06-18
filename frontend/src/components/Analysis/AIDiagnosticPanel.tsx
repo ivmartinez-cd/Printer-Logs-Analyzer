@@ -1,6 +1,6 @@
 import { forwardRef, useState, useEffect } from 'react'
 import { aiDiagnose } from '../../services/api'
-import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter } from '../../types/api'
+import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter, CdsIncident } from '../../types/api'
 import { AIDiagnosticSkeleton } from './AIDiagnosticSkeleton'
 
 interface AIDiagnosticPanelProps {
@@ -8,6 +8,7 @@ interface AIDiagnosticPanelProps {
   consumables?: RealtimeConsumable[]
   alerts?: DeviceAlertsResponse | null
   meters?: InsightMeter[]
+  cdsIncidents?: CdsIncident[]
   className?: string
   isFeatured?: boolean
   serialNumber?: string | null
@@ -59,7 +60,7 @@ function parseDiagnosis(text: string): DiagnosisData | null {
 }
 
 export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelProps>(
-  function AIDiagnosticPanel({ result, consumables, alerts, meters, className, isFeatured = false, serialNumber, modelName }, ref) {
+  function AIDiagnosticPanel({ result, consumables, alerts, meters, cdsIncidents, className, isFeatured = false, serialNumber, modelName }, ref) {
     const [diagnosis, setDiagnosis] = useState<string | null>(null)
     const [tareas, setTareas] = useState<string | null>(null)
     const [urgencia, setUrgencia] = useState<string | null>(null)
@@ -83,7 +84,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
       setLoading(true)
       setError(null)
       try {
-        const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName })
+        const res = await aiDiagnose(result, { consumables, alerts, meters, serialNumber, modelName, cdsIncidents })
         setDiagnosis(res.diagnosis)
         if (res.tareas_resumen) setTareas(res.tareas_resumen)
         if (res.urgencia) setUrgencia(res.urgencia)
