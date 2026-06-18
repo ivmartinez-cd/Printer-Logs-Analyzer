@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
             justifyContent: 'center',
             height: '100vh',
             gap: '16px',
-            fontFamily: 'sans-serif',
+            fontFamily: 'var(--font-sans)',
             color: '#374151',
           }}
         >

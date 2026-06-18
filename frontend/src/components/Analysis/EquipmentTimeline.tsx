@@ -277,7 +277,7 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
                 return (
                   <tr key={r.code}>
                     <td style={{ padding: '6px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: isErr ? '#f87171' : '#fbbf24' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: isErr ? '#f87171' : '#fbbf24' }}>
                         {r.code}
                       </span>
                       <span style={{ color: '#64748b', marginLeft: '8px' }}>{r.classification}</span>

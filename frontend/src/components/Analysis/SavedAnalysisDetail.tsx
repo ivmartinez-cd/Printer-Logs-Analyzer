@@ -601,7 +601,7 @@ export function SavedAnalysisDetail({
                   <div key={m.code + String(index)} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#f8fafc', fontWeight: 700 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#f8fafc', fontWeight: 700 }}>
                           {m.code}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
@@ -648,7 +648,7 @@ export function SavedAnalysisDetail({
               const color = m.severity.toUpperCase() === 'ERROR' ? '#f87171' : m.severity.toUpperCase() === 'WARNING' ? '#fbbf24' : '#38bdf8'
               return (
                 <div key={m.code + String(index)} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ width: '80px', fontFamily: 'monospace', fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600 }}>
+                  <div style={{ width: '80px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600 }}>
                     {m.code}
                   </div>
                   <div style={{ flex: 1, height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', overflow: 'hidden' }}>
@@ -719,7 +719,7 @@ export function SavedAnalysisDetail({
                         </h4>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                           {updateDiff.newCodes.map(c => (
-                            <span key={c} style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            <span key={c} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
                               {c}
                             </span>
                           ))}
@@ -735,7 +735,7 @@ export function SavedAnalysisDetail({
                         </h4>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                           {updateDiff.resolvedCodes.map(c => (
-                            <span key={c} style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            <span key={c} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
                               {c}
                             </span>
                           ))}
@@ -754,7 +754,7 @@ export function SavedAnalysisDetail({
                             const isIncrease = change.delta > 0
                             return (
                               <div key={change.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#f8fafc' }}>{change.code}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#f8fafc' }}>{change.code}</span>
                                 <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                   <span style={{ color: '#64748b' }}>{change.before} → {change.after}</span>
                                   <span style={{
