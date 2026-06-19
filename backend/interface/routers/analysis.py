@@ -1,9 +1,11 @@
 import logging
 import time
 from datetime import datetime, timezone
+from typing import List
 
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
+from backend.domain.entities import ErrorSolution
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.interface.auth import authenticate
@@ -132,3 +134,19 @@ def validate_logs(
         codes_new=codes_new,
         errors=errors,
     )
+
+
+@router.get(
+    "/cpmd/{model_family}",
+    response_model=List[ErrorSolution],
+    dependencies=[Depends(authenticate)],
+    summary="Get all CPMD solutions for a model family",
+)
+def get_cpmd_solutions(
+    model_family: str,
+    error_solution_repository: ErrorSolutionRepository = Depends(get_error_solution_repo),
+) -> List[ErrorSolution]:
+    try:
+        return error_solution_repository.list_by_model(model_family)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

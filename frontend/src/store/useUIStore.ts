@@ -22,6 +22,7 @@ interface UIState {
   } | null
   helpModalOpen: boolean
   monitorWizardOpen: boolean
+  cpmdManualModelFamily: string | null
 
   // Actions
   setLogModalOpen: (open: boolean) => void
@@ -34,6 +35,7 @@ interface UIState {
   setSolutionModal: (data: { code: string; sdsContent?: string | null; sdsUrl?: string | null; cpmdContent?: string | null } | null) => void
   setHelpModalOpen: (open: boolean) => void
   setMonitorWizardOpen: (open: boolean) => void
+  setCpmdManualModelFamily: (family: string | null) => void
   closeAllModals: () => void
 }
 
@@ -48,6 +50,7 @@ export const useUIStore = create<UIState>((set) => ({
   solutionModal: null,
   helpModalOpen: false,
   monitorWizardOpen: false,
+  cpmdManualModelFamily: null,
 
   setLogModalOpen: (logModalOpen) => set({ logModalOpen }),
   setSdsModalOpen: (sdsModalOpen) => set({ sdsModalOpen }),
@@ -59,6 +62,7 @@ export const useUIStore = create<UIState>((set) => ({
   setSolutionModal: (solutionModal) => set({ solutionModal }),
   setHelpModalOpen: (helpModalOpen) => set({ helpModalOpen }),
   setMonitorWizardOpen: (monitorWizardOpen) => set({ monitorWizardOpen }),
+  setCpmdManualModelFamily: (cpmdManualModelFamily) => set({ cpmdManualModelFamily }),
   closeAllModals: () => set({
     logModalOpen: false,
     sdsModalOpen: false,
@@ -68,6 +72,7 @@ export const useUIStore = create<UIState>((set) => ({
     helpModalOpen: false,
     monitorWizardOpen: false,
     addCodeModalCode: null,
-    editCodeInitial: null
+    editCodeInitial: null,
+    cpmdManualModelFamily: null
   })
 }))

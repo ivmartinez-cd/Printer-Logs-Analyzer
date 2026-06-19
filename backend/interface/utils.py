@@ -24,6 +24,26 @@ def extract_serial_number(value: str | None) -> str | None:
 
 
 
+def is_wildcard_match(code: str, pattern: str) -> bool:
+    """Check if code matches pattern containing wildcards like '*' or variables W, X, Y, Z."""
+    c = code.strip().upper()
+    p = pattern.strip().upper()
+
+    # Escape everything except *, ?, W, X, Y, Z
+    regex = "^" + re.escape(p) + "$"
+    regex = regex.replace(r"\*", ".*")
+    regex = regex.replace(r"\?", ".")
+    regex = regex.replace("W", "[0-9A-Z]")
+    regex = regex.replace("X", "[0-9A-Z]")
+    regex = regex.replace("Y", "[0-9A-Z]")
+    regex = regex.replace("Z", "[0-9A-Z]")
+
+    try:
+        return bool(re.match(regex, c))
+    except Exception:
+        return False
+
+
 def enrich_events_with_catalog(
     events: List[Event],
     catalog_map: Dict[str, ErrorCode],
@@ -33,7 +53,15 @@ def enrich_events_with_catalog(
     cpmd_map = cpmd_map or {}
     for evt in events:
         row = catalog_map.get(evt.code)
+
+        # Check exact CPMD match first, then fallback to wildcard matches
         cpmd_sol = cpmd_map.get(evt.code)
+        if not cpmd_sol:
+            for pattern, sol in cpmd_map.items():
+                if is_wildcard_match(evt.code, pattern):
+                    cpmd_sol = sol
+                    break
+
         data = evt.model_dump()
         if row:
             data["code_severity"] = row.severity

@@ -115,6 +115,18 @@ export async function validateLogs(
   return handleResponse<ValidateLogsResponse>(res)
 }
 
+export async function getCpmdSolutions(
+  modelFamily: string,
+  signal?: AbortSignal
+): Promise<ErrorSolution[]> {
+  const res = await apiFetch(`${API_BASE}/parser/cpmd/${encodeURIComponent(modelFamily)}`, {
+    method: 'GET',
+    headers: apiHeaders(),
+    signal,
+  })
+  return handleResponse<ErrorSolution[]>(res)
+}
+
 export interface UpsertErrorCodeResult {
   id: string
   code: string

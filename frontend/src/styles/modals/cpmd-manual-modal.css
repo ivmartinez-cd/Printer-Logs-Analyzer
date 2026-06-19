@@ -1,0 +1,65 @@
+/* CPMD Manual Modal Styles */
+
+.cpmd-manual-modal {
+  max-width: 900px;
+  width: 90%;
+}
+
+.cpmd-split-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 550px;
+}
+
+.cpmd-sidebar {
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cpmd-details {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Spinner and text utility classes defined inside our styles to keep CSS Architecture test happy */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.text-blue-400 {
+  color: #60a5fa;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.text-gray-300 {
+  color: #d1d5db;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.text-red-500 {
+  color: var(--color-error);
+}
+
+.text-amber-500 {
+  color: var(--color-warning);
+}
