@@ -28,12 +28,10 @@ from backend.application.services.sds_web_service import (
 )
 from backend.infrastructure.config import Settings
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
-from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.infrastructure.repositories.notification_repository import NotificationRepository
 from backend.interface.auth import authenticate
 from backend.interface.deps import (
     get_error_code_repo,
-    get_error_solution_repo,
     get_notification_repo,
     get_settings,
 )
@@ -65,7 +63,6 @@ async def resolve_device_endpoint(
     request: Request,
     serial: str,
     settings: Settings = Depends(get_settings),
-    error_solution_repository: ErrorSolutionRepository = Depends(get_error_solution_repo),
 ) -> ResolveDeviceResponse:
     if not (
         settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret
@@ -296,7 +293,6 @@ async def extract_sds_logs(
     request: Request,
     body: ExtractSdsLogsRequest,
     settings: Settings = Depends(get_settings),
-    error_solution_repository: ErrorSolutionRepository = Depends(get_error_solution_repo),
     error_code_repo: ErrorCodeRepository = Depends(get_error_code_repo),
 ) -> ExtractSdsLogsResponse:
     if not (settings.sds_web_username and settings.sds_web_password):

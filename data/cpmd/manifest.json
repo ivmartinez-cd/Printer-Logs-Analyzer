@@ -1,0 +1,9 @@
+{
+  "mappings": [
+    {
+      "keywords": ["M607", "M608", "M609", "M610", "M611", "M612", "E60055", "E60065", "E60075", "E60155", "E60165", "E60175"],
+      "pdf": "CPMD_M607_M612_E600xx.pdf",
+      "label": "HP LaserJet Enterprise M607-M612 / Managed E600xx Series"
+    }
+  ]
+}

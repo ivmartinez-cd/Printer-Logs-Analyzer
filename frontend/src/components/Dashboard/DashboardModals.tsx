@@ -12,7 +12,6 @@ import { ConfirmModal } from '../ui/ConfirmModal'
 import { SolutionContentModal } from '../Parser/SolutionContentModal'
 import { HelpModal } from '../ui/HelpModal'
 import { MonitorWizard } from '../Monitor/MonitorWizard'
-import { CpmdManualModal } from '../Parser/CpmdManualModal'
 
 interface DashboardModalsProps {
   serverWasCold: boolean
@@ -83,8 +82,6 @@ export function DashboardModals({
     helpModalOpen,
     setHelpModalOpen,
     monitorWizardOpen,
-    cpmdManualModelFamily,
-    setCpmdManualModelFamily,
   } = useUIStore()
 
   const toast = useToast()
@@ -189,7 +186,6 @@ export function DashboardModals({
           modelId={currentModelId}
           sdsContent={solutionModal.sdsContent}
           sdsUrl={solutionModal.sdsUrl}
-          cpmdContent={solutionModal.cpmdContent}
           onClose={() => setSolutionModal(null)}
         />
       )}
@@ -200,13 +196,6 @@ export function DashboardModals({
 
       {monitorWizardOpen && (
         <MonitorWizard />
-      )}
-
-      {cpmdManualModelFamily && (
-        <CpmdManualModal
-          modelFamily={cpmdManualModelFamily}
-          onClose={() => setCpmdManualModelFamily(null)}
-        />
       )}
 
       {autoExtracting && (

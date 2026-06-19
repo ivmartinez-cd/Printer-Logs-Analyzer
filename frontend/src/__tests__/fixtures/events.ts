@@ -13,7 +13,6 @@ export function mockEvent(overrides: Partial<EnrichedEvent> = {}): EnrichedEvent
     code_description: 'Fuser error',
     code_solution_url: null,
     code_solution_content: null,
-    cpmd_solution_content: null,
     ...overrides,
   }
 }
@@ -33,7 +32,6 @@ export function mockIncident(overrides: Partial<Incident> = {}): Incident {
     events,
     sds_link: null,
     sds_solution_content: null,
-    cpmd_solution_content: null,
     ...overrides,
   }
 }
@@ -51,7 +49,6 @@ export function mockIncidentRow(overrides: Partial<IncidentRow> = {}): IncidentR
     end_time: evt.timestamp,
     sds_link: null,
     sds_solution_content: null,
-    cpmd_solution_content: null,
     eventsInWindow: [evt],
     ...overrides,
   }

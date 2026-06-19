@@ -43,7 +43,7 @@ interface AnalysisDashboardViewProps {
   lastErrorEvent: ApiEvent | null
   lastErrorLabel: string
   activeFilter: DateFilter
-  topCodes: { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[]
+  topCodes: { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null; }[]
   realtimeConsumables: RealtimeConsumable[]
   insightData: InsightDataResult | null
   cdsIncidents: { data: CdsIncident[]; loading: boolean; error: string | null }
@@ -53,7 +53,7 @@ interface AnalysisDashboardViewProps {
   sdsIncident: SdsIncidentData | null
   
   onSetEditCodeInitial: (val: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
-  onSetSolutionModal: (val: { code: string; sdsContent?: string | null; sdsUrl?: string | null; cpmdContent?: string | null } | null) => void
+  onSetSolutionModal: (val: { code: string; sdsContent?: string | null; sdsUrl?: string | null } | null) => void
 }
 
 export function AnalysisDashboardView({
@@ -158,8 +158,8 @@ export function AnalysisDashboardView({
             <TopErrorsChart
               topCodes={topCodes}
               activeSeverities={visibleSeverities}
-              onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
-                onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
+              onViewSolution={(code, sdsContent, sdsUrl) =>
+                onSetSolutionModal({ code, sdsContent, sdsUrl })
               }
               onBarClick={setDrillCode}
             />
@@ -171,8 +171,8 @@ export function AnalysisDashboardView({
           <ErrorHeatmap
             events={events}
             visibleSeverities={visibleSeverities}
-            onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
-              onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
+            onViewSolution={(code, sdsContent, sdsUrl) =>
+              onSetSolutionModal({ code, sdsContent, sdsUrl })
             }
             onEditCode={(code, description, severity, solutionUrl) =>
               onSetEditCodeInitial({ code, description, severity, solutionUrl })
@@ -186,8 +186,8 @@ export function AnalysisDashboardView({
         <ErrorTimeline
           events={events}
           visibleSeverities={visibleSeverities}
-          onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
-            onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
+          onViewSolution={(code, sdsContent, sdsUrl) =>
+            onSetSolutionModal({ code, sdsContent, sdsUrl })
           }
         />
       </section>
@@ -242,8 +242,8 @@ export function AnalysisDashboardView({
                     solutionUrl,
                   })
                 }
-                onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
-                  onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
+                onViewSolution={(code, sdsContent, sdsUrl) =>
+                  onSetSolutionModal({ code, sdsContent, sdsUrl })
                 }
               />
             </div>
@@ -253,8 +253,8 @@ export function AnalysisDashboardView({
         {/* Eventos del periodo */}
         <EventsTable
           events={filteredEvents}
-          onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
-            onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
+          onViewSolution={(code, sdsContent, sdsUrl) =>
+            onSetSolutionModal({ code, sdsContent, sdsUrl })
           }
         />
 
