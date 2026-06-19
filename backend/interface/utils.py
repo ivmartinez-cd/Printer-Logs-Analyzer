@@ -1,7 +1,7 @@
 import re
 from typing import Dict, List
 
-from backend.domain.entities import EnrichedEvent, Event, Incident, ErrorSolution
+from backend.domain.entities import EnrichedEvent, ErrorSolution, Event, Incident
 from backend.infrastructure.repositories.error_code_repository import ErrorCode
 
 
@@ -40,9 +40,9 @@ def enrich_events_with_catalog(
             data["code_description"] = row.description
             data["code_solution_url"] = row.solution_url
             data["code_solution_content"] = row.solution_content
-        
+
         if cpmd_sol:
-            cpmd_text = f"--- HP CPMD SERVICE MANUAL SOLUTION ---\n"
+            cpmd_text = "--- HP CPMD SERVICE MANUAL SOLUTION ---\n"
             if cpmd_sol.title:
                 cpmd_text += f"[Title]: {cpmd_sol.title}\n"
             if cpmd_sol.cause:
@@ -57,9 +57,9 @@ def enrich_events_with_catalog(
                 for fru in cpmd_sol.frus:
                     cpmd_text += f"- {fru.part_number}: {fru.description}\n"
                 cpmd_text += "\n"
-            
+
             data["cpmd_solution_content"] = cpmd_text
-            
+
             if not data.get("code_solution_url"):
                 data["code_solution_url"] = f"cpmd://{cpmd_sol.model_family}/{cpmd_sol.code}"
 

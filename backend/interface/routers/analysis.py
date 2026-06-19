@@ -7,7 +7,12 @@ from backend.application.services.analysis_service import AnalysisService
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.interface.auth import authenticate
-from backend.interface.deps import get_analysis_service, get_error_code_repo, get_error_solution_repo, get_log_parser
+from backend.interface.deps import (
+    get_analysis_service,
+    get_error_code_repo,
+    get_error_solution_repo,
+    get_log_parser,
+)
 from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.analysis import (
     ParseLogsRequest,

@@ -31,7 +31,7 @@ export type IncidentRow = {
   end_time: string
   sds_link: string | null
   sds_solution_content: string | null
-  cpmd_solution_content: string | null
+  cpmd_solution_content?: string | null
   eventsInWindow: ApiEvent[]
 }
 
