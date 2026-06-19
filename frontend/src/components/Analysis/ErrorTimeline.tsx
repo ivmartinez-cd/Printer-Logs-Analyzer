@@ -5,7 +5,7 @@ import '../../styles/error-timeline.css'
 interface ErrorTimelineProps {
   events: EnrichedEvent[]
   visibleSeverities: Set<string>
-  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null, cpmdContent?: string | null) => void
 }
 
 type DayEvents = {
@@ -242,7 +242,8 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
                         onViewSolution(
                           evt.code,
                           evt.code_solution_content || (evt.code_solution_url ? null : evt.code_description),
-                          evt.code_solution_url
+                          evt.code_solution_url,
+                          evt.cpmd_solution_content
                         )
                       }
                       title="Ver solución técnica"

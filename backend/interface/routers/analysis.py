@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from backend.application.parsers.log_parser import LogParser
 from backend.application.services.analysis_service import AnalysisService
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
+from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.interface.auth import authenticate
-from backend.interface.deps import get_analysis_service, get_error_code_repo, get_log_parser
+from backend.interface.deps import get_analysis_service, get_error_code_repo, get_error_solution_repo, get_log_parser
 from backend.interface.rate_limiter import limiter
 from backend.interface.schemas.analysis import (
     ParseLogsRequest,
@@ -38,6 +39,7 @@ def parse_logs(
     parser: LogParser = Depends(get_log_parser),
     analysis_service: AnalysisService = Depends(get_analysis_service),
     error_code_repository: ErrorCodeRepository = Depends(get_error_code_repo),
+    error_solution_repository: ErrorSolutionRepository = Depends(get_error_solution_repo),
 ) -> ParseLogsResponse:
     if len(payload.logs) > MAX_LOGS_LENGTH:
         raise HTTPException(status_code=400, detail="logs exceeds max length")
@@ -48,7 +50,16 @@ def parse_logs(
     unique_codes = list(dict.fromkeys(e.code for e in report.events))
     catalog_map = error_code_repository.get_by_codes(unique_codes)
 
-    events = enrich_events_with_catalog(report.events, catalog_map)
+    # Fetch CPMD solutions if model_family is provided
+    cpmd_map = {}
+    if payload.model_family:
+        try:
+            sols = error_solution_repository.list_by_model(payload.model_family)
+            cpmd_map = {s.code: s for s in sols}
+        except Exception as e:
+            _logger.error("Error fetching CPMD solutions for %s: %s", payload.model_family, e)
+
+    events = enrich_events_with_catalog(report.events, catalog_map, cpmd_map)
     analysis = analysis_service.analyze(events)
 
     errors = [

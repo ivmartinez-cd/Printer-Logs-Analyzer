@@ -408,23 +408,30 @@ async def insight_device_alerts(
     request: Request,
     serial: str,
     settings: Settings = Depends(get_settings),
-) -> Dict[str, Any]:
+) -> List[Dict[str, Any]]:
     if not (
         settings.insight_portal_url and settings.insight_api_key and settings.insight_api_secret
     ):
-        return {"insight_configured": False}
+        return []
 
     serial = extract_serial_number(serial)
     if not serial:
-        return {"insight_configured": False}
-    return await asyncio.to_thread(
+        return []
 
+    raw = await asyncio.to_thread(
         _insight_get_device_alerts,
         settings.insight_portal_url,
         settings.insight_api_key,
         settings.insight_api_secret,
         serial,
     )
+    # get_device_alerts returns a dict: {"current": [...], "history": [...], ...}
+    # The public API exposes only the active (current) alerts as a list.
+    if isinstance(raw, dict):
+        return raw.get("current", [])
+    if isinstance(raw, list):
+        return raw
+    return []
 
 
 @router.get(

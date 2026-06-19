@@ -31,13 +31,14 @@ export type IncidentRow = {
   end_time: string
   sds_link: string | null
   sds_solution_content: string | null
+  cpmd_solution_content: string | null
   eventsInWindow: ApiEvent[]
 }
 
 interface IncidentsTableProps {
   incidentRows: IncidentRow[]
   onEditCode: (code: string, classification: string, severity: string, sdsLink: string) => void
-  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null, cpmdContent?: string | null) => void
 }
 
 export function IncidentsTable({
@@ -209,7 +210,7 @@ export function IncidentsTable({
                         type="button"
                         className="dashboard-table__code-link"
                         onClick={() =>
-                          onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link)
+                          onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link, inc.cpmd_solution_content)
                         }
                         title="Ver solución"
                       >
@@ -234,12 +235,12 @@ export function IncidentsTable({
                     <td className="dashboard-table__cell-solution" data-label="Solución">
                       <span className="dashboard-table__cell-actions">
                         <span className="dashboard-table__cell-actions-left">
-                          {inc.sds_solution_content || inc.sds_link ? (
+                          {inc.sds_solution_content || inc.sds_link || inc.cpmd_solution_content ? (
                             <button
                               type="button"
                               className="dashboard-table__solution-link"
                               onClick={() =>
-                                onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link)
+                                onViewSolution(inc.code, inc.sds_solution_content, inc.sds_link, inc.cpmd_solution_content)
                               }
                             >
                               Ver solución

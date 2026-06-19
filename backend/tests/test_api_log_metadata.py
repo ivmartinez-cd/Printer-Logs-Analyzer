@@ -66,3 +66,55 @@ def test_parse_logs_empty_metadata_fallback() -> None:
     assert data["log_start_date"] is not None
     assert data["log_end_date"] is not None
     assert data["total_lines"] == 0
+
+
+def test_parse_logs_with_cpmd_enrichment() -> None:
+    """Verifies that CPMD solutions are fetched and enrich the preview output when model_family is provided."""
+    log_text = (
+        "type\tcode\tfecha\thora\tcounter\tfirmware\n"
+        "Error\t13.B2.00\t14-mar-2024 10:00:00\t100\tv1\n"
+    )
+
+    from backend.domain.entities import ErrorSolution, ErrorSolutionFru
+
+    mock_solution = ErrorSolution(
+        model_family="E60075",
+        code="13.B2.00",
+        title="Jam in Tray 2",
+        cause="Paper roller is dirty.",
+        technician_steps=["Clean roller.", "Replace if worn."],
+        frus=[ErrorSolutionFru(part_number="RM1-1234", description="Pickup Roller")],
+        source_audience="service",
+        source_page=12,
+        cpmd_hash="abc",
+    )
+
+    with (
+        patch(
+            "backend.infrastructure.repositories.error_code_repository.ErrorCodeRepository.get_by_codes",
+            return_value={},
+        ),
+        patch(
+            "backend.infrastructure.repositories.error_solution_repository.ErrorSolutionRepository.list_by_model",
+            return_value=[mock_solution],
+        ) as mock_list_by_model,
+    ):
+        client = TestClient(get_app(settings=_make_settings()))
+        response = client.post(
+            "/parser/preview",
+            json={"logs": log_text, "model_family": "E60075"},
+            headers=_HEADERS,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        mock_list_by_model.assert_called_once_with("E60075")
+
+        # Verify the event has been enriched with the CPMD solution content
+        event = data["events"][0]
+        assert event["code_solution_content"] is None
+        assert "RM1-1234" in event["cpmd_solution_content"]
+        assert "Clean roller." in event["cpmd_solution_content"]
+        assert "HP CPMD SERVICE MANUAL SOLUTION" in event["cpmd_solution_content"]
+        assert "cpmd://E60075/13.B2.00" in event["code_solution_url"]

@@ -15,6 +15,7 @@ interface TopCode {
   severity: string
   sds_link?: string | null
   sds_solution_content?: string | null
+  cpmd_solution_content?: string | null
 }
 
 interface CustomCursorProps {
@@ -40,7 +41,7 @@ const CustomCursor = (props: CustomCursorProps) => {
 
 interface TopErrorsChartProps {
   topCodes: TopCode[]
-  onViewSolution?: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
+  onViewSolution?: (code: string, sdsContent?: string | null, sdsUrl?: string | null, cpmdContent?: string | null) => void
   onBarClick?: (code: string) => void
   activeSeverities: Set<string>
 }
@@ -84,7 +85,7 @@ export function TopErrorsChart({
                 tick={(props) => {
                   const { x, y, payload } = props
                   const entry = filteredCodes.find((c) => c.name === payload.value)
-                  const canView = !!(entry?.sds_link || entry?.sds_solution_content)
+                  const canView = !!(entry?.sds_link || entry?.sds_solution_content || entry?.cpmd_solution_content)
                   return (
                     <g transform={`translate(${x},${y})`}>
                       <text
@@ -99,7 +100,7 @@ export function TopErrorsChart({
                         className={canView ? 'chart-y-axis-link' : ''}
                         onClick={() => {
                           if (canView && onViewSolution && entry) {
-                            onViewSolution(entry.name, entry.sds_solution_content, entry.sds_link)
+                            onViewSolution(entry.name, entry.sds_solution_content, entry.sds_link, entry.cpmd_solution_content)
                           }
                         }}
                       >
@@ -132,7 +133,7 @@ export function TopErrorsChart({
                       }}>
                         <div style={{ color: '#e5e7eb', fontWeight: 700, marginBottom: '4px' }}>{data.name}</div>
                         <div style={{ color: '#9aa3b2', fontSize: '12px' }}>Ocurrencias: <span style={{ color: '#fff' }}>{data.count}</span></div>
-                        {(data.sds_link || data.sds_solution_content) && (
+                        {(data.sds_link || data.sds_solution_content || data.cpmd_solution_content) && (
                           <div style={{ color: '#3b82f6', fontSize: '10px', marginTop: '8px', fontWeight: 700 }}>
                             Haga clic en el código para ver solución
                           </div>

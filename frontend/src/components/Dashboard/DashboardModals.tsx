@@ -186,6 +186,7 @@ export function DashboardModals({
           modelId={currentModelId}
           sdsContent={solutionModal.sdsContent}
           sdsUrl={solutionModal.sdsUrl}
+          cpmdContent={solutionModal.cpmdContent}
           onClose={() => setSolutionModal(null)}
         />
       )}
