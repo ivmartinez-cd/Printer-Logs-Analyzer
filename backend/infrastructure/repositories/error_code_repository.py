@@ -1,4 +1,4 @@
-"""Catalog of error codes for enrichment. Persisted in PostgreSQL/Neon.
+"""Catalog of error codes for enrichment. Persisted in PostgreSQL.
 
 When the database is unreachable the repository automatically falls back to a
 local JSON file so the application keeps working behind a corporate firewall.
@@ -44,7 +44,7 @@ class ErrorCode:
 
 
 class ErrorCodeRepository:
-    """Repository that persists error codes in Neon/PostgreSQL.
+    """Repository that persists error codes in PostgreSQL.
 
     On any database connectivity failure the repository transparently falls
     back to a local JSON file so parsing and analysis continue to work.

@@ -1,4 +1,4 @@
-"""Repository for CPMD-extracted error solutions. Persisted in PostgreSQL/Neon.
+"""Repository for CPMD-extracted error solutions. Persisted in PostgreSQL.
 
 When the database is unreachable the repository automatically falls back to a
 local JSON file so the application keeps working behind a corporate firewall.
@@ -25,7 +25,7 @@ _local_write_lock = threading.Lock()
 
 
 class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
-    """Repository for error_solutions (PostgreSQL/Neon).
+    """Repository for error_solutions (PostgreSQL).
 
     Falls back to a local JSON file when the database is unreachable.
     """
@@ -66,17 +66,27 @@ class ErrorSolutionRepository(BaseRepository[ErrorSolution, int]):
         )
 
     def list_by_model(self, model_family: str) -> List[ErrorSolution]:
-        """Return all solutions for a model family, ordered by code."""
-        return self._execute_with_fallback(
+        """Return all solutions for a model family, ordered by code.
+
+        When the DB is available but returns no results, the local JSON
+        file is checked as a supplementary source (CPMD data may have
+        been ingested locally without writing to the remote DB).
+        """
+        result = self._execute_with_fallback(
             self._list_by_model_db, self._list_by_model_local, model_family
         )
+        if not result:
+            result = self._list_by_model_local(model_family)
+        return result
 
     def get_model_families_with_solutions(self) -> set:
         """Return the set of model_family strings that have at least one solution."""
-        return self._execute_with_fallback(
+        db_families = self._execute_with_fallback(
             self._get_model_families_with_solutions_db,
             self._get_model_families_with_solutions_local,
         )
+        local_families = self._get_model_families_with_solutions_local()
+        return db_families | local_families
 
     # ------------------------------------------------------------------
     # Database helpers

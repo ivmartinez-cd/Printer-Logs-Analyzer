@@ -1,4 +1,4 @@
-"""Database migration runner for PostgreSQL/Neon."""
+"""Database migration runner for PostgreSQL."""
 
 import logging
 import os

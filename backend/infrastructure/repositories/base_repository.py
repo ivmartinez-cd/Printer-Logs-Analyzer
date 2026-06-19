@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 class BaseRepository(ABC, Generic[T, ID_TYPE]):
     """
     Repositorio base genérico que implementa el patrón de fallback
-    cuando la base de datos PostgreSQL/Neon no está disponible.
+    cuando la base de datos PostgreSQL no está disponible.
     """
 
     def __init__(self, database: Optional[Database] = None) -> None:

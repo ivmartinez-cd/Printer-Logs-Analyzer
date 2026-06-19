@@ -2,7 +2,7 @@
 
 Bypass para el endpoint POST /models/{id}/cpmd que da 502 en Render free por
 timeout (5-10 min por CPMD). Este script corre en la máquina local y escribe
-directamente en la DB de producción (Neon) usando los mismos servicios.
+directamente en la DB de producción usando los mismos servicios.
 
 Pipeline de extracción (híbrido):
   1. Regex determinista → resuelve ~85-95% de los bloques sin API
@@ -198,7 +198,7 @@ def main(argv: list[str] | None = None) -> None:
         # We only strictly require DB_URL if we are writing to the DB
         print(
             "Error: la variable de entorno DB_URL es requerida para escribir en la DB.\n"
-            '  export DB_URL="<connection string de Neon producción>"\n'
+            '  export DB_URL="<connection string de PostgreSQL producción>"\n'
             "  o usa --output-sql para generar un archivo sin conexión.",
             file=sys.stderr,
         )
