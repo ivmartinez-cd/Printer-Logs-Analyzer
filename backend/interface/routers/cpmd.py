@@ -4,9 +4,8 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-
 from backend.interface.auth import authenticate
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/cpmd", tags=["cpmd"], dependencies=[Depends(authenticate)])
 
