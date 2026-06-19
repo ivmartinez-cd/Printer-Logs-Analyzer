@@ -41,7 +41,7 @@ class TelemetryEvent:
 
 
 class TelemetryRepository:
-    """Repository for device_telemetry_events (PostgreSQL/Neon).
+    """Repository for device_telemetry_events (PostgreSQL).
 
     Falls back to a local JSON file when the database is unreachable.
     """

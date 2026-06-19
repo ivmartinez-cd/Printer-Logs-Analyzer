@@ -37,7 +37,7 @@ class SavedAnalysisSnapshot:
 
 
 class SavedAnalysisRepository:
-    """Repository for saved_analyses table (PostgreSQL/Neon).
+    """Repository for saved_analyses table (PostgreSQL).
 
     Falls back to a local JSON file when the database is unreachable.
     """

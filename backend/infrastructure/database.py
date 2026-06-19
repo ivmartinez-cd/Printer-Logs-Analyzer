@@ -1,4 +1,4 @@
-"""Database connectivity helpers for PostgreSQL/Neon."""
+"""Database connectivity helpers for PostgreSQL."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class DatabaseUnavailableError(Exception):
 
 
 class Database:
-    """Pooled connection manager for PostgreSQL/Neon.
+    """Pooled connection manager for PostgreSQL.
 
     Uses a ThreadedConnectionPool (min=1, max=5) so repeated queries reuse
     existing TCP connections instead of opening a new one each time.
@@ -59,7 +59,7 @@ class Database:
         pool is exhausted, so callers can switch to the local fallback without
         crashing.
 
-        Neon (and other managed Postgres services) close idle connections
+        Managed Postgres services may close idle connections
         without notice.  To avoid surfacing OperationalError / InterfaceError
         to callers when a pooled connection has silently died, we pre-ping
         each connection with ``SELECT 1`` before yielding it.  If the ping
@@ -87,7 +87,7 @@ class Database:
                     cur.execute("SELECT 1")
                 break  # connection is live; exit retry loop
             except (psycopg2.OperationalError, psycopg2.InterfaceError) as exc:
-                # Connection was closed by the server (Neon idle timeout, etc.)
+                # Connection was closed by the server (idle timeout, etc.)
                 last_exc = exc
                 try:
                     pool.putconn(conn, close=True)
