@@ -119,7 +119,7 @@ describe('IncidentsTable', () => {
     )
 
     await user.click(screen.getByRole('button', { name: '53.B0.02' }))
-    expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null)
+    expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null, null)
   })
 
   it('click en "Ver solución" dispara onViewSolution con el contenido correcto', async () => {
@@ -142,7 +142,8 @@ describe('IncidentsTable', () => {
     expect(onViewSolution).toHaveBeenCalledWith(
       '53.B0.02',
       'Reemplazar el fusor',
-      'https://example.com/solution'
+      'https://example.com/solution',
+      null
     )
   })
 
@@ -153,7 +154,7 @@ describe('IncidentsTable', () => {
       <IncidentsTable incidentRows={[row1]} onEditCode={vi.fn()} onViewSolution={onViewSolution} />
     )
     await user.click(screen.getByRole('button', { name: /53\.B0\.02/ }))
-    expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null)
+    expect(onViewSolution).toHaveBeenCalledWith('53.B0.02', null, null, null)
   })
 
 

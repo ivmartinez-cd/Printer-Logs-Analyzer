@@ -6,7 +6,7 @@ import '../../styles/error-heatmap.css'
 interface ErrorHeatmapProps {
   events: EnrichedEvent[]
   visibleSeverities: Set<string>
-  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null, cpmdContent?: string | null) => void
   onEditCode: (code: string, description: string, severity: string, solutionUrl: string) => void
 }
 
@@ -212,12 +212,12 @@ function HeatmapDetailModal({
   hour: number; 
   data: CellData; 
   onClose: () => void;
-  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void;
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null, cpmdContent?: string | null) => void;
   onEditCode: (code: string, description: string, severity: string, solutionUrl: string) => void;
 }) {
   // Group codes by count
   const codeStats = useMemo(() => {
-    const stats: Record<string, { count: number; severity: string; description: string | null; sds_url?: string | null; sds_content?: string | null }> = {}
+    const stats: Record<string, { count: number; severity: string; description: string | null; sds_url?: string | null; sds_content?: string | null; cpmd_content?: string | null }> = {}
     data.events.forEach(e => {
       if (!stats[e.code]) {
         stats[e.code] = { 
@@ -225,7 +225,8 @@ function HeatmapDetailModal({
           severity: (e.code_severity || e.type || 'INFO').toUpperCase(),
           description: e.code_description || null,
           sds_url: e.code_solution_url,
-          sds_content: e.code_solution_content
+          sds_content: e.code_solution_content,
+          cpmd_content: e.cpmd_solution_content || null
         }
       }
       stats[e.code].count++
@@ -273,7 +274,7 @@ function HeatmapDetailModal({
                           <button 
                             type="button"
                             className="heatmap-modal-code-name"
-                            onClick={() => onViewSolution(code, stat.sds_content || (stat.sds_url ? null : (stat.description || null)), stat.sds_url)}
+                            onClick={() => onViewSolution(code, stat.sds_content || (stat.sds_url ? null : (stat.description || null)), stat.sds_url, stat.cpmd_content)}
                             title="Ver solución técnica"
                             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
                           >
@@ -309,7 +310,7 @@ function HeatmapDetailModal({
                       <button 
                         type="button"
                         className={`severity-tag severity-tag--${(evt.code_severity || evt.type || 'INFO').toLowerCase()}`}
-                        onClick={() => onViewSolution(evt.code, evt.code_solution_content || (evt.code_solution_url ? null : evt.code_description), evt.code_solution_url)}
+                        onClick={() => onViewSolution(evt.code, evt.code_solution_content || (evt.code_solution_url ? null : evt.code_description), evt.code_solution_url, evt.cpmd_solution_content)}
                         title="Ver solución técnica"
                         style={{ border: 'none', cursor: 'pointer' }}
                       >

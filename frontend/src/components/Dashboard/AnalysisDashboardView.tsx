@@ -53,7 +53,7 @@ interface AnalysisDashboardViewProps {
   sdsIncident: SdsIncidentData | null
   
   onSetEditCodeInitial: (val: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
-  onSetSolutionModal: (val: { code: string; sdsContent?: string | null; sdsUrl?: string | null } | null) => void
+  onSetSolutionModal: (val: { code: string; sdsContent?: string | null; sdsUrl?: string | null; cpmdContent?: string | null } | null) => void
 }
 
 export function AnalysisDashboardView({
@@ -158,8 +158,8 @@ export function AnalysisDashboardView({
             <TopErrorsChart
               topCodes={topCodes}
               activeSeverities={visibleSeverities}
-              onViewSolution={(code, sdsContent, sdsUrl) =>
-                onSetSolutionModal({ code, sdsContent, sdsUrl })
+              onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
+                onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
               }
               onBarClick={setDrillCode}
             />
@@ -171,8 +171,8 @@ export function AnalysisDashboardView({
           <ErrorHeatmap
             events={events}
             visibleSeverities={visibleSeverities}
-            onViewSolution={(code, sdsContent, sdsUrl) =>
-              onSetSolutionModal({ code, sdsContent, sdsUrl })
+            onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
+              onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
             }
             onEditCode={(code, description, severity, solutionUrl) =>
               onSetEditCodeInitial({ code, description, severity, solutionUrl })
@@ -186,8 +186,8 @@ export function AnalysisDashboardView({
         <ErrorTimeline
           events={events}
           visibleSeverities={visibleSeverities}
-          onViewSolution={(code, sdsContent, sdsUrl) =>
-            onSetSolutionModal({ code, sdsContent, sdsUrl })
+          onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
+            onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
           }
         />
       </section>
@@ -242,8 +242,8 @@ export function AnalysisDashboardView({
                     solutionUrl,
                   })
                 }
-                onViewSolution={(code, sdsContent, sdsUrl) =>
-                  onSetSolutionModal({ code, sdsContent, sdsUrl })
+                onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
+                  onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
                 }
               />
             </div>
@@ -253,8 +253,8 @@ export function AnalysisDashboardView({
         {/* Eventos del periodo */}
         <EventsTable
           events={filteredEvents}
-          onViewSolution={(code, sdsContent, sdsUrl) =>
-            onSetSolutionModal({ code, sdsContent, sdsUrl })
+          onViewSolution={(code, sdsContent, sdsUrl, cpmdContent) =>
+            onSetSolutionModal({ code, sdsContent, sdsUrl, cpmdContent })
           }
         />
 

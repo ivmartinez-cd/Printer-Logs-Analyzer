@@ -7,6 +7,7 @@ export interface SolutionContentModalProps {
   modelId?: string | null
   sdsContent?: string | null
   sdsUrl?: string | null
+  cpmdContent?: string | null
   onClose: () => void
 }
 
@@ -14,6 +15,7 @@ export function SolutionContentModal({
   code,
   sdsContent: initialContent,
   sdsUrl,
+  cpmdContent,
   onClose,
 }: SolutionContentModalProps) {
   const isKaaS = sdsUrl?.includes('kaas.hpcloud.hp.com')
@@ -23,6 +25,10 @@ export function SolutionContentModal({
   const [loading, setLoading] = useState(shouldFetchLive)
   const [source, setSource] = useState<'cache' | 'live'>(initialContent ? 'cache' : 'live')
   const [liveUrl, setLiveUrl] = useState<string | null>(sdsUrl || null)
+  
+  const hasCpmd = !!cpmdContent?.trim()
+  const hasSds = shouldFetchLive || !!content?.trim() || !!sdsUrl?.trim()
+  const [activeTab, setActiveTab] = useState<'cpmd' | 'sds'>(hasCpmd ? 'cpmd' : 'sds')
 
   useEffect(() => {
     // If we have a URL but no content, or it's a KaaS URL, try to fetch live via proxy
@@ -56,48 +62,75 @@ export function SolutionContentModal({
         <div className="log-modal solution-content-modal">
           <div className="log-modal__header">
             <h2 id="solution-modal-title" className="log-modal__title">
-              Solución técnica {loading && '— Cargando...'}
+              Solución técnica {loading && activeTab === 'sds' && '— Cargando...'}
             </h2>
             <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">
               ×
             </button>
           </div>
 
+          {hasCpmd && hasSds && (
+            <div className="solution-content-modal__tabs">
+              <button
+                type="button"
+                className={`solution-content-modal__tab ${activeTab === 'cpmd' ? 'solution-content-modal__tab--active' : ''}`}
+                onClick={() => setActiveTab('cpmd')}
+              >
+                Manual CPMD
+              </button>
+              <button
+                type="button"
+                className={`solution-content-modal__tab ${activeTab === 'sds' ? 'solution-content-modal__tab--active' : ''}`}
+                onClick={() => setActiveTab('sds')}
+              >
+                Catálogo / Portal HP
+              </button>
+            </div>
+          )}
+
           <div className="solution-content-modal__tab-content">
-            {(sdsUrl || liveUrl || source === 'live') && (
-              <p className="solution-content-modal__source">
-                Fuente:{' '}
-                {sdsUrl || liveUrl ? (
-                  <a
-                    href={sdsUrl || liveUrl || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="solution-content-modal__url"
-                  >
-                    HP Portal
-                  </a>
-                ) : (
-                  <span className="solution-content-modal__url">HP Portal</span>
-                )}{' '}
-                <span className="solution-content-modal__url-warning">
-                  ({source === 'live' ? 'contenido actualizado en vivo' : 'versión guardada'})
-                </span>
-              </p>
+            {activeTab === 'cpmd' && hasCpmd && (
+              <pre className="solution-content-modal__body">{cpmdContent}</pre>
             )}
 
-            {loading ? (
-              <div className="solution-content-modal__empty">
-                <span className="log-modal__spinner"></span>
-                Consultando portal HP con tus credenciales...
-              </div>
-            ) : content ? (
-              <pre className="solution-content-modal__body">{content}</pre>
-            ) : (
-              <p className="solution-content-modal__empty">
-                {sdsUrl || liveUrl
-                  ? 'No se pudo recuperar el contenido. El link puede estar vencido o las credenciales SDS son incorrectas.'
-                  : 'Sin información disponible para este código.'}
-              </p>
+            {activeTab === 'sds' && (
+              <>
+                {(sdsUrl || liveUrl || source === 'live') && (
+                  <p className="solution-content-modal__source">
+                    Fuente:{' '}
+                    {sdsUrl || liveUrl ? (
+                      <a
+                        href={sdsUrl || liveUrl || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="solution-content-modal__url"
+                      >
+                        HP Portal
+                      </a>
+                    ) : (
+                      <span className="solution-content-modal__url">HP Portal</span>
+                    )}{' '}
+                    <span className="solution-content-modal__url-warning">
+                      ({source === 'live' ? 'contenido actualizado en vivo' : 'versión guardada'})
+                    </span>
+                  </p>
+                )}
+
+                {loading ? (
+                  <div className="solution-content-modal__empty">
+                    <span className="log-modal__spinner"></span>
+                    Consultando portal HP con tus credenciales...
+                  </div>
+                ) : content ? (
+                  <pre className="solution-content-modal__body">{content}</pre>
+                ) : (
+                  <p className="solution-content-modal__empty">
+                    {sdsUrl || liveUrl
+                      ? 'No se pudo recuperar el contenido. El link puede estar vencido o las credenciales SDS son incorrectas.'
+                      : 'Sin información disponible para este código.'}
+                  </p>
+                )}
+              </>
             )}
           </div>
 

@@ -19,6 +19,7 @@ export function useModals() {
     code: string
     sdsContent?: string | null
     sdsUrl?: string | null
+    cpmdContent?: string | null
   } | null>(null)
   const [helpModalOpen, setHelpModalOpen] = useState(false)
 

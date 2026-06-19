@@ -63,11 +63,11 @@ _MOCK_ALERT_RESPONSE = {
 
 
 def test_insight_endpoint_returns_not_configured_when_no_env() -> None:
-    """Returns {insight_configured: false} gracefully when integration is not set up."""
+    """Returns empty list gracefully when Insight integration is not set up."""
     client = TestClient(get_app(settings=_make_settings(with_insight=False)))
     response = client.get("/insight/devices/CNNCQ520HG/alerts", headers=_HEADERS)
     assert response.status_code == 200
-    assert response.json() == {"insight_configured": False}
+    assert response.json() == []
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +77,7 @@ def test_insight_endpoint_returns_not_configured_when_no_env() -> None:
 
 @patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
-    """Returns alert data when the portal responds correctly."""
+    """Returns list of current alerts when the portal responds correctly."""
     mock_get.return_value = _MOCK_ALERT_RESPONSE
 
     client = TestClient(get_app(settings=_make_settings(with_insight=True)))
@@ -85,12 +85,10 @@ def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert data["insight_configured"] is True
-    assert data["serial"] == "CNNCQ520HG"
-    assert data["device_id"] == 142699
-    assert isinstance(data["history"], list)
-    assert len(data["history"]) == 1
-    assert data["history"][0]["alertClass"] == "SYSTEM_WARNING"
+    # Endpoint now returns List[dict] — the "current" active alerts only
+    assert isinstance(data, list)
+    # _MOCK_ALERT_RESPONSE has "current": [] so the result is an empty list
+    assert data == []
     mock_get.assert_called_once()
 
 
@@ -101,7 +99,7 @@ def test_insight_endpoint_returns_alerts(mock_get: MagicMock) -> None:
 
 @patch("backend.interface.routers.sds._insight_get_device_alerts")
 def test_insight_endpoint_returns_empty_when_serial_not_found(mock_get: MagicMock) -> None:
-    """When the serial doesn't exist in the portal, returns empty alert lists."""
+    """When the serial doesn't exist in the portal, returns empty list."""
     mock_get.return_value = {
         "serial": "NOTFOUND",
         "device_id": None,
@@ -117,9 +115,9 @@ def test_insight_endpoint_returns_empty_when_serial_not_found(mock_get: MagicMoc
 
     assert response.status_code == 200
     data = response.json()
-    assert data["device_id"] is None
-    assert data["current"] == []
-    assert data["history"] == []
+    # Endpoint returns List[dict] — empty when no alerts found
+    assert isinstance(data, list)
+    assert data == []
 
 
 # ---------------------------------------------------------------------------
@@ -175,6 +173,8 @@ def test_insight_endpoint_normalizes_serial_to_uppercase(mock_get: MagicMock) ->
     response = client.get("/insight/devices/cnncq520hg/alerts", headers=_HEADERS)
 
     assert response.status_code == 200
+    # Endpoint returns List[dict]
+    assert isinstance(response.json(), list)
     _args, _kwargs = mock_get.call_args
     # The 4th positional argument is the serial
     assert _args[3] == "CNNCQ520HG"

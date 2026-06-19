@@ -12,6 +12,7 @@ export interface EnrichedEvent extends Event {
   code_description?: string | null
   code_solution_url?: string | null
   code_solution_content?: string | null
+  cpmd_solution_content?: string | null
 }
 
 export interface Incident {
@@ -27,6 +28,7 @@ export interface Incident {
   events: EnrichedEvent[]
   sds_link?: string | null
   sds_solution_content?: string | null
+  cpmd_solution_content?: string | null
 }
 
 export interface AIPdfSummaryResponse {

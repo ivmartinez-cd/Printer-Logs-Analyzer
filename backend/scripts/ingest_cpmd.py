@@ -290,7 +290,9 @@ def main(argv: list[str] | None = None) -> None:
 
     # --- Run ingestion ---
     start = time.monotonic()
-    model_ids = [m.id for m in target_models]
+    model_families = list({m.family for m in target_models if m.family})
+    if not model_families and target_models:
+        model_families = list({m.model_code for m in target_models if m.model_code})
 
     # If exporting SQL, we don't want to skip models just because they are in the DB.
     # We want ALL solutions translated to SQL for those models.
@@ -302,7 +304,7 @@ def main(argv: list[str] | None = None) -> None:
         actual_repo = solution_repo
 
     report = ingest_cpmd(
-        model_ids,
+        model_families,
         pdf_bytes,
         api_key=anthropic_api_key,
         repository=actual_repo,
@@ -314,7 +316,7 @@ def main(argv: list[str] | None = None) -> None:
         _export_to_sql(args.output_sql, report.solutions)
         print(f"\n[OK] SQL exportado a: {args.output_sql}")
         if not db_url:
-            print("  Nota: exportado en modo OFFLINE (ID de modelo no verificado)")
+            print("  Nota: exportado en modo OFFLINE (familia de modelo no verificado)")
 
     if report.skipped and not args.output_sql:
         print("\n[!] CPMD ya procesado (mismo hash) - se omitio la ingesta.")
@@ -396,11 +398,11 @@ def _export_to_sql(output_path: str, solutions: list) -> None:
 
         sql = (
             "INSERT INTO error_solutions\n"
-            "    (model_id, code, title, cause, technician_steps, frus, source_audience, source_page, cpmd_hash)\n"
-            f"VALUES ({esc(s.model_id)}, {esc(s.code)}, {esc(s.title)}, {esc(s.cause)}, \n"
+            "    (model_family, code, title, cause, technician_steps, frus, source_audience, source_page, cpmd_hash)\n"
+            f"VALUES ({esc(s.model_family)}, {esc(s.code)}, {esc(s.title)}, {esc(s.cause)}, \n"
             f"        {esc(steps_json)}::jsonb, {esc(frus_json)}::jsonb, \n"
             f"        {esc(s.source_audience)}, {s.source_page or 'NULL'}, {esc(s.cpmd_hash)})\n"
-            "ON CONFLICT (model_id, code) DO UPDATE SET\n"
+            "ON CONFLICT (model_family, code) DO UPDATE SET\n"
             "    title             = EXCLUDED.title,\n"
             "    cause             = EXCLUDED.cause,\n"
             "    technician_steps  = EXCLUDED.technician_steps,\n"

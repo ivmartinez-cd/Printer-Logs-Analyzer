@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Optional
 from uuid import UUID
 
-from backend.domain.entities import Event, Incident
+from backend.domain.entities import EnrichedEvent, Event, Incident
 from pydantic import BaseModel
 
 
@@ -44,7 +44,7 @@ class ParseLogsRequest(BaseModel):
 class ParseLogsResponse(BaseModel):
     """Parser + analysis response."""
 
-    events: List[Event]
+    events: List[EnrichedEvent]
     incidents: List[Incident]
     global_severity: str
     errors: List[ParserErrorModel]

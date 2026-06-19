@@ -43,6 +43,7 @@ class AnalysisService:
             classification = code
             sds_link = None
             sds_solution_content = None
+            cpmd_solution_content = None
             for evt in group:
                 if evt.code_description and evt.code_description.strip():
                     classification = evt.code_description.strip()
@@ -51,6 +52,10 @@ class AnalysisService:
                 if evt.code_solution_url and evt.code_solution_url.strip():
                     sds_link = evt.code_solution_url.strip()
                     sds_solution_content = getattr(evt, "code_solution_content", None)
+                    break
+            for evt in group:
+                if getattr(evt, "cpmd_solution_content", None):
+                    cpmd_solution_content = getattr(evt, "cpmd_solution_content", None)
                     break
 
             incidents.append(
@@ -67,6 +72,7 @@ class AnalysisService:
                     events=group,
                     sds_link=sds_link,
                     sds_solution_content=sds_solution_content,
+                    cpmd_solution_content=cpmd_solution_content,
                 )
             )
 

@@ -5,7 +5,7 @@ import styles from './EventsTable.module.css'
 
 interface EventsTableProps {
   events: ApiEvent[]
-  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null) => void
+  onViewSolution: (code: string, sdsContent?: string | null, sdsUrl?: string | null, cpmdContent?: string | null) => void
 }
 
 export function EventsTable({ events, onViewSolution }: EventsTableProps) {
@@ -160,12 +160,12 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
                     </td>
                     <td data-label="Mensaje">{evt.code_description?.trim() || evt.code || '—'}</td>
                     <td data-label="Solución" className={styles['dashboard-table__cell-solution']}>
-                      {evt.code_solution_content?.trim() || evt.code_solution_url?.trim() ? (
+                      {evt.code_solution_content?.trim() || evt.code_solution_url?.trim() || evt.cpmd_solution_content?.trim() ? (
                         <button
                           type="button"
                           className={styles['dashboard-table__solution-link']}
                           onClick={() =>
-                            onViewSolution(evt.code, evt.code_solution_content, evt.code_solution_url)
+                            onViewSolution(evt.code, evt.code_solution_content, evt.code_solution_url, evt.cpmd_solution_content)
                           }
                         >
                           Ver solución

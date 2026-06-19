@@ -18,6 +18,7 @@ interface UIState {
     code: string
     sdsContent?: string | null
     sdsUrl?: string | null
+    cpmdContent?: string | null
   } | null
   helpModalOpen: boolean
   monitorWizardOpen: boolean
@@ -30,7 +31,7 @@ interface UIState {
   setEditCodeInitial: (data: { code: string; description: string; severity: string; solutionUrl: string } | null) => void
   setSaveIncidentModalOpen: (open: boolean) => void
   setDeleteConfirm: (data: { id: string; name: string } | null) => void
-  setSolutionModal: (data: { code: string; sdsContent?: string | null; sdsUrl?: string | null } | null) => void
+  setSolutionModal: (data: { code: string; sdsContent?: string | null; sdsUrl?: string | null; cpmdContent?: string | null } | null) => void
   setHelpModalOpen: (open: boolean) => void
   setMonitorWizardOpen: (open: boolean) => void
   closeAllModals: () => void
