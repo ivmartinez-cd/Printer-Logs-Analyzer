@@ -86,6 +86,7 @@ export default function DashboardPage({
     savingCode,
     monitorClientId,
     monitorModels,
+    currentModelFamily,
   } = useAnalysisStore()
 
   const toast = useToast()
@@ -102,7 +103,8 @@ export default function DashboardPage({
     setSolutionModal,
     setHelpModalOpen,
     setMonitorWizardOpen,
-    setSdsModalOpen
+    setSdsModalOpen,
+    setCpmdManualModelFamily,
   } = useUIStore()
 
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
@@ -675,6 +677,15 @@ export default function DashboardPage({
                           >
                             <Router size={16} />
                             {loadingRemoteEws ? 'Conectando...' : 'EWS Remoto'}
+                          </button>
+                          <button
+                            className="dashboard__btn dashboard__btn--secondary"
+                            onClick={() => setCpmdManualModelFamily(currentModelFamily || currentModelName)}
+                            disabled={!(currentModelFamily || currentModelName)}
+                            title="Ver manual de servicio CPMD para este modelo"
+                          >
+                            <FileText size={16} />
+                            Manual CPMD
                           </button>
                           <button
                             className="dashboard__btn dashboard__btn--secondary"

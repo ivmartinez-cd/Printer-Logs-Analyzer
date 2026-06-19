@@ -1,0 +1,177 @@
+[
+  {
+    "id": 1,
+    "model_family": "HP LaserJet Managed E60075",
+    "code": "49.38.07",
+    "title": "Firmware Error - Formatter Crash",
+    "cause": "Formatter board communication failure or corrupted firmware",
+    "technician_steps": [
+      "Turn the printer off via the power switch",
+      "Remove all cables (power, network)",
+      "Wait 30 seconds to discharge capacitors",
+      "Reconnect cables and power on the printer",
+      "If error persists, update firmware via USB using HP Service Manager",
+      "If firmware update fails, replace Formatter Board (B3G84-67901)"
+    ],
+    "frus": [
+      {"part_number": "B3G84-67901", "description": "Formatter Board Assembly"},
+      {"part_number": "B3G84-67914", "description": "Formatter with HDD"}
+    ],
+    "source_audience": "technician",
+    "source_page": 42,
+    "cpmd_hash": "test_hash_001",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 2,
+    "model_family": "HP LaserJet Managed E60075",
+    "code": "49.04.46",
+    "title": "Firmware Error - Communication Failure",
+    "cause": "Network communication failure or EIO card issue",
+    "technician_steps": [
+      "Perform Cold Reset: power off, unplug power cord for 2 minutes",
+      "Check and reseat all network cable connections",
+      "Update printer firmware to latest version via HP Web Jetadmin",
+      "If EIO/JetDirect card is installed, check card seating",
+      "Replace Formatter Board (B3G84-67901) if error persists"
+    ],
+    "frus": [
+      {"part_number": "B3G84-67901", "description": "Formatter Board Assembly"}
+    ],
+    "source_audience": "technician",
+    "source_page": 44,
+    "cpmd_hash": "test_hash_002",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 3,
+    "model_family": "HP LaserJet Managed MFP E62655",
+    "code": "13.B9.A2",
+    "title": "Paper Stay Jam - Fuser Delivery Area",
+    "cause": "Paper stayed in the fuser delivery area. Possible causes: worn fuser, foreign object in paper path, or damaged delivery rollers.",
+    "technician_steps": [
+      "Open the right door and remove any visible jammed paper carefully",
+      "Check the fuser area for torn paper fragments using a flashlight",
+      "Inspect fuser delivery rollers for wear, glazing or damage",
+      "Clean the paper path with compressed air",
+      "Check sensor PS813 (fuser delivery sensor) with Service Diagnostics menu",
+      "If jam recurs frequently (more than 5 times per week), replace the Fuser Assembly",
+      "Verify paper type and weight matches printer specifications (60-220g/m2)"
+    ],
+    "frus": [
+      {"part_number": "B3G84-67905", "description": "Fuser Assembly 110V"},
+      {"part_number": "B3G84-67906", "description": "Fuser Assembly 220V"},
+      {"part_number": "B3G84-67923", "description": "Paper Delivery Assembly"}
+    ],
+    "source_audience": "technician",
+    "source_page": 87,
+    "cpmd_hash": "test_hash_003",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 4,
+    "model_family": "HP LaserJet Managed MFP E62655",
+    "code": "13.D3.D2",
+    "title": "Paper Jam - Duplex Feed Area",
+    "cause": "Paper jammed during duplexing operation. Likely duplex unit sensor or feed roller issue.",
+    "technician_steps": [
+      "Remove paper from the duplex area (open rear door if necessary)",
+      "Inspect duplex feed rollers for wear or contamination",
+      "Check duplex sensor (PS816) operation via Service Menu diagnostics",
+      "Clean feed rollers with IPA-dampened lint-free cloth",
+      "Replace duplex unit if jam occurs on every duplex job"
+    ],
+    "frus": [
+      {"part_number": "B3G84-67930", "description": "Duplex Assembly"},
+      {"part_number": "B3G84-67931", "description": "Duplex Feed Roller Kit"}
+    ],
+    "source_audience": "technician",
+    "source_page": 92,
+    "cpmd_hash": "test_hash_004",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 5,
+    "model_family": "HP LaserJet Managed MFP E62655",
+    "code": "49.38.07",
+    "title": "Firmware Error - Formatter Crash",
+    "cause": "Formatter board communication failure or corrupted firmware",
+    "technician_steps": [
+      "Turn the printer off via the power switch",
+      "Remove all cables (power, network)",
+      "Wait 30 seconds to discharge capacitors",
+      "Reconnect cables and power on the printer",
+      "If error persists, update firmware via USB using HP Service Manager",
+      "If firmware update fails, replace Formatter Board"
+    ],
+    "frus": [
+      {"part_number": "B3G84-67901", "description": "Formatter Board Assembly"},
+      {"part_number": "B3G84-67914", "description": "Formatter with HDD"}
+    ],
+    "source_audience": "technician",
+    "source_page": 42,
+    "cpmd_hash": "test_hash_005",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 6,
+    "model_family": "HP LaserJet Managed E60075",
+    "code": "13.WX.YZ",
+    "title": "Atasco de Papel en Ruta (CPMD Genérico)",
+    "cause": "Permanencia o demora de papel detectada por algún sensor del trayecto de impresión.",
+    "technician_steps": [
+      "Abrir puertas laterales y traseras para verificar obstrucciones de papel.",
+      "Identificar W (tipo atasco): 13.A1 (Bandeja 1), 13.B9 (Fusor), 13.D3 (Duplex).",
+      "Limpiar sensores de paso de papel con aire comprimido.",
+      "Realizar prueba de sensores desde el menú de diagnósticos del panel."
+    ],
+    "frus": [
+      {"part_number": "RM2-1256-000CN", "description": "Fuser Assembly E60075"},
+      {"part_number": "J8J70-67903", "description": "Roller Kit Tray 2-5"}
+    ],
+    "source_audience": "technician",
+    "source_page": 115,
+    "cpmd_hash": "generic_jam_e60075",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 7,
+    "model_family": "HP LaserJet Managed E60075",
+    "code": "34.XX.YY",
+    "title": "Fallo de Sensor o Solenoide (CPMD Genérico)",
+    "cause": "Fallo en circuito o respuesta de solenoides/motores del sistema de alimentación de papel.",
+    "technician_steps": [
+      "Verificar conexiones del motor/solenoide afectado.",
+      "Ejecutar prueba de componentes (Component Test) desde el menú de servicio.",
+      "Medir continuidad en el cableado del componente implicado."
+    ],
+    "frus": [
+      {"part_number": "J8J70-67909", "description": "Paper Pickup Motor"},
+      {"part_number": "J8J70-67910", "description": "Lifter Drive Assembly"}
+    ],
+    "source_audience": "technician",
+    "source_page": 134,
+    "cpmd_hash": "generic_sensor_e60075",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 8,
+    "model_family": "HP LaserJet Managed E60075",
+    "code": "53.XX.YY",
+    "title": "Error en Inicialización de Módulo (CPMD Genérico)",
+    "cause": "Fallo de comunicación, error de fuser, láser o placa interna al inicializar.",
+    "technician_steps": [
+      "Apagar y encender la impresora.",
+      "Asegurar que el fusor y la placa de formateadora estén correctamente asentados.",
+      "Actualizar firmware a la última versión disponible."
+    ],
+    "frus": [
+      {"part_number": "B3G84-67901", "description": "Formatter Board Assembly"},
+      {"part_number": "RM2-1256-000CN", "description": "Fuser Assembly E60075"}
+    ],
+    "source_audience": "technician",
+    "source_page": 158,
+    "cpmd_hash": "generic_init_e60075",
+    "created_at": "2024-01-01T00:00:00+00:00"
+  }
+]
