@@ -256,25 +256,23 @@ def main(argv: list[str] | None = None) -> None:
             sys.exit(1)
 
     if args.family:
-        if not model_repo:
-            print("Error: se requiere DB_URL para resolver familias.", file=sys.stderr)
-            sys.exit(1)
-        try:
-            models = model_repo.list_by_family(args.family)
+        families = [f.strip() for f in args.family.split(",") if f.strip()]
+        for fam in families:
+            models = []
+            if model_repo:
+                try:
+                    models = model_repo.list_by_family(fam)
+                except Exception as e:
+                    _logger.warning("No se pudo conectar a la DB para resolver la familia %s. Usando fallback. Error: %s", fam, e)
+
             if not models:
-                print(
-                    f"Error: no se encontraron modelos para la familia {args.family}",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-            # Avoid duplicates if both --model-id and --family are used
-            existing_ids = {m.id for m in target_models}
-            for m in models:
-                if m.id not in existing_ids:
-                    target_models.append(m)
-        except DatabaseUnavailableError:
-            print("Error: no se pudo conectar a la DB para resolver la familia.", file=sys.stderr)
-            sys.exit(1)
+                mock_m = _MockModel(None, name=f"Family {fam}", code=fam, family=fam)
+                target_models.append(mock_m)
+            else:
+                existing_ids = {m.id for m in target_models}
+                for m in models:
+                    if m.id not in existing_ids:
+                        target_models.append(m)
 
     # --- Dry-run: parse and analyse blocks, no DB/API calls ---
     if args.dry_run:
@@ -368,10 +366,11 @@ class _DummyRepo:
 class _MockModel:
     """Simple mock for PrinterModel when DB is unavailable."""
 
-    def __init__(self, id_uuid: UUID, name: str, code: str):
+    def __init__(self, id_uuid: UUID | None, name: str, code: str, family: str | None = None):
         self.id = id_uuid
         self.model_name = name
         self.model_code = code
+        self.family = family
 
 
 def _export_to_sql(output_path: str, solutions: list) -> None:
