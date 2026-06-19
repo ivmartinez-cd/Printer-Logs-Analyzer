@@ -28,7 +28,7 @@ def is_wildcard_match(code: str, pattern: str) -> bool:
     """Check if code matches pattern containing wildcards like '*' or variables W, X, Y, Z."""
     c = code.strip().upper()
     p = pattern.strip().upper()
-    
+
     # Escape everything except *, ?, W, X, Y, Z
     regex = "^" + re.escape(p) + "$"
     regex = regex.replace(r"\*", ".*")
@@ -37,7 +37,7 @@ def is_wildcard_match(code: str, pattern: str) -> bool:
     regex = regex.replace("X", "[0-9A-Z]")
     regex = regex.replace("Y", "[0-9A-Z]")
     regex = regex.replace("Z", "[0-9A-Z]")
-    
+
     try:
         return bool(re.match(regex, c))
     except Exception:
@@ -53,7 +53,7 @@ def enrich_events_with_catalog(
     cpmd_map = cpmd_map or {}
     for evt in events:
         row = catalog_map.get(evt.code)
-        
+
         # Check exact CPMD match first, then fallback to wildcard matches
         cpmd_sol = cpmd_map.get(evt.code)
         if not cpmd_sol:

@@ -17,22 +17,39 @@ export function CpmdManualModal({ modelFamily, onClose }: CpmdManualModalProps) 
   const [selectedSol, setSelectedSol] = useState<ErrorSolution | null>(null)
 
   useEffect(() => {
-    setLoading(true)
-    setError(null)
+    let ignore = false
+    
+    Promise.resolve().then(() => {
+      if (!ignore) {
+        setLoading(true)
+        setError(null)
+      }
+    })
+
     getCpmdSolutions(modelFamily)
       .then((data) => {
-        setSolutions(data)
-        if (data.length > 0) {
-          setSelectedSol(data[0])
+        if (!ignore) {
+          setSolutions(data)
+          if (data.length > 0) {
+            setSelectedSol(data[0])
+          }
         }
       })
       .catch((err) => {
-        console.error('Error fetching CPMD manual:', err)
-        setError('No se pudo cargar el manual CPMD para este modelo.')
+        if (!ignore) {
+          console.error('Error fetching CPMD manual:', err)
+          setError('No se pudo cargar el manual CPMD para este modelo.')
+        }
       })
       .finally(() => {
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       })
+
+    return () => {
+      ignore = true
+    }
   }, [modelFamily])
 
   const filteredSolutions = solutions.filter((sol) => {

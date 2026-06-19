@@ -233,7 +233,7 @@ export default function DashboardPage({
     } finally {
       setAutoExtracting(false)
     }
-  }, [handleAnalyze, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast, saveToSearchHistory])
+  }, [handleAnalyze, setCurrentModelId, setCurrentSerialNumber, setError, setLogModalOpen, toast, saveToSearchHistory, dashboardRef])
 
   useEffect(() => {
     if (initialIsSavedList) {
