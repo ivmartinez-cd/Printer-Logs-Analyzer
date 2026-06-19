@@ -1,7 +1,7 @@
 import re
 from typing import Dict, List
 
-from backend.domain.entities import EnrichedEvent, ErrorSolution, Event, Incident
+from backend.domain.entities import EnrichedEvent, Event, Incident
 from backend.infrastructure.repositories.error_code_repository import ErrorCode
 
 
@@ -23,44 +23,13 @@ def extract_serial_number(value: str | None) -> str | None:
     return val.upper()
 
 
-
-def is_wildcard_match(code: str, pattern: str) -> bool:
-    """Check if code matches pattern containing wildcards like '*' or variables W, X, Y, Z."""
-    c = code.strip().upper()
-    p = pattern.strip().upper()
-
-    # Escape everything except *, ?, W, X, Y, Z
-    regex = "^" + re.escape(p) + "$"
-    regex = regex.replace(r"\*", ".*")
-    regex = regex.replace(r"\?", ".")
-    regex = regex.replace("W", "[0-9A-Z]")
-    regex = regex.replace("X", "[0-9A-Z]")
-    regex = regex.replace("Y", "[0-9A-Z]")
-    regex = regex.replace("Z", "[0-9A-Z]")
-
-    try:
-        return bool(re.match(regex, c))
-    except Exception:
-        return False
-
-
 def enrich_events_with_catalog(
     events: List[Event],
     catalog_map: Dict[str, ErrorCode],
-    cpmd_map: Dict[str, ErrorSolution] = None,
 ) -> List[EnrichedEvent]:
     enriched: List[EnrichedEvent] = []
-    cpmd_map = cpmd_map or {}
     for evt in events:
         row = catalog_map.get(evt.code)
-
-        # Check exact CPMD match first, then fallback to wildcard matches
-        cpmd_sol = cpmd_map.get(evt.code)
-        if not cpmd_sol:
-            for pattern, sol in cpmd_map.items():
-                if is_wildcard_match(evt.code, pattern):
-                    cpmd_sol = sol
-                    break
 
         data = evt.model_dump()
         if row:
@@ -68,28 +37,6 @@ def enrich_events_with_catalog(
             data["code_description"] = row.description
             data["code_solution_url"] = row.solution_url
             data["code_solution_content"] = row.solution_content
-
-        if cpmd_sol:
-            cpmd_text = "--- HP CPMD SERVICE MANUAL SOLUTION ---\n"
-            if cpmd_sol.title:
-                cpmd_text += f"[Title]: {cpmd_sol.title}\n"
-            if cpmd_sol.cause:
-                cpmd_text += f"[Cause]:\n{cpmd_sol.cause}\n\n"
-            if cpmd_sol.technician_steps:
-                cpmd_text += "[Technician Steps]:\n"
-                for idx, step in enumerate(cpmd_sol.technician_steps, 1):
-                    cpmd_text += f"{idx}. {step}\n"
-                cpmd_text += "\n"
-            if cpmd_sol.frus:
-                cpmd_text += "[Replacement Parts (FRUs)]:\n"
-                for fru in cpmd_sol.frus:
-                    cpmd_text += f"- {fru.part_number}: {fru.description}\n"
-                cpmd_text += "\n"
-
-            data["cpmd_solution_content"] = cpmd_text
-
-            if not data.get("code_solution_url"):
-                data["code_solution_url"] = f"cpmd://{cpmd_sol.model_family}/{cpmd_sol.code}"
 
         enriched.append(EnrichedEvent(**data))
     return enriched

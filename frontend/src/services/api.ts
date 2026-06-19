@@ -7,7 +7,6 @@ import type {
   SavedAnalysisFull,
   DeviceHealth,
   AIDiagnosisResponse,
-  ErrorSolution,
   DeviceAlertsResponse,
   ExtractSdsLogsResponse,
   RemoteEwsResponse,
@@ -31,7 +30,7 @@ import type {
   CdsIncident,
 } from '../types/api'
 
-const API_BASE =
+export const API_BASE =
   import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8001'
 
 function normalizeEnvValue(value: string | undefined): string {
@@ -115,16 +114,15 @@ export async function validateLogs(
   return handleResponse<ValidateLogsResponse>(res)
 }
 
-export async function getCpmdSolutions(
+export async function getCpmdPdfUrl(
   modelFamily: string,
-  signal?: AbortSignal
-): Promise<ErrorSolution[]> {
-  const res = await apiFetch(`${API_BASE}/parser/cpmd/${encodeURIComponent(modelFamily)}`, {
+): Promise<{ url: string; label: string } | null> {
+  const res = await apiFetch(`${API_BASE}/cpmd/pdf-url?model_family=${encodeURIComponent(modelFamily)}`, {
     method: 'GET',
     headers: apiHeaders(),
-    signal,
   })
-  return handleResponse<ErrorSolution[]>(res)
+  if (res.status === 404) return null
+  return handleResponse<{ url: string; label: string }>(res)
 }
 
 export interface UpsertErrorCodeResult {
@@ -253,19 +251,6 @@ export async function deleteSavedAnalysis(id: string, signal?: AbortSignal): Pro
 // --- Modelos de impresora ---
 
 
-
-export async function getErrorSolution(
-  modelFamily: string,
-  code: string,
-  signal?: AbortSignal
-): Promise<ErrorSolution | null> {
-  const res = await apiFetch(
-    `${API_BASE}/models/${encodeURIComponent(modelFamily)}/error-solutions/${encodeURIComponent(code)}`,
-    { method: 'GET', headers: apiHeaders(), signal }
-  )
-  if (res.status === 404) return null
-  return handleResponse<ErrorSolution>(res)
-}
 
 // --- Diagnóstico con IA ---
 

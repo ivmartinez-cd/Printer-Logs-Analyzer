@@ -32,7 +32,6 @@ export function getIncidentTableRows(
         end_time: new Date(Math.max(...times)).toISOString(),
         sds_link: inc.sds_link ?? null,
         sds_solution_content: inc.sds_solution_content ?? null,
-        cpmd_solution_content: inc.cpmd_solution_content ?? null,
         eventsInWindow: inWindow,
       }
     })
@@ -48,7 +47,7 @@ export function getTopIncidentsForChart(
   events: ApiEvent[],
   selectedDate: DateFilter,
   n: number
-): { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null; cpmd_solution_content?: string | null }[] {
+): { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null }[] {
   const window = getWindowForDate(events, selectedDate)
   if (!window) return []
   const { minTs, maxTs } = window
@@ -70,7 +69,6 @@ export function getTopIncidentsForChart(
       severity: x.inc.severity,
       sds_link: x.inc.sds_link,
       sds_solution_content: x.inc.sds_solution_content,
-      cpmd_solution_content: x.inc.cpmd_solution_content
     }))
 }
 

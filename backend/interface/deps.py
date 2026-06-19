@@ -3,7 +3,6 @@ from backend.application.services.analysis_service import AnalysisService
 from backend.infrastructure.config import get_settings
 from backend.infrastructure.database import Database
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
-from backend.infrastructure.repositories.error_solution_repository import ErrorSolutionRepository
 from backend.infrastructure.repositories.maintenance_repository import MaintenanceRepository
 from backend.infrastructure.repositories.notification_repository import NotificationRepository
 from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
@@ -14,7 +13,6 @@ __all__ = [
     "get_db",
     "get_error_code_repo",
     "get_saved_analysis_repo",
-    "get_error_solution_repo",
     "get_telemetry_repo",
     "get_maintenance_repo",
     "get_notification_repo",
@@ -37,10 +35,6 @@ def get_error_code_repo(db: Database = Depends(get_db)) -> ErrorCodeRepository:
 
 def get_saved_analysis_repo(db: Database = Depends(get_db)) -> SavedAnalysisRepository:
     return SavedAnalysisRepository(db)
-
-
-def get_error_solution_repo(db: Database = Depends(get_db)) -> ErrorSolutionRepository:
-    return ErrorSolutionRepository(db)
 
 
 def get_telemetry_repo(db: Database = Depends(get_db)) -> TelemetryRepository:

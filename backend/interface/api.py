@@ -12,6 +12,7 @@ from backend.interface.rate_limiter import limiter
 from backend.interface.routers import (
     ai,
     analysis,
+    cpmd,
     error_codes,
     fleet,
     maintenance,
@@ -21,6 +22,7 @@ from backend.interface.routers import (
 )
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -99,6 +101,12 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(fleet.router)
     app.include_router(maintenance.router)
     app.include_router(notifications.router)
+    app.include_router(cpmd.router)
+
+    from pathlib import Path
+    cpmd_dir = Path(__file__).parent.parent.parent / "data" / "cpmd"
+    if cpmd_dir.exists():
+        app.mount("/static/cpmd", StaticFiles(directory=str(cpmd_dir)), name="cpmd-static")
 
     return app
 

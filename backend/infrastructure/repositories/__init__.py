@@ -2,7 +2,6 @@
 
 from .base_repository import BaseRepository
 from .error_code_repository import ErrorCodeRepository
-from .error_solution_repository import ErrorSolutionRepository
 from .fleet_repository import FleetRepository
 from .maintenance_repository import MaintenanceRepository
 from .notification_repository import NotificationRepository

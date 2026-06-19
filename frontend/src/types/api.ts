@@ -12,7 +12,6 @@ export interface EnrichedEvent extends Event {
   code_description?: string | null
   code_solution_url?: string | null
   code_solution_content?: string | null
-  cpmd_solution_content?: string | null
 }
 
 export interface Incident {
@@ -28,7 +27,6 @@ export interface Incident {
   events: EnrichedEvent[]
   sds_link?: string | null
   sds_solution_content?: string | null
-  cpmd_solution_content?: string | null
 }
 
 export interface AIPdfSummaryResponse {
@@ -126,23 +124,6 @@ export interface DeviceHealth {
   events_count: number
 }
 
-export interface ErrorSolutionFru {
-  part_number: string
-  description: string
-}
-
-export interface ErrorSolution {
-  id: number | null
-  model_id: string
-  code: string
-  title: string | null
-  cause: string | null
-  technician_steps: string[]
-  frus: ErrorSolutionFru[]
-  source_audience: string | null
-  source_page: number | null
-  cpmd_hash: string | null
-}
 
 
 // --- Diagnóstico con IA ---

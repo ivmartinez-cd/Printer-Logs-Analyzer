@@ -35,9 +35,6 @@ class EnrichedEvent(Event):
     code_solution_content: Optional[str] = Field(
         None, description="Fetched text content of the solution page"
     )
-    cpmd_solution_content: Optional[str] = Field(
-        None, description="CPMD solution content formatted as text"
-    )
 
 
 class Incident(BaseModel):
@@ -57,7 +54,6 @@ class Incident(BaseModel):
     events: List[EnrichedEvent]
     sds_link: Optional[str] = None
     sds_solution_content: Optional[str] = None
-    cpmd_solution_content: Optional[str] = None
 
     model_config = {"frozen": True}
 
@@ -109,33 +105,6 @@ class ConsumableWarning(BaseModel):
 
     model_config = {"frozen": True}
 
-
-
-class ErrorSolutionFru(BaseModel):
-    """A Field Replaceable Unit referenced in an error solution."""
-
-    part_number: str
-    description: str
-
-    model_config = {"frozen": True}
-
-
-class ErrorSolution(BaseModel):
-    """Technical solution for an error code extracted from a CPMD document."""
-
-    id: Optional[int] = None
-    model_family: str
-    code: str
-    title: Optional[str] = None
-    cause: Optional[str] = None
-    technician_steps: List[str] = Field(default_factory=list)
-    frus: List[ErrorSolutionFru] = Field(default_factory=list)
-    source_audience: Optional[str] = None  # 'service' | 'customers'
-    source_page: Optional[int] = None
-    cpmd_hash: Optional[str] = None
-    created_at: Optional[datetime] = None
-
-    model_config = {"frozen": True}
 
 
 class AnalysisResult(BaseModel):

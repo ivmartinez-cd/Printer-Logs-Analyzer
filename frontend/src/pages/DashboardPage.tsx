@@ -6,6 +6,8 @@ import {
   extractSdsLogs,
   generatePdfSummary,
   getRemoteEwsAccess,
+  getCpmdPdfUrl,
+  API_BASE,
 } from '../services/api'
 import { useHpCacheRefresh } from '../hooks/useHpCacheRefresh'
 import { NotificationsBell } from '../components/ui/NotificationsBell'
@@ -104,7 +106,6 @@ export default function DashboardPage({
     setHelpModalOpen,
     setMonitorWizardOpen,
     setSdsModalOpen,
-    setCpmdManualModelFamily,
   } = useUIStore()
 
   const [savedList, setSavedList] = useState<SavedAnalysisSummary[] | null>(null)
@@ -680,7 +681,20 @@ export default function DashboardPage({
                           </button>
                           <button
                             className="dashboard__btn dashboard__btn--secondary"
-                            onClick={() => setCpmdManualModelFamily(currentModelFamily || currentModelName)}
+                            onClick={async () => {
+                              const family = currentModelFamily || currentModelName
+                              if (!family) return
+                              try {
+                                const result = await getCpmdPdfUrl(family)
+                                if (result) {
+                                  window.open(`${API_BASE}${result.url}`, '_blank', 'noopener,noreferrer')
+                                } else {
+                                  toast.showWarning('No hay manual CPMD disponible para este modelo.')
+                                }
+                              } catch {
+                                toast.showError('Error al buscar el manual CPMD.')
+                              }
+                            }}
                             disabled={!(currentModelFamily || currentModelName)}
                             title="Ver manual de servicio CPMD para este modelo"
                           >
