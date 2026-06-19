@@ -125,6 +125,23 @@ export async function getCpmdPdfUrl(
   return handleResponse<{ url: string; label: string }>(res)
 }
 
+export async function uploadCpmdPdf(
+  file: File,
+  keywords: string,
+  label: string,
+): Promise<{ url: string; label: string }> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('keywords', keywords)
+  form.append('label', label)
+  const res = await apiFetch(`${API_BASE}/cpmd/upload`, {
+    method: 'POST',
+    headers: { 'x-api-key': normalizeEnvValue(import.meta.env.VITE_API_KEY) || 'dev' },
+    body: form,
+  }, 120_000)
+  return handleResponse<{ url: string; label: string }>(res)
+}
+
 export interface UpsertErrorCodeResult {
   id: string
   code: string
