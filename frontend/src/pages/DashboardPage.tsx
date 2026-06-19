@@ -20,6 +20,7 @@ import type {
   RealtimeConsumable,
   AIPdfSummaryResponse,
 } from '../types/api'
+import { CpmdUploadModal } from '../components/Parser/CpmdUploadModal'
 import { AddCodeToCatalogModal } from '../components/Parser/AddCodeToCatalogModal'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { SavedAnalysisList } from '../components/Analysis/SavedAnalysisList'
@@ -124,6 +125,7 @@ export default function DashboardPage({
   const [pdfAiSummary, setPdfAiSummary] = useState<AIPdfSummaryResponse | null>(null)
   const [isAiPdfReady, setIsAiPdfReady] = useState(false)
   const [isGeneratingAiPdf, setIsGeneratingAiPdf] = useState(false)
+  const [cpmdUploadFamily, setCpmdUploadFamily] = useState<string | null>(null)
 
   const lastNavState = useRef({ viewMode, currentSerialNumber, selectedSavedId })
 
@@ -689,7 +691,7 @@ export default function DashboardPage({
                                 if (result) {
                                   window.open(`${API_BASE}${result.url}`, '_blank', 'noopener,noreferrer')
                                 } else {
-                                  toast.showWarning('No hay manual CPMD disponible para este modelo.')
+                                  setCpmdUploadFamily(family)
                                 }
                               } catch {
                                 toast.showError('Error al buscar el manual CPMD.')
@@ -765,6 +767,18 @@ export default function DashboardPage({
         deletingId={deletingId}
         setDeletingId={setDeletingId}
       />
+
+      {cpmdUploadFamily && (
+        <CpmdUploadModal
+          modelFamily={cpmdUploadFamily}
+          onClose={() => setCpmdUploadFamily(null)}
+          onUploaded={(pdfUrl) => {
+            setCpmdUploadFamily(null)
+            toast.showSuccess('Manual CPMD subido correctamente')
+            window.open(pdfUrl, '_blank', 'noopener,noreferrer')
+          }}
+        />
+      )}
     </div>
   )
 }
