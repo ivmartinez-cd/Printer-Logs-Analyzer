@@ -264,7 +264,7 @@ def main(argv: list[str] | None = None) -> None:
                     models = model_repo.list_by_family(fam)
                 except Exception as e:
                     _logger.warning("No se pudo conectar a la DB para resolver la familia %s. Usando fallback. Error: %s", fam, e)
-            
+
             if not models:
                 mock_m = _MockModel(None, name=f"Family {fam}", code=fam, family=fam)
                 target_models.append(mock_m)
