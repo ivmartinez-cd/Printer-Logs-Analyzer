@@ -89,6 +89,12 @@ def _watch(
         time.sleep(_POLL_INTERVAL_S)
         try:
             ops = session.get_hp_operations(device_id)
+            _logger.info(
+                "HP ops poll for %s — %d rows total: %s",
+                serial,
+                len(ops),
+                [(o.get("operation"), o.get("last_known_state")) for o in ops],
+            )
 
             # The table lists every past run; keep only the newest row per cache op
             # type (the table is ordered newest-first) to avoid stale/duplicate rows.
@@ -99,10 +105,21 @@ def _watch(
                     latest_by_op[op] = o
             cache_ops = list(latest_by_op.values())
             if not cache_ops:
+                _logger.info(
+                    "HP ops poll for %s — no cache ops found in %d rows (CACHE_OP_TYPES=%s)",
+                    serial,
+                    len(ops),
+                    CACHE_OP_TYPES,
+                )
                 continue
             # Prefer ops whose "sent" changed vs baseline (our new run).
             fresh = [o for o in cache_ops if o.get("sent", "") != baseline.get(o["operation"], "")]
             target = fresh or cache_ops
+            _logger.info(
+                "HP ops poll for %s — target: %s",
+                serial,
+                [(o.get("operation"), o.get("last_known_state"), o.get("sent")) for o in target],
+            )
             if all(_is_terminal(o.get("last_known_state")) for o in target):
                 status, message = _summarize(target)
                 repo.update_status(
