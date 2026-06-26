@@ -251,7 +251,7 @@
 .fleet-kpi__value { font-size: 2.2rem; font-weight: 800; line-height: 1; color: #f1f5f9; }
 
 .fleet-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;
 }
 
 .fleet-card.glass-card { cursor: pointer; border-left: 4px solid rgba(255, 255, 255, 0.12); }
