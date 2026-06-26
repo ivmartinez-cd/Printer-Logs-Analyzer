@@ -1,6 +1,21 @@
 import { useState } from 'react'
 import type { CdsIncident } from '../../types/api'
 
+function calcCheckDigit(numStr: string): string {
+  const clean = numStr.replace(/\D/g, '')
+  if (!clean) return ''
+  let sum = 0
+  for (let i = 0; i < clean.length; i++) {
+    sum += Number(clean[i]) * (i % 2 === 0 ? 3 : 1)
+  }
+  return String((10 - (sum % 10)) % 10)
+}
+
+function formatIncidentNumber(numero: string): string {
+  const cd = calcCheckDigit(numero)
+  return cd ? `${numero}-${cd}` : numero
+}
+
 interface CdsIncidentsPanelProps {
   serial: string | null
   data: CdsIncident[]
@@ -79,7 +94,7 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                               rel="noopener noreferrer"
                               className="cds-incidents-panel__link"
                             >
-                              {inc.numero_incidente}
+                              {formatIncidentNumber(inc.numero_incidente)}
                             </a>
                           </td>
                           <td>{inc.motivo}</td>
