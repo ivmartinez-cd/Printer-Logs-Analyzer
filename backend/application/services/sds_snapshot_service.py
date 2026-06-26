@@ -21,7 +21,10 @@ from backend.application.services.sds_web_service import (
 from backend.infrastructure.config import get_settings
 from backend.infrastructure.repositories.error_code_repository import ErrorCodeRepository
 from backend.infrastructure.repositories.saved_analysis_repository import SavedAnalysisRepository
-from backend.infrastructure.repositories.telemetry_repository import TelemetryEvent, TelemetryRepository
+from backend.infrastructure.repositories.telemetry_repository import (
+    TelemetryEvent,
+    TelemetryRepository,
+)
 from backend.interface.utils import (
     enrich_events_with_catalog,
     extract_serial_number,
