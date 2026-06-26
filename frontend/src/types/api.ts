@@ -126,6 +126,23 @@ export interface DeviceHealth {
 
 
 
+export interface SnapshotDiffResult {
+  older: SavedAnalysisFull
+  newer: SavedAnalysisFull
+  diff: {
+    codigos_nuevos: string[]
+    codigos_desaparecidos: string[]
+    cambios_ocurrencias: Array<{
+      code: string
+      saved_occurrences: number
+      current_occurrences: number
+      delta: number
+    }>
+    diferencia_dias: number
+    tendencia: 'mejoro' | 'estable' | 'empeoro'
+  }
+}
+
 // --- Diagnóstico con IA ---
 
 export interface AIDiagnosisResponse {

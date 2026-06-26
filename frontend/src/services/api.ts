@@ -29,6 +29,7 @@ import type {
   AIPdfSummaryResponse,
   CdsIncident,
   DeviceStatusResponse,
+  SnapshotDiffResult,
 } from '../types/api'
 
 export const API_BASE =
@@ -264,6 +265,18 @@ export async function deleteSavedAnalysis(id: string, signal?: AbortSignal): Pro
       typeof err.detail === 'string' ? err.detail : res.statusText || 'Request failed'
     )
   }
+}
+
+export async function compareSnapshots(
+  id: string,
+  targetId: string,
+  signal?: AbortSignal
+): Promise<SnapshotDiffResult> {
+  const res = await apiFetch(
+    `${API_BASE}/saved-analyses/${encodeURIComponent(id)}/compare-with/${encodeURIComponent(targetId)}`,
+    { method: 'GET', headers: apiHeaders(), signal }
+  )
+  return handleResponse<SnapshotDiffResult>(res)
 }
 
 // --- Modelos de impresora ---

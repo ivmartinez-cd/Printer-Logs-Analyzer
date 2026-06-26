@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { formatDateTime } from '../../hooks/useDateFilter'
-import { getDeviceHealth, createSavedAnalysis, previewLogs, extractSdsLogs } from '../../services/api'
+import { getDeviceHealth, createSavedAnalysis, previewLogs, extractSdsLogs, compareSnapshots } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
 import { useHpCacheRefresh } from '../../hooks/useHpCacheRefresh'
-import { Activity, AlertTriangle, RefreshCw, Calendar, HardDrive, CheckCircle, DatabaseBackup } from 'lucide-react'
-import { Portal } from '../ui/Portal'
+import { Activity, AlertTriangle, RefreshCw, Calendar, HardDrive, CheckCircle, DatabaseBackup, GitCompare } from 'lucide-react'
 import type { SavedAnalysisFull, DeviceHealth, SavedAnalysisIncidentItem } from '../../types/api'
+import { SnapshotHistoryPanel } from './SnapshotHistoryPanel'
+
 import { DeviceStatusHeader } from '../Monitor/DeviceStatusHeader'
 import { HealthScoreGauge } from '../Monitor/HealthScoreGauge'
 import { NocKpiCards } from '../Monitor/NocKpiCards'
@@ -157,7 +158,14 @@ export function SavedAnalysisDetail({
   } | null>(null)
 
   const [previousIncidents, setPreviousIncidents] = useState<SavedAnalysisIncidentItem[] | null>(null)
+  const [selectedCompareId, setSelectedCompareId] = useState<string>('')
+  const [diffLoading, setDiffLoading] = useState(false)
 
+  useEffect(() => {
+    setSelectedCompareId('')
+    setUpdateDiff(null)
+    setPreviousIncidents(null)
+  }, [savedDetail?.id])
 
   if (!savedDetail) {
     return (
@@ -301,6 +309,34 @@ export function SavedAnalysisDetail({
     }
 
     return { newCodes, resolvedCodes, occurrenceChanges }
+  }
+
+  const handleCompareSnapshot = async (targetId: string) => {
+    if (!targetId) return
+    setDiffLoading(true)
+    setSelectedCompareId(targetId)
+    try {
+      const result = await compareSnapshots(savedDetail.id, targetId)
+      // Show "other" snapshot as the "before" reference
+      const otherSnap = result.older.id === savedDetail.id ? result.newer : result.older
+      setPreviousIncidents(otherSnap.incidents)
+      setUpdateDiff({
+        newCodes: result.diff.codigos_nuevos,
+        resolvedCodes: result.diff.codigos_desaparecidos,
+        occurrenceChanges: result.diff.cambios_ocurrencias.map((c) => ({
+          code: c.code,
+          before: c.saved_occurrences,
+          after: c.current_occurrences,
+          delta: c.delta,
+        })),
+      })
+      toast.showSuccess('Comparación activa.')
+    } catch {
+      toast.showError('Error al comparar snapshots')
+      setSelectedCompareId('')
+    } finally {
+      setDiffLoading(false)
+    }
   }
 
   const handleUpdateLog = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -463,6 +499,24 @@ export function SavedAnalysisDetail({
             Volver a Vista Normal
           </button>
         </div>
+      )}
+
+      {/* Snapshot history chart + comparison selector */}
+      {savedDetail.equipment_identifier && (
+        <SnapshotHistoryPanel
+          currentId={savedDetail.id}
+          currentCreatedAt={savedDetail.created_at}
+          currentGlobalSeverity={savedDetail.global_severity}
+          equipmentIdentifier={savedDetail.equipment_identifier}
+          selectedCompareId={selectedCompareId}
+          diffLoading={diffLoading}
+          onCompare={handleCompareSnapshot}
+          onClearCompare={() => {
+            setSelectedCompareId('')
+            setUpdateDiff(null)
+            setPreviousIncidents(null)
+          }}
+        />
       )}
 
       {/* Header Info & Actions */}
@@ -672,125 +726,154 @@ export function SavedAnalysisDetail({
       {/* NOC: Tendencia de códigos (tabla operacional) */}
       <CodeTrendTable trends={nocTrends} />
 
+      {/* Inline diff panel — shown after file upload, SDS refresh, or snapshot comparison */}
       {updateDiff && (
-        <Portal>
-          <div
-            className="log-modal-overlay animate-in fade-in"
-            role="dialog"
-            aria-modal="true"
-            style={{ zIndex: 110000 }}
-          >
-            <div className="log-modal add-code-modal" style={{ maxWidth: '500px' }}>
-              <div className="log-modal__header">
-                <div className="log-modal__header-content">
-                  <h2 className="log-modal__title">
-                    Cambios en la Actualización
-                  </h2>
-                  <p className="log-modal__subtitle">
-                    Resumen de variaciones detectadas en esta lectura de logs.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="log-modal__close"
-                  onClick={() => setUpdateDiff(null)}
-                  aria-label="Cerrar"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px 32px' }}>
-                {updateDiff.newCodes.length === 0 &&
-                 updateDiff.resolvedCodes.length === 0 &&
-                 updateDiff.occurrenceChanges.length === 0 ? (
-                  <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px 0' }}>
-                    <CheckCircle className="text-emerald-400" size={32} style={{ margin: '0 auto 12px' }} />
-                    <p style={{ margin: 0, fontWeight: 600 }}>Sin cambios en esta versión</p>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>No se registraron nuevas ocurrencias ni alertas de error.</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* New Codes */}
-                    {updateDiff.newCodes.length > 0 && (
-                      <div style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '16px', borderRadius: '12px' }}>
-                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#ef4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <AlertTriangle size={15} /> Códigos Nuevos Detectados ({updateDiff.newCodes.length})
-                        </h4>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {updateDiff.newCodes.map(c => (
-                            <span key={c} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Resolved Codes */}
-                    {updateDiff.resolvedCodes.length > 0 && (
-                      <div style={{ background: 'rgba(34, 197, 94, 0.06)', border: '1px solid rgba(34, 197, 94, 0.15)', padding: '16px', borderRadius: '12px' }}>
-                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <CheckCircle size={15} /> Códigos Resueltos / Desaparecidos ({updateDiff.resolvedCodes.length})
-                        </h4>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {updateDiff.resolvedCodes.map(c => (
-                            <span key={c} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Occurrence Changes */}
-                    {updateDiff.occurrenceChanges.length > 0 && (
-                      <div>
-                        <h4 style={{ margin: '0 0 10px 0', fontSize: '0.95rem', color: '#e2e8f0', fontWeight: 700 }}>
-                          Variación de Ocurrencias
-                        </h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {updateDiff.occurrenceChanges.map(change => {
-                            const isIncrease = change.delta > 0
-                            return (
-                              <div key={change.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#f8fafc' }}>{change.code}</span>
-                                <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ color: '#64748b' }}>{change.before} → {change.after}</span>
-                                  <span style={{
-                                    fontWeight: 700,
-                                    color: isIncrease ? '#f87171' : '#34d399',
-                                    background: isIncrease ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.75rem'
-                                  }}>
-                                    {isIncrease ? `+${change.delta}` : change.delta}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="log-modal__actions" style={{ marginTop: '10px' }}>
-                <button
-                  type="button"
-                  className="dashboard__btn dashboard__btn--primary"
-                  onClick={() => setUpdateDiff(null)}
-                  style={{ width: '100%' }}
-                >
-                  Entendido
-                </button>
-              </div>
-            </div>
+        <div
+          className="animate-in"
+          style={{
+            background: 'rgba(30, 41, 59, 0.45)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37)',
+            borderRadius: '20px',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
+          {/* Panel header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <GitCompare size={17} style={{ color: '#38bdf8' }} />
+              {selectedCompareId ? 'Comparación entre Snapshots' : 'Cambios en la Actualización'}
+            </h3>
+            <button
+              type="button"
+              onClick={() => { setUpdateDiff(null); setPreviousIncidents(null); setSelectedCompareId('') }}
+              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1, padding: '2px 6px' }}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
           </div>
-        </Portal>
+
+          {updateDiff.newCodes.length === 0 &&
+           updateDiff.resolvedCodes.length === 0 &&
+           updateDiff.occurrenceChanges.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle size={28} style={{ color: '#34d399' }} />
+              <p style={{ margin: 0, fontWeight: 600 }}>Sin cambios detectados</p>
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>Ambas lecturas son idénticas.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* New codes */}
+              {updateDiff.newCodes.length > 0 && (
+                <div style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.18)', padding: '14px 16px', borderRadius: '14px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#ef4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <AlertTriangle size={14} /> Códigos Nuevos ({updateDiff.newCodes.length})
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {updateDiff.newCodes.map((c) => (
+                      <span
+                        key={c}
+                        className="animate-pulse-glow"
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.8rem',
+                          background: 'rgba(239, 68, 68, 0.18)',
+                          color: '#ef4444',
+                          padding: '3px 10px',
+                          borderRadius: '7px',
+                          fontWeight: 700,
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                        }}
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Resolved codes */}
+              {updateDiff.resolvedCodes.length > 0 && (
+                <div style={{ background: 'rgba(34, 197, 94, 0.06)', border: '1px solid rgba(34, 197, 94, 0.18)', padding: '14px 16px', borderRadius: '14px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle size={14} /> Códigos Resueltos ({updateDiff.resolvedCodes.length})
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {updateDiff.resolvedCodes.map((c) => (
+                      <span
+                        key={c}
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.8rem',
+                          background: 'rgba(34, 197, 94, 0.15)',
+                          color: '#22c55e',
+                          padding: '3px 10px',
+                          borderRadius: '7px',
+                          fontWeight: 700,
+                          border: '1px solid rgba(34, 197, 94, 0.25)',
+                        }}
+                      >
+                        ✓ {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Occurrence changes */}
+              {updateDiff.occurrenceChanges.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#e2e8f0', fontWeight: 700 }}>
+                    Variación de Ocurrencias
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {updateDiff.occurrenceChanges.map((change) => {
+                      const isIncrease = change.delta > 0
+                      return (
+                        <div
+                          key={change.code}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '8px 14px',
+                            background: 'rgba(255,255,255,0.025)',
+                            borderRadius: '10px',
+                            border: `1px solid ${isIncrease ? 'rgba(239,68,68,0.1)' : 'rgba(52,211,153,0.1)'}`,
+                          }}
+                        >
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#f1f5f9', fontSize: '0.9rem' }}>
+                            {change.code}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
+                            <span style={{ color: '#64748b' }}>
+                              {change.before} → {change.after}
+                            </span>
+                            <span style={{
+                              fontWeight: 700,
+                              color: isIncrease ? '#f87171' : '#34d399',
+                              background: isIncrease ? 'rgba(239,68,68,0.12)' : 'rgba(52,211,153,0.12)',
+                              padding: '2px 8px',
+                              borderRadius: '5px',
+                              fontSize: '0.78rem',
+                            }}>
+                              {isIncrease ? `+${change.delta}` : change.delta}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
