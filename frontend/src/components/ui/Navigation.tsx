@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { 
-  LayoutDashboard, 
-  Database, 
-  PlusCircle, 
+import {
+  LayoutDashboard,
+  Database,
+  PlusCircle,
   HelpCircle,
-  Printer,
   Monitor,
   Bell,
   ChevronLeft,
@@ -67,13 +66,11 @@ export function Navigation({
 
       <div className="navigation__content">
         <div className="navigation__brand" onClick={() => onNavigate('dashboard')} style={{ cursor: 'pointer' }}>
-          <Printer className="navigation__logo" />
-          {!isCollapsed && (
-            <div className="navigation__brand-text">
-              <span className="navigation__brand-name">HP Logs</span>
-              <span className="navigation__brand-suffix">Analyzer</span>
-            </div>
-          )}
+          <img
+            src={isCollapsed ? '/isotipo-naranja.svg' : '/logo-cd-naranja.svg'}
+            alt="Canal Directo"
+            className={isCollapsed ? 'navigation__logo' : 'navigation__logo-full'}
+          />
         </div>
 
         <ul className="navigation__list">
@@ -122,13 +119,13 @@ export function Navigation({
           </li>
 
           <li style={{ marginTop: '12px' }}>
-            <button 
+            <button
               className="navigation__item"
               onClick={onNewAnalysis}
               title="Analizar otro log"
             >
-              <PlusCircle className="navigation__item-icon" style={{ color: 'var(--hp-blue-vibrant)' }} />
-              {!isCollapsed && <span className="navigation__item-label" style={{ color: 'var(--hp-blue-vibrant)', fontWeight: 600 }}>Análisis manual</span>}
+              <PlusCircle className="navigation__item-icon" style={{ color: 'var(--cd-orange)' }} />
+              {!isCollapsed && <span className="navigation__item-label" style={{ color: 'var(--cd-orange)', fontWeight: 600 }}>Análisis manual</span>}
             </button>
           </li>
         </ul>

@@ -4,17 +4,16 @@
   position: fixed;
   left: 0;
   top: 0;
-  background: rgba(13, 17, 23, 0.95); /* Slightly more opaque for performance */
-  backdrop-filter: blur(12px); /* Reduced from 24px for smoother animation */
-  -webkit-backdrop-filter: blur(12px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0d0d0f;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 3px solid var(--cd-orange);
   display: flex;
   flex-direction: column;
   z-index: 2000;
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: visible;
   will-change: width;
-  transform: translateZ(0); /* Force GPU layer */
+  transform: translateZ(0);
 }
 
 .navigation--collapsed {
@@ -42,10 +41,10 @@
 }
 
 .navigation__toggle:hover {
-  background: var(--hp-blue-vibrant);
-  border-color: var(--hp-blue-vibrant);
+  background: var(--cd-orange);
+  border-color: var(--cd-orange);
   transform: translateY(-50%) scale(1.15);
-  box-shadow: 0 0 20px rgba(0, 150, 214, 0.5);
+  box-shadow: 0 0 16px rgba(243, 147, 34, 0.45);
 }
 
 .navigation__content {
@@ -86,16 +85,24 @@
 
 .navigation__brand-suffix {
   font-size: 0.95rem;
-  color: var(--hp-blue-vibrant);
-  font-weight: 500;
+  color: var(--cd-orange);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .navigation__logo {
   width: 32px;
   height: 32px;
-  color: var(--hp-blue-vibrant);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.navigation__logo-full {
+  height: 28px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -134,9 +141,10 @@
 }
 
 .navigation__item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(243, 147, 34, 0.06);
   color: #fff;
   transform: translateX(4px);
+  border-color: rgba(243, 147, 34, 0.15);
 }
 
 .navigation--collapsed .navigation__item:hover {
@@ -144,9 +152,10 @@
 }
 
 .navigation__item--active {
-  background: rgba(0, 161, 224, 0.1);
-  border-color: rgba(0, 161, 224, 0.2);
-  color: var(--hp-blue-vibrant);
+  background: rgba(243, 147, 34, 0.1);
+  border-color: rgba(243, 147, 34, 0.28);
+  color: var(--cd-orange);
+  font-weight: 600;
 }
 
 .navigation__item-icon {

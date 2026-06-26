@@ -125,8 +125,8 @@
 
 .log-modal__serial-input:focus {
   border-color: var(--hp-blue-vibrant);
-  background: rgba(0, 150, 214, 0.05);
-  box-shadow: 0 0 0 3px rgba(0, 150, 214, 0.15);
+  background: rgba(243, 147, 34, 0.05);
+  box-shadow: 0 0 0 3px rgba(243, 147, 34, 0.15);
 }
 
 .log-modal__textarea {
@@ -147,7 +147,7 @@
 
 .log-modal__textarea:focus {
   border-color: var(--hp-blue-vibrant);
-  background: rgba(0, 150, 214, 0.05);
+  background: rgba(243, 147, 34, 0.05);
 }
 
 .log-modal__actions {
