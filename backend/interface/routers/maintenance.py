@@ -1,5 +1,6 @@
 import threading
-from typing import List, Optional
+from datetime import datetime
+from typing import List, Literal, Optional
 
 from backend.application.services.maintenance_service import (
     MaintenanceService,
@@ -59,6 +60,25 @@ class CloseIncidentRequest(BaseModel):
 class SendAlertRequest(BaseModel):
     serial: str
     component_type: str
+
+
+class ComponentStatus(BaseModel):
+    component_type: str
+    remaining: int
+    expected_life: int
+    alert_margin: int
+    status: Literal["ok", "warning", "critical", "incident"]
+    incident_number: Optional[str] = None
+    email_recipients: Optional[str] = None
+
+
+class DeviceStatusResponse(BaseModel):
+    serial: str
+    model_family: Optional[str] = None
+    last_sync_counter: int
+    last_sync_at: Optional[datetime] = None
+    status: Literal["ok", "warning", "critical", "incident"]
+    components: List[ComponentStatus]
 
 
 def get_maintenance_service():
@@ -162,6 +182,79 @@ def update_device_state(
 @router.get("/devices", response_model=List[MaintenanceDevice])
 def list_devices(service: MaintenanceService = Depends(get_maintenance_service)):
     return service.repo.get_all_devices()
+
+
+@router.get("/devices/status", response_model=List[DeviceStatusResponse])
+def list_devices_status(service: MaintenanceService = Depends(get_maintenance_service)):
+    """Consolidated fleet status: per-device + per-component health, no Insight API calls."""
+    devices = service.repo.get_all_devices()
+    active = [d for d in devices if d.is_active]
+
+    priority = {"ok": 0, "warning": 1, "incident": 2, "critical": 3}
+    rules_cache: dict = {}
+    result = []
+
+    for device in active:
+        family = device.model_family or ""
+        if family not in rules_cache:
+            rules_cache[family] = service.repo.get_model_rules(family)
+
+        rules = rules_cache[family]
+        if not rules:
+            continue
+
+        states = service.repo.get_device_state(device.serial)
+        incidents = service.get_incidents(device.serial)
+
+        state_map = {s.component_type: s for s in states}
+        open_inc = {i.component_type: i for i in incidents if i.status == "open"}
+
+        current = device.last_sync_counter or 0
+        components: List[ComponentStatus] = []
+        device_worst = "ok"
+
+        for rule in rules:
+            state = state_map.get(rule.component_type)
+            last_change = state.last_change_counter if state else current
+            remaining = (last_change + rule.expected_life) - current
+
+            inc = open_inc.get(rule.component_type)
+            if inc:
+                cstatus = "incident"
+            elif remaining <= 0:
+                cstatus = "critical"
+            elif remaining <= rule.alert_margin:
+                cstatus = "warning"
+            else:
+                cstatus = "ok"
+
+            if priority.get(cstatus, 0) > priority.get(device_worst, 0):
+                device_worst = cstatus
+
+            components.append(
+                ComponentStatus(
+                    component_type=rule.component_type,
+                    remaining=remaining,
+                    expected_life=rule.expected_life,
+                    alert_margin=rule.alert_margin,
+                    status=cstatus,
+                    incident_number=inc.incident_number if inc else None,
+                    email_recipients=rule.email_recipients,
+                )
+            )
+
+        result.append(
+            DeviceStatusResponse(
+                serial=device.serial,
+                model_family=device.model_family,
+                last_sync_counter=current,
+                last_sync_at=device.last_sync_at,
+                status=device_worst,
+                components=components,
+            )
+        )
+
+    return result
 
 
 @router.post("/devices")

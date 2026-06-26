@@ -19,10 +19,11 @@ import {
   getDeviceIncidents,
   getMaintenanceFamilies,
   sendMaintenanceAlert,
+  getMaintenanceDevicesStatus,
 } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
 import { AvisosSidebar } from '../components/Maintenance/AvisosSidebar'
-import { RuleCard } from '../components/Maintenance/RuleCard'
+import { MaintenanceComponentsTable } from '../components/Maintenance/MaintenanceComponentsTable'
 import {
   CloseIncidentModal,
   HowItWorksModal,
@@ -38,6 +39,7 @@ import {
   DeleteFamilyModal,
 } from '../components/Maintenance/MaintenanceModals'
 import type {
+  DeviceStatusResponse,
   MaintenanceDevice,
   MaintenanceDeviceState,
   MaintenanceHistory,
@@ -52,26 +54,49 @@ interface MaintenanceSyncJobState {
   errors: number
 }
 
+const STATUS_PRIORITY: Record<string, number> = { ok: 0, warning: 1, incident: 2, critical: 3 }
 
+function worstComponent(device: DeviceStatusResponse) {
+  return device.components.reduce(
+    (worst, c) =>
+      STATUS_PRIORITY[c.status] > STATUS_PRIORITY[worst?.status ?? 'ok'] ? c : worst,
+    device.components[0]
+  )
+}
+
+function StatusBadge({ status }: { status: DeviceStatusResponse['status'] }) {
+  const labels: Record<string, string> = {
+    ok: 'Óptimo',
+    warning: 'Atención',
+    critical: 'Crítico',
+    incident: 'Incidente',
+  }
+  return <span className={`mnt-status-badge mnt-status-badge--${status}`}>{labels[status]}</span>
+}
 
 export function AvisosPage() {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'devices'>('dashboard')
+
   const [devices, setDevices] = useState<MaintenanceDevice[]>([])
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
   const [discovering, setDiscovering] = useState(false)
   const [syncJob, setSyncJob] = useState<MaintenanceSyncJobState | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  
+
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<MaintenanceDevice | null>(null)
-  
+
   const [rules, setRules] = useState<MaintenanceModelRule[]>([])
   const [deviceStates, setDeviceStates] = useState<MaintenanceDeviceState[]>([])
   const [history, setHistory] = useState<MaintenanceHistory[]>([])
   const [incidents, setIncidents] = useState<MaintenanceIncident[]>([])
   const [allFamilies, setAllFamilies] = useState<string[]>([])
   const [loadingRules, setLoadingRules] = useState(false)
-  
+
+  const [devicesStatus, setDevicesStatus] = useState<DeviceStatusResponse[]>([])
+  const [loadingStatus, setLoadingStatus] = useState(false)
+
   // Rule Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<MaintenanceModelRule | null>(null)
@@ -86,7 +111,7 @@ export function AvisosPage() {
   const [isStateModalOpen, setIsStateModalOpen] = useState(false)
   const [stateEditingData, setStateEditingData] = useState<MaintenanceStateDraft | null>(null)
   const [updatingState, setUpdatingState] = useState(false)
-  
+
   // New Family Modal State
   const [isNewFamilyModalOpen, setIsNewFamilyModalOpen] = useState(false)
 
@@ -98,17 +123,16 @@ export function AvisosPage() {
   const [closingIncidentData, setClosingIncidentData] =
     useState<MaintenanceCloseIncidentDraft | null>(null)
   const [closingIncident, setClosingIncident] = useState(false)
-  
+
   // How it works modal
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false)
-  
+
   // Edit/Delete Family States
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  
+
   const toast = useToast()
 
-  // Agrupar equipos por familia
   const groupedDevices = useMemo(() => {
     return devices.reduce<Record<string, MaintenanceDevice[]>>((acc, device) => {
       const family = device.model_family || 'Sin Modelo'
@@ -123,7 +147,7 @@ export function AvisosPage() {
     try {
       const [devicesData, familiesData] = await Promise.all([
         getMaintenanceDevices(),
-        getMaintenanceFamilies()
+        getMaintenanceFamilies(),
       ])
       setDevices(devicesData)
       setAllFamilies(familiesData)
@@ -134,16 +158,28 @@ export function AvisosPage() {
     }
   }, [toast])
 
+  const loadDevicesStatus = useCallback(async () => {
+    setLoadingStatus(true)
+    try {
+      const data = await getMaintenanceDevicesStatus()
+      setDevicesStatus(data)
+    } catch {
+      toast.showError('Error al cargar estado de flota')
+    } finally {
+      setLoadingStatus(false)
+    }
+  }, [toast])
+
   useEffect(() => {
     loadDevices()
+    loadDevicesStatus()
     return () => {
       if (pollRef.current) clearInterval(pollRef.current)
     }
-  }, [loadDevices])
+  }, [loadDevices, loadDevicesStatus])
 
   const handleDeleteFamily = async () => {
     if (!selectedFamily) return
-    
     try {
       await deleteFamily(selectedFamily)
       toast.showSuccess(`Familia ${selectedFamily} eliminada correctamente`)
@@ -184,6 +220,7 @@ export function AvisosPage() {
               const label = sendEmails ? 'Sincronización' : 'Sincronización silenciosa'
               toast.showSuccess(`${label} de ${selectedFamily} completada (${status.processed}/${status.total})`)
               await loadDevices()
+              await loadDevicesStatus()
               if (selectedDevice) loadDeviceData(selectedDevice)
               else loadFamilyRules(selectedFamily)
             } else {
@@ -258,6 +295,13 @@ export function AvisosPage() {
     }
   }
 
+  const handleSelectFromDashboard = async (serial: string) => {
+    const device = devices.find((d) => d.serial === serial)
+    if (!device) return
+    setActiveTab('devices')
+    handleSelectDevice(device)
+  }
+
   const handleOpenModal = (rule?: MaintenanceModelRule) => {
     if (rule) {
       setEditingRule({ ...rule })
@@ -267,7 +311,7 @@ export function AvisosPage() {
         component_type: '',
         expected_life: 200000,
         alert_margin: 10000,
-        email_recipients: ''
+        email_recipients: '',
       })
     }
     setIsModalOpen(true)
@@ -311,7 +355,6 @@ export function AvisosPage() {
       setIsRenameModalOpen(false)
       return
     }
-
     setLoadingRules(true)
     try {
       await renameFamily(selectedFamily, newName)
@@ -329,8 +372,7 @@ export function AvisosPage() {
 
   const handleClearDevices = async () => {
     if (!selectedFamily) return
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar todos los equipos asociados a la familia "${selectedFamily}"? Esto limpiará la lista actual.`)) return
-
+    if (!window.confirm(`¿Estás seguro de que quieres eliminar todos los equipos asociados a la familia "${selectedFamily}"?`)) return
     setLoading(true)
     try {
       await clearFamilyDevices(selectedFamily)
@@ -343,15 +385,12 @@ export function AvisosPage() {
     }
   }
 
-  const handleOpenStateModal = (
-    rule: MaintenanceModelRule,
-    currentState?: MaintenanceDeviceState
-  ) => {
+  const handleOpenStateModal = (rule: MaintenanceModelRule, currentState?: MaintenanceDeviceState) => {
     if (!selectedDevice) return
     setStateEditingData({
       serial: selectedDevice.serial,
       component_type: rule.component_type,
-      last_change_counter: currentState?.last_change_counter || 0
+      last_change_counter: currentState?.last_change_counter || 0,
     })
     setIsStateModalOpen(true)
   }
@@ -361,11 +400,7 @@ export function AvisosPage() {
     if (!stateEditingData || !selectedDevice) return
     setUpdatingState(true)
     try {
-      await updateDeviceState(
-        stateEditingData.serial,
-        stateEditingData.component_type,
-        stateEditingData.last_change_counter
-      )
+      await updateDeviceState(stateEditingData.serial, stateEditingData.component_type, stateEditingData.last_change_counter)
       toast.showSuccess('Estado actualizado correctamente')
       setIsStateModalOpen(false)
       loadDeviceData(selectedDevice)
@@ -378,12 +413,7 @@ export function AvisosPage() {
 
   const handleOpenRecordModal = (rule: MaintenanceModelRule) => {
     if (!selectedDevice) return
-    setRecordingData({
-      serial: selectedDevice.serial,
-      component_type: rule.component_type,
-      incident_number: '',
-      notes: ''
-    })
+    setRecordingData({ serial: selectedDevice.serial, component_type: rule.component_type, incident_number: '', notes: '' })
     setIsRecordModalOpen(true)
   }
 
@@ -397,7 +427,7 @@ export function AvisosPage() {
       setIsRecordModalOpen(false)
       if (selectedDevice) {
         loadDeviceData(selectedDevice)
-        loadDevices() // Refresh sync counter
+        loadDevices()
       }
     } catch {
       toast.showError('Error al registrar el cambio')
@@ -428,10 +458,7 @@ export function AvisosPage() {
     }
   }
 
-  const handleOpenCloseIncident = (
-    rule: MaintenanceModelRule,
-    incident: MaintenanceIncident
-  ) => {
+  const handleOpenCloseIncident = (rule: MaintenanceModelRule, incident: MaintenanceIncident) => {
     if (!incident.id) return
     setClosingIncidentData({ incident_id: incident.id, incident_number: incident.incident_number, component_type: rule.component_type, notes: '' })
     setIsCloseIncidentModalOpen(true)
@@ -458,7 +485,7 @@ export function AvisosPage() {
     if (!selectedDevice) return
     try {
       const result = await sendMaintenanceAlert(selectedDevice.serial, rule.component_type)
-      toast.showSuccess(`📧 Alerta enviada a: ${result.recipients.join(', ')}`)
+      toast.showSuccess(`Alerta enviada a: ${result.recipients.join(', ')}`)
     } catch (err) {
       toast.showError(err instanceof Error ? err.message : 'Error al enviar la alerta')
     }
@@ -467,19 +494,16 @@ export function AvisosPage() {
   const handleCreateNewFamily = async (family: string) => {
     const trimmed = family.trim()
     if (!trimmed) return
-    
     try {
       await upsertMaintenanceModelRule({
         model_family: trimmed,
         component_type: 'Fuser Kit',
         expected_life: 200000,
         alert_margin: 10000,
-        email_recipients: ''
+        email_recipients: '',
       })
-      
       toast.showSuccess(`Familia ${trimmed} lista para configurar`)
       setIsNewFamilyModalOpen(false)
-      
       await loadDevices()
       setSelectedFamily(trimmed)
       setSelectedDevice(null)
@@ -489,6 +513,22 @@ export function AvisosPage() {
     }
   }
 
+  // --- KPI counts ---
+  const kpiCounts = useMemo(() => {
+    const critical = devicesStatus.filter((d) => d.status === 'critical').length
+    const warning = devicesStatus.filter((d) => d.status === 'warning').length
+    const incident = devicesStatus.filter((d) => d.status === 'incident').length
+    return { critical, warning, incident }
+  }, [devicesStatus])
+
+  const alertDevices = useMemo(
+    () =>
+      devicesStatus
+        .filter((d) => d.status !== 'ok')
+        .sort((a, b) => STATUS_PRIORITY[b.status] - STATUS_PRIORITY[a.status]),
+    [devicesStatus]
+  )
+
   return (
     <div className="avisos-page animate-in" style={{ padding: '0 40px 40px' }}>
       <header className="dashboard__subheader">
@@ -497,186 +537,337 @@ export function AvisosPage() {
           <p className="dashboard__subheader-meta">Gestión proactiva de consumibles y alertas</p>
         </div>
         <div className="dashboard__subheader-actions">
-           <button className="dashboard__btn dashboard__btn--secondary" onClick={() => setIsHowItWorksOpen(true)}>
-             ¿Cómo funciona?
-           </button>
+          <button className="dashboard__btn dashboard__btn--secondary" onClick={() => setIsHowItWorksOpen(true)}>
+            ¿Cómo funciona?
+          </button>
         </div>
       </header>
 
-      <div className="avisos-grid">
-        <AvisosSidebar 
-          groupedDevices={groupedDevices}
-          allFamilies={allFamilies}
-          selectedFamily={selectedFamily}
-          selectedDevice={selectedDevice}
-          loading={loading}
-          onSelectFamily={handleSelectFamily}
-          onSelectDevice={handleSelectDevice}
-          onNewFamily={() => setIsNewFamilyModalOpen(true)}
-        />
+      {/* Tab Navigation */}
+      <div className="mnt-tabs">
+        <button
+          className={`mnt-tab-btn ${activeTab === 'dashboard' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
+        >
+          Dashboard General
+        </button>
+        <button
+          className={`mnt-tab-btn ${activeTab === 'devices' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('devices')}
+        >
+          Modelos y Equipos
+        </button>
+        {activeTab === 'dashboard' && (
+          <button
+            className="dashboard__btn dashboard__btn--secondary mnt-tabs-refresh"
+            onClick={loadDevicesStatus}
+            disabled={loadingStatus}
+            title="Actualizar estado de flota"
+          >
+            {loadingStatus ? 'Actualizando...' : '↻ Actualizar'}
+          </button>
+        )}
+      </div>
 
-        <main className="avisos-main">
-          {selectedFamily ? (
-            <div className="avisos-detail">
-              <div className="avisos-detail-header">
-                <div className="avisos-detail-title-row">
-                  <h2>{selectedDevice ? `Equipo: ${selectedDevice.serial}` : `Familia: ${selectedFamily}`}</h2>
-                  {selectedFamily && !selectedDevice && (
-                    <>
-                      <button 
-                        onClick={() => setIsRenameModalOpen(true)}
-                        className="dashboard__btn--icon-edit"
-                        title="Renombrar Familia"
+      {/* ── DASHBOARD TAB ── */}
+      {activeTab === 'dashboard' && (
+        <div className="mnt-dashboard-content">
+          {/* KPI Cards */}
+          <div className="mnt-kpi-grid">
+            <div className="mnt-kpi-card mnt-kpi-card--critical">
+              <span className="mnt-kpi-value">{kpiCounts.critical}</span>
+              <span className="mnt-kpi-label">Críticos</span>
+              <span className="mnt-kpi-sublabel">requieren intervención</span>
+            </div>
+            <div className="mnt-kpi-card mnt-kpi-card--warning">
+              <span className="mnt-kpi-value">{kpiCounts.warning}</span>
+              <span className="mnt-kpi-label">En Advertencia</span>
+              <span className="mnt-kpi-sublabel">próximos a vencer</span>
+            </div>
+            <div className="mnt-kpi-card mnt-kpi-card--incident">
+              <span className="mnt-kpi-value">{kpiCounts.incident}</span>
+              <span className="mnt-kpi-label">Con Incidente</span>
+              <span className="mnt-kpi-sublabel">alertas suspendidas</span>
+            </div>
+            <div className="mnt-kpi-card mnt-kpi-card--ok">
+              <span className="mnt-kpi-value">
+                {devicesStatus.filter((d) => d.status === 'ok').length}
+              </span>
+              <span className="mnt-kpi-label">Óptimos</span>
+              <span className="mnt-kpi-sublabel">sin alertas activas</span>
+            </div>
+          </div>
+
+          {/* Fleet Table */}
+          {loadingStatus ? (
+            <div className="mnt-fleet-loading">Cargando estado de flota...</div>
+          ) : alertDevices.length === 0 ? (
+            <div className="mnt-fleet-empty">
+              <span className="mnt-fleet-empty-icon">✓</span>
+              <p>Toda la flota en estado óptimo. No hay equipos con alertas activas.</p>
+            </div>
+          ) : (
+            <div className="mnt-fleet-table-wrapper">
+              <h3 className="avisos-section-title" style={{ marginBottom: '16px' }}>
+                Equipos con Alertas Activas
+              </h3>
+              <table className="mnt-fleet-table">
+                <thead>
+                  <tr>
+                    <th>Serie</th>
+                    <th>Modelo</th>
+                    <th>Componente en Alerta</th>
+                    <th>Contador</th>
+                    <th>Págs. Restantes</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alertDevices.map((device) => {
+                    const worst = worstComponent(device)
+                    if (!worst) return null
+                    const pct = Math.max(
+                      0,
+                      Math.min(100, (worst.remaining / worst.expected_life) * 100)
+                    )
+                    return (
+                      <tr
+                        key={device.serial}
+                        className={`mnt-fleet-row mnt-fleet-row--${device.status}`}
+                        onClick={() => handleSelectFromDashboard(device.serial)}
+                        title="Ver detalle del equipo"
                       >
-                        ✏️
-                      </button>
-                      <button 
-                        onClick={() => setIsDeleteModalOpen(true)}
-                        className="dashboard__btn--icon-edit"
-                        style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                        title="Eliminar Familia"
+                        <td className="mnt-fleet-cell--serial">
+                          <code>{device.serial}</code>
+                        </td>
+                        <td className="mnt-fleet-cell--model">
+                          {device.model_family ?? '—'}
+                        </td>
+                        <td className="mnt-fleet-cell--component">
+                          ⚙️ {worst.component_type}
+                          {worst.incident_number && (
+                            <span className="mnt-incident-tag">#{worst.incident_number}</span>
+                          )}
+                        </td>
+                        <td className="mnt-fleet-cell--counter">
+                          {device.last_sync_counter.toLocaleString()}
+                        </td>
+                        <td className="mnt-fleet-cell--remaining">
+                          <div className="mnt-fleet-remaining">
+                            <div className="mnt-progress-track mnt-progress-track--fleet">
+                              <div
+                                className="mnt-progress-fill"
+                                style={{
+                                  width: `${pct}%`,
+                                  backgroundColor:
+                                    device.status === 'critical'
+                                      ? 'hsl(0 70% 58%)'
+                                      : device.status === 'incident'
+                                        ? 'hsl(220 78% 58%)'
+                                        : 'hsl(45 88% 52%)',
+                                }}
+                              />
+                            </div>
+                            <span className="mnt-fleet-remaining-val">
+                              {worst.remaining >= 0 ? '+' : ''}
+                              {worst.remaining.toLocaleString()}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="mnt-fleet-cell--status">
+                          <StatusBadge status={device.status} />
+                        </td>
+                        <td className="mnt-fleet-cell--action">
+                          <button
+                            className="mnt-action-btn mnt-action-btn--primary"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSelectFromDashboard(device.serial)
+                            }}
+                          >
+                            Ver →
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── DEVICES TAB ── */}
+      {activeTab === 'devices' && (
+        <div className="avisos-grid">
+          <AvisosSidebar
+            groupedDevices={groupedDevices}
+            allFamilies={allFamilies}
+            selectedFamily={selectedFamily}
+            selectedDevice={selectedDevice}
+            loading={loading}
+            onSelectFamily={handleSelectFamily}
+            onSelectDevice={handleSelectDevice}
+            onNewFamily={() => setIsNewFamilyModalOpen(true)}
+          />
+
+          <main className="avisos-main">
+            {selectedFamily ? (
+              <div className="avisos-detail">
+                <div className="avisos-detail-header">
+                  <div className="avisos-detail-title-row">
+                    <h2>{selectedDevice ? `Equipo: ${selectedDevice.serial}` : `Familia: ${selectedFamily}`}</h2>
+                    {selectedFamily && !selectedDevice && (
+                      <>
+                        <button
+                          onClick={() => setIsRenameModalOpen(true)}
+                          className="dashboard__btn--icon-edit"
+                          title="Renombrar Familia"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => setIsDeleteModalOpen(true)}
+                          className="dashboard__btn--icon-edit"
+                          style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                          title="Eliminar Familia"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <p className="detail-subtitle">
+                    {selectedDevice
+                      ? `Monitoreo de componentes para el serie ${selectedDevice.serial}`
+                      : 'Configuración maestra para todos los equipos de este modelo.'}
+                  </p>
+
+                  {!selectedDevice && (
+                    <div className="avisos-detail-actions">
+                      <button
+                        onClick={() => handleSyncFamily(false)}
+                        disabled={checking}
+                        title="Sincroniza contadores pero NO envía correos de alerta"
+                        className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'} dashboard__btn--small`}
                       >
-                        🗑️
+                        {checking
+                          ? syncJob
+                            ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
+                            : 'Iniciando...'
+                          : '🔇 Sincronización Silenciosa'}
                       </button>
-                    </>
+                      <button
+                        onClick={() => handleSyncFamily(true)}
+                        disabled={checking}
+                        className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--primary'} dashboard__btn--small`}
+                      >
+                        {checking
+                          ? syncJob
+                            ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
+                            : 'Iniciando...'
+                          : '🔄 Sincronizar Familia'}
+                      </button>
+                      <button
+                        onClick={handleDiscoverFamily}
+                        disabled={discovering}
+                        className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
+                      >
+                        {discovering ? 'Buscando...' : '🔍 Buscar Equipos en SDS'}
+                      </button>
+                      <button
+                        onClick={handleClearDevices}
+                        className="dashboard__btn dashboard__btn--danger-outline dashboard__btn--small"
+                      >
+                        🗑️ Limpiar Equipos
+                      </button>
+                    </div>
+                  )}
+
+                  {checking && syncJob && syncJob.total > 0 && (
+                    <div className="sync-inline-progress">
+                      <div className="sync-inline-bar">
+                        <div
+                          className="sync-inline-fill"
+                          style={{ width: `${Math.round((syncJob.processed / syncJob.total) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="sync-inline-text">
+                        {syncJob.processed} / {syncJob.total} equipos
+                      </span>
+                    </div>
                   )}
                 </div>
-                <p className="detail-subtitle">
-                  {selectedDevice 
-                    ? `Monitoreo de componentes para el serie ${selectedDevice.serial}`
-                    : 'Configuración maestra para todos los equipos de este modelo.'}
-                </p>
-                
-                {!selectedDevice && (
-                  <div className="avisos-detail-actions">
-                    <button
-                      onClick={() => handleSyncFamily(false)}
-                      disabled={checking}
-                      title="Sincroniza contadores pero NO envía correos de alerta"
-                      className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--secondary'} dashboard__btn--small`}
-                    >
-                      {checking
-                        ? syncJob
-                          ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
-                          : 'Iniciando...'
-                        : '🔇 Sincronización Silenciosa'}
-                    </button>
-                    <button
-                      onClick={() => handleSyncFamily(true)}
-                      disabled={checking}
-                      className={`dashboard__btn ${checking ? 'dashboard__btn--loading' : 'dashboard__btn--primary'} dashboard__btn--small`}
-                    >
-                      {checking
-                        ? syncJob
-                          ? `Sincronizando... ${syncJob.processed}/${syncJob.total}`
-                          : 'Iniciando...'
-                        : '🔄 Sincronizar Familia'}
-                    </button>
-                    <button
-                      onClick={handleDiscoverFamily}
-                      disabled={discovering}
-                      className="dashboard__btn dashboard__btn--secondary dashboard__btn--small"
-                    >
-                      {discovering ? 'Buscando...' : '🔍 Buscar Equipos en SDS'}
-                    </button>
-                    <button
-                      onClick={handleClearDevices}
-                      className="dashboard__btn dashboard__btn--danger-outline dashboard__btn--small"
-                    >
-                      🗑️ Limpiar Equipos
-                    </button>
-                  </div>
-                )}
-                
-                {checking && syncJob && syncJob.total > 0 && (
-                  <div className="sync-inline-progress">
-                    <div className="sync-inline-bar">
-                      <div
-                        className="sync-inline-fill"
-                        style={{ width: `${Math.round((syncJob.processed / syncJob.total) * 100)}%` }}
-                      />
-                    </div>
-                    <span className="sync-inline-text">
-                      {syncJob.processed} / {syncJob.total} equipos
-                    </span>
-                  </div>
-                )}
-              </div>
 
-              <div className="avisos-rules-section">
-                <h3 className="avisos-section-title">
-                  Reglas Maestras {selectedDevice ? '' : '(Modo Catálogo)'}
-                </h3>
-                {loadingRules ? (
-                  <p>Cargando reglas...</p>
-                ) : (
-                  <div className="avisos-rules-list">
-                    {rules.map((r) => (
-                      <RuleCard
-                        key={r.id}
-                        rule={r}
-                        state={deviceStates.find(s => s.component_type === r.component_type)}
-                        selectedDevice={selectedDevice}
-                        incident={incidents.find(i => i.component_type === r.component_type && i.status === 'open')}
-                        onEditRule={handleOpenModal}
-                        onAdjustState={handleOpenStateModal}
-                        onRecordChange={handleOpenRecordModal}
-                        onOpenIncident={handleOpenIncident}
-                        onCloseIncident={handleOpenCloseIncident}
-                        onSendAlert={handleSendAlert}
-                      />
-                    ))}
-                    {!selectedDevice && rules.length < 8 && (
-                      <button className="avisos-add-rule-btn" onClick={() => handleOpenModal()}>
-                        <span>+ Agregar Regla al Modelo</span>
-                      </button>
+                <div className="avisos-rules-section">
+                  <h3 className="avisos-section-title">
+                    {selectedDevice ? 'Control de Componentes' : 'Reglas Maestras (Modo Catálogo)'}
+                  </h3>
+                  <MaintenanceComponentsTable
+                    rules={rules}
+                    deviceStates={deviceStates}
+                    incidents={incidents}
+                    selectedDevice={selectedDevice}
+                    onEditRule={handleOpenModal}
+                    onAdjustState={handleOpenStateModal}
+                    onRecordChange={handleOpenRecordModal}
+                    onOpenIncident={handleOpenIncident}
+                    onCloseIncident={handleOpenCloseIncident}
+                    onSendAlert={handleSendAlert}
+                    onAddRule={!selectedDevice ? () => handleOpenModal() : undefined}
+                    loading={loadingRules}
+                  />
+                </div>
+
+                {selectedDevice && (
+                  <div className="avisos-history-section">
+                    <h3 className="avisos-section-title">Historial del Equipo</h3>
+                    {history.length > 0 ? (
+                      <div className="avisos-history-list">
+                        {history.map((h) => (
+                          <div key={h.id} className="avisos-history-item">
+                            <div className="history-date">
+                              {h.changed_at ? new Date(h.changed_at).toLocaleDateString() : 'N/A'}
+                            </div>
+                            <div className="history-content">
+                              <div className="history-main">
+                                <strong>{h.component_type}</strong> cambiado a las{' '}
+                                <strong>{h.change_counter?.toLocaleString()}</strong> págs.
+                              </div>
+                              {h.incident_number && (
+                                <div className="history-incident">
+                                  Nº Incidente: <code>{h.incident_number}</code>
+                                </div>
+                              )}
+                              {h.technician_notes && (
+                                <div className="history-notes">"{h.technician_notes}"</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="avisos-no-history">No hay intervenciones registradas para este equipo.</p>
                     )}
                   </div>
                 )}
               </div>
+            ) : (
+              <div className="avisos-empty-state">
+                <div className="avisos-empty-icon">📂</div>
+                <h3>Selecciona una familia o equipo</h3>
+                <p>Gestiona las reglas globales por modelo o registra intervenciones específicas por número de serie.</p>
+              </div>
+            )}
+          </main>
+        </div>
+      )}
 
-              {selectedDevice && (
-                <div className="avisos-history-section">
-                  <h3 className="avisos-section-title">Historial del Equipo</h3>
-                  {history.length > 0 ? (
-                    <div className="avisos-history-list">
-                      {history.map((h) => (
-                        <div key={h.id} className="avisos-history-item">
-                          <div className="history-date">
-                            {h.changed_at ? new Date(h.changed_at).toLocaleDateString() : 'N/A'}
-                          </div>
-                          <div className="history-content">
-                            <div className="history-main">
-                              <strong>{h.component_type}</strong> cambiado a las <strong>{h.change_counter?.toLocaleString()}</strong> págs.
-                            </div>
-                            {h.incident_number && (
-                              <div className="history-incident">Nº Incidente: <code>{h.incident_number}</code></div>
-                            )}
-                            {h.technician_notes && (
-                              <div className="history-notes">"{h.technician_notes}"</div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="avisos-no-history">No hay intervenciones registradas para este equipo.</p>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="avisos-empty-state">
-              <div className="avisos-empty-icon">📂</div>
-              <h3>Selecciona una familia o equipo</h3>
-              <p>Gestiona las reglas globales por modelo o registra intervenciones específicas por número de serie.</p>
-            </div>
-          )}
-        </main>
-      </div>
-
+      {/* ── Modals (unchanged) ── */}
       {isModalOpen && editingRule && (
-        <RuleModal 
+        <RuleModal
           editingRule={editingRule}
           setEditingRule={setEditingRule}
           onSave={handleSaveRule}
@@ -684,9 +875,8 @@ export function AvisosPage() {
           saving={saving}
         />
       )}
-
       {isRecordModalOpen && recordingData && (
-        <RecordChangeModal 
+        <RecordChangeModal
           recordingData={recordingData}
           setRecordingData={setRecordingData}
           currentCounter={selectedDevice?.last_sync_counter ?? 0}
@@ -695,9 +885,8 @@ export function AvisosPage() {
           recording={recording}
         />
       )}
-
       {isStateModalOpen && stateEditingData && (
-        <StateModal 
+        <StateModal
           stateEditingData={stateEditingData}
           setStateEditingData={setStateEditingData}
           currentCounter={selectedDevice?.last_sync_counter ?? 0}
@@ -707,10 +896,7 @@ export function AvisosPage() {
         />
       )}
       {isNewFamilyModalOpen && (
-        <NewFamilyModal
-          onSave={handleCreateNewFamily}
-          onClose={() => setIsNewFamilyModalOpen(false)}
-        />
+        <NewFamilyModal onSave={handleCreateNewFamily} onClose={() => setIsNewFamilyModalOpen(false)} />
       )}
       {isOpenIncidentModalOpen && openIncidentData && (
         <OpenIncidentModal
@@ -730,11 +916,7 @@ export function AvisosPage() {
           saving={closingIncident}
         />
       )}
-      {isHowItWorksOpen && (
-        <HowItWorksModal
-          onClose={() => setIsHowItWorksOpen(false)}
-        />
-      )}
+      {isHowItWorksOpen && <HowItWorksModal onClose={() => setIsHowItWorksOpen(false)} />}
       {isRenameModalOpen && selectedFamily && (
         <RenameFamilyModal
           currentName={selectedFamily}

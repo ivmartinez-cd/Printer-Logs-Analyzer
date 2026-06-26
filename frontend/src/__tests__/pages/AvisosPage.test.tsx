@@ -26,7 +26,13 @@ vi.mock('../../services/api', () => ({
   openMaintenanceIncident: vi.fn(),
   closeMaintenanceIncident: vi.fn(),
   sendMaintenanceAlert: vi.fn(),
+  getMaintenanceDevicesStatus: vi.fn(),
 }))
+
+async function switchToDevicesTab() {
+  const devicesTab = screen.getByText('Modelos y Equipos')
+  fireEvent.click(devicesTab)
+}
 
 describe('AvisosPage Integration', () => {
   beforeEach(() => {
@@ -35,6 +41,7 @@ describe('AvisosPage Integration', () => {
     vi.mocked(api.getMaintenanceDevices).mockResolvedValue([])
     vi.mocked(api.getMaintenanceFamilies).mockResolvedValue([])
     vi.mocked(api.getDeviceIncidents).mockResolvedValue([])
+    vi.mocked(api.getMaintenanceDevicesStatus).mockResolvedValue([])
   })
 
   it('renders the empty state when no family is selected', async () => {
@@ -47,18 +54,24 @@ describe('AvisosPage Integration', () => {
     await waitFor(() => {
       expect(screen.getByText('Avisos de Mantenimiento')).toBeInTheDocument()
     })
-    
-    expect(screen.getByText('Selecciona una familia o equipo')).toBeInTheDocument()
+
+    switchToDevicesTab()
+
+    await waitFor(() => {
+      expect(screen.getByText('Selecciona una familia o equipo')).toBeInTheDocument()
+    })
   })
 
   it('loads and displays families in the sidebar', async () => {
     vi.mocked(api.getMaintenanceFamilies).mockResolvedValue(['Family 1'])
-    
+
     render(
       <ToastProvider>
         <AvisosPage />
       </ToastProvider>
     )
+
+    switchToDevicesTab()
 
     await waitFor(() => {
       expect(screen.getByText('Family 1')).toBeInTheDocument()
@@ -74,6 +87,8 @@ describe('AvisosPage Integration', () => {
         <AvisosPage />
       </ToastProvider>
     )
+
+    switchToDevicesTab()
 
     const familyBtn = await screen.findByText('Family 1')
     fireEvent.click(familyBtn)
@@ -102,6 +117,8 @@ describe('AvisosPage Integration', () => {
       </ToastProvider>
     )
 
+    switchToDevicesTab()
+
     const familyBtn = await screen.findByText('Family 1')
     fireEvent.click(familyBtn)
 
@@ -125,6 +142,8 @@ describe('AvisosPage Integration', () => {
       </ToastProvider>
     )
 
+    switchToDevicesTab()
+
     const familyBtn = await screen.findByText('Family 1')
     fireEvent.click(familyBtn)
 
@@ -144,12 +163,14 @@ describe('AvisosPage Integration', () => {
     vi.mocked(api.triggerMaintenanceCheck).mockResolvedValue({ job_id: 'job-123', total: 1, status: 'pending' })
     vi.mocked(api.getMaintenanceSyncStatus).mockResolvedValue({ status: 'completed', processed: 1, total: 1, errors: 0 })
     vi.mocked(api.getMaintenanceModelRules).mockResolvedValue([])
-    
+
     render(
       <ToastProvider>
         <AvisosPage />
       </ToastProvider>
     )
+
+    switchToDevicesTab()
 
     const familyBtn = await screen.findByText('Family 1')
     fireEvent.click(familyBtn)
@@ -165,12 +186,14 @@ describe('AvisosPage Integration', () => {
   it('calls clearFamilyDevices when clear is triggered', async () => {
     vi.mocked(api.getMaintenanceFamilies).mockResolvedValue(['Family 1'])
     window.confirm = vi.fn().mockReturnValue(true)
-    
+
     render(
       <ToastProvider>
         <AvisosPage />
       </ToastProvider>
     )
+
+    switchToDevicesTab()
 
     const familyBtn = await screen.findByText('Family 1')
     fireEvent.click(familyBtn)

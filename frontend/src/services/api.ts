@@ -28,6 +28,7 @@ import type {
   MaintenanceSyncStatus,
   AIPdfSummaryResponse,
   CdsIncident,
+  DeviceStatusResponse,
 } from '../types/api'
 
 export const API_BASE =
@@ -786,4 +787,9 @@ export async function sendMaintenanceAlert(serial: string, componentType: string
     body: JSON.stringify({ serial, component_type: componentType }),
   })
   return handleResponse(res)
+}
+
+export async function getMaintenanceDevicesStatus(): Promise<DeviceStatusResponse[]> {
+  const res = await apiFetch(`${API_BASE}/maintenance/devices/status`, { method: 'GET', headers: apiHeaders() })
+  return handleResponse<DeviceStatusResponse[]>(res)
 }
