@@ -360,17 +360,20 @@
 }
 
 .welcome-grid__title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 10px 0;
   color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .welcome-grid__desc {
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .welcome-grid__footer {
@@ -483,12 +486,14 @@
 }
 
 .welcome-activity__item-serial {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  letter-spacing: 0.02em;
 }
 
 .welcome-activity__item-model {

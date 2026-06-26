@@ -51,12 +51,8 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--cd-orange);
   letter-spacing: -0.03em;
-  background: var(--text-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .log-modal__header-content {
