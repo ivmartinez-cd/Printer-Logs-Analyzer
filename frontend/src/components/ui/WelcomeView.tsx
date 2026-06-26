@@ -209,8 +209,8 @@ export function WelcomeView({
           </div>
           <p className="welcome-searchbox__tip">
             {searchMode === 'serial' 
-              ? '💡 Consejo: Pega un número de serie para un diagnóstico instantáneo vía HP Insight API.'
-              : '💡 Seleccioná un cliente de la flota para listar sus equipos activos y diagnosticar uno de ellos.'
+              ? 'Pega un número de serie para un diagnóstico instantáneo vía HP Insight API.'
+              : 'Seleccioná un cliente de la flota para listar sus equipos activos y diagnosticar uno de ellos.'
             }
           </p>
         </form>
@@ -222,7 +222,6 @@ export function WelcomeView({
         {/* NEW: Fleet Monitor Card */}
         <div className="welcome-grid__item welcome-grid__item--monitor" onClick={onOpenMonitor}>
           <div className="welcome-grid__content">
-            <div className="welcome-grid__icon welcome-grid__icon--pulse">🖥️</div>
             <h3 className="welcome-grid__title">Monitoreo de Flota</h3>
             <p className="welcome-grid__desc">Control centralizado de logs para clientes críticos y familias de modelos.</p>
           </div>
@@ -234,7 +233,6 @@ export function WelcomeView({
         {/* NEW: Maintenance Alerts Card */}
         <div className="welcome-grid__item welcome-grid__item--alerts" onClick={onOpenAvisos}>
           <div className="welcome-grid__content">
-            <div className="welcome-grid__icon welcome-grid__icon--warning">🔔</div>
             <h3 className="welcome-grid__title">Avisos de Mantenimiento</h3>
             <p className="welcome-grid__desc">Alertas automáticas por contador para equipos sin medición por chip.</p>
           </div>
@@ -247,7 +245,7 @@ export function WelcomeView({
         <div className="welcome-grid__item welcome-grid__item--main">
           <div className="welcome-activity">
             <div className="welcome-activity__header">
-              <h3 className="welcome-activity__title">🔍 Búsquedas Recientes</h3>
+              <h3 className="welcome-activity__title">Búsquedas Recientes</h3>
             </div>
             <div className="welcome-activity__list">
               {displaySearches.length > 0 ? displaySearches.map((s) => (
@@ -256,9 +254,6 @@ export function WelcomeView({
                   onClick={() => onQuickSearch(s)}
                   className="welcome-activity__item welcome-activity__item--search"
                 >
-                  <div className="welcome-activity__item-icon-wrapper welcome-activity__item-icon-wrapper--search">
-                    🔍
-                  </div>
                   <div className="welcome-activity__item-info">
                     <span className="welcome-activity__item-serial">{s}</span>
                     <span className="welcome-activity__item-date">Consulta rápida</span>
@@ -278,7 +273,7 @@ export function WelcomeView({
         <div className="welcome-grid__item welcome-grid__item--history">
           <div className="welcome-activity">
             <div className="welcome-activity__header">
-              <h3 className="welcome-activity__title">📂 Incidentes Guardados</h3>
+              <h3 className="welcome-activity__title">Incidentes Guardados</h3>
               <button onClick={onViewSaved} className="welcome-activity__link">Ver todo</button>
             </div>
             <div className="welcome-activity__list">
@@ -334,7 +329,6 @@ export function WelcomeView({
         {/* CARD 2: Recent Search History - Slot 5 (Now containing Manual Analysis) */}
         <div className="welcome-grid__item welcome-grid__item--history" onClick={onAnalyzeNew}>
           <div className="welcome-grid__content">
-            <div className="welcome-grid__icon">✨</div>
             <h3 className="welcome-grid__title">Análisis Manual</h3>
             <p className="welcome-grid__desc">Sube o pega logs históricos para un diagnóstico profundo fuera de línea.</p>
           </div>

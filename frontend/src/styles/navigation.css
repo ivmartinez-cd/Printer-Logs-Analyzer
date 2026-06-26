@@ -1,19 +1,18 @@
 .navigation {
   width: 280px;
   height: 100vh;
-  position: fixed;
-  left: 0;
+  /* Desktop: sticky in flex row — no z-index overlap with charts */
+  position: sticky;
   top: 0;
+  flex-shrink: 0;
   background: #0d0d0f;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   border-top: 3px solid var(--cd-orange);
   display: flex;
   flex-direction: column;
-  z-index: 2000;
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible;
+  overflow: hidden;
   will-change: width;
-  transform: translateZ(0);
 }
 
 .navigation--collapsed {
@@ -255,11 +254,14 @@
 .navigation__db-dot--ok { color: var(--color-success); }
 .navigation__db-dot--error { color: var(--color-error); }
 
-/* ─── Mobile Responsiveness ────────────────────────────────────────── */
+/* ─── Mobile: vuelve a position fixed para el slide-in ─────────────── */
 @media (max-width: 1024px) {
   .navigation {
+    position: fixed;
     left: -280px;
+    top: 0;
     width: 280px !important;
+    z-index: 2000;
     transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
