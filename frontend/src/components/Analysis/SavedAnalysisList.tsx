@@ -1,11 +1,9 @@
 import { Fragment, useState } from 'react'
+import { AlertOctagon, AlertTriangle, CheckCircle2, Monitor, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDateTime } from '../../hooks/useDateFilter'
 import type { SavedAnalysisSummary } from '../../types/api'
 import { EquipmentTimeline } from './EquipmentTimeline'
 import { relativeTime } from '../Monitor/healthMetrics'
-import { GlassCard } from '../ui/GlassCard'
-import { Badge } from '../ui/Badge'
-import { Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { useUIStore } from '../../store/useUIStore'
 
 interface SavedAnalysisListProps {
@@ -25,7 +23,18 @@ interface EquipmentGroup {
 
 type FleetStatus = 'critical' | 'watch' | 'healthy'
 type FleetTrend = 'up' | 'down' | 'stable'
-type BadgeStatus = 'success' | 'warning' | 'error' | 'info' | 'offline' | 'default'
+
+const STATUS_COLOR = {
+  critical: { text: 'var(--noc-error)', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  label: 'Crítico'   },
+  watch:    { text: 'var(--noc-warn)',  bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', label: 'Atención'  },
+  healthy:  { text: 'var(--noc-ok)',   bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)', label: 'Saludable' },
+}
+
+const TREND_CSS: Record<FleetTrend, { cls: string; label: string }> = {
+  up:     { cls: 'noc-trend noc-trend--up',     label: '↑ Empeorando' },
+  down:   { cls: 'noc-trend noc-trend--down',   label: '↓ Mejorando'  },
+  stable: { cls: 'noc-trend noc-trend--stable', label: '↔ Estable'    },
+}
 
 function isGroupable(equipment: string): boolean {
   return !!equipment && equipment.toLowerCase() !== 'desconocido'
@@ -47,27 +56,9 @@ function severityToScore(sev: string): number {
   return 90
 }
 
-function scoreColor(score: number): string {
-  if (score >= 75) return '#22c55e'
-  if (score >= 45) return '#eab308'
-  return '#ef4444'
-}
-
 function statusOf(sev: string): FleetStatus {
   const r = severityRank(sev)
   return r >= 3 ? 'critical' : r === 2 ? 'watch' : 'healthy'
-}
-
-const STATUS_META: Record<FleetStatus, { label: string; badge: BadgeStatus }> = {
-  critical: { label: 'Crítico', badge: 'error' },
-  watch:    { label: 'Atención', badge: 'warning' },
-  healthy:  { label: 'Saludable', badge: 'success' },
-}
-
-const TREND_META: Record<FleetTrend, { icon: string; label: string; badge: BadgeStatus }> = {
-  up:     { icon: '↑', label: 'Empeorando', badge: 'error' },
-  down:   { icon: '↓', label: 'Mejorando',  badge: 'success' },
-  stable: { icon: '↔', label: 'Estable',    badge: 'default' },
 }
 
 function trendOf(snapshots: SavedAnalysisSummary[]): FleetTrend {
@@ -77,20 +68,25 @@ function trendOf(snapshots: SavedAnalysisSummary[]): FleetTrend {
   return latest > prev ? 'up' : latest < prev ? 'down' : 'stable'
 }
 
+function scoreColorVar(score: number): string {
+  if (score >= 75) return 'var(--noc-ok)'
+  if (score >= 45) return 'var(--noc-warn)'
+  return 'var(--noc-error)'
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function ScoreRing({ score }: { score: number }) {
   const r = 22
-  const circumference = 2 * Math.PI * r
-  const filled = (score / 100) * circumference
-  const color = scoreColor(score)
+  const circ = 2 * Math.PI * r
+  const color = scoreColorVar(score)
   return (
     <svg width="56" height="56" viewBox="0 0 56 56" style={{ flexShrink: 0 }}>
       <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
       <circle
         cx="28" cy="28" r={r} fill="none"
         stroke={color} strokeWidth="4"
-        strokeDasharray={`${filled} ${circumference}`}
+        strokeDasharray={`${(score / 100) * circ} ${circ}`}
         strokeLinecap="round"
         transform="rotate(-90 28 28)"
         style={{ transition: 'stroke-dasharray 0.6s ease' }}
@@ -102,11 +98,10 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
-function Sparkline({ scores, color }: { scores: number[]; color: string }) {
-  if (scores.length < 2) return <div style={{ width: 88, height: 36 }} />
-  const W = 88, H = 34
-  const min = Math.min(...scores)
-  const max = Math.max(...scores)
+function Sparkline({ scores, colorVar }: { scores: number[]; colorVar: string }) {
+  if (scores.length < 2) return <div style={{ width: 88, height: 32 }} />
+  const W = 88, H = 30
+  const min = Math.min(...scores), max = Math.max(...scores)
   const range = max - min || 10
   const pts = scores.map((s, i) => {
     const x = (i / (scores.length - 1)) * W
@@ -116,13 +111,18 @@ function Sparkline({ scores, color }: { scores: number[]; color: string }) {
   const [lx, ly] = pts[pts.length - 1].split(',')
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ overflow: 'visible', flexShrink: 0 }}>
-      <polyline
-        points={pts.join(' ')}
-        fill="none" stroke={color}
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      />
-      <circle cx={lx} cy={ly} r="3.5" fill={color} />
+      <polyline points={pts.join(' ')} fill="none" stroke={colorVar} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="3.5" fill={colorVar} />
     </svg>
+  )
+}
+
+function StatusPill({ status }: { status: FleetStatus }) {
+  const s = STATUS_COLOR[status]
+  return (
+    <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}`, whiteSpace: 'nowrap' }}>
+      {s.label}
+    </span>
   )
 }
 
@@ -158,10 +158,7 @@ export function SavedAnalysisList({
     const equipment = (s.equipment_identifier ?? '').trim()
     if (isGroupable(equipment)) {
       const existing = indexByEquipment.get(equipment)
-      if (existing != null) {
-        groups[existing].snapshots.push(s)
-        continue
-      }
+      if (existing != null) { groups[existing].snapshots.push(s); continue }
       indexByEquipment.set(equipment, groups.length)
       groups.push({ key: equipment, equipment, snapshots: [s] })
     } else {
@@ -174,21 +171,20 @@ export function SavedAnalysisList({
     { critical: 0, watch: 0, healthy: 0 }
   )
 
-  const kpis: { value: number; label: string; status: BadgeStatus; key: string }[] = [
-    { key: 'total',    value: groups.length,  label: 'Equipos',    status: 'info' },
-    { key: 'critical', value: fleet.critical, label: 'Críticos',   status: 'error' },
-    { key: 'watch',    value: fleet.watch,    label: 'Atención',   status: 'warning' },
-    { key: 'healthy',  value: fleet.healthy,  label: 'Saludables', status: 'success' },
-  ]
-
   return (
-    <div className="dashboard__saved-section fleet-overview animate-in">
-      <header className="dashboard__subheader">
-        <div className="dashboard__subheader-title-group">
-          <h2 className="dashboard__subheader-title">Historial de Incidentes</h2>
-          <p className="dashboard__subheader-meta">Evolución de dispositivos y diagnóstico de flota</p>
+    <div className="noc-stack animate-in" style={{ paddingTop: '8px' }}>
+
+      {/* ── Section header ─────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div>
+          <h4 style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--hp-blue-vibrant)', margin: '0 0 4px', fontWeight: 800, letterSpacing: '0.05em' }}>
+            Historial de Incidentes
+          </h4>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            Evolución de dispositivos y diagnóstico de flota
+          </p>
         </div>
-        <div className="dashboard__subheader-actions">
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           {savedList && savedList.length > 0 && (
             <input
               type="search"
@@ -197,240 +193,195 @@ export function SavedAnalysisList({
               value={savedListSearch}
               onChange={(e) => setSavedListSearch(e.target.value)}
               aria-label="Buscar análisis guardados"
-              style={{ width: '240px', height: '40px', borderRadius: '12px', margin: 0 }}
+              style={{ width: '220px', height: '38px', borderRadius: '10px', margin: 0 }}
             />
           )}
-          <button
-            type="button"
-            className="dashboard__btn dashboard__btn--primary"
-            onClick={() => setLogModalOpen(true)}
-          >
-            <Plus size={16} />
-            Analizar nuevo log
+          <button type="button" className="dashboard__btn dashboard__btn--primary" onClick={() => setLogModalOpen(true)}>
+            <Plus size={15} /> Analizar nuevo log
           </button>
         </div>
-      </header>
+      </div>
 
       {savedList === null ? (
-        <p className="dashboard__muted" style={{ padding: '20px 0' }}>Cargando…</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Cargando…</p>
       ) : savedList.length === 0 ? (
-        <p className="dashboard__muted" style={{ padding: '20px 0' }}>No hay incidentes guardados.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay incidentes guardados.</p>
       ) : (
         <>
-          {/* Fleet KPI bar */}
-          <div className="fleet-kpis animate-fade-in">
-            {kpis.map((k) => (
-              <GlassCard key={k.key} variant="secondary" className={'fleet-kpi fleet-kpi--' + k.status}>
-                <span className="fleet-kpi__value">{k.value}</span>
-                <Badge status={k.status} pulsing={k.status !== 'info'}>{k.label}</Badge>
-              </GlassCard>
-            ))}
+          {/* ── NOC KPI bar ──────────────────────────────────────────────── */}
+          <div className="noc-kpis">
+            <div className="noc-kpi noc-kpi--info">
+              <span className="noc-kpi__icon"><Monitor size={22} /></span>
+              <span className="noc-kpi__value">{groups.length}</span>
+              <span className="noc-kpi__label">Equipos</span>
+            </div>
+            <div className="noc-kpi noc-kpi--error">
+              <span className="noc-kpi__icon"><AlertOctagon size={22} /></span>
+              <span className="noc-kpi__value">{fleet.critical}</span>
+              <span className="noc-kpi__label">Críticos</span>
+            </div>
+            <div className="noc-kpi noc-kpi--warn">
+              <span className="noc-kpi__icon"><AlertTriangle size={22} /></span>
+              <span className="noc-kpi__value">{fleet.watch}</span>
+              <span className="noc-kpi__label">Atención</span>
+            </div>
+            <div className="noc-kpi noc-kpi--ok">
+              <span className="noc-kpi__icon"><CheckCircle2 size={22} /></span>
+              <span className="noc-kpi__value">{fleet.healthy}</span>
+              <span className="noc-kpi__label">Saludables</span>
+            </div>
           </div>
 
+          {/* ── Fleet grid ───────────────────────────────────────────────── */}
           {groups.length === 0 ? (
-            <p className="dashboard__muted animate-fade-in delay-2" style={{ padding: '20px 0' }}>
-              Sin resultados.
-            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Sin resultados.</p>
           ) : (
-            <div className="fleet-grid animate-fade-in delay-2">
+            <div className="fleet-grid">
               {groups.map((g) => {
                 const latest     = g.snapshots[0]
                 const status     = statusOf(latest.global_severity)
                 const trend      = trendOf(g.snapshots)
-                const sm         = STATUS_META[status]
-                const tm         = TREND_META[trend]
-                const title      = g.equipment || latest.name
+                const s          = STATUS_COLOR[status]
                 const open       = expanded.has(g.key)
                 const hasHistory = g.snapshots.length >= 2
                 const score      = severityToScore(latest.global_severity)
-                const color      = scoreColor(score)
-
-                // Sparkline: chronological order (oldest → newest), up to 10 points
-                const sparkScores = [...g.snapshots]
-                  .reverse()
-                  .slice(-10)
-                  .map((s) => severityToScore(s.global_severity))
+                const colorVar   = scoreColorVar(score)
+                const title      = g.equipment || latest.name
+                const sparkScores = [...g.snapshots].reverse().slice(-10).map((sn) => severityToScore(sn.global_severity))
 
                 return (
                   <Fragment key={g.key}>
-                    <GlassCard
-                      variant="secondary"
-                      hoverEffect
-                      className={'fleet-card fleet-card--' + status}
+                    {/* ── Device card ──────────────────────────────── */}
+                    <div
+                      style={{
+                        borderRadius: 'var(--noc-radius)',
+                        border: `1px solid ${open ? s.text : s.border}`,
+                        background: open ? `linear-gradient(135deg, ${s.bg}, var(--noc-panel-bg))` : 'var(--noc-panel-bg)',
+                        backdropFilter: 'blur(20px)',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s, background 0.2s',
+                        boxShadow: open ? `0 0 20px ${s.bg}` : 'none',
+                      }}
+                      onClick={() => onOpen(latest.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(latest.id) } }}
                       role="button"
                       tabIndex={0}
-                      onClick={() => onOpen(latest.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(latest.id) }
-                      }}
                     >
-                      {/* ── Head: device name + status badge ── */}
-                      <div className="fleet-card__head">
-                        <span className="fleet-card__title" title={title}>{title}</span>
-                        <Badge status={sm.badge} pulsing>{sm.label}</Badge>
-                      </div>
+                      {/* Top accent bar */}
+                      <div style={{ height: '3px', background: s.text, boxShadow: `0 0 8px ${s.text}`, flexShrink: 0 }} />
 
-                      {/* ── Body: score ring + health bar + sparkline ── */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <ScoreRing score={score} />
+                      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                        {/* Title + status */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.88rem', color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={title}>
+                            {title}
+                          </span>
+                          <StatusPill status={status} />
+                        </div>
 
-                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {/* Health bar */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{
-                              flex: 1, height: '5px',
-                              background: 'rgba(255,255,255,0.07)',
-                              borderRadius: '3px', overflow: 'hidden',
-                            }}>
-                              <div style={{
-                                width: `${score}%`, height: '100%',
-                                background: color, borderRadius: '3px',
-                                transition: 'width 0.6s ease',
-                              }} />
+                        {/* Score ring + health bar + sparkline */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                          <ScoreRing score={score} />
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.07)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${score}%`, height: '100%', background: colorVar, borderRadius: '3px', transition: 'width 0.6s ease' }} />
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>{score}/100</span>
                             </div>
-                            <span style={{ fontSize: '0.72rem', color: '#475569', whiteSpace: 'nowrap' }}>
-                              {score}/100
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              {hasHistory ? <><strong style={{ color: '#94a3b8' }}>{g.snapshots.length}</strong> lecturas</> : '1 lectura'}
+                              {' · '}{relativeTime(latest.created_at)}
                             </span>
+                            <span className={TREND_CSS[trend].cls}>{TREND_CSS[trend].label}</span>
                           </div>
-
-                          {/* Meta */}
-                          <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.4 }}>
-                            {hasHistory
-                              ? <><strong style={{ color: '#94a3b8' }}>{g.snapshots.length}</strong> lecturas</>
-                              : '1 lectura'
-                            }
-                            {' · '}{relativeTime(latest.created_at)}
-                          </div>
-
-                          {/* Trend */}
-                          <Badge status={tm.badge}>{tm.icon} {tm.label}</Badge>
-                        </div>
-
-                        {/* Sparkline (only if ≥2 readings) */}
-                        {hasHistory && (
-                          <div style={{ opacity: 0.85 }}>
-                            <Sparkline scores={sparkScores} color={color} />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* ── Footer: actions ── */}
-                      <div className="fleet-card__footer" onClick={(e) => e.stopPropagation()}>
-                        <span style={{ fontSize: '0.75rem', color: '#475569' }}>
-                          {formatDateTime(latest.created_at)}
-                        </span>
-                        <span className="fleet-card__actions">
-                          <button
-                            type="button"
-                            className="dashboard__btn dashboard__btn--small dashboard__btn--primary"
-                            onClick={() => onOpen(latest.id)}
-                          >
-                            Abrir
-                          </button>
-                          {hasHistory ? (
-                            <button
-                              type="button"
-                              className="dashboard__btn dashboard__btn--small"
-                              onClick={() => toggle(g.key)}
-                              aria-expanded={open}
-                              style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                            >
-                              {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                              {open ? 'Ocultar' : 'Evolución'}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="dashboard__btn dashboard__btn--small"
-                              disabled={deletingId !== null}
-                              onClick={() => onDelete({ id: latest.id, name: latest.name })}
-                            >
-                              {deletingId === latest.id ? 'Borrando…' : 'Borrar'}
-                            </button>
+                          {hasHistory && (
+                            <div style={{ opacity: 0.8 }}>
+                              <Sparkline scores={sparkScores} colorVar={colorVar} />
+                            </div>
                           )}
-                        </span>
-                      </div>
-                    </GlassCard>
-
-                    {/* ── Evolution panel (EquipmentTimeline) ── */}
-                    {open && hasHistory && g.equipment && (
-                      <GlassCard variant="secondary" className="fleet-history">
-                        <div style={{
-                          display: 'flex', justifyContent: 'space-between',
-                          alignItems: 'center', marginBottom: '12px',
-                        }}>
-                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>
-                            Evolución — {g.equipment}
-                          </span>
-                          <span style={{ fontSize: '0.72rem', color: '#475569' }}>
-                            {g.snapshots.length} snapshots
-                          </span>
                         </div>
-                        <EquipmentTimeline
-                          embedded
-                          equipmentId={g.equipment}
-                          snapshots={g.snapshots}
-                        />
-                        {/* Snapshot list for individual actions */}
-                        <ul className="fleet-history__list" style={{ marginTop: '16px' }}>
-                          {g.snapshots.map((s) => (
-                            <li key={s.id} className="fleet-history__item">
-                              <Badge status={STATUS_META[statusOf(s.global_severity)].badge}>
-                                {STATUS_META[statusOf(s.global_severity)].label}
-                              </Badge>
-                              <span className="fleet-history__name">{s.name}</span>
-                              <span className="fleet-history__date">{formatDateTime(s.created_at)}</span>
-                              <span className="fleet-history__actions">
-                                <button
-                                  type="button"
-                                  className="dashboard__btn dashboard__btn--small"
-                                  onClick={() => onOpen(s.id)}
-                                >
-                                  Abrir
-                                </button>
-                                <button
-                                  type="button"
-                                  className="dashboard__btn dashboard__btn--small"
-                                  disabled={deletingId !== null}
-                                  onClick={() => onDelete({ id: s.id, name: s.name })}
-                                >
-                                  {deletingId === s.id ? 'Borrando…' : 'Borrar'}
-                                </button>
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </GlassCard>
-                    )}
 
-                    {/* Solo snapshot (no equipment) — evolution not available */}
-                    {open && hasHistory && !g.equipment && (
-                      <GlassCard variant="secondary" className="fleet-history">
-                        <ul className="fleet-history__list">
-                          {g.snapshots.map((s) => (
-                            <li key={s.id} className="fleet-history__item">
-                              <Badge status={STATUS_META[statusOf(s.global_severity)].badge}>
-                                {STATUS_META[statusOf(s.global_severity)].label}
-                              </Badge>
-                              <span className="fleet-history__name">{s.name}</span>
-                              <span className="fleet-history__date">{formatDateTime(s.created_at)}</span>
-                              <span className="fleet-history__actions">
-                                <button
-                                  type="button"
-                                  className="dashboard__btn dashboard__btn--small"
-                                  onClick={() => onOpen(s.id)}
-                                >Abrir</button>
-                                <button
-                                  type="button"
-                                  className="dashboard__btn dashboard__btn--small"
-                                  disabled={deletingId !== null}
-                                  onClick={() => onDelete({ id: s.id, name: s.name })}
-                                >{deletingId === s.id ? 'Borrando…' : 'Borrar'}</button>
-                              </span>
-                            </li>
-                          ))}
+                        {/* Footer */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}
+                          onClick={(e) => e.stopPropagation()}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                            {formatDateTime(latest.created_at)}
+                          </span>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button type="button" className="dashboard__btn dashboard__btn--small dashboard__btn--primary" onClick={() => onOpen(latest.id)}>
+                              Abrir
+                            </button>
+                            {hasHistory ? (
+                              <button
+                                type="button"
+                                className="dashboard__btn dashboard__btn--small"
+                                onClick={() => toggle(g.key)}
+                                aria-expanded={open}
+                                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                {open ? 'Ocultar' : 'Evolución'}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="dashboard__btn dashboard__btn--small"
+                                disabled={deletingId !== null}
+                                onClick={() => onDelete({ id: latest.id, name: latest.name })}
+                              >
+                                {deletingId === latest.id ? 'Borrando…' : 'Borrar'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Evolution panel ──────────────────────────── */}
+                    {open && hasHistory && (
+                      <div className="fleet-history" style={{
+                        background: 'var(--noc-panel-bg)',
+                        border: 'var(--noc-panel-border)',
+                        borderRadius: 'var(--noc-radius)',
+                        padding: '20px 24px',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--hp-blue-vibrant)', fontWeight: 800, letterSpacing: '0.05em' }}>
+                            Evolución — {g.equipment ?? latest.name}
+                          </h4>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{g.snapshots.length} snapshots</span>
+                        </div>
+
+                        {g.equipment && (
+                          <EquipmentTimeline embedded equipmentId={g.equipment} snapshots={g.snapshots} />
+                        )}
+
+                        <ul className="fleet-history__list" style={{ marginTop: g.equipment ? '16px' : 0 }}>
+                          {g.snapshots.map((sn) => {
+                            const st = statusOf(sn.global_severity)
+                            const sc = STATUS_COLOR[st]
+                            return (
+                              <li key={sn.id} className="fleet-history__item">
+                                <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '0.68rem', fontWeight: 700, background: sc.bg, color: sc.text, whiteSpace: 'nowrap' }}>
+                                  {sc.label}
+                                </span>
+                                <span className="fleet-history__name">{sn.name}</span>
+                                <span className="fleet-history__date">{formatDateTime(sn.created_at)}</span>
+                                <span className="fleet-history__actions">
+                                  <button type="button" className="dashboard__btn dashboard__btn--small" onClick={() => onOpen(sn.id)}>Abrir</button>
+                                  <button type="button" className="dashboard__btn dashboard__btn--small" disabled={deletingId !== null} onClick={() => onDelete({ id: sn.id, name: sn.name })}>
+                                    {deletingId === sn.id ? 'Borrando…' : 'Borrar'}
+                                  </button>
+                                </span>
+                              </li>
+                            )
+                          })}
                         </ul>
-                      </GlassCard>
+                      </div>
                     )}
                   </Fragment>
                 )

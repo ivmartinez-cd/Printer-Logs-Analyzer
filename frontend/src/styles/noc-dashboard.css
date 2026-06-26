@@ -225,6 +225,7 @@
 }
 .noc-badge--error { background: rgba(239, 68, 68, 0.15); color: var(--noc-error); }
 .noc-badge--warn  { background: rgba(245, 158, 11, 0.15); color: var(--noc-warn); }
+.noc-badge--ok    { background: rgba(16, 185, 129, 0.15); color: var(--noc-ok); }
 .noc-badge--impact-high   { background: rgba(239, 68, 68, 0.15); color: var(--noc-error); }
 .noc-badge--impact-medium { background: rgba(245, 158, 11, 0.15); color: var(--noc-warn); }
 .noc-badge--impact-low    { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
