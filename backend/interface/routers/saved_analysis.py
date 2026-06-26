@@ -222,6 +222,91 @@ def get_device_health(
 
 
 
+def _diff_two_snapshots(older: SavedAnalysisSnapshot, newer: SavedAnalysisSnapshot) -> dict:
+    """Diff two stored snapshots; both use dict-based incidents."""
+    older_codes = {i["code"]: i for i in older.incidents}
+    newer_codes = {i["code"]: i for i in newer.incidents}
+    older_set = set(older_codes.keys())
+    newer_set = set(newer_codes.keys())
+
+    codigos_nuevos = list(newer_set - older_set)
+    codigos_desaparecidos = list(older_set - newer_set)
+    cambios_ocurrencias = []
+    for code in older_set & newer_set:
+        so = older_codes[code].get("occurrences") or 0
+        co = newer_codes[code].get("occurrences") or 0
+        if so != co:
+            cambios_ocurrencias.append(
+                {"code": code, "saved_occurrences": so, "current_occurrences": co, "delta": co - so}
+            )
+
+    older_dt = (
+        older.created_at.replace(tzinfo=timezone.utc)
+        if older.created_at.tzinfo is None
+        else older.created_at
+    )
+    newer_dt = (
+        newer.created_at.replace(tzinfo=timezone.utc)
+        if newer.created_at.tzinfo is None
+        else newer.created_at
+    )
+    return {
+        "codigos_nuevos": codigos_nuevos,
+        "codigos_desaparecidos": codigos_desaparecidos,
+        "cambios_ocurrencias": cambios_ocurrencias,
+        "diferencia_dias": max(0, int((newer_dt - older_dt).total_seconds() / 86400)),
+    }
+
+
+@router.get(
+    "/{id}/compare-with/{target_id}",
+    dependencies=[Depends(authenticate)],
+    summary="Compare two saved analysis snapshots",
+    response_description="Chronological diff between two snapshots.",
+)
+def compare_two_snapshots(
+    id: str,
+    target_id: str,
+    repo: SavedAnalysisRepository = Depends(get_saved_analysis_repo),
+) -> dict:
+    try:
+        uid1 = UUID(id)
+        uid2 = UUID(target_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid snapshot ID") from None
+
+    snap1 = repo.get_by_id(uid1)
+    snap2 = repo.get_by_id(uid2)
+    if not snap1 or not snap2:
+        raise HTTPException(status_code=404, detail="One or both snapshots not found")
+
+    dt1 = snap1.created_at.replace(tzinfo=timezone.utc) if snap1.created_at.tzinfo is None else snap1.created_at
+    dt2 = snap2.created_at.replace(tzinfo=timezone.utc) if snap2.created_at.tzinfo is None else snap2.created_at
+    older, newer = (snap1, snap2) if dt1 <= dt2 else (snap2, snap1)
+
+    diff = _diff_two_snapshots(older, newer)
+
+    class _Adapter:
+        def __init__(self, d: dict):
+            self.code = d.get("code", "")
+            self.occurrences = d.get("occurrences") or 0
+            self.severity = d.get("severity", "INFO")
+
+    diff["tendencia"] = calculate_trend(older.incidents, [_Adapter(i) for i in newer.incidents], diff)
+
+    def _snap_dict(s: SavedAnalysisSnapshot) -> dict:
+        return {
+            "id": str(s.id),
+            "name": s.name,
+            "equipment_identifier": s.equipment_identifier,
+            "incidents": s.incidents,
+            "global_severity": s.global_severity,
+            "created_at": s.created_at.isoformat(),
+        }
+
+    return {"older": _snap_dict(older), "newer": _snap_dict(newer), "diff": diff}
+
+
 @router.delete(
     "/{id}",
     status_code=204,
