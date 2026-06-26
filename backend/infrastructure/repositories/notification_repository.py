@@ -86,6 +86,18 @@ class NotificationRepository:
         except DatabaseUnavailableError:
             return self._mark_all_read_local()
 
+    def delete(self, id: UUID) -> bool:
+        try:
+            return self._delete_db(id)
+        except DatabaseUnavailableError:
+            return self._delete_local(id)
+
+    def delete_read(self) -> int:
+        try:
+            return self._delete_read_db()
+        except DatabaseUnavailableError:
+            return self._delete_read_local()
+
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
@@ -166,6 +178,22 @@ class NotificationRepository:
                 updated = cur.rowcount
             conn.commit()
         return updated
+
+    def _delete_db(self, id: UUID) -> bool:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM notifications WHERE id = %s", (str(id),))
+                deleted = cur.rowcount
+            conn.commit()
+        return deleted > 0
+
+    def _delete_read_db(self) -> int:
+        with self._db.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM notifications WHERE is_read = TRUE")
+                deleted = cur.rowcount
+            conn.commit()
+        return deleted
 
     # ------------------------------------------------------------------
     # Local JSON fallback helpers
@@ -250,6 +278,24 @@ class NotificationRepository:
             if count:
                 self._save_local(items)
         return count
+
+    def _delete_local(self, id: UUID) -> bool:
+        with _local_write_lock:
+            items = self._load_local()
+            new_items = [i for i in items if i["id"] != str(id)]
+            if len(new_items) == len(items):
+                return False
+            self._save_local(new_items)
+        return True
+
+    def _delete_read_local(self) -> int:
+        with _local_write_lock:
+            items = self._load_local()
+            new_items = [i for i in items if not i.get("is_read")]
+            deleted = len(items) - len(new_items)
+            if deleted:
+                self._save_local(new_items)
+        return deleted
 
     # ------------------------------------------------------------------
     # Shared helpers

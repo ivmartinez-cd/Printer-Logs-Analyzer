@@ -89,40 +89,43 @@ def _watch(
         time.sleep(_POLL_INTERVAL_S)
         try:
             ops = session.get_hp_operations(device_id)
-        except Exception as exc:  # transient portal/session error: keep polling
-            _logger.debug("HP operations poll failed for %s: %s", serial, exc)
+
+            # The table lists every past run; keep only the newest row per cache op
+            # type (the table is ordered newest-first) to avoid stale/duplicate rows.
+            latest_by_op: dict[str, dict] = {}
+            for o in ops:
+                op = o.get("operation")
+                if op in CACHE_OP_TYPES and op not in latest_by_op:
+                    latest_by_op[op] = o
+            cache_ops = list(latest_by_op.values())
+            if not cache_ops:
+                continue
+            # Prefer ops whose "sent" changed vs baseline (our new run).
+            fresh = [o for o in cache_ops if o.get("sent", "") != baseline.get(o["operation"], "")]
+            target = fresh or cache_ops
+            if all(_is_terminal(o.get("last_known_state")) for o in target):
+                status, message = _summarize(target)
+                repo.update_status(
+                    notification_id, status=status, title=f"Caché de HP — {serial}", message=message
+                )
+                _logger.info("HP cache refresh finished for %s: %s", serial, status)
+                return
+        except Exception as exc:
+            _logger.warning("HP cache watch error for %s: %s", serial, exc)
             continue
 
-        # The table lists every past run; keep only the newest row per cache op
-        # type (the table is ordered newest-first) to avoid stale/duplicate rows.
-        latest_by_op: dict[str, dict] = {}
-        for o in ops:
-            op = o.get("operation")
-            if op in CACHE_OP_TYPES and op not in latest_by_op:
-                latest_by_op[op] = o
-        cache_ops = list(latest_by_op.values())
-        if not cache_ops:
-            continue
-        # Prefer ops whose "sent" changed vs baseline (our new run).
-        fresh = [o for o in cache_ops if o.get("sent", "") != baseline.get(o["operation"], "")]
-        target = fresh or cache_ops
-        if all(_is_terminal(o.get("last_known_state")) for o in target):
-            status, message = _summarize(target)
-            repo.update_status(
-                notification_id, status=status, title=f"Caché de HP — {serial}", message=message
-            )
-            _logger.info("HP cache refresh finished for %s: %s", serial, status)
-            return
-
-    repo.update_status(
-        notification_id,
-        status="warning",
-        title=f"Caché de HP — {serial}",
-        message=(
-            "La actualización de la caché de HP sigue procesándose. "
-            "Volvé a consultar el estado en unos minutos."
-        ),
-    )
+    try:
+        repo.update_status(
+            notification_id,
+            status="warning",
+            title=f"Caché de HP — {serial}",
+            message=(
+                "La actualización de la caché de HP sigue procesándose. "
+                "Volvé a consultar el estado en unos minutos."
+            ),
+        )
+    except Exception as exc:
+        _logger.error("Failed to update notification %s after timeout: %s", notification_id, exc)
 
 
 def start_cache_refresh_watch(

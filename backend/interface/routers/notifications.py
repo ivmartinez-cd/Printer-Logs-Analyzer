@@ -66,3 +66,31 @@ def mark_all_notifications_read(
     repo: NotificationRepository = Depends(get_notification_repo),
 ) -> dict:
     return {"updated": repo.mark_all_read()}
+
+
+@router.delete(
+    "/{id}",
+    status_code=204,
+    dependencies=[Depends(authenticate)],
+    summary="Delete a notification",
+)
+def delete_notification(
+    id: str, repo: NotificationRepository = Depends(get_notification_repo)
+) -> None:
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid id") from None
+    if not repo.delete(uid):
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+
+@router.delete(
+    "",
+    dependencies=[Depends(authenticate)],
+    summary="Delete all read notifications",
+)
+def delete_read_notifications(
+    repo: NotificationRepository = Depends(get_notification_repo),
+) -> dict:
+    return {"deleted": repo.delete_read()}
