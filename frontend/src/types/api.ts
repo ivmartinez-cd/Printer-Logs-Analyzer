@@ -368,6 +368,27 @@ export interface MaintenanceMutationResponse {
   history_id?: number | null
 }
 
+export type MaintenanceComponentStatusLevel = 'ok' | 'warning' | 'critical' | 'incident'
+
+export interface ComponentStatus {
+  component_type: string
+  remaining: number
+  expected_life: number
+  alert_margin: number
+  status: MaintenanceComponentStatusLevel
+  incident_number?: string | null
+  email_recipients?: string | null
+}
+
+export interface DeviceStatusResponse {
+  serial: string
+  model_family: string | null
+  last_sync_counter: number
+  last_sync_at?: string | null
+  status: MaintenanceComponentStatusLevel
+  components: ComponentStatus[]
+}
+
 export interface CdsReplacement {
   articulo: string
   cantidad: number
