@@ -540,6 +540,24 @@ export async function markAllNotificationsRead(signal?: AbortSignal): Promise<vo
   if (!res.ok) throw new Error(res.statusText || 'Request failed')
 }
 
+export async function deleteNotification(id: string, signal?: AbortSignal): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/notifications/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: apiHeaders(),
+    signal,
+  })
+  if (!res.ok && res.status !== 404) throw new Error(res.statusText || 'Request failed')
+}
+
+export async function deleteReadNotifications(signal?: AbortSignal): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/notifications`, {
+    method: 'DELETE',
+    headers: apiHeaders(),
+    signal,
+  })
+  if (!res.ok) throw new Error(res.statusText || 'Request failed')
+}
+
 export async function extractSdsLogs(
   serial: string,
   days: number = 30,
