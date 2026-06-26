@@ -40,8 +40,8 @@
 .noc-device__identity { display: flex; align-items: center; gap: 16px; min-width: 240px; }
 .noc-device__icon {
   display: grid; place-items: center;
-  width: 52px; height: 52px; border-radius: 14px;
-  background: rgba(0, 161, 224, 0.12); color: var(--hp-blue-vibrant);
+  width: 52px; height: 52px; border-radius: 8px;
+  background: rgba(243, 147, 34, 0.1); color: var(--cd-orange);
   flex-shrink: 0;
 }
 .noc-device__model { margin: 0; font-size: 1.25rem; font-weight: 700; color: #f1f5f9; }

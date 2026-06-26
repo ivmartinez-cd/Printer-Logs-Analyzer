@@ -28,7 +28,7 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.03em;
-  filter: drop-shadow(0 0 8px rgba(0, 161, 224, 0.2));
+  filter: drop-shadow(0 0 8px rgba(243, 147, 34, 0.2));
   margin: 0;
 }
 
@@ -127,7 +127,7 @@
 .sidebar-search-input:focus {
   outline: none;
   border-color: var(--hp-blue-vibrant);
-  background: rgba(0, 150, 214, 0.05);
+  background: rgba(243, 147, 34, 0.05);
 }
 
 .clear-search {
@@ -173,8 +173,8 @@
 }
 
 .avisos-family-header.is-selected {
-  background: rgba(0, 150, 214, 0.08);
-  border-color: rgba(0, 150, 214, 0.4);
+  background: rgba(243, 147, 34, 0.08);
+  border-color: rgba(243, 147, 34, 0.4);
 }
 
 .family-collapse-btn {
@@ -251,7 +251,7 @@
 }
 
 .avisos-device-item.is-selected {
-  background: rgba(0, 150, 214, 0.15);
+  background: rgba(243, 147, 34, 0.15);
   border-color: var(--hp-blue-vibrant);
   color: #fff;
 }
@@ -504,8 +504,8 @@
 
 .dashboard__btn--icon-vibrant:hover {
   transform: scale(1.1) rotate(90deg);
-  background: #00b4ff;
-  box-shadow: 0 0 20px rgba(0, 161, 224, 0.4);
+  background: var(--cd-orange-light);
+  box-shadow: 0 0 20px rgba(243, 147, 34, 0.4);
 }
 
 .dashboard__btn--icon-edit {
@@ -559,7 +559,7 @@
 .avisos-add-rule-btn:hover {
   border-color: var(--hp-blue-vibrant);
   color: #fff;
-  background: rgba(0, 150, 214, 0.04);
+  background: rgba(243, 147, 34, 0.04);
 }
 
 /* Modals */
@@ -635,7 +635,7 @@
   outline: none;
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--hp-blue-vibrant);
-  box-shadow: 0 0 0 4px rgba(0, 150, 214, 0.15);
+  box-shadow: 0 0 0 4px rgba(243, 147, 34, 0.15);
 }
 
 .form-input::placeholder {
@@ -698,7 +698,7 @@
 
 .sync-inline-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--hp-blue-vibrant), #9333ea);
+  background: linear-gradient(90deg, var(--cd-orange), var(--cd-magenta));
   border-radius: 10px;
   transition: width 0.4s ease;
 }
