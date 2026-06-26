@@ -25,6 +25,8 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: #e6e8ee;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .kpi-card__values {

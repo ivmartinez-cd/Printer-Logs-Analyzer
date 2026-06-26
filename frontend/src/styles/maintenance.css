@@ -23,12 +23,8 @@
 .avisos-page .dashboard__subheader-title {
   font-size: 1.75rem;
   font-weight: 800;
-  background: var(--text-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--cd-orange);
   letter-spacing: -0.03em;
-  filter: drop-shadow(0 0 8px rgba(243, 147, 34, 0.2));
   margin: 0;
 }
 

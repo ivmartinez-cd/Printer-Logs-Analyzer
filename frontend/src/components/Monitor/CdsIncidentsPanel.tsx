@@ -89,7 +89,7 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
                           <td>{inc.fecha}</td>
                           <td>
                             <a
-                              href={`https://webagentes.canaldirecto.com.ar/incidents/view/${inc.numero_incidente}`}
+                              href={`https://webagentes.canaldirecto.com.ar/incidents/view/${formatIncidentNumber(inc.numero_incidente)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="cds-incidents-panel__link"
