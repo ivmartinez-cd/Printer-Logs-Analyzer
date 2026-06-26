@@ -454,7 +454,10 @@ def _parse_hp_operations(page_text: str) -> list[dict]:
     """Parse the HP Smart operations table (one dict per operation row)."""
     out: list[dict] = []
     try:
-        tree = html.fromstring(page_text)
+        # The operations endpoint returns the same EKM AJAX XML/CDATA wrapper
+        # that the event log endpoint uses — unwrap it before parsing HTML.
+        html_content = _get_html_content(page_text)
+        tree = html.fromstring(html_content)
         for tr in tree.xpath("//table//tr"):
             tds = tr.xpath("./td")
             if len(tds) < 4:  # header (th) rows and empties are skipped
