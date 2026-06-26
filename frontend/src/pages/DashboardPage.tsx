@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { Menu, Zap, Save, FileText, Router, DatabaseBackup } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import {
   listSavedAnalyses,
   getSavedAnalysis,
@@ -361,7 +361,7 @@ export default function DashboardPage({
 
 
   return (
-    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="app-layout" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <Navigation 
         viewMode={viewMode}
         onNavigate={(mode) => {
@@ -389,15 +389,14 @@ export default function DashboardPage({
 
       <NotificationsBell />
       
-      <div 
-        className={dashboardClass} 
-        ref={dashboardRef} 
-        style={{ 
-          marginLeft: typeof window !== 'undefined' && window.innerWidth > 1024 ? (navCollapsed ? '80px' : '280px') : '0', 
+      <div
+        className={dashboardClass}
+        ref={dashboardRef}
+        style={{
+          flex: 1,
           minWidth: 0,
-          transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: 'margin-left',
-          transform: 'translateZ(0)'
+          overflowY: 'auto',
+          height: '100vh',
         }}
       >
         <header className="export-header">
@@ -606,7 +605,6 @@ export default function DashboardPage({
                             onClick={() => setSdsModalOpen(true)}
                             title="Ingresar Incidente SDS"
                           >
-                            <Zap size={16} />
                             SDS
                           </button>
                           <button
@@ -614,7 +612,6 @@ export default function DashboardPage({
                             onClick={() => setSaveIncidentModalOpen(true)}
                             title="Guardar Análisis"
                           >
-                            <Save size={16} />
                             Guardar
                           </button>
                           <button
@@ -654,7 +651,6 @@ export default function DashboardPage({
                             }}
                             disabled={exportingPdf || isGeneratingAiPdf}
                           >
-                            <FileText size={16} />
                             {isGeneratingAiPdf ? 'Procesando...' : exportingPdf ? 'Exportando...' : 'Exportar PDF'}
                           </button>
                           <button
@@ -678,7 +674,6 @@ export default function DashboardPage({
                             disabled={!currentSerialNumber || loadingRemoteEws}
                             title="Acceso remoto al EWS del dispositivo"
                           >
-                            <Router size={16} />
                             {loadingRemoteEws ? 'Conectando...' : 'EWS Remoto'}
                           </button>
                           <button
@@ -700,7 +695,6 @@ export default function DashboardPage({
                             disabled={!(currentModelFamily || currentModelName)}
                             title="Ver manual de servicio CPMD para este modelo"
                           >
-                            <FileText size={16} />
                             Manual CPMD
                           </button>
                           <button
@@ -709,7 +703,6 @@ export default function DashboardPage({
                             disabled={!currentSerialNumber || refreshingHpCache}
                             title="Solicitar al portal SDS que actualice la caché de datos de HP del dispositivo"
                           >
-                            <DatabaseBackup size={16} />
                             {refreshingHpCache ? 'Actualizando...' : 'Actualizar caché HP'}
                           </button>
                         </div>
