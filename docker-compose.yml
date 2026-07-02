@@ -13,7 +13,7 @@ services:
     networks:
       - backend-network
     ports:
-      - "5432:5432"
+      - "5433:5432"
     # Essential for 2026 standards: avoid boot race conditions
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U printerapp -d printer_logs"]
@@ -60,7 +60,7 @@ services:
         - VITE_API_KEY=${API_KEY:-dev}
     restart: unless-stopped
     ports:
-      - "5173:5173" # Cambiamos al puerto de desarrollo de Vite
+      - "5175:5173" # Cambiamos al puerto de desarrollo de Vite
     environment:
       - VITE_API_BASE=http://localhost:8000
       - CHOKIDAR_USEPOLLING=true
