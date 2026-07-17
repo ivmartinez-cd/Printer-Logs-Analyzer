@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 1000, // Check files every 1s instead of constantly to save CPU
+      ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**']
+    }
+  },
   build: {
     rollupOptions: {
       output: {
@@ -14,3 +21,4 @@ export default defineConfig({
     },
   },
 })
+

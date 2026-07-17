@@ -32,8 +32,27 @@ import type {
   SnapshotDiffResult,
 } from '../types/api'
 
-export const API_BASE =
-  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8001'
+const getApiBase = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE
+  
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    const hostname = window.location.hostname
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // If accessed via domain/IP on the local network or production domain
+      if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+        return envUrl
+      }
+      // If port is 5175 (Docker frontend), use port 8000 (Docker backend), else use 8001 (local manual dev)
+      const port = window.location.port === '5175' ? '8000' : '8001'
+      return `http://${hostname}:${port}`
+    }
+  }
+  
+  return envUrl || 'http://localhost:8001'
+}
+
+export const API_BASE = getApiBase()
+
 
 function normalizeEnvValue(value: string | undefined): string {
   const trimmed = (value ?? '').trim()

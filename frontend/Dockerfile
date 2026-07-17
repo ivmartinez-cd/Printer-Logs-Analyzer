@@ -11,6 +11,10 @@ RUN npm ci --legacy-peer-deps
 COPY ./ ./
 ARG VITE_API_KEY
 ENV VITE_API_KEY=$VITE_API_KEY
+ARG VITE_API_BASE
+ENV VITE_API_BASE=$VITE_API_BASE
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Production stage - Nginx
