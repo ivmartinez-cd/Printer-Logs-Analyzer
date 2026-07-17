@@ -44,9 +44,6 @@ services:
         condition: service_healthy
     volumes:
       - ./data:/app/data
-      - ./backend:/app/backend # Sincronización de código backend
-    # Usar --reload para desarrollo (Ruta correcta de la app)
-    command: uvicorn backend.interface.api:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - backend-network
       - frontend-network
@@ -55,28 +52,20 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: build # Usamos la etapa que tiene Node.js para desarrollo
       args:
         - VITE_API_KEY=${API_KEY:-dev}
+        - VITE_API_BASE=http://localhost:8000
+        - VITE_API_URL=http://localhost:8000
     restart: unless-stopped
     ports:
-      - "5175:5173" # Cambiamos al puerto de desarrollo de Vite
-    environment:
-      - VITE_API_BASE=http://localhost:8000
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
-      - VITE_WATCH_USE_POLLING=true
+      - "5175:8080" # Map host 5175 to Nginx production port 8080
     depends_on:
       - backend
     networks:
       - frontend-network
     env_file:
       - .env
-    volumes:
-      - ./frontend:/app # Sincronización de código frontend
-      - /app/node_modules # Evitar que los node_modules locales pisen los del contenedor
-    # En desarrollo usamos npm run dev en lugar de Nginx
-    command: npm run dev -- --host 0.0.0.0 --port 5173
+
 
 networks:
   backend-network:

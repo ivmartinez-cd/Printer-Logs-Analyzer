@@ -76,6 +76,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
             "http://localhost:5176",
             "http://localhost:8081",
             "http://127.0.0.1:8081",
+            "http://192.168.178.2:5175",
         ],
         allow_credentials=True,
         allow_methods=["*"],

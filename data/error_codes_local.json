@@ -1,0 +1,598 @@
+[
+  {
+    "id": "1",
+    "code": "10.00.15",
+    "severity": "ERROR",
+    "description": "Supply has been removed or installed incorrectly.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "2",
+    "code": "10.00.58",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDdTQzhydnNqempJdXdQK3NKMl9YeVRuMCtzWGR4Q09SdkY4Y2tJZHNCa0FISjM2NnorY3ZvZ1lzK2tDVEVnT3NLUnUzUU9KRT0vaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjEwLjAwLjU4IiwiUHJvZHVjdE51bWJlciI6Ik0wUDM5QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTYiLCJDdXN0b21lcklkIjo1MDAxMzksIkRldmljZUlkIjoxNTM5NTk4MDcsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODA5OTAxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.gLpno-iLstfeIpTvk0xd2_ORkG6JOnixsaUD6nyi4nU"
+  },
+  {
+    "id": "21",
+    "code": "10.00.60",
+    "severity": "WARNING",
+    "description": "The printer indicates when a supply level is low. Actual toner cartridge life might vary. You do not need to replace the toner cartridge at this time unless print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjTdAxmjPbt7Ti0pu8vzjIuwP+sJ26+GRWFBoGdPFK5eXsFkCeIplUr7tY7q6lfN7etzNQ8AuqBL51hnfcw=/ish_10301738-6752107-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "22",
+    "code": "10.00.70",
+    "severity": "WARNING",
+    "description": "The printer indicates when one of the supplies is printing past very low state. The actual remaining supply life might vary. You do not need to replace the toner cartridge at this time unless the print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9TikgvMvzjIuwP+sJ29CIUFRNw25JMeZyUcQFI8AJu0PY2Jq+6RxpsYA0uV9w4MSfm0OZJus=/ish_10367090-7156877-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "23",
+    "code": "10.01.60",
+    "severity": "WARNING",
+    "description": "The printer indicates when a supply level is low. Actual toner cartridge life might vary. You do not need to replace the toner cartridge at this time unless print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9Tikguc7zjIuwP+sJ267wQ18kvBV7NcQqVNwEXNsTtx3xrK7r0+I4+Om0ANiViaTYzMzWCQE=/ish_10367090-7156822-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "24",
+    "code": "10.03.58",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibp_Sywtv9Hvi4e6P+sLrvCYT2YBz0BvCultVIAmPMQ1sDuKpq3p1SXFP3edcXya0dZY+o3vgg==/ish_1690610-1730354-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "25",
+    "code": "10.03.60",
+    "severity": "WARNING",
+    "description": "The printer indicates when a supply level is low. Actual toner cartridge life might vary. You do not need to replace the toner cartridge at this time unless print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9Tikguc7zjIuwP+sJ26_wXWU0l3BsFcltTcI9O9Eym0qFoo2P+9wMKzxcGRDkOOdc9SU4SSU=/ish_10367090-7156822-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "26",
+    "code": "10.03.70",
+    "severity": "WARNING",
+    "description": "The printer indicates when one of the supplies is printing past very low state. The actual remaining supply life might vary. You do not need to replace the toner cartridge at this time unless the print quality is no longer acceptable.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf87mjLbBBOrPbp9Tikguc7zjIuwP+sJ26_wXWU0l3BsFcltTcI9O9Eym0qFoo2P+9wMKzxcGRDkOOdc9SU4SSU=/ish_10367090-7156822-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "27",
+    "code": "10.03.87",
+    "severity": "ERROR",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibp_Sywtv9Hvi4e6P+sLhuj1bU4GwhYOa9BFaoAVWv4CrhGBhrbtJFMnniKFTf0r4IvCr5FfQA==/ish_1690610-1730354-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "39",
+    "code": "10.23.15",
+    "severity": "ERROR",
+    "description": "The fuser is either not installed, or not correctly installed in the printer.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduVExmQWhpcVBiOTZTeW9xdmRIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWV4UGk1NTZacytZU0JNRUpnaG9USnhnPT0vaXNoXzEwNDYzNjIxLTI2MDUyNi0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTAuMjMuMTUiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA0NjM2MjEtMjYwNTI2LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.c827odbTxd1TdYbsAsGa7VxXxUzkj6ozMgktkdaiG_g"
+  },
+  {
+    "id": "40",
+    "code": "10.26.58",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDdTQzhydnNqempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzVEtpMVo3RFhrdU9uNHc1blRxNnVsYz0vaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjEwLjI2LjU4IiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.MkasyXGrSjD_sMeYJmodMyNegHET9-lMXAcUqUqtfVQ"
+  },
+  {
+    "id": "41",
+    "code": "10.26.59",
+    "severity": "WARNING",
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDdTQzhydnNqempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzVEtpMVo3RFhrdU9uNHc1blRxNnVsYz0vaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjEwLjI2LjU5IiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.aVAoq5S4ByUdJERRxlzb_Ot0QHfQH_HkT7ChxRYSw_4"
+  },
+  {
+    "id": "3",
+    "code": "10.99.40",
+    "severity": "WARNING",
+    "description": "The printer displays this message when a new cartridge has been installed and all cartridges are Genuine HP.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUaWdxdTlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZEcW1TZmNoV1dIRW96N25qTFNYT3BRPT0vaXNoXzEyMzU3MjkxLTI1NTcyMC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTAuOTkuNDAiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU1NzIwLTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.T0VUevLLoFLepdMSCkGAjdia4HFowvrhVXp0cngj0wU"
+  },
+  {
+    "id": "48",
+    "code": "13.A1.D1",
+    "severity": "ERROR",
+    "description": "Paper delay jam from tray 1.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUU2tzdjlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZIdUF0QXd1dVp2SmNJbXJlWHBwSmVnPT0vaXNoXzEyMzU3MjkxLTI1NjY0NC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQTEuRDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU2NjQ0LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.p48MAotVE1OEEQ5WwKMLNOxIzoUPz4cSlYaX-CGnN64"
+  },
+  {
+    "id": "28",
+    "code": "13.A2.D2",
+    "severity": "ERROR",
+    "description": "Errors in the 13.* family are related to jams.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2KLl+SCstps3oh426P+lxm_ObQ15Ft1tRNvV4FdZsLowUnAbRpJsMExO+bjDgsioHoffC++Bd/ish_1690610-842345-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "4",
+    "code": "13.A3.D3",
+    "severity": "ERROR",
+    "description": "Optional tray paper feed jam.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "49",
+    "code": "13.B2.A1",
+    "severity": "ERROR",
+    "description": "Paper stay jam in the rear door at the image area.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUU291djlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZVMyt5RU5MZ1o2YlUycU8waUtXYkdnPT0vaXNoXzEyMzU3MjkxLTI1NjU2NC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjIuQTEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU2NTY0LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.b9WHS4_C_OGghhGN3ejggtt-VYjxb-AEmyc1JgsT1Ys"
+  },
+  {
+    "id": "5",
+    "code": "13.B2.A2",
+    "severity": "ERROR",
+    "description": "Paper stay jam in the right door at the image area.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduVExmQWhpcVBiOTZTeVlxdU5Idmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWVqTmRtWXB1MkJGSTZBeU44a2lQQUNRPT0vaXNoXzEwNDYzNjIxLTI2MDkyMy0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjIuQTIiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA0NjM2MjEtMjYwOTIzLTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.zoCQ8rpLxKcAzmMLAh4T3QQ_Nmk3VJ_nrJG0irtVxog"
+  },
+  {
+    "id": "50",
+    "code": "13.B2.D1",
+    "severity": "ERROR",
+    "description": "Paper delay jam in the rear door at the image area.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUU291czlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZkUDk3SDF1aGZJemlVNDVoTkNZKzNBPT0vaXNoXzEyMzU3MjkxLTI1NjU2OC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjIuRDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU2NTY4LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.gwvZDu06MOA-JB4z_LDxvBUpl98HsM8luASp_VQ3c4o"
+  },
+  {
+    "id": "42",
+    "code": "13.B2.D2",
+    "severity": "ERROR",
+    "description": "Paper delay jam at the image area.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduVExmQWhpcVBiOTZTeWNwc3RIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWVkSnNweDBSWEl3RnpWc2d6ZHllOUxRPT0vaXNoXzEwNDYzNjIxLTI2MDgxOS0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjIuRDIiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA0NjM2MjEtMjYwODE5LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.NP2KLVf_O5Fjc-94r2Z6-f_Zbrg3T2TeUAlBIZtHqhE"
+  },
+  {
+    "id": "6",
+    "code": "13.B2.D3",
+    "severity": "ERROR",
+    "description": "Paper delay jam in top cover at image area.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "29",
+    "code": "13.B4.C1",
+    "severity": "ERROR",
+    "description": "Paper delay jam to loop sensor inside the right door.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85kTHZAhOvPbp9TigoucrzjIuwP+sJ28+teEc7oVcEJsxoUYQTC9oFrAD337iO7gu8OngEb_cD2afB9DRs5nI=/ish_12855694-7157026-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "58",
+    "code": "13.B9.A2",
+    "severity": "ERROR",
+    "description": "Paper stay jam in the fuser area.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUU29nczlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZBZW9KMVlVKzJreW84XzJYaU0ybUdRPT0vaXNoXzEyMzU3MjkxLTI1NjU4OC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjkuQTIiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU2NTg4LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.M7YIejrADKCUUeiTtT-XVAavxLfOP6o2VVP7CuoTyj0"
+  },
+  {
+    "id": "7",
+    "code": "13.B9.D2",
+    "severity": "ERROR",
+    "description": "Fuser delivery delay jam.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUU29odmRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZmenNpQm9BaUE1RUpmNDdCWWRaaStnPT0vaXNoXzEyMzU3MjkxLTI1NjU5Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjkuRDIiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU2NTk2LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.btMmUCaKvV4zQIK06l9MmXfhc_PWPR5Q6HKuMEu-PhQ"
+  },
+  {
+    "id": "8",
+    "code": "13.B9.D3",
+    "severity": "ERROR",
+    "description": "Fuser delivery delay jam.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "59",
+    "code": "13.D3.D2",
+    "severity": "ERROR",
+    "description": "The paper jammed while attempting to duplex.",
+    "solution_url": null
+  },
+  {
+    "id": "43",
+    "code": "13.E1.D2",
+    "severity": "ERROR",
+    "description": "Output delivery delay jam. Paper did not reach the output bin full sensor in time.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBieDdUQ1lxczgzempJdXdQK3NKMl9YeVRuMCtzWGR4Q09SdkY4Y2tJZHNCa0FISjM2NnorY0pKdk81eXN6dUszb2NzX3l3TW0zST0vaXNoXzEyMzU3MjkxLTE3NzkyODEtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjEzLkUxLkQyIiwiUHJvZHVjdE51bWJlciI6Ik0wUDM5QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEyMzU3MjkxLTE3NzkyODEtMTYiLCJDdXN0b21lcklkIjo1MDAxMzksIkRldmljZUlkIjoxNTM5NTk4MDcsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODA5OTM0LCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.BdJSC3LNdodSL_P-2nvouCmI4WBU5EX4svI2j9xginw"
+  },
+  {
+    "id": "51",
+    "code": "13.FF.FF",
+    "severity": "ERROR",
+    "description": "A power on residual paper jam has occurred.",
+    "solution_url": null
+  },
+  {
+    "id": "30",
+    "code": "31.03.42",
+    "severity": "WARNING",
+    "description": "Errors in the 31.* family are related to the document feeder.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Ibp_Sy4hs9Hvi4e6P+sLgPfzcH0PoGEFZs9URfg2B_pRsxvJv7qL_H+k5xtSp3E7_FqVHMqDpw==/ish_1690610-1730198-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "9",
+    "code": "32.08.A1",
+    "severity": "INFO",
+    "description": "An event related to starting the printer.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDRUeWdwdnNUempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzWExPWWNaQnV3TEN5YkpRVlp1VmRlaz0vaXNoXzEwNzQ1ODM5LTE0NDcxNTgtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjMyLjA4LkExIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE0NDcxNTgtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.Z-mjGc10BK93YjjjkMjI8b3xnWtNbUjnrae87qt4HiQ"
+  },
+  {
+    "id": "10",
+    "code": "32.08.A2",
+    "severity": "INFO",
+    "description": "An event related to starting the printer.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDRUeWdwdnNUempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzWExPWWNaQnV3TEN5YkpRVlp1VmRlaz0vaXNoXzEwNzQ1ODM5LTE0NDcxNTgtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjMyLjA4LkEyIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE0NDcxNTgtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.OL_BL0sEEaydNPI351Thr-KOZnCkXrwWo0lJYj_V6UA"
+  },
+  {
+    "id": "11",
+    "code": "32.08.A3",
+    "severity": "INFO",
+    "description": "An event related to starting the printer.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDRUeWdwdnNUempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzWExPWWNaQnV3TEN5YkpRVlp1VmRlaz0vaXNoXzEwNzQ1ODM5LTE0NDcxNTgtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjMyLjA4LkEzIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE0NDcxNTgtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.bkLG9UFgHiPhHxAjgnH9rhhpz-B7p5viJkz93ZSyebM"
+  },
+  {
+    "id": "12",
+    "code": "33.01.03",
+    "severity": "INFO",
+    "description": "A save or restore process has occurred.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBiOTlUeTBwczlIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWUyaTRjRFBKUmdzT3VJMTkyeTU1bGNBPT0vaXNoXzEwNzQ1ODM5LTIxNDIxOC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMzMuMDEuMDMiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA3NDU4MzktMjE0MjE4LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.FjG4raeojwHkdvJgbktxmqi-WuFoZ6QvHYpa888ME_c"
+  },
+  {
+    "id": "31",
+    "code": "34.01.01",
+    "severity": "INFO",
+    "description": null,
+    "solution_url": null
+  },
+  {
+    "id": "32",
+    "code": "34.02.01",
+    "severity": "INFO",
+    "description": null,
+    "solution_url": null
+  },
+  {
+    "id": "13",
+    "code": "40.08.00",
+    "severity": "INFO",
+    "description": "The USB storage accessory has been removed.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBiOTlUeXdvdU5Idmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWVhK0hBMUJQNzZ5QmZtdFNnTk12aGpBPT0vaXNoXzEwNzQ1ODM5LTIxNDMwMy0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNDAuMDguMDAiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA3NDU4MzktMjE0MzAzLTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.syqnGj-vbcWw2DW5yONg5t6ZPSXCTg0ynXskcbI5MGI"
+  },
+  {
+    "id": "33",
+    "code": "41.03.A1",
+    "severity": "ERROR",
+    "description": "The printer detected a different paper size than expected.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuVERaRFJPcFBiOTVUU2NodmRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZoUnhIK09NOXBraHpOV0Y2WnpzUHJ3PT0vaXNoXzEyNDQ1OTkyLTI1Njg5Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNDEuMDMuQTEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTI0NDU5OTItMjU2ODk2LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.PbvBPSyeMWkYLO-5eUCmYK2nEW3BQ8HHF50pEA42qtg"
+  },
+  {
+    "id": "44",
+    "code": "41.03.A2",
+    "severity": "ERROR",
+    "description": "Size mismatch. Detected media too long from Tray 2",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uREhZQUIyalBieF9TU2d1dThub2tJeThOZXNKMmEyMmN6bEF2MnhzRnRkOEhQc1JPNHhRbXh6VTJMV2syK29EQ2UxWWRGczJYenlrVFRHZWN5ZjAvaXNoXzE0NTU0NDc4LTEzMjc2MDU2LTE2P2VudGl0bGVtZW50PWhpZ2hWYWx1ZSZhdWRpZW5jZT1jYWxsX2FnZW50LGN1c3RvbWVyLHNlcnZpY2VfdGVjaG5pY2lhbiZpc0Z1bGxIVE1MUmVxdWlyZWQ9dHJ1ZSIsIkNvZGUiOiI0MS4wMy5BMiIsIlByb2R1Y3ROdW1iZXIiOiIzR1kxNEEiLCJLYWFzRG9jdW1lbnRJZCI6ImlzaF8xNDU1NDQ3OC0xMzI3NjA1Ni0xNiIsIkN1c3RvbWVySWQiOjYyNjk2OCwiRGV2aWNlSWQiOjE1NjM3OTY4NSwiSGVhZGVycyI6eyJYLVNETC1BdWRpZW5jZSI6InNlcnZpY2VfdGVjaG5pY2lhbiJ9LCJpYXQiOjE3ODE4NjkwNDEsImF1ZCI6WyJLYWFzQ29udGVudEJvb3RzdHJhcHBlclNlcnZpY2UiLCJLYWFzTGlua0dyb29taW5nU2VydmljZSJdLCJpc3MiOiJIZXdsZXR0IFBhY2thcmQsIEluYy4ifQ.oKjVL-5SBiwg5TUCrEjruBkZAtmhYSgf8LFfGVQYVc0"
+  },
+  {
+    "id": "34",
+    "code": "41.03.B1",
+    "severity": "ERROR",
+    "description": "The printer detected a different paper size than expected.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuVERaRFJPcFBiOTVUU2NodmRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZoUnhIK09NOXBraHpOV0Y2WnpzUHJ3PT0vaXNoXzEyNDQ1OTkyLTI1Njg5Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNDEuMDMuQjEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTI0NDU5OTItMjU2ODk2LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.9yi95NkBVDZmcgmTmERQkdraPZx4oEFTBvArh8RZBTY"
+  },
+  {
+    "id": "45",
+    "code": "41.03.B2",
+    "severity": "ERROR",
+    "description": "The printer detected a different paper size than expected.",
+    "solution_url": null
+  },
+  {
+    "id": "52",
+    "code": "42.33.01",
+    "severity": "WARNING",
+    "description": "Errors in the 42.* family indicate an internal system failure has occurred.",
+    "solution_url": null
+  },
+  {
+    "id": "14",
+    "code": "44.A0.A2",
+    "severity": "ERROR",
+    "description": "Errors in the 44.* family are related to the digital send functionality: fax, email, send to SharePoint, or save to folder.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "15",
+    "code": "47.03.10",
+    "severity": "INFO",
+    "description": "Print job internal error.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "16",
+    "code": "47.06.09",
+    "severity": "WARNING",
+    "description": "Print application internal error.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "60",
+    "code": "49.38.07",
+    "severity": "ERROR",
+    "description": "Generic error.",
+    "solution_url": null
+  },
+  {
+    "id": "35",
+    "code": "49.39.01",
+    "severity": "INFO",
+    "description": "A firmware error occurred.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuRFhmQlJpclBieCtUU2tzdTg3empJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzWENmcVpMNzhkcndQSV9vMzcwREpoOD0vaXNoXzEyNTEzMTIwLTEyNjY0MDItMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjQ5LjM5LjAxIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEyNTEzMTIwLTEyNjY0MDItMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.TokOzGmbSfFe3749lS0kBpte6L1L-vCEKSk4obRp_3k"
+  },
+  {
+    "id": "53",
+    "code": "53.A1.10",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" paper delivery direction misalignment resolved.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTRzdU5Idmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzYrd0FBaklLcTJkeEZmK1JlOEh5WDFnPT0vaXNoXzE2ODc1NTItMTI5ODE0My0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQTEuMTAiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTQzLTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.wRe2MB7px1wAVsoP6YNPka5BYxUy_k5w2llC2fyzU8Y"
+  },
+  {
+    "id": "54",
+    "code": "53.A1.11",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" paper delivery direction misalignment warning.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTRzczlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZseDlET202RWpTVVQwNW15dDZGSDNBPT0vaXNoXzE2ODc1NTItMTI5ODE0OC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQTEuMTEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTQ4LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.AgA--CU4kMjqF5hu1L_jq61bBA8ooYAlVKfpXVjk-es"
+  },
+  {
+    "id": "55",
+    "code": "53.A2.10",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" overload resolved.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTR0dU5Idmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZFdTQrTFUxb242Y2t1VGQ3Nzl1NHJRPT0vaXNoXzE2ODc1NTItMTI5ODE1My0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQTIuMTAiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTUzLTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.j7978ON2X6LsxkAzu-2dMjRjmJfefABJSxJGUa4UAnw"
+  },
+  {
+    "id": "56",
+    "code": "53.A2.11",
+    "severity": "WARNING",
+    "description": "Tray \"Y\" overload warning.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTR0czlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZmdkY5bTZGR3kxNXlGVXFYcUFab3B3PT0vaXNoXzE2ODc1NTItMTI5ODE1OC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQTIuMTEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTU4LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.u6w3VD29AC6cW1L8Gmgo_aj4PqtIrnrEXNUJYxiIwDY"
+  },
+  {
+    "id": "46",
+    "code": "53.B0.02",
+    "severity": "WARNING",
+    "description": "Tray \"Z\" feed roller nearing end of life.",
+    "solution_url": null
+  },
+  {
+    "id": "36",
+    "code": "54.0E.01",
+    "severity": "INFO",
+    "description": "These are informational only messages for engine calibration events.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDXVBhmsPbt0Qi4vv8XzjIuwP+sJ26enXVUzvhZ3O6l8F8E_HP0NxzPf3quEzIag61orc2pvIHPHRGVw5R0=/ish_12519237-6891749-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "37",
+    "code": "54.0E.02",
+    "severity": "INFO",
+    "description": "These are informational only messages for engine calibration events.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf85nDXVBhmsPbt0Qi4vv8XzjIuwP+sJ26enXVUzvhZ3O6l8F8E_HP0NxzPf3quEzIag61orc2pvIHPHRGVw5R0=/ish_12519237-6891749-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "57",
+    "code": "54.40.00",
+    "severity": "ERROR",
+    "description": "Errors in the 54.* family are related to the image-formation system.",
+    "solution_url": null
+  },
+  {
+    "id": "17",
+    "code": "60.00.02",
+    "severity": "ERROR",
+    "description": "A tray lifting error has occurred.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "18",
+    "code": "60.01.02",
+    "severity": "ERROR",
+    "description": "A tray lifting error has occurred.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "19",
+    "code": "90.15.01",
+    "severity": "WARNING",
+    "description": "Errors in the 90.* family are related to the control panel.",
+    "solution_url": "https://kaas.hpcloud.hp.com/PROD/v2/render/6f9MBf89kDTaBRq2Irx4SC8rps3oh426P+kO3_3wW0IzlHN0KtUkQuxtIo0puErZmu_kiM2tfDx6vXAEiAjOKmSc/ish_1690610-214303-16?entitlement=highValue&audience=call_agent,customer,service_technician&isFullHTMLRequired=true"
+  },
+  {
+    "id": "20",
+    "code": "98.00.07",
+    "severity": "INFO",
+    "description": "Errors in the 98.* family are related to data corruption in the firmware.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVDNhQkJxMklicF9TeTBzczlIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWUzVWdNbW1RQ2xBZUZybnJoS1hxNGtnPT0vaXNoXzE2ODk2MDAtMTczMDI0OC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiOTguMDAuMDciLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4OTYwMC0xNzMwMjQ4LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.rPWzyw6vMDodBb5c8kkrqixs4TKJgQ1aze_im6Ofp9s"
+  },
+  {
+    "id": "47",
+    "code": "99.03.20",
+    "severity": "INFO",
+    "description": "Errors in the 99.* family are related to the firmware upgrade process.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uRERVQWh5aVBieDdTQzhxdnM3empJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzZE5UOExOal80Uk1vRlUzRXRtVDhTND0vaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6Ijk5LjAzLjIwIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.fDek2hJyElDgS1Ne75KzBQF3Ulp5f3454F2WeUoOWAA"
+  },
+  {
+    "id": "38",
+    "code": "99.06.21",
+    "severity": "INFO",
+    "description": "Errors in the 99.* family are related to the firmware upgrade process.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uRERVQWh5aVBieDdTQzhxdnM3empJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzZE5UOExOal80Uk1vRlUzRXRtVDhTND0vaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6Ijk5LjA2LjIxIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.eRuXP0ZQffe2f8AsJ7P23ePBqRigSTkKvBpgasvbvew"
+  },
+  {
+    "id": "61",
+    "code": "33.27.01",
+    "severity": null,
+    "description": "Errors in the 33.* family are related to the printer’s storage system or the formatter. The component might have been previously installed in another printer and is therefore locked to that other printer. Or, the component might be incorrect for this printer.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVDNhQkJxMklicF9TeTBvczlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZ0RXl4ZjgrZjNBWkVacDhCYVpuMkV3PT0vaXNoXzE2ODk2MDAtMTczMDIwOC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMzMuMjcuMDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4OTYwMC0xNzMwMjA4LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.-l3e-Rq05RVqKkenpVk5KkayvFwp6TZr9jdNk65O9UI",
+    "solution_content": null
+  },
+  {
+    "id": "62",
+    "code": "13.B9.D1",
+    "severity": null,
+    "description": "Fuser delivery delay jam.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVtakhiQmhPcVBiOTVUU29odmRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZmenNpQm9BaUE1RUpmNDdCWWRaaStnPT0vaXNoXzEyMzU3MjkxLTI1NjU5Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQjkuRDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTIzNTcyOTEtMjU2NTk2LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkzNCwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.qAIRl0T8eBKprXAZbQz8K0x-QvEjCTkb8KZNo9C5EPY",
+    "solution_content": null
+  },
+  {
+    "id": "63",
+    "code": "33.27.03",
+    "severity": null,
+    "description": "Errors in the 33.* family are related to the printer’s storage system or the formatter. The component might have been previously installed in another printer and is therefore locked to that other printer. Or, the component might be incorrect for this printer.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVDNhQkJxMklicF9TeTBvczlIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZ0RXl4ZjgrZjNBWkVacDhCYVpuMkV3PT0vaXNoXzE2ODk2MDAtMTczMDIwOC0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMzMuMjcuMDMiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4OTYwMC0xNzMwMjA4LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.NpYgIo4JpqNERUup-pb3D0oS7tVJ5EAWoQv6OpUyfsM",
+    "solution_content": null
+  },
+  {
+    "id": "64",
+    "code": "53.B2.02",
+    "severity": null,
+    "description": "Tray \"Z\" feed roller brand new.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTRndnRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZqQWxyZ2djUmZuX1hGcWNJclppREJ3PT0vaXNoXzE2ODc1NTItMTI5ODE4NS0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQjIuMDIiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTg1LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.BxLLssWom7PRKjyPeBOMyogdIvTYxzQwXpN3teFiznA",
+    "solution_content": null
+  },
+  {
+    "id": "65",
+    "code": "53.B2.01",
+    "severity": null,
+    "description": "Tray \"Z\" feed roller brand new.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTRndnRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZqQWxyZ2djUmZuX1hGcWNJclppREJ3PT0vaXNoXzE2ODc1NTItMTI5ODE4NS0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQjIuMDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTg1LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.sPqKPdTC1jr-wV6qxky070Sq_uk8Jpd_GUd9tXzzH74",
+    "solution_content": null
+  },
+  {
+    "id": "66",
+    "code": "99.02.01",
+    "severity": null,
+    "description": "Firmware installation was successful.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uRERVQWh5aVBiOTlUeWtydU5Idmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZuaUU1VFBUUno1T3RtU0RtQjVfVEJnPT0vaXNoXzE0NTQ4NjY5LTIxNDYzMy0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiOTkuMDIuMDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTQ1NDg2NjktMjE0NjMzLTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.RXjTMFWzaXVaJxlyYjH6g5np2Rbl5vvpbfNa6WLBDGc",
+    "solution_content": null
+  },
+  {
+    "id": "67",
+    "code": "99.00.01",
+    "severity": null,
+    "description": "A remote firmware upgrade (RFU) was not performed.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uRERVQWh5aVBiOTlUeW9odk5Idmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZON0RycTlTeTlBWEcwR3ZvdU9mbUJ3PT0vaXNoXzE0NTQ4NjY5LTIxNDU5Ny0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiOTkuMDAuMDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTQ1NDg2NjktMjE0NTk3LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.D02WqsVp71UPlxnYALFAnZcQKR7yzyCsn9ozQFdZbF4",
+    "solution_content": null
+  },
+  {
+    "id": "68",
+    "code": "32.1C.40",
+    "severity": null,
+    "description": "The backup operation completed successfully (informational).",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBiOTlUeTR0dnRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZrTFpraURlSW5neHBkajZ3KzVDbGp3PT0vaXNoXzEwNzQ1ODM5LTIxNDE1NS0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMzIuMUMuNDAiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA3NDU4MzktMjE0MTU1LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.DqeQYSDp8HE4_Bbm0FSXBhvtIl11tnz3FMCDM1j7iV4",
+    "solution_content": null
+  },
+  {
+    "id": "69",
+    "code": "53.B1.01",
+    "severity": null,
+    "description": "Tray \"Z\" feed roller at end of life.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTR2c3RIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZOM0x1NXA4TmhlN0srU29Pc2xlUmZ3PT0vaXNoXzE2ODc1NTItMTI5ODE3OS0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQjEuMDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTc5LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.3QIgQlgk0Q2DsUSXB7LctA17Z9pR4OuCyYPcyNKPgMg",
+    "solution_content": null
+  },
+  {
+    "id": "70",
+    "code": "53.B0.01",
+    "severity": null,
+    "description": "Tray \"Z\" feed roller nearing end of life.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVFBaQVJpMkliOTFReTR1dU5Idmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzY2dHg5engwdVZTcUc4a0lVenpMSklRPT0vaXNoXzE2ODc1NTItMTI5ODE2My0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTMuQjAuMDEiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTY4NzU1Mi0xMjk4MTYzLTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.YzA6NDdBfrDdjk-DRC9yMItkWSz4EjZcoSyU_-QRHZ8",
+    "solution_content": null
+  },
+  {
+    "id": "71",
+    "code": "13.BB.EE",
+    "severity": null,
+    "description": "Errors in the 13.* family are related to jams.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBiVjRTU3dzdnRIdmk0ZTZQK3NMZzZ5RmVrWXlvbTluS093dVY4UWFBZGNIaHdpRG5iSzZwTDBmNlBIMTU3dlQ0SDVDNWFKRDlRPT0vaXNoXzEwNzQ1ODM5LTg0MjM0NS0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMTMuQkIuRUUiLCJQcm9kdWN0TnVtYmVyIjoiTTBQMzlBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA3NDU4MzktODQyMzQ1LTE2IiwiQ3VzdG9tZXJJZCI6NTAwMTM5LCJEZXZpY2VJZCI6MTUzOTU5ODA3LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTgwOTkwMSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.1raSDIj1ebbpA9mZfnP5HHjARGqBFg1sEIAeqVTqxzY",
+    "solution_content": null
+  },
+  {
+    "id": "72",
+    "code": "50.2F.00",
+    "severity": null,
+    "description": "Errors in the 50.* family indicate a problem with the fuser.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuRFhmQlJpclBiUjBRaThndmRIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWVHNGpuUnNrM09ocUhmWUlpdlVXOTZBPT0vaXNoXzEyNTEzMTIwLTk4OTA4Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTAuMkYuMDAiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTI1MTMxMjAtOTg5MDg2LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.C5HLJBuaGtJUSXYqHPN6LccUWI61MIff0OzBJzQCLzM",
+    "solution_content": null
+  },
+  {
+    "id": "73",
+    "code": "99.07.20",
+    "severity": null,
+    "description": "Fax modem error.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODlrVExaQlIrMklydDhRaWNycHMzb2g0MjZQK2xPa0t2MFEwSWtzbXBjYXRGWWNJMW5BTnNFd3h2S3FwOWh5ejY2eXA1Z3c0M0hUWUhNeUFYSi9pc2hfMTY4NjUxNS0yNjA5ODMtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6Ijk5LjA3LjIwIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzE2ODY1MTUtMjYwOTgzLTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.7fwixpaZdNowNiBwafgjnVAACi1Xb9CTxDuIiT04bes",
+    "solution_content": null
+  },
+  {
+    "id": "74",
+    "code": "50.22.14",
+    "severity": null,
+    "description": "Errors in the 50.* family indicate a problem with the fuser.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuRFhmQlJpclBiUjBRaThndmRIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWVHNGpuUnNrM09ocUhmWUlpdlVXOTZBPT0vaXNoXzEyNTEzMTIwLTk4OTA4Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTAuMjIuMTQiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTI1MTMxMjAtOTg5MDg2LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.QPuFVv6qoyid1PuG5ZGlwu1YpzwvoA0HBoum7g1cfNY",
+    "solution_content": null
+  },
+  {
+    "id": "75",
+    "code": "50.22.11",
+    "severity": null,
+    "description": "Errors in the 50.* family indicate a problem with the fuser.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuRFhmQlJpclBiUjBRaThndmRIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWVHNGpuUnNrM09ocUhmWUlpdlVXOTZBPT0vaXNoXzEyNTEzMTIwLTk4OTA4Ni0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiNTAuMjIuMTEiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTI1MTMxMjAtOTg5MDg2LTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.uZKHc19v_44wdSuMs0_Ag-am5voezka23efwOQAr3iQ",
+    "solution_content": null
+  },
+  {
+    "id": "76",
+    "code": "99.05.50",
+    "severity": null,
+    "description": "Errors in the 99.* family are related to the firmware upgrade process.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uRERVQWh5aVBieDdTQzhxdnM3empJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzZE5UOExOal80Uk1vRlUzRXRtVDhTND0vaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6Ijk5LjA1LjUwIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.rFBJA3A-4ZgYtsT7uR7k2r9MNuLyv2tKjG-055sYg4k",
+    "solution_content": null
+  },
+  {
+    "id": "77",
+    "code": "99.05.56",
+    "severity": null,
+    "description": "Errors in the 99.* family are related to the firmware upgrade process.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmOF9uRERVQWh5aVBieDdTQzhxdnM3empJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzZE5UOExOal80Uk1vRlUzRXRtVDhTND0vaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6Ijk5LjA1LjU2IiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzE0NTQ4NjY5LTE3MzAyNTItMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.3dSqIo5j_wVwjhn-_79i286zZ0v2_zj5HzxttcLl7c8",
+    "solution_content": null
+  },
+  {
+    "id": "78",
+    "code": "30.01.41",
+    "severity": null,
+    "description": "The formatter lost connections with the SCB or communication was corrupted.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduVExmQWhpcVBiOTZTaWd0dWRIdmk0ZTZQK3NMbnViMVAwUTZwMmQwTTZaU1llQnRYTm9OazBYYWxwbWV1S3NiWXRkclltRXlwQ2g0QWpydlVRPT0vaXNoXzEwNDYzNjIxLTI2MTc1Mi0xNj9lbnRpdGxlbWVudD1oaWdoVmFsdWUmYXVkaWVuY2U9Y2FsbF9hZ2VudCxjdXN0b21lcixzZXJ2aWNlX3RlY2huaWNpYW4maXNGdWxsSFRNTFJlcXVpcmVkPXRydWUiLCJDb2RlIjoiMzAuMDEuNDEiLCJQcm9kdWN0TnVtYmVyIjoiM0dZMTRBIiwiS2Fhc0RvY3VtZW50SWQiOiJpc2hfMTA0NjM2MjEtMjYxNzUyLTE2IiwiQ3VzdG9tZXJJZCI6NjI2OTY4LCJEZXZpY2VJZCI6MTU2Mzc5Njg1LCJIZWFkZXJzIjp7IlgtU0RMLUF1ZGllbmNlIjoic2VydmljZV90ZWNobmljaWFuIn0sImlhdCI6MTc4MTg2OTA0MSwiYXVkIjpbIkthYXNDb250ZW50Qm9vdHN0cmFwcGVyU2VydmljZSIsIkthYXNMaW5rR3Jvb21pbmdTZXJ2aWNlIl0sImlzcyI6Ikhld2xldHQgUGFja2FyZCwgSW5jLiJ9.zuGA51LhhmwyceHPRimClZC7IGnTxd8Vu1tiDRoIog8",
+    "solution_content": null
+  },
+  {
+    "id": "79",
+    "code": "30.03.46",
+    "severity": null,
+    "description": "Errors in the 30.* family are related to the flatbed scanner.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDdTQzhwc3NqempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzUVQrWWRMVm05eFNhb2l5QXJsM1FXWT0vaXNoXzEwNzQ1ODM5LTE3MzAxOTQtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjMwLjAzLjQ2IiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE3MzAxOTQtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.YJtqQvQtFD9w1Pp572kRKK-7JfyQyUAaT9mStmXFX58",
+    "solution_content": null
+  },
+  {
+    "id": "80",
+    "code": "10.00.34",
+    "severity": null,
+    "description": "Errors in the 10.* family are related to toner cartridges and other supply items that require regular replacement as part of routine printer maintenance.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDdTQzhydnNqempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzVEtpMVo3RFhrdU9uNHc1blRxNnVsYz0vaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjEwLjAwLjM0IiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE3MzAzNTQtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.DodBCltspy8fU2Ib9ZpHC8eNfXGCKha7sTjOjT_xDGQ",
+    "solution_content": null
+  },
+  {
+    "id": "81",
+    "code": "48.01.02",
+    "severity": null,
+    "description": "Errors in the 48.* family indicate an internal error has occurred.",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODVuRFhmQlJpclBieDdTQzhydmNqempJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzZUFSZzA4bE1IWEJYUk1GeWtQTF8yZz0vaXNoXzEyNTEzMTIwLTE3MzAzNjQtMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjQ4LjAxLjAyIiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEyNTEzMTIwLTE3MzAzNjQtMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.bP0oaaObjApynLUUNpJ02DqoAtcDh-kP-ASnXWav4N4",
+    "solution_content": null
+  },
+  {
+    "id": "82",
+    "code": "10.00.59",
+    "severity": null,
+    "description": "Black cartridge has been replaced with non-new cartridge",
+    "solution_url": "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUYXJnZXQiOiJodHRwczovL2thYXMuaHBjbG91ZC5ocC5jb20vUFJPRC92Mi9yZW5kZXIvNmY5TUJmODduakRaREJtaVBieDBUQzRxdk03empJdXdQK3NKMitpNFBqZzh1WEo1R184bGFfRUFWb1lNbWhXRWhxV1kzWCtRWjBOQzBlK2RFOHg4MHVfeHlWYz0vaXNoXzEwNzQ1ODM5LTE4NzEyNzItMTY_ZW50aXRsZW1lbnQ9aGlnaFZhbHVlJmF1ZGllbmNlPWNhbGxfYWdlbnQsY3VzdG9tZXIsc2VydmljZV90ZWNobmljaWFuJmlzRnVsbEhUTUxSZXF1aXJlZD10cnVlIiwiQ29kZSI6IjEwLjAwLjU5IiwiUHJvZHVjdE51bWJlciI6IjNHWTE0QSIsIkthYXNEb2N1bWVudElkIjoiaXNoXzEwNzQ1ODM5LTE4NzEyNzItMTYiLCJDdXN0b21lcklkIjo2MjY5NjgsIkRldmljZUlkIjoxNTYzNzk2ODUsIkhlYWRlcnMiOnsiWC1TREwtQXVkaWVuY2UiOiJzZXJ2aWNlX3RlY2huaWNpYW4ifSwiaWF0IjoxNzgxODY5MDQxLCJhdWQiOlsiS2Fhc0NvbnRlbnRCb290c3RyYXBwZXJTZXJ2aWNlIiwiS2Fhc0xpbmtHcm9vbWluZ1NlcnZpY2UiXSwiaXNzIjoiSGV3bGV0dCBQYWNrYXJkLCBJbmMuIn0.jqRYcyvwgIY0b7VA9d6Sft0TIGItxbj582AdfMlYMW4",
+    "solution_content": null
+  }
+]
