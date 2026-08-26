@@ -71,6 +71,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
+            "https://printer-logs-analyzer.vercel.app",
             "https://printer-logs-analyzer-alpha.vercel.app",
             "https://printer-logs-analyzer-git-develop-imartinez1.vercel.app",
             "http://localhost:5173",
