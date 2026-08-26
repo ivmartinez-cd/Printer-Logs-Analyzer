@@ -42,8 +42,8 @@ const getApiBase = (): string => {
       if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
         return envUrl
       }
-      // If port is 5175 (Docker frontend), use port 8000 (Docker backend), else use 8001 (local manual dev)
-      const port = window.location.port === '5175' ? '8000' : '8001'
+      // If port is 5175 (Docker frontend), use port 8002 (Docker backend), else use 8001 (local manual dev)
+      const port = window.location.port === '5175' ? '8002' : '8001'
       return `http://${hostname}:${port}`
     }
   }
