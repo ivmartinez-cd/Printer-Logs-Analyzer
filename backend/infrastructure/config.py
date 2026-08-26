@@ -41,6 +41,15 @@ class Settings(BaseModel):
     smtp_from: str = Field("noreply@hplogsanalyzer.com", alias="SMTP_FROM")
     maintenance_emails_enabled: bool = Field(True, alias="MAINTENANCE_EMAILS_ENABLED")
 
+    # Render (free tier) no soporta bien jobs en segundo plano de larga duración
+    # (spin-down a los 15 min de inactividad); desactivable sin afectar dev local.
+    enable_scheduler: bool = Field(True, alias="ENABLE_SCHEDULER")
+
+    # En disco efímero (Render free), el fallback a JSON local puede escribir datos
+    # que se pierden en el próximo redeploy sin avisar. Desactivarlo ahí para fallar
+    # explícito en vez de perder datos en silencio.
+    disable_local_fallback: bool = Field(False, alias="DISABLE_LOCAL_FALLBACK")
+
     @classmethod
     def from_env(cls) -> "Settings":
         """Load configuration and raise informative errors when missing."""

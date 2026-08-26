@@ -6,6 +6,7 @@ from typing import Any, Callable, Generic, List, Optional, TypeVar
 from uuid import UUID
 
 from backend.domain.exceptions import ResourceNotFoundError
+from backend.infrastructure.config import get_settings
 from backend.infrastructure.database import Database, DatabaseUnavailableError
 
 T = TypeVar("T")
@@ -32,6 +33,10 @@ class BaseRepository(ABC, Generic[T, ID_TYPE]):
                 raise DatabaseUnavailableError("No Database provided")
             return db_func(*args, **kwargs)
         except DatabaseUnavailableError:
+            if get_settings().disable_local_fallback:
+                # En disco efímero (Render free) escribir en JSON local se pierde en el
+                # próximo redeploy sin avisar: preferimos fallar explícito.
+                raise
             return local_func(*args, **kwargs)
 
     def get_or_404(

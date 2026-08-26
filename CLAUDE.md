@@ -56,7 +56,7 @@ docker compose up -d --build   # Re-build total (recomendado tras cambios en Doc
 docker compose down            # Apagar todo
 docker compose logs -f         # Ver logs en tiempo real
 
-# Backend:  http://localhost:8000 (Health: /health)
+# Backend:  http://localhost:8002 (Health: /health)
 # Frontend: http://localhost:5173
 ```
 
@@ -189,18 +189,19 @@ Switch automático a JSON local (`backend/data/`) cuando PostgreSQL no está dis
 
 ## Infraestructura y Despliegue (dónde está todo)
 
-**NO se usa Neon ni Render** (legado descartado). Producción:
+**La VM de Google Cloud fue dada de baja** (dejó de responder, no se mantuvo más). Producción
+actual: Render (backend) + Neon (Postgres) + Vercel (frontend). Ver `docs/deploy.md` para el
+detalle completo, variables de entorno y limitaciones aceptadas del free tier
+(`ENABLE_SCHEDULER=false`, `DISABLE_LOCAL_FALLBACK=true` en Render).
 
-- **Frontend:** Vercel — proyecto `printer-logs-analyzer` (org `ivmartinezcd-8237s-projects`). Auto-deploy en push a `main`.
-- **Backend + DB:** VM de Google Cloud, vía Docker Compose.
-  - VM: IP `34.63.48.46`, host `instance-20260529-143249`. Proyecto en `/home/ivmartinez_cd/Printer-Logs-Analyzer`.
-  - SSH: `ssh -i ~/.ssh/google_compute_engine imartinez@34.63.48.46` (Docker requiere `sudo`).
-  - Contenedores: `printer-logs-analyzer-backend-1` (`:8000`), `printer-logs-analyzer-db-1` (Postgres 17, interno `db:5432`, **puerto NO expuesto al exterior**). Convive `helpdesk-backend` (`:8010`, otro proyecto, no tocar).
-  - DB: `postgresql://printerapp:***@db:5432/printer_logs` (credenciales en `docker-compose.yml`).
+- **Frontend:** Vercel — proyecto `printer-logs-analyzer` (`https://printer-logs-analyzer-alpha.vercel.app`, cuenta nueva, Root Directory `frontend`). Auto-deploy en push a `main`.
+- **Backend:** Render — Web Service sobre `backend/Dockerfile`. Free tier: duerme tras 15 min sin tráfico.
+- **DB:** Neon — Postgres 17 gestionado, `DB_URL` con `?sslmode=require`.
 
-**Deploy:** push/merge a **`main`** dispara dos cosas:
-- `.github/workflows/deploy.yml` → SSH a la VM → `git pull` + `docker compose up -d --build backend` (**solo rebuildea el backend**) + migraciones.
-- Vercel → publica el frontend.
+**Deploy:** push/merge a **`main`** dispara Render (rebuild + migraciones automáticas) y Vercel
+(frontend) en paralelo.
+- El workflow `.github/workflows/deploy.yml` (SSH a la VM vieja) quedó obsoleto — eliminar o
+  reemplazar si se quiere un trigger manual.
 - Branch protection en `main`: requiere CI en verde; **auto-merge deshabilitado** → mergear el PR a mano tras los checks. Pushear a una rama feature **no** despliega nada.
 
 **Dev local:** `docker compose up -d db` (Postgres local, mismas creds) o túnel SSH `-L 5432:localhost:5432`. Sin DB accesible → fallback automático a JSON en `data/`.

@@ -41,7 +41,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
     @app.on_event("startup")
     def startup_event():
-        start_scheduler()
+        if settings.enable_scheduler:
+            start_scheduler()
         # Resume any in-progress HP cache-refresh notifications orphaned by a restart.
         try:
             from backend.application.services.hp_cache_notifier import resume_pending_watches
@@ -56,7 +57,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
 
     @app.on_event("shutdown")
     def shutdown_event():
-        stop_scheduler()
+        if settings.enable_scheduler:
+            stop_scheduler()
 
     # Dependency overrides for testing
     if settings:
@@ -69,7 +71,8 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "https://printer-logs-analyzer.vercel.app",
+            "https://printer-logs-analyzer-alpha.vercel.app",
+            "https://printer-logs-analyzer-git-develop-imartinez1.vercel.app",
             "http://localhost:5173",
             "http://localhost:5174",
             "http://localhost:5175",
