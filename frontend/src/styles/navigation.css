@@ -57,6 +57,12 @@
 }
 
 .navigation--collapsed .navigation__brand-block {
+  /* Columna centrada: logo y franja se alinean por el mismo eje flex, en
+     vez de depender de que el ancho del botón y el margin:auto del span
+     coincidan por separado. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 0 0 32px;
 }
 
@@ -77,6 +83,7 @@
   padding: 0 0 16px;
   justify-content: center;
   min-width: 0;
+  width: 32px;
 }
 
 .navigation__brand-strip {
@@ -84,8 +91,8 @@
 }
 
 .navigation--collapsed .navigation__brand-strip {
+  width: 32px;
   max-width: 32px;
-  margin: 0 auto;
 }
 
 .navigation__brand:focus-visible {
