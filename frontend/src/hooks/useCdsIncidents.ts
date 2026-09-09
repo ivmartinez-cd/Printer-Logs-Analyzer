@@ -7,6 +7,7 @@ export function useCdsIncidents(serial: string | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [prevSerial, setPrevSerial] = useState<string | null>(null)
+  const [retryTick, setRetryTick] = useState(0)
   const abortRef = useRef<AbortController | null>(null)
 
   if (serial !== prevSerial) {
@@ -44,7 +45,7 @@ export function useCdsIncidents(serial: string | null) {
 
     void fetchData()
     return () => controller.abort()
-  }, [serial])
+  }, [serial, retryTick])
 
-  return { data, loading, error }
+  return { data, loading, error, refetch: () => setRetryTick((t) => t + 1) }
 }

@@ -17,6 +17,7 @@ interface InsightDataResult {
   meters: InsightMeter[]
   loading: boolean
   error: string | null
+  refetch: () => void
 }
 
 import { KPICards } from '../Monitor/KPICards'
@@ -46,7 +47,7 @@ interface AnalysisDashboardViewProps {
   topCodes: { name: string; count: number; severity: string; sds_link?: string | null; sds_solution_content?: string | null; }[]
   realtimeConsumables: RealtimeConsumable[]
   insightData: InsightDataResult | null
-  cdsIncidents: { data: CdsIncident[]; loading: boolean; error: string | null }
+  cdsIncidents: { data: CdsIncident[]; loading: boolean; error: string | null; refetch: () => void }
   currentSerialNumber: string | null
   currentModelName: string | null
   incidentRows: IncidentRow[]
@@ -117,15 +118,15 @@ export function AnalysisDashboardView({
           justifyContent: 'center',
           padding: '0 4px'
         }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '16px', 
-            background: 'rgba(255, 255, 255, 0.02)', 
-            padding: '8px 24px', 
-            borderRadius: '14px', 
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            background: 'var(--veil-1)',
+            padding: '8px 24px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--veil-2)',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <span style={{ 
               fontSize: '0.7rem', 
@@ -219,7 +220,7 @@ export function AnalysisDashboardView({
               📋 Incidencias detectadas
             </span>
             {incidentsCollapsed && incidentRows.length > 0 && (
-              <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 4 }}>
                 {incidentRows.length} incidencia{incidentRows.length !== 1 ? 's' : ''}
               </span>
             )}
@@ -269,6 +270,7 @@ export function AnalysisDashboardView({
           data={insightData?.data || null}
           loading={insightData?.loading || false}
           error={insightData?.error || null}
+          onRetry={insightData?.refetch}
         />
 
         {/* Incidentes de Canal Directo */}
@@ -277,6 +279,7 @@ export function AnalysisDashboardView({
           data={cdsIncidents.data}
           loading={cdsIncidents.loading}
           error={cdsIncidents.error}
+          onRetry={cdsIncidents.refetch}
         />
 
         {/* SDS Engineering Incident */}
@@ -304,13 +307,13 @@ export function AnalysisDashboardView({
         <Portal>
           <div
             onClick={() => setDrillCode(null)}
-            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--overlay-backdrop)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
           >
             <div
               onClick={e => e.stopPropagation()}
-              style={{ width: '100%', maxWidth: '720px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: '#0e121a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}
+              style={{ width: '100%', maxWidth: '720px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)', border: '1px solid var(--veil-4)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)' }}
             >
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--veil-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--hp-blue-vibrant)' }}>{drillCode}</span>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{drillEvents.length} evento{drillEvents.length !== 1 ? 's' : ''} en el período</span>
@@ -323,20 +326,20 @@ export function AnalysisDashboardView({
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                     <thead>
-                      <tr style={{ background: 'rgba(255,255,255,0.03)', position: 'sticky', top: 0 }}>
+                      <tr style={{ background: 'var(--veil-1)', position: 'sticky', top: 0 }}>
                         {['Fecha', 'Tipo', 'Descripción', 'Contador'].map(h => (
-                          <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>{h}</th>
+                          <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--veil-3)' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {drillEvents.map((e, i) => {
-                        const typeColor = e.type?.toUpperCase() === 'ERROR' ? '#ff5252' : e.type?.toUpperCase() === 'WARNING' ? '#ffb300' : '#3b82f6'
+                        const typeColor = e.type?.toUpperCase() === 'ERROR' ? 'var(--color-error)' : e.type?.toUpperCase() === 'WARNING' ? 'var(--color-warning)' : 'var(--color-info)'
                         return (
-                          <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                          <tr key={i} style={{ borderBottom: '1px solid var(--veil-2)' }}>
                             <td style={{ padding: '10px 16px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>{e.timestamp ? new Date(e.timestamp).toLocaleString('es-AR') : '—'}</td>
                             <td style={{ padding: '10px 16px' }}><span style={{ color: typeColor, fontWeight: 700, fontSize: '0.75rem' }}>{e.type}</span></td>
-                            <td style={{ padding: '10px 16px', color: '#e5e7eb' }}>{e.code_description || '—'}</td>
+                            <td style={{ padding: '10px 16px', color: 'var(--text-main)' }}>{e.code_description || '—'}</td>
                             <td style={{ padding: '10px 16px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{e.counter ?? '—'}</td>
                           </tr>
                         )

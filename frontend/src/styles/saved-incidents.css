@@ -1,6 +1,6 @@
 /* Saved incidents section and compare */
 .dashboard__muted {
-  color: #9aa3b2;
+  color: var(--text-secondary);
   font-size: 0.9375rem;
 }
 
@@ -45,9 +45,9 @@
 .dashboard__compare-block {
   margin-top: 24px;
   padding: 16px;
-  background: #1a1d26;
-  border: 1px solid #2d3544;
-  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
 .dashboard__compare-block h4 {
@@ -67,33 +67,54 @@
   gap: 12px;
   margin: 4px 0 16px;
   padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--dh-border, #2d3544);
-  background: linear-gradient(135deg, var(--dh-bg1, #1a1d26), var(--dh-bg2, #1a1d26));
-  color: #e6e9ef;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--dh-border, var(--border-color));
+  background: linear-gradient(135deg, var(--dh-bg1, var(--bg-elevated)), var(--dh-bg2, var(--bg-elevated)));
+  color: var(--text-main);
   animation: device-health-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .device-health--loading {
-  color: #9aa3b2;
+  color: var(--text-secondary);
   font-size: 0.9375rem;
   animation: device-health-pulse-dim 1.2s ease-in-out infinite;
 }
 
+/* Tinte claro por defecto — html.dark de abajo lo reemplaza por el tinte
+   casi-negro original en modo oscuro. */
 .device-health--red {
-  --dh-border: rgba(248, 113, 113, 0.55);
-  --dh-bg1: #2a1518;
-  --dh-bg2: #1c1116;
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.15), 0 8px 24px -12px rgba(248, 113, 113, 0.6);
+  --dh-border: rgba(220, 38, 38, 0.35);
+  --dh-bg1: #fef2f2;
+  --dh-bg2: #fee2e2;
+  box-shadow: var(--shadow-sm);
 }
 
 .device-health--yellow {
+  --dh-border: rgba(202, 138, 4, 0.35);
+  --dh-bg1: #fefce8;
+  --dh-bg2: #fef9c3;
+}
+
+.device-health--green {
+  --dh-border: rgba(22, 163, 74, 0.3);
+  --dh-bg1: #f0fdf4;
+  --dh-bg2: #dcfce7;
+}
+
+html.dark .device-health--red {
+  --dh-border: rgba(248, 113, 113, 0.55);
+  --dh-bg1: #2a1518;
+  --dh-bg2: #1c1116;
+  box-shadow: var(--shadow-sm);
+}
+
+html.dark .device-health--yellow {
   --dh-border: rgba(250, 204, 21, 0.5);
   --dh-bg1: #2a2410;
   --dh-bg2: #1b1810;
 }
 
-.device-health--green {
+html.dark .device-health--green {
   --dh-border: rgba(74, 222, 128, 0.45);
   --dh-bg1: #112318;
   --dh-bg2: #101a14;
@@ -106,7 +127,7 @@
   background: linear-gradient(
     100deg,
     transparent 30%,
-    rgba(255, 255, 255, 0.06) 50%,
+    var(--veil-2) 50%,
     transparent 70%
   );
   transform: translateX(-100%);
@@ -141,16 +162,16 @@
 }
 
 .device-health--red .device-health__reco {
-  color: #fca5a5;
+  color: var(--color-error);
 }
 .device-health--green .device-health__reco {
-  color: #86efac;
+  color: var(--color-success);
 }
 
 .device-health__reason {
   margin: 4px 0 0;
   font-size: 0.8125rem;
-  color: #aab2c0;
+  color: var(--text-secondary);
 }
 
 @keyframes device-health-in {

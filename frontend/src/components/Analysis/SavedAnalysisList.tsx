@@ -3,6 +3,7 @@ import { AlertOctagon, AlertTriangle, CheckCircle2, Monitor, Plus, ChevronDown, 
 import { formatDateTime } from '../../hooks/useDateFilter'
 import type { SavedAnalysisSummary } from '../../types/api'
 import { EquipmentTimeline } from './EquipmentTimeline'
+import { LoadingState } from '../ui/Spinner'
 import { relativeTime } from '../Monitor/healthMetrics'
 import { useUIStore } from '../../store/useUIStore'
 
@@ -193,7 +194,7 @@ export function SavedAnalysisList({
               value={savedListSearch}
               onChange={(e) => setSavedListSearch(e.target.value)}
               aria-label="Buscar análisis guardados"
-              style={{ width: '220px', height: '38px', borderRadius: '10px', margin: 0 }}
+              style={{ width: '220px', height: '38px', borderRadius: 'var(--radius-md)', margin: 0 }}
             />
           )}
           <button type="button" className="dashboard__btn dashboard__btn--primary" onClick={() => setLogModalOpen(true)}>
@@ -203,7 +204,7 @@ export function SavedAnalysisList({
       </div>
 
       {savedList === null ? (
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Cargando…</p>
+        <LoadingState />
       ) : savedList.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay incidentes guardados.</p>
       ) : (
@@ -256,14 +257,12 @@ export function SavedAnalysisList({
                       style={{
                         borderRadius: 'var(--noc-radius)',
                         border: `1px solid ${open ? s.text : s.border}`,
-                        background: open ? `linear-gradient(135deg, ${s.bg}, var(--noc-panel-bg))` : 'var(--noc-panel-bg)',
-                        backdropFilter: 'blur(20px)',
+                        background: open ? s.bg : 'var(--noc-panel-bg)',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
                         cursor: 'pointer',
                         transition: 'border-color 0.2s, background 0.2s',
-                        boxShadow: open ? `0 0 20px ${s.bg}` : 'none',
                       }}
                       onClick={() => onOpen(latest.id)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(latest.id) } }}

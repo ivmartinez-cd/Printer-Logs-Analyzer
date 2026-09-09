@@ -58,7 +58,7 @@ describe('AvisosPage Integration', () => {
     switchToDevicesTab()
 
     await waitFor(() => {
-      expect(screen.getByText('Selecciona una familia o equipo')).toBeInTheDocument()
+      expect(screen.getByText('Seleccioná una familia o equipo')).toBeInTheDocument()
     })
   })
 
@@ -185,7 +185,6 @@ describe('AvisosPage Integration', () => {
 
   it('calls clearFamilyDevices when clear is triggered', async () => {
     vi.mocked(api.getMaintenanceFamilies).mockResolvedValue(['Family 1'])
-    window.confirm = vi.fn().mockReturnValue(true)
 
     render(
       <ToastProvider>
@@ -200,6 +199,9 @@ describe('AvisosPage Integration', () => {
 
     const clearBtn = await screen.findByText(/Limpiar Equipos/i)
     fireEvent.click(clearBtn)
+
+    const confirmBtn = await screen.findByText('Eliminar')
+    fireEvent.click(confirmBtn)
 
     await waitFor(() => {
       expect(api.clearFamilyDevices).toHaveBeenCalledWith('Family 1')

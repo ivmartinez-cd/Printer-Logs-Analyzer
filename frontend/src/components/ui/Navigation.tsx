@@ -11,6 +11,7 @@ import {
   X
 } from 'lucide-react'
 import type { HealthStatus } from '../../services/api'
+import { ThemeToggle } from './ThemeToggle'
 import '../../styles/navigation.css'
 
 export type ViewMode = 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos'
@@ -51,7 +52,7 @@ export function Navigation({
     <>
       <nav className={`navigation ${isCollapsed ? 'navigation--collapsed' : ''} ${isMobileOpen ? 'navigation--mobile-open' : ''}`}>
         <div className="navigation__mobile-header">
-          <button className="navigation__close-mobile" onClick={onCloseMobile}>
+          <button className="navigation__close-mobile" onClick={onCloseMobile} aria-label="Cerrar menú">
             <X size={24} />
           </button>
         </div>
@@ -65,12 +66,20 @@ export function Navigation({
       </button>
 
       <div className="navigation__content">
-        <div className="navigation__brand" onClick={() => onNavigate('dashboard')} style={{ cursor: 'pointer' }}>
-          <img
-            src={isCollapsed ? '/isotipo-naranja.svg' : '/logo-cd-naranja.svg'}
-            alt="Canal Directo"
-            className={isCollapsed ? 'navigation__logo' : 'navigation__logo-full'}
-          />
+        <div className="navigation__brand-block">
+          <button
+            type="button"
+            className="navigation__brand"
+            onClick={() => onNavigate('dashboard')}
+            title="Ir al panel de análisis"
+          >
+            <img
+              src={isCollapsed ? '/isotipo-naranja.svg' : '/logo-cd-naranja.svg'}
+              alt="Canal Directo"
+              className={isCollapsed ? 'navigation__logo' : 'navigation__logo-full'}
+            />
+          </button>
+          <span className="brand-strip navigation__brand-strip" aria-hidden="true" />
         </div>
 
         <ul className="navigation__list">
@@ -135,6 +144,8 @@ export function Navigation({
             <HelpCircle className="navigation__item-icon" />
             {!isCollapsed && <span className="navigation__item-label">Ayuda</span>}
           </button>
+
+          <ThemeToggle collapsed={isCollapsed} />
 
           {!isCollapsed && (
             <div className="navigation__status-area">

@@ -3,12 +3,12 @@
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.05) 50%,
+    var(--veil-2) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
   animation: skeleton-pulse 1.5s infinite linear;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 @keyframes skeleton-pulse {
@@ -19,4 +19,4 @@
 .skeleton--circle { border-radius: 50%; }
 .skeleton--text { height: 14px; margin-bottom: 8px; width: 100%; }
 .skeleton--title { height: 24px; margin-bottom: 12px; width: 60%; }
-.skeleton--card { height: 120px; border-radius: 12px; }
+.skeleton--card { height: 120px; border-radius: var(--radius-md); }

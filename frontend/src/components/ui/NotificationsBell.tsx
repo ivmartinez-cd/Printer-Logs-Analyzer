@@ -13,10 +13,10 @@ import { formatDateTime } from '../../hooks/useDateFilter'
 const POLL_INTERVAL_MS = 30_000
 
 const STATUS_META: Record<NotificationStatus, { color: string; icon: typeof Bell }> = {
-  in_progress: { color: '#38bdf8', icon: Loader2 },
-  success: { color: '#34d399', icon: CheckCircle2 },
-  warning: { color: '#fbbf24', icon: AlertTriangle },
-  error: { color: '#f87171', icon: XCircle },
+  in_progress: { color: 'var(--color-info)', icon: Loader2 },
+  success: { color: 'var(--color-success)', icon: CheckCircle2 },
+  warning: { color: 'var(--color-warning)', icon: AlertTriangle },
+  error: { color: 'var(--color-error)', icon: XCircle },
 }
 
 export function NotificationsBell() {
@@ -119,15 +119,14 @@ export function NotificationsBell() {
           width: '48px',
           height: '48px',
           borderRadius: '50%',
-          background: 'rgba(15, 23, 42, 0.9)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          backdropFilter: 'blur(8px)',
-          color: '#e2e8f0',
+          background: 'var(--bg-glass)',
+          border: '1px solid var(--veil-4)',
+          color: 'var(--text-main)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
         <Bell size={20} />
@@ -141,14 +140,14 @@ export function NotificationsBell() {
               height: '18px',
               padding: '0 4px',
               borderRadius: '9px',
-              background: '#ef4444',
-              color: '#fff',
+              background: 'var(--color-error)',
+              color: 'var(--text-on-accent)',
               fontSize: '0.7rem',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px solid #0f172a',
+              border: '2px solid var(--bg-surface)',
             }}
           >
             {unread > 9 ? '9+' : unread}
@@ -166,10 +165,10 @@ export function NotificationsBell() {
             maxWidth: 'calc(100vw - 32px)',
             maxHeight: '70vh',
             overflowY: 'auto',
-            background: '#0f172a',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '16px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--veil-4)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
           <div
@@ -178,13 +177,13 @@ export function NotificationsBell() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '14px 16px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid var(--veil-2)',
               position: 'sticky',
               top: 0,
-              background: '#0f172a',
+              background: 'var(--bg-surface)',
             }}
           >
-            <span style={{ fontWeight: 700, color: '#f8fafc' }}>Notificaciones</span>
+            <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>Notificaciones</span>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {items.some((i) => !i.is_read) && (
                 <button
@@ -196,7 +195,7 @@ export function NotificationsBell() {
                     gap: '6px',
                     background: 'none',
                     border: 'none',
-                    color: '#38bdf8',
+                    color: 'var(--cd-orange)',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -215,7 +214,7 @@ export function NotificationsBell() {
                     gap: '6px',
                     background: 'none',
                     border: 'none',
-                    color: '#94a3b8',
+                    color: 'var(--text-secondary)',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -228,7 +227,7 @@ export function NotificationsBell() {
           </div>
 
           {items.length === 0 ? (
-            <p style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b', margin: 0 }}>
+            <p style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', margin: 0 }}>
               No hay notificaciones.
             </p>
           ) : (
@@ -241,8 +240,8 @@ export function NotificationsBell() {
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
-                    background: n.is_read ? 'transparent' : 'rgba(56,189,248,0.06)',
+                    borderBottom: '1px solid var(--veil-2)',
+                    background: n.is_read ? 'transparent' : 'var(--color-info-bg)',
                   }}
                 >
                   <button
@@ -274,7 +273,7 @@ export function NotificationsBell() {
                           alignItems: 'baseline',
                         }}
                       >
-                        <span style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '0.9rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>
                           {n.title}
                         </span>
                         {!n.is_read && (
@@ -283,16 +282,16 @@ export function NotificationsBell() {
                               width: '8px',
                               height: '8px',
                               borderRadius: '50%',
-                              background: '#38bdf8',
+                              background: 'var(--color-info)',
                               flexShrink: 0,
                             }}
                           />
                         )}
                       </div>
-                      <p style={{ margin: '2px 0 0 0', color: '#cbd5e1', fontSize: '0.82rem', lineHeight: 1.4 }}>
+                      <p style={{ margin: '2px 0 0 0', color: 'var(--text-main)', fontSize: '0.82rem', lineHeight: 1.4 }}>
                         {n.message}
                       </p>
-                      <span style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
                         {formatDateTime(n.updated_at)}
                       </span>
                     </div>
@@ -305,12 +304,12 @@ export function NotificationsBell() {
                       padding: '10px 12px 10px 4px',
                       background: 'none',
                       border: 'none',
-                      color: '#475569',
+                      color: 'var(--text-dim)',
                       cursor: 'pointer',
                       flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#94a3b8')}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#475569')}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)')}
                   >
                     <X size={14} />
                   </button>

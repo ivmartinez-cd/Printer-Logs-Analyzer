@@ -4,7 +4,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MonitorDashboard } from '../../components/Monitor/MonitorDashboard'
 import * as api from '../../services/api'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
+import { ToastProvider } from '../../contexts/ToastContext'
 import type { FleetClientDetail, FleetScanResult } from '../../types/api'
+
+function renderDashboard(props?: { pollingInterval?: number }) {
+  return render(
+    <ToastProvider>
+      <MonitorDashboard {...props} />
+    </ToastProvider>
+  )
+}
 
 // Mock Recharts
 vi.mock('recharts', () => ({
@@ -75,7 +84,7 @@ describe('MonitorDashboard', () => {
   })
 
   it('renders initial state with devices as unreachable', async () => {
-    render(<MonitorDashboard />)
+    renderDashboard()
 
     await waitFor(() => {
       expect(screen.getByText('Test Client')).toBeInTheDocument()
@@ -95,7 +104,7 @@ describe('MonitorDashboard', () => {
       results: mockScanResults,
     })
 
-    render(<MonitorDashboard pollingInterval={10} />)
+    renderDashboard({ pollingInterval: 10 })
     await waitFor(() => screen.getByText('S1'))
     
     fireEvent.click(screen.getByText('🔄 Sincronizar Todo'))
@@ -115,7 +124,7 @@ describe('MonitorDashboard', () => {
       results: mockScanResults,
     })
 
-    render(<MonitorDashboard pollingInterval={10} />)
+    renderDashboard({ pollingInterval: 10 })
     await waitFor(() => screen.getByText('S1'))
     
     fireEvent.click(screen.getByText('🔄 Sincronizar Todo'))
@@ -137,7 +146,7 @@ describe('MonitorDashboard', () => {
       results: mockScanResults,
     })
 
-    render(<MonitorDashboard pollingInterval={10} />)
+    renderDashboard({ pollingInterval: 10 })
     await waitFor(() => screen.getByText('S1'))
     
     fireEvent.click(screen.getByText('🔄 Sincronizar Todo'))

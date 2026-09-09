@@ -22,8 +22,8 @@ export function NewCodesSection({
     <div className="dashboard__codes-new-section" role="status">
       <p className="dashboard__codes-new-intro">
         Se detectaron {codesNew.length} código{codesNew.length !== 1 ? 's' : ''} nuevo
-        {codesNew.length !== 1 ? 's' : ''} que no están en el catálogo. Agrega cada uno
-        con su URL de solución si la tienes.
+        {codesNew.length !== 1 ? 's' : ''} que no están en el catálogo. Agregá cada uno
+        con su URL de solución si la tenés.
       </p>
       <ul className="dashboard__codes-new-list">
         {codesNew.map((code: string) => {

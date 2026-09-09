@@ -50,64 +50,162 @@
 }
 
 :root {
-  /* Canal Directo Brand Colors */
+  /* ── Canal Directo Brand Colors (invariantes, no cambian con el tema) ──
+     Este producto es MPS (impresión) — el manual pauta "servicio + gris"
+     por producto: acá el par institucional es naranja + gris, nada más.
+     --cd-celeste/--cd-magenta/--cd-violet son los colores de OTRAS unidades
+     de negocio (Signage / Digitalización / DaaS) — quedan definidos por si
+     hace falta referenciarlos puntualmente, pero no se usan como decoración
+     de esta UI. */
   --cd-orange: #f39322;
   --cd-orange-light: #f5a84a;
   --cd-orange-glow: rgba(243, 147, 34, 0.25);
+  --cd-gray: #59595b;
+  /* Variante de --cd-gray para acentos de UI (bordes/íconos) — en oscuro el
+     gris institucional real casi no contrasta contra un fondo casi negro,
+     así que se aclara sólo para esos usos puntuales; el valor de marca
+     "real" (--cd-gray) no cambia. */
+  --cd-gray-accent: var(--cd-gray);
   --cd-celeste: #3bb1ca;
   --cd-magenta: #dc368b;
   --cd-violet: #633188;
-  --cd-gray: #59595b;
-
-  /* Backgrounds — warm charcoal instead of cold blue-black */
-  --bg-main: #0a0a0b;
-  --bg-surface: #111113;
-  --bg-card: rgba(22, 22, 26, 0.55);
-  --bg-glass: rgba(18, 18, 22, 0.70);
-
-  /* Primary accent → Canal Directo orange */
-  --hp-blue: var(--cd-orange);
-  --hp-blue-vibrant: var(--cd-orange);
-  --hp-blue-glow: var(--cd-orange-glow);
 
   --accent-primary: var(--cd-orange);
-  --accent-secondary: var(--cd-celeste);
+  --accent-secondary: var(--cd-gray);
+  --accent-color: var(--cd-orange);
+  --text-on-accent: #ffffff;
 
-  --text-main: #f5f5f5;
-  --text-muted: #9a9a9e;
-  --text-dim: #5e5e63;
-  --text-gradient: linear-gradient(135deg, #ffffff 0%, #f39322 100%);
+  /* ── Superficies (modo claro por defecto) ─────────────────────────────
+     Todas opacas a propósito: nada de "vidrio" translúcido — el manual de
+     marca son piezas planas de color sólido, no glassmorphism. --bg-card y
+     --bg-glass quedan como alias de --bg-elevated (no como "vidrio") para
+     no romper los archivos que todavía los referencian. */
+  --bg-main: #f6f6f7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f0f0f2;
+  --bg-card: #ffffff;
+  --bg-glass: #f0f0f2;
+  --bg-hover: rgba(15, 23, 42, 0.04);
+  --bg-input: rgba(15, 23, 42, 0.03);
 
-  /* Status Colors */
+  /* ── Texto ───────────────────────────────────────────────────────────── */
+  --text-main: #1a1a1e;
+  --text-secondary: #4b4b52;
+  --text-muted: #6b6b74;
+  --text-dim: #9a9aa3;
+  --text-gradient: linear-gradient(135deg, #1a1a1e 0%, var(--cd-orange) 100%);
+
+  /* ── Status Colors — semántica genérica de UI (error/warning/success), no
+     colores de marca. --color-info usaba el celeste de Signage por error:
+     pasa a un slate neutro para no pisar el color de otra unidad de negocio. */
   --color-error: #ef4444;
   --color-warning: #f59e0b;
-  --color-info: var(--cd-celeste);
+  --color-info: #64748b;
   --color-success: #10b981;
+  --color-error-bg: rgba(239, 68, 68, 0.1);
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-info-bg: rgba(100, 116, 139, 0.1);
+  --color-success-bg: rgba(16, 185, 129, 0.1);
 
-  /* Borders & Glass */
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.07);
-  --border-glass: 1px solid rgba(255, 255, 255, 0.09);
-  --glass-blur: blur(16px) saturate(1.6);
+  /* ── Bordes ──────────────────────────────────────────────────────────── */
+  --border-color: rgba(15, 23, 42, 0.09);
+  --border-subtle: 1px solid rgba(15, 23, 42, 0.09);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --border-glass: 1px solid rgba(15, 23, 42, 0.12);
+  /* El blur de "vidrio" queda apagado a propósito (ver nota de superficies) */
+  --glass-blur: none;
+  /* Escala única de radios: chico (inputs), medio (cards/botones/modales), pill (badges) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
 
-  /* Elevation */
-  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 24px rgba(243, 147, 34, 0.12);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  /* ── Escala de veladuras neutras (bordes finos, hovers, disabled) ──────
+     Uso: reemplazan rgba(255,255,255,X) / rgba(0,0,0,X) sueltos usados como
+     hairline o fondo hover — el signo del alfa se invierte solo, el rol es
+     el mismo en los dos temas. */
+  --veil-1: rgba(15, 23, 42, 0.03);
+  --veil-2: rgba(15, 23, 42, 0.05);
+  --veil-3: rgba(15, 23, 42, 0.08);
+  --veil-4: rgba(15, 23, 42, 0.12);
+  --veil-5: rgba(15, 23, 42, 0.18);
 
-  /* Transitions */
+  /* Fondo oscurecido detrás de un modal/overlay a pantalla completa */
+  --overlay-backdrop: rgba(15, 23, 42, 0.45);
+
+  /* ── Elevación — planas y neutras, nunca de color (nada de "glow"):
+     la profundidad la da el borde, la sombra es solo para separar capas
+     reales (modal sobre overlay, dropdown sobre contenido). ───────────── */
+  --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.14);
+  /* Alias retro-compatibles: dejan de ser "glow"/"premium" de color, apuntan a sombras planas */
+  --shadow-premium: var(--shadow-lg);
+  --shadow-glow: var(--shadow-sm);
+
+  /* ── Escala de z-index única para toda la app ───────────────────────── */
+  --z-sticky: 100;
+  --z-nav: 2000;
+  --z-nav-mobile: 2001;
+  --z-dropdown: 3000;
+  --z-modal-overlay: 10000;
+  --z-modal: 10001;
+  --z-toast: 11000;
+
+  /* ── Transiciones ────────────────────────────────────────────────────── */
   --transition-premium: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: all 0.18s ease;
   --transition-smooth: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Typography — RNS Sanz corporativa */
+  /* ── Tipografía — RNS Sanz corporativa ──────────────────────────────── */
   --font-sans: 'RNS Sanz', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Consolas', 'Courier New', monospace;
+}
 
-  /* Semantic aliases */
-  --border-color: rgba(255, 255, 255, 0.07);
+/* ── Modo oscuro — overrides de superficie/texto/borde/veladura ────────── */
+html.dark {
+  --bg-main: #0a0a0b;
+  --bg-surface: #111113;
+  --bg-elevated: #17171a;
+  --bg-card: #111113;
+  --bg-glass: #17171a;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-input: rgba(0, 0, 0, 0.3);
+
+  /* En oscuro el gris institucional (#59595b) casi no contrasta contra un
+     fondo casi negro — se aclara solo para acentos de UI, ver :root */
+  --cd-gray-accent: #9a9aa0;
+
+  --text-main: #f5f5f5;
   --text-secondary: #c2c2c8;
-  --accent-color: var(--cd-orange);
+  --text-muted: #9a9a9e;
+  --text-dim: #5e5e63;
+  --text-gradient: linear-gradient(135deg, #ffffff 0%, var(--cd-orange) 100%);
+
+  --border-color: rgba(255, 255, 255, 0.07);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-glass: 1px solid rgba(255, 255, 255, 0.09);
+
+  --veil-1: rgba(255, 255, 255, 0.03);
+  --veil-2: rgba(255, 255, 255, 0.05);
+  --veil-3: rgba(255, 255, 255, 0.08);
+  --veil-4: rgba(255, 255, 255, 0.12);
+  --veil-5: rgba(255, 255, 255, 0.18);
+
+  --overlay-backdrop: rgba(10, 14, 23, 0.7);
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-premium: var(--shadow-lg);
+  --shadow-glow: var(--shadow-sm);
+}
+
+/* Alias retro-compatibles (no agregar usos nuevos, migrar a --cd-orange / --accent-primary) */
+:root {
+  --hp-blue: var(--cd-orange);
+  --hp-blue-vibrant: var(--cd-orange);
+  --hp-blue-glow: var(--cd-orange-glow);
 }
 
 *,
@@ -155,10 +253,10 @@ body {
   font-size: 0.875rem;
   font-weight: 600;
   font-family: inherit;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: var(--transition-premium);
+  transition: var(--transition-fast);
   white-space: nowrap;
   text-decoration: none;
   user-select: none;
@@ -171,40 +269,37 @@ body {
 
 .dashboard__btn--primary {
   background: var(--cd-orange);
-  color: #fff;
+  color: var(--text-on-accent);
   border-color: var(--cd-orange);
-  box-shadow: 0 4px 12px rgba(243, 147, 34, 0.25);
 }
 
 .dashboard__btn--primary:hover:not(:disabled) {
   background: var(--cd-orange-light);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(243, 147, 34, 0.4);
 }
 
+/* Variante de énfasis: el par institucional es naranja + gris (nada de
+   magenta, que es el color de Digitalización, otra unidad de negocio) —
+   gris sólido y fuerte, en vez del degradado naranja→magenta con glow que
+   tenía antes. */
 .dashboard__btn--vibrant {
-  background: linear-gradient(135deg, var(--cd-orange) 0%, var(--cd-magenta) 100%);
-  color: #fff;
-  border: none;
-  box-shadow: 0 4px 15px rgba(243, 147, 34, 0.3);
+  background: var(--cd-gray);
+  color: var(--text-on-accent);
+  border: 1px solid var(--cd-gray);
 }
 
 .dashboard__btn--vibrant:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(243, 147, 34, 0.45);
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
 
 .dashboard__btn--secondary {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-elevated);
   color: var(--text-main);
-  border-color: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
+  border-color: var(--border-color);
 }
 
 .dashboard__btn--secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--veil-3);
+  border-color: var(--veil-4);
 }
 
 .dashboard__btn--danger-outline {
@@ -214,27 +309,24 @@ body {
 }
 
 .dashboard__btn--danger-outline:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--color-error-bg);
   border-color: var(--color-error);
 }
 
 .dashboard__btn--danger {
   background: var(--color-error);
-  color: #fff;
+  color: var(--text-on-accent);
   border-color: var(--color-error);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .dashboard__btn--danger:hover:not(:disabled) {
-  background: #f87171;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  background: #dc2626;
 }
 
 .dashboard__btn--small {
   padding: 6px 12px;
   font-size: 0.8125rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* ─── Global Scrollbar ───────────────────────────────────────────────── */
@@ -248,25 +340,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--veil-3);
   border-radius: 20px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--veil-5);
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 /* ─── Standardized Forms ─────────────────────────────────────────────── */
 .dashboard__input {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--veil-4);
   padding: 12px 16px;
-  border-radius: 12px;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
   font-family: inherit;
   font-size: 0.95rem;
   transition: var(--transition-fast);
@@ -274,13 +366,13 @@ body {
 }
 
 .dashboard__input:focus {
-  border-color: var(--hp-blue-vibrant);
-  background: rgba(0, 150, 214, 0.05);
-  box-shadow: 0 0 0 3px rgba(0, 150, 214, 0.15);
+  border-color: var(--cd-orange);
+  background: var(--cd-orange-glow);
+  box-shadow: 0 0 0 3px rgba(243, 147, 34, 0.15);
 }
 
 .dashboard__input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--text-dim);
 }
 
 .dashboard__label {
@@ -291,9 +383,105 @@ body {
   display: block;
 }
 
+/* ─── Franja de marca — "servicio + gris" del manual para MPS: naranja
+   institucional + gris, nada de los otros 3 colores de servicio (esos son
+   de DaaS/Digitalización/Signage, otras unidades de negocio). Reemplaza al
+   glow ambiental como elemento de identidad bajo el logo / título. ────── */
+.brand-strip {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--cd-orange) 0% 65%,
+    var(--cd-gray-accent) 65% 100%
+  );
+}
+
+/* ─── Textos genéricos de modal (título/cuerpo neutros, sin el estilo
+   "gradiente" de .log-modal__title — para modales de formulario simples) ── */
+.modal-heading {
+  margin: 0 0 12px 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.modal-body-text {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* Los modales de formulario (ex .maintenance-modal) viven dentro de
+   .log-modal, que no trae padding propio (lo aportan sus sub-bloques
+   __header/__method-section/etc). Estas dos reglas le dan el padding que
+   antes ponía .maintenance-modal, sin tocar log-paste-modal.css. */
+.log-modal > .modal-heading {
+  padding: 32px 32px 0;
+}
+
+.log-modal > .maintenance-form,
+.log-modal > .modal-body-text,
+.log-modal > .form-actions {
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.log-modal > .maintenance-form {
+  padding-bottom: 32px;
+}
+
+.log-modal > .modal-body-text {
+  margin-top: 12px;
+}
+
+.log-modal > .form-actions {
+  padding-bottom: 32px;
+}
+
+/* Footer de los modales anchos (HowItWorksModal, HelpModal): el resto de
+   .log-modal__actions usa padding 24px 32px (definido en log-paste-modal.css);
+   estos dos usan el mismo padding horizontal que el header ancho (40px). */
+.log-modal__actions--wide {
+  padding: 24px 40px;
+}
+
 /* ─── Export Header (visible only when printing) ─────────────────────── */
 .export-header {
   display: none;
+}
+
+/* ─── Spinner / LoadingState (patrón único de carga, ver components/ui/Spinner.tsx) */
+.spinner {
+  display: inline-block;
+  border-style: solid;
+  border-color: var(--veil-4);
+  border-top-color: var(--cd-orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.dashboard-modals__extract-spinner {
+  margin: 0 auto 20px;
+}
+
+.dashboard-modals__pdf-spinner {
+  margin-bottom: 28px;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 /* ─── Animations ─────────────────────────────────────────────────────── */
@@ -363,23 +551,21 @@ body {
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--veil-2);
+  border: 1px solid var(--veil-4);
   border-radius: 50%;
-  color: var(--hp-blue-vibrant);
+  color: var(--cd-orange);
   font-weight: 800;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: var(--transition-premium);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .hiw-trigger-btn:hover {
-  background: var(--hp-blue-vibrant);
-  color: #fff;
-  border-color: var(--hp-blue-vibrant);
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: 0 0 15px rgba(0, 161, 224, 0.4);
+  background: var(--cd-orange);
+  color: var(--text-on-accent);
+  border-color: var(--cd-orange);
 }
 
 .hiw-header {
@@ -388,8 +574,8 @@ body {
   align-items: flex-start;
   margin-bottom: 12px;
   padding: 32px 40px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid var(--veil-2);
+  background: var(--veil-1);
 }
 
 .hiw-close-btn {
@@ -403,7 +589,7 @@ body {
 }
 
 .hiw-close-btn:hover {
-  color: #fff;
+  color: var(--text-main);
   transform: rotate(90deg);
 }
 
@@ -423,8 +609,8 @@ body {
 }
 
 .hiw-step-number {
-  background: var(--hp-blue-vibrant);
-  color: #fff;
+  background: var(--cd-orange);
+  color: var(--text-on-accent);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -434,7 +620,6 @@ body {
   font-weight: 800;
   font-size: 0.9rem;
   flex-shrink: 0;
-  box-shadow: 0 0 15px rgba(0, 161, 224, 0.3);
 }
 
 .hiw-step-content {
@@ -443,7 +628,7 @@ body {
 
 .hiw-step-content h4 {
   margin: 0 0 8px 0;
-  color: #fff;
+  color: var(--text-main);
   font-size: 1.1rem;
   font-weight: 700;
 }
@@ -458,44 +643,36 @@ body {
 .hiw-callout {
   margin-top: 16px;
   padding: 16px;
-  background: rgba(0, 161, 224, 0.06);
-  border-left: 4px solid var(--hp-blue-vibrant);
+  background: var(--cd-orange-glow);
+  border-left: 4px solid var(--cd-orange);
   border-radius: 4px 12px 12px 4px;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--text-main);
   font-style: italic;
-  backdrop-filter: blur(4px);
 }
 
 .hiw-formula {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--bg-input);
   padding: 12px 20px;
   border-radius: 14px;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.9rem;
   margin-top: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--veil-2);
 }
 
 .hiw-formula-item {
-  color: var(--hp-blue-vibrant);
+  color: var(--cd-orange);
 }
 
 .hiw-formula-op {
   color: var(--text-dim);
 }
 
-/* Colors for specific steps */
-.hiw-section--setup .hiw-step-number { background: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-.hiw-section--discover .hiw-step-number { background: #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
-.hiw-section--sync .hiw-step-number { background: #8b5cf6; box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
-.hiw-section--formula .hiw-step-number { background: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
-.hiw-section--alert .hiw-step-number { background: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
-.hiw-section--incident .hiw-step-number { background: #d946ef; box-shadow: 0 0 15px rgba(217, 70, 239, 0.3); }
-.hiw-section--close .hiw-step-number { background: #14b8a6; box-shadow: 0 0 15px rgba(20, 184, 166, 0.3); }
-.hiw-section--direct .hiw-step-number { background: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
-.hiw-section--adjust .hiw-step-number { background: #64748b; box-shadow: 0 0 15px rgba(100, 116, 139, 0.3); }
+/* Los 9 pasos del walkthrough ya se distinguen por el número — un solo
+   color institucional (naranja) en vez de un arcoíris decorativo de 9
+   colores ajenos a la marca. */

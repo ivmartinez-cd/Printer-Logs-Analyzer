@@ -22,6 +22,8 @@ import {
   getMaintenanceDevicesStatus,
 } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
+import { LoadingState } from '../components/ui/Spinner'
+import { ConfirmModal } from '../components/ui/ConfirmModal'
 import { AvisosSidebar } from '../components/Maintenance/AvisosSidebar'
 import { MaintenanceComponentsTable } from '../components/Maintenance/MaintenanceComponentsTable'
 import {
@@ -130,6 +132,7 @@ export function AvisosPage() {
   // Edit/Delete Family States
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isClearDevicesModalOpen, setIsClearDevicesModalOpen] = useState(false)
 
   const toast = useToast()
 
@@ -372,7 +375,6 @@ export function AvisosPage() {
 
   const handleClearDevices = async () => {
     if (!selectedFamily) return
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar todos los equipos asociados a la familia "${selectedFamily}"?`)) return
     setLoading(true)
     try {
       await clearFamilyDevices(selectedFamily)
@@ -382,6 +384,7 @@ export function AvisosPage() {
       toast.showError('Error al limpiar equipos')
     } finally {
       setLoading(false)
+      setIsClearDevicesModalOpen(false)
     }
   }
 
@@ -600,7 +603,7 @@ export function AvisosPage() {
 
           {/* Fleet Table */}
           {loadingStatus ? (
-            <div className="mnt-fleet-loading">Cargando estado de flota...</div>
+            <LoadingState className="mnt-fleet-loading" text="Cargando estado de flota..." />
           ) : alertDevices.length === 0 ? (
             <div className="mnt-fleet-empty">
               <span className="mnt-fleet-empty-icon">✓</span>
@@ -778,7 +781,7 @@ export function AvisosPage() {
                         {discovering ? 'Buscando...' : '🔍 Buscar Equipos en SDS'}
                       </button>
                       <button
-                        onClick={handleClearDevices}
+                        onClick={() => setIsClearDevicesModalOpen(true)}
                         className="dashboard__btn dashboard__btn--danger-outline dashboard__btn--small"
                       >
                         🗑️ Limpiar Equipos
@@ -857,7 +860,7 @@ export function AvisosPage() {
             ) : (
               <div className="avisos-empty-state">
                 <div className="avisos-empty-icon">📂</div>
-                <h3>Selecciona una familia o equipo</h3>
+                <h3>Seleccioná una familia o equipo</h3>
                 <p>Gestiona las reglas globales por modelo o registra intervenciones específicas por número de serie.</p>
               </div>
             )}
@@ -929,6 +932,17 @@ export function AvisosPage() {
           familyName={selectedFamily}
           onConfirm={handleDeleteFamily}
           onClose={() => setIsDeleteModalOpen(false)}
+        />
+      )}
+      {isClearDevicesModalOpen && selectedFamily && (
+        <ConfirmModal
+          title="Limpiar equipos"
+          message={`¿Eliminar todos los equipos asociados a la familia "${selectedFamily}"?`}
+          confirmLabel="Eliminar"
+          variant="danger"
+          loading={loading}
+          onConfirm={handleClearDevices}
+          onCancel={() => setIsClearDevicesModalOpen(false)}
         />
       )}
     </div>

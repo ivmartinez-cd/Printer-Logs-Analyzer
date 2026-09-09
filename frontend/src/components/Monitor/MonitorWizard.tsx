@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Portal } from '../ui/Portal'
+import { LoadingState } from '../ui/Spinner'
 import { listFleetClients, getFleetClient } from '../../services/api'
 import type { FleetClientSummary, FleetClientDetail } from '../../types/api'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
@@ -120,9 +121,9 @@ export function MonitorWizard() {
           <div style={{ padding: '24px', minHeight: '320px', flex: 1, overflowY: 'auto' }}>
             {step === 'client' ? (
               <>
-                <h3 style={{ marginBottom: '16px', color: '#fff', fontSize: '1rem', fontWeight: 600 }}>1. Seleccionar Cliente</h3>
+                <h3 style={{ marginBottom: '16px', color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600 }}>1. Seleccionar Cliente</h3>
                 {loading ? (
-                  <p style={{ color: 'var(--text-muted)' }}>Cargando clientes…</p>
+                  <LoadingState text="Cargando clientes…" />
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {clients.map(client => (
@@ -131,14 +132,14 @@ export function MonitorWizard() {
                         onClick={() => setSelectedClient(client.id)}
                         style={{
                           padding: '16px',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--radius-md)',
                           border: selectedClient === client.id
                             ? '2px solid var(--hp-blue-vibrant)'
                             : '1px solid rgba(255,255,255,0.08)',
                           background: selectedClient === client.id
                             ? 'rgba(0, 161, 255, 0.1)'
                             : 'rgba(255,255,255,0.03)',
-                          color: '#fff',
+                          color: 'var(--text-main)',
                           textAlign: 'left',
                           cursor: 'pointer',
                           transition: 'all 0.2s',
@@ -157,7 +158,7 @@ export function MonitorWizard() {
               </>
             ) : (
               <>
-                <h3 style={{ marginBottom: '16px', color: '#fff', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                <h3 style={{ marginBottom: '16px', color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
                   <button 
                     onClick={() => setStep('client')} 
                     style={{ 
@@ -202,7 +203,7 @@ export function MonitorWizard() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '8px', lineHeight: '1.5' }}>
-                       El cliente <strong style={{ color: '#fff' }}>{clientDetail.name}</strong> tiene {clientDetail.devices.length} equipos. 
+                       El cliente <strong style={{ color: 'var(--text-main)' }}>{clientDetail.name}</strong> tiene {clientDetail.devices.length} equipos. 
                        Seleccioná qué familias de modelos querés monitorear:
                      </p>
                      {uniqueModels.map(model => (
@@ -213,7 +214,7 @@ export function MonitorWizard() {
                               alignItems: 'center', 
                               gap: '12px', 
                               padding: '12px 16px', 
-                              borderRadius: '12px', 
+                              borderRadius: 'var(--radius-md)', 
                               background: 'rgba(255,255,255,0.03)',
                               border: '1px solid rgba(255,255,255,0.06)',
                               cursor: 'pointer',
@@ -228,7 +229,7 @@ export function MonitorWizard() {
                           onChange={() => toggleModel(model)}
                          />
                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#fff' }}>{model}</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>{model}</div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                               {clientDetail.devices.filter(d => (d.model || 'Desconocido') === model).length} dispositivos detectados
                             </div>

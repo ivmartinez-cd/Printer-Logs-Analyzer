@@ -33,14 +33,14 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
 
   return (
     <Portal>
-      <div className="log-modal-overlay" role="dialog" aria-modal="true" style={{ zIndex: 11000 }}>
+      <div className="log-modal-overlay" role="dialog" aria-modal="true">
         <div className="log-modal" style={{ maxWidth: '480px', width: '90%' }}>
           <div className="log-modal__header">
             <h2 className="log-modal__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Upload size={18} />
               Subir Manual CPMD
             </h2>
-            <button type="button" className="log-modal__close" onClick={onClose}>×</button>
+            <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">×</button>
           </div>
 
           <div className="log-modal__body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -52,22 +52,22 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
               onClick={() => inputRef.current?.click()}
               style={{
                 border: '2px dashed var(--border-color)',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-sm)',
                 padding: '24px',
                 textAlign: 'center',
                 cursor: 'pointer',
-                background: file ? 'rgba(59,130,246,0.05)' : 'transparent',
+                background: file ? 'var(--cd-orange-glow)' : 'transparent',
                 transition: 'background 0.2s',
               }}
             >
               {file ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <FileText size={18} className="text-blue-400" />
-                  <span style={{ fontSize: '13px', color: '#fff' }}>{file.name}</span>
-                  <span style={{ fontSize: '11px', color: '#6b7280' }}>({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                  <FileText size={18} style={{ color: 'var(--cd-orange)' }} />
+                  <span style={{ fontSize: '13px', color: 'var(--text-main)' }}>{file.name}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
                 </div>
               ) : (
-                <div style={{ color: '#6b7280', fontSize: '13px' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                   Click para seleccionar un archivo PDF
                 </div>
               )}
@@ -81,33 +81,35 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>Keywords (separados por coma)</label>
+              <label htmlFor="cpmd-keywords" style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Keywords (separados por coma)</label>
               <input
+                id="cpmd-keywords"
                 type="text"
                 value={keywords}
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="M607, E60075, ..."
                 style={{
-                  padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)',
-                  background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '13px',
+                  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+                  background: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '13px',
                 }}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>Etiqueta</label>
+              <label htmlFor="cpmd-label" style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Etiqueta</label>
               <input
+                id="cpmd-label"
                 type="text"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 style={{
-                  padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)',
-                  background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '13px',
+                  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+                  background: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '13px',
                 }}
               />
             </div>
 
-            {error && <p style={{ margin: 0, fontSize: '12px', color: '#ef4444' }}>{error}</p>}
+            {error && <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-error)' }}>{error}</p>}
           </div>
 
           <div className="log-modal__actions" style={{ padding: '16px 24px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

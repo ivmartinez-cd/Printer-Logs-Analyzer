@@ -1,7 +1,7 @@
 .executive-summary {
-  background: #111522;
-  border: 1px solid #232734;
-  border-radius: 12px;
+  background: var(--bg-surface);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -15,9 +15,9 @@
 }
 
 .exec-scorecard {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #232734;
-  border-radius: 10px;
+  background: var(--veil-1);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -28,30 +28,30 @@
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #8a94a6;
+  color: var(--text-muted);
 }
 
 .exec-scorecard__value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--text-main);
 }
 
 .exec-scorecard__value--critical {
-  color: #f87171;
+  color: var(--color-error);
 }
 
 .exec-scorecard__value--watch {
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .exec-scorecard__value--ok {
-  color: #34d399;
+  color: var(--color-success);
 }
 
 .exec-scorecard__sub {
   font-size: 0.8rem;
-  color: #9aa3b2;
+  color: var(--text-secondary);
 }
 
 .executive-summary__grid {
@@ -61,16 +61,16 @@
 }
 
 .executive-summary__block {
-  background: rgba(17, 21, 34, 0.6);
-  border: 1px solid #232734;
-  border-radius: 10px;
+  background: var(--bg-glass);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 16px 18px;
 }
 
 .executive-summary__block-title {
   margin: 0 0 10px;
   font-size: 0.95rem;
-  color: #e6e8ee;
+  color: var(--text-main);
 }
 
 .executive-summary__block-list {
@@ -79,7 +79,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #c5cddd;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -93,11 +93,11 @@
   display: flex;
   gap: 6px;
   font-size: 0.9rem;
-  color: #d1d7e4;
+  color: var(--text-main);
 }
 
 .exec-next-steps li strong {
-  color: #f9fafb;
+  color: var(--text-main);
   font-weight: 600;
 }
 
@@ -105,7 +105,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
-  border-top: 1px solid #232734;
+  border-top: var(--border-subtle);
   padding-top: 12px;
 }
 
@@ -118,12 +118,12 @@
 .executive-summary__context-label {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #8a94a6;
+  color: var(--text-muted);
   letter-spacing: 0.04em;
 }
 
 .executive-summary__context-value {
   font-size: 0.95rem;
-  color: #f3f4f6;
+  color: var(--text-main);
   font-weight: 600;
 }

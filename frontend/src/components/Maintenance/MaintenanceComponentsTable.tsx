@@ -4,6 +4,7 @@ import type {
   MaintenanceIncident,
   MaintenanceModelRule,
 } from '../../types/api'
+import { LoadingState } from '../ui/Spinner'
 
 interface MaintenanceComponentsTableProps {
   rules: MaintenanceModelRule[]
@@ -49,7 +50,7 @@ export function MaintenanceComponentsTable({
   loading,
 }: MaintenanceComponentsTableProps) {
   if (loading) {
-    return <div className="mnt-comp-table-loading">Cargando componentes...</div>
+    return <LoadingState className="mnt-comp-table-loading" text="Cargando componentes..." />
   }
 
   if (rules.length === 0) {

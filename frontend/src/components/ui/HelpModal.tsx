@@ -29,20 +29,20 @@ export function HelpModal({ onClose }: HelpModalProps) {
 
           <div className="hiw-body">
             {/* FLUJO DE ANÁLISIS */}
-            <section className="hiw-section hiw-section--direct">
+            <section className="hiw-section">
               <div className="hiw-step-number">1</div>
               <div className="hiw-step-content">
                 <h4>Flujo de Análisis</h4>
                 <p>El sistema soporta tres métodos principales para procesar la información:</p>
                 <div className="help-modal__flow-list">
                   <div className="flow-item">
-                    <strong>Opción 1 — Deep Link:</strong> Ingresa directamente vía URL con el serial. La app resuelve el modelo y extrae logs de HP SDS automáticamente.
+                    <strong>Opción 1 — Deep Link:</strong> Ingresá directamente vía URL con el serial. La app resuelve el modelo y extrae logs de HP SDS automáticamente.
                   </div>
                   <div className="flow-item">
-                    <strong>Opción 2 — Extracción Automática:</strong> Ingresa el serial en el modal inicial para un flujo completo de Login → Extracción → Análisis.
+                    <strong>Opción 2 — Extracción Automática:</strong> Ingresá el serial en el modal inicial para un flujo completo de Login → Extracción → Análisis.
                   </div>
                   <div className="flow-item">
-                    <strong>Opción 3 — Log Manual:</strong> Pega el contenido crudo. El sistema detecta la identidad del equipo automáticamente.
+                    <strong>Opción 3 — Log Manual:</strong> Pegá el contenido crudo. El sistema detecta la identidad del equipo automáticamente.
                   </div>
                 </div>
                 <div className="hiw-callout">
@@ -52,7 +52,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Panel de KPIs */}
-            <section className="hiw-section hiw-section--formula">
+            <section className="hiw-section">
               <div className="hiw-step-number">2</div>
               <div className="hiw-step-content">
                 <h4>Panel de KPIs Inteligentes</h4>
@@ -79,7 +79,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Diagnóstico con IA */}
-            <section className="hiw-section hiw-section--incident">
+            <section className="hiw-section">
               <div className="hiw-step-number">3</div>
               <div className="hiw-step-content">
                 <h4>Diagnóstico Ejecutivo (IA)</h4>
@@ -93,7 +93,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Consumibles e Insight */}
-            <section className="hiw-section hiw-section--alert">
+            <section className="hiw-section">
               <div className="hiw-step-number">4</div>
               <div className="hiw-step-content">
                 <h4>Consumibles y Alertas Insight</h4>
@@ -105,7 +105,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Exportación */}
-            <section className="hiw-section hiw-section--close">
+            <section className="hiw-section">
               <div className="hiw-step-number">5</div>
               <div className="hiw-step-content">
                 <h4>Reporte Ejecutivo PDF</h4>
@@ -114,7 +114,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
           </div>
 
-          <div className="log-modal__actions" style={{ padding: '24px 40px' }}>
+          <div className="log-modal__actions log-modal__actions--wide">
             <button
               type="button"
               className="dashboard__btn dashboard__btn--primary vibrant"

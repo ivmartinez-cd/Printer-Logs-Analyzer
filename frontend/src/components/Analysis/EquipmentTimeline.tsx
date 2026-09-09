@@ -37,11 +37,11 @@ interface Verdict {
 }
 
 const TREND_META: Record<Trend, { label: string; color: string }> = {
-  up: { label: '↑ En aumento', color: '#f87171' },
-  new: { label: '✚ Nuevo', color: '#f87171' },
-  stable: { label: '→ Estable', color: '#94a3b8' },
-  down: { label: '↓ Baja', color: '#34d399' },
-  resolved: { label: '✓ Resuelto', color: '#34d399' },
+  up: { label: '↑ En aumento', color: 'var(--color-error)' },
+  new: { label: '✚ Nuevo', color: 'var(--color-error)' },
+  stable: { label: '→ Estable', color: 'var(--text-secondary)' },
+  down: { label: '↓ Baja', color: 'var(--color-success)' },
+  resolved: { label: '✓ Resuelto', color: 'var(--color-success)' },
 }
 
 function computeTrend(occ: number[]): Trend {
@@ -188,9 +188,9 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
       {data && (
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={data} margin={{ top: 8, right: 20, left: -10, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2d3544" />
-            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9aa3b2' }} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9aa3b2' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
@@ -213,7 +213,7 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
               type="monotone"
               dataKey="errors"
               name="Errores"
-              stroke="#e53e3e"
+              stroke="var(--color-error)"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 5 }}
@@ -222,7 +222,7 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
               type="monotone"
               dataKey="warnings"
               name="Advertencias"
-              stroke="#d97706"
+              stroke="var(--color-warning)"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 5 }}
@@ -236,7 +236,7 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
           style={{
             marginTop: '12px',
             padding: '10px 14px',
-            borderRadius: '10px',
+            borderRadius: 'var(--radius-md)',
             fontSize: '0.85rem',
             fontWeight: 600,
             display: 'flex',
@@ -244,12 +244,12 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
             gap: '8px',
             background:
               verdict.level === 'red'
-                ? 'rgba(239,68,68,0.1)'
+                ? 'var(--color-error-bg)'
                 : verdict.level === 'yellow'
-                  ? 'rgba(234,179,8,0.1)'
-                  : 'rgba(34,197,94,0.1)',
+                  ? 'var(--color-warning-bg)'
+                  : 'var(--color-success-bg)',
             border: `1px solid ${verdict.level === 'red' ? 'rgba(239,68,68,0.25)' : verdict.level === 'yellow' ? 'rgba(234,179,8,0.25)' : 'rgba(34,197,94,0.25)'}`,
-            color: verdict.level === 'red' ? '#f87171' : verdict.level === 'yellow' ? '#fbbf24' : '#34d399',
+            color: verdict.level === 'red' ? 'var(--color-error)' : verdict.level === 'yellow' ? 'var(--color-warning)' : 'var(--color-success)',
           }}
         >
           <span>{verdict.level === 'red' ? '🔧' : verdict.level === 'yellow' ? '🔁' : '✅'}</span>
@@ -277,13 +277,13 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
                 return (
                   <tr key={r.code}>
                     <td style={{ padding: '6px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: isErr ? '#f87171' : '#fbbf24' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: isErr ? 'var(--color-error)' : 'var(--color-warning)' }}>
                         {r.code}
                       </span>
-                      <span style={{ color: '#64748b', marginLeft: '8px' }}>{r.classification}</span>
+                      <span style={{ color: 'var(--text-muted)', marginLeft: '8px' }}>{r.classification}</span>
                     </td>
                     {r.occ.map((n, i) => (
-                      <td key={i} style={{ padding: '6px 12px', textAlign: 'right', color: n === 0 ? '#475569' : '#e2e8f0', fontWeight: 600 }}>
+                      <td key={i} style={{ padding: '6px 12px', textAlign: 'right', color: n === 0 ? 'var(--text-dim)' : 'var(--text-main)', fontWeight: 600 }}>
                         {n}
                       </td>
                     ))}

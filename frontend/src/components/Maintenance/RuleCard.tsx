@@ -89,7 +89,7 @@ export function RuleCard({
               className="progress-fill"
               style={{
                 width: `${Math.max(0, Math.min(100, (remaining / rule.expected_life) * 100))}%`,
-                backgroundColor: isCritical ? '#ef4444' : isWarning ? '#f59e0b' : '#10b981'
+                backgroundColor: isCritical ? 'var(--color-error)' : isWarning ? 'var(--color-warning)' : 'var(--color-success)'
               }}
             ></div>
           </div>
@@ -139,8 +139,8 @@ export function RuleCard({
                 style={{
                   width: '100%',
                   height: '40px',
-                  borderColor: 'rgba(56, 189, 248, 0.3)',
-                  color: '#38bdf8',
+                  borderColor: 'rgba(243, 147, 34, 0.3)',
+                  color: 'var(--cd-orange)',
                   fontSize: '13px'
                 }}
                 title={rule.email_recipients ? `Enviar alerta a: ${rule.email_recipients}` : 'No hay destinatarios configurados en esta regla'}

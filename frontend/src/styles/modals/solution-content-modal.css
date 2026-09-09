@@ -11,13 +11,13 @@
   margin: 0;
   padding: 10px 20px;
   font-size: 0.8125rem;
-  color: #9aa3b2;
-  border-bottom: 1px solid #232734;
+  color: var(--text-secondary);
+  border-bottom: var(--border-subtle);
   word-break: break-all;
 }
 
 .solution-content-modal__url {
-  color: #4c8bf5;
+  color: var(--cd-orange);
   text-decoration: none;
 }
 
@@ -26,7 +26,7 @@
 }
 
 .solution-content-modal__url-warning {
-  color: #e0a63a;
+  color: var(--color-warning);
   font-size: 0.75rem;
 }
 
@@ -38,10 +38,10 @@
   font-family: inherit;
   font-size: 0.8125rem;
   line-height: 1.6;
-  color: #c9cdd6;
+  color: var(--text-main);
   white-space: pre-wrap;
   word-break: break-word;
-  background: #0f1115;
+  background: var(--bg-main);
 }
 
 /* make .dashboard-table__solution-link work as button too */
@@ -59,7 +59,7 @@ button.dashboard-table__solution-link {
   padding: 0;
   cursor: pointer;
   font: inherit;
-  color: #4c8bf5;
+  color: var(--cd-orange);
   text-decoration: none;
 }
 
@@ -68,9 +68,9 @@ button.dashboard-table__solution-link {
 }
 
 .dashboard-table__code-link:focus-visible {
-  outline: 2px solid #4c8bf5;
+  outline: 2px solid var(--cd-orange);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .dashboard-table__cpmd-badge {
@@ -84,7 +84,7 @@ button.dashboard-table__solution-link {
 /* solution-content-modal tabs */
 .solution-content-modal__tabs {
   display: flex;
-  border-bottom: 1px solid #232734;
+  border-bottom: var(--border-subtle);
   padding: 0 20px;
   gap: 4px;
   flex-shrink: 0;
@@ -96,19 +96,19 @@ button.dashboard-table__solution-link {
   border-bottom: 2px solid transparent;
   padding: 8px 12px;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--text-dim);
   cursor: pointer;
   margin-bottom: -1px;
-  transition: color 0.15s, border-color 0.15s;
+  transition: var(--transition-fast);
 }
 
 .solution-content-modal__tab:hover {
-  color: #c9d1df;
+  color: var(--text-main);
 }
 
 .solution-content-modal__tab--active {
-  color: #4c8bf5;
-  border-bottom-color: #4c8bf5;
+  color: var(--cd-orange);
+  border-bottom-color: var(--cd-orange);
   font-weight: 600;
 }
 
@@ -123,7 +123,7 @@ button.dashboard-table__solution-link {
   margin: 0;
   padding: 20px;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--text-dim);
   text-align: center;
 }
 
@@ -139,7 +139,7 @@ button.dashboard-table__solution-link {
   gap: 8px;
   padding: 12px 0;
   font-size: 0.8125rem;
-  color: #9aa3b2;
+  color: var(--text-secondary);
 }
 
 .solution-content-modal__cpmd-body {
@@ -150,7 +150,7 @@ button.dashboard-table__solution-link {
 
 .solution-content-modal__cpmd-page {
   font-size: 0.75rem;
-  color: #60a5fa;
+  color: var(--cd-orange);
   font-style: italic;
 }
 
@@ -163,14 +163,14 @@ button.dashboard-table__solution-link {
 .solution-content-modal__cpmd-block-title {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #9aa3b2;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .solution-content-modal__cpmd-text {
   font-size: 0.8125rem;
-  color: #c9d1df;
+  color: var(--text-main);
   margin: 0;
   line-height: 1.5;
 }
@@ -185,7 +185,7 @@ button.dashboard-table__solution-link {
 
 .solution-content-modal__cpmd-steps li {
   font-size: 0.8125rem;
-  color: #c9d1df;
+  color: var(--text-main);
   line-height: 1.5;
 }
 
@@ -199,25 +199,25 @@ button.dashboard-table__solution-link {
 
 .solution-content-modal__cpmd-frus li {
   font-size: 0.8125rem;
-  color: #c9d1df;
+  color: var(--text-main);
 }
 
 .solution-content-modal__cpmd-pn {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  background: #1a1d26;
+  background: var(--bg-elevated);
   padding: 1px 4px;
-  border-radius: 3px;
-  color: #60a5fa;
+  border-radius: var(--radius-sm);
+  color: var(--cd-orange);
 }
 
 .solution-content-modal__cpmd-fru-desc {
-  color: #9aa3b2;
+  color: var(--text-secondary);
 }
 
 .solution-content-modal__cpmd-source {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-dim);
   margin: 0;
 }
 

@@ -2,20 +2,20 @@
 .collapsible-panel {
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-left: 4px solid #2d3a52;
-  border-radius: 16px;
+  border-left: 4px solid var(--border-strong);
+  border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  transition: var(--transition-smooth);
+  transition: var(--transition-fast);
 }
 
 .collapsible-panel:hover {
   box-shadow: var(--shadow-lg);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--veil-5);
 }
 
 .collapsible-panel--ai {
-  border-left-color: #8b5cf6;
+  border-left-color: var(--cd-orange);
 }
 
 .collapsible-panel--sds {
@@ -31,15 +31,15 @@
 }
 
 .collapsible-panel--insight {
-  border-left-color: #06b6d4;
+  border-left-color: var(--cd-gray-accent);
 }
 
 .collapsible-panel--insight-alerts {
-  border-left-color: #06b6d4;
+  border-left-color: var(--cd-gray-accent);
 }
 
 .collapsible-panel--cds {
-  border-left-color: #3b82f6;
+  border-left-color: var(--cd-gray-accent);
 }
 
 .collapsible-panel--incidents {
@@ -51,7 +51,7 @@
 }
 
 .collapsible-panel--events {
-  border-left-color: #4c8bf5;
+  border-left-color: var(--cd-gray-accent);
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────── */
@@ -72,7 +72,7 @@
 }
 
 .collapsible-panel__header:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--veil-1);
 }
 
 .collapsible-panel__icon {
@@ -81,7 +81,7 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 1.1rem;
   flex-shrink: 0;
 }

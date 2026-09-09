@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { DeviceAlertsResponse, InsightAlert } from '../../types/api'
+import { LoadingState } from '../ui/Spinner'
 
 interface InsightAlertsPanelProps {
   serial: string | null
@@ -91,9 +92,10 @@ interface InsightAlertsPanelProps {
   data: DeviceAlertsResponse | null
   loading: boolean
   error: string | null
+  onRetry?: () => void
 }
 
-export function InsightAlertsPanel({ serial, data, loading, error }: InsightAlertsPanelProps) {
+export function InsightAlertsPanel({ serial, data, loading, error, onRetry }: InsightAlertsPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current')
 
@@ -138,15 +140,17 @@ export function InsightAlertsPanel({ serial, data, loading, error }: InsightAler
 
       {!collapsed && (
         <div className="collapsible-panel__body">
-          {loading && (
-            <div className="insight-alerts-panel__loading">
-              <span className="insight-alerts-panel__spinner" aria-hidden="true" />
-              Consultando portal HP SDS…
-            </div>
-          )}
+          {loading && <LoadingState text="Consultando portal HP SDS…" />}
 
           {error && (
-            <p className="insight-alerts-panel__error">⚠ {error}</p>
+            <p className="insight-alerts-panel__error">
+              ⚠ {error}
+              {onRetry && (
+                <button type="button" className="dashboard__btn dashboard__btn--secondary dashboard__btn--small" onClick={onRetry} style={{ marginLeft: '10px' }}>
+                  Reintentar
+                </button>
+              )}
+            </p>
           )}
 
           {data && data.insight_configured && !loading && (

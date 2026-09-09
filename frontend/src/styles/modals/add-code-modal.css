@@ -19,29 +19,29 @@
 .add-code-modal__label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #9aa3b2;
+  color: var(--text-secondary);
 }
 
 .add-code-modal__input,
 .add-code-modal__textarea,
 .add-code-modal__select {
   width: 100%;
-  background: #0f1115;
-  border: 1px solid #232734;
-  border-radius: 6px;
-  color: #e6e8ee;
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
   padding: 10px 12px;
   font-family: inherit;
   font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: var(--transition-fast);
 }
 
 .add-code-modal__input:focus,
 .add-code-modal__textarea:focus,
 .add-code-modal__select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--cd-orange);
+  box-shadow: 0 0 0 2px rgba(243, 147, 34, 0.2);
 }
 
 .add-code-modal__input:disabled,
@@ -52,8 +52,8 @@
 }
 
 .add-code-modal__input--readonly {
-  background: rgba(255, 255, 255, 0.03);
-  color: #9aa3b2;
+  background: var(--veil-1);
+  color: var(--text-secondary);
   border-style: dashed;
   cursor: default;
 }
@@ -82,15 +82,15 @@
   padding: 10px 18px;
   font-size: 14px;
   background: transparent;
-  color: #9aa3b2;
-  border: 1px solid #232734;
-  border-radius: 6px;
+  color: var(--text-secondary);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition-fast);
 }
 
 .log-modal__btn-secondary:hover:not(:disabled) {
-  color: #e6e8ee;
-  border-color: #3d4452;
-  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-main);
+  border-color: var(--border-strong);
+  background: var(--veil-1);
 }

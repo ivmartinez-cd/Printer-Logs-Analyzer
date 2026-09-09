@@ -3,6 +3,7 @@ import { getFleetClient, triggerFleetScan, getFleetScanStatus } from '../../serv
 import type { FleetClientDetail, FleetScanResult, RollerComponent } from '../../types/api'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
 import { useUIStore } from '../../store/useUIStore'
+import { useToast } from '../../contexts/ToastContext'
 import { SolutionContentModal } from '../Parser/SolutionContentModal'
 import { Portal } from '../ui/Portal'
 import { 
@@ -16,10 +17,10 @@ import {
 } from 'recharts'
 
 const STATUS_COLOR = {
-  ok: { bg: 'rgba(0, 200, 83, 0.1)', text: '#00e676', border: 'rgba(0, 200, 83, 0.2)', label: 'Saludable' },
-  warning: { bg: 'rgba(255, 160, 0, 0.1)', text: '#ffb300', border: 'rgba(255, 160, 0, 0.2)', label: 'Advertencia' },
-  critical: { bg: 'rgba(211, 47, 47, 0.1)', text: '#ff5252', border: 'rgba(211, 47, 47, 0.2)', label: 'Crítico' },
-  unreachable: { bg: 'rgba(100,100,100,0.1)', text: '#888', border: 'rgba(100,100,100,0.2)', label: 'Sin contacto' },
+  ok: { bg: 'var(--color-success-bg)', text: 'var(--color-success)', border: 'rgba(0, 200, 83, 0.2)', label: 'Saludable' },
+  warning: { bg: 'var(--color-warning-bg)', text: 'var(--color-warning)', border: 'rgba(255, 160, 0, 0.2)', label: 'Advertencia' },
+  critical: { bg: 'var(--color-error-bg)', text: 'var(--color-error)', border: 'rgba(211, 47, 47, 0.2)', label: 'Crítico' },
+  unreachable: { bg: 'rgba(100,100,100,0.1)', text: 'var(--text-muted)', border: 'rgba(100,100,100,0.2)', label: 'Sin contacto' },
 }
 
 function formatLabel(label: string) {
@@ -35,16 +36,16 @@ function formatLabel(label: string) {
 
 function StatusLegend() {
   const items = [
-    { label: 'Saludable', desc: 'Consumibles > 30% y sin alertas.', color: '#00e676' },
-    { label: 'Advertencia', desc: 'Consumibles 15-30% o alertas preventivas.', color: '#ffb300' },
-    { label: 'Crítico', desc: 'Consumibles < 15% o alertas de error.', color: '#ff5252' },
-    { label: 'Sin contacto', desc: 'No alcanzable.', color: '#888' },
+    { label: 'Saludable', desc: 'Consumibles > 30% y sin alertas.', color: 'var(--color-success)' },
+    { label: 'Advertencia', desc: 'Consumibles 15-30% o alertas preventivas.', color: 'var(--color-warning)' },
+    { label: 'Crítico', desc: 'Consumibles < 15% o alertas de error.', color: 'var(--color-error)' },
+    { label: 'Sin contacto', desc: 'No alcanzable.', color: 'var(--text-muted)' },
   ]
   return (
-    <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '12px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '12px 20px', background: 'var(--veil-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--veil-2)', flexWrap: 'wrap' }}>
       {items.map(i => (
         <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: i.color, boxShadow: `0 0 8px ${i.color}` }} />
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: i.color }} />
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: i.color, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{i.label}:</span>
           <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{i.desc}</span>
         </div>
@@ -72,9 +73,9 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
       gap: '32px', 
       marginTop: '16px', 
       padding: '20px', 
-      background: 'rgba(255,255,255,0.02)', 
-      borderRadius: '12px',
-      border: '1px solid rgba(255,255,255,0.05)'
+      background: 'var(--veil-1)', 
+      borderRadius: 'var(--radius-md)',
+      border: '1px solid var(--veil-2)'
     }}>
       {/* Top Errores column */}
       <div>
@@ -89,14 +90,14 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
                 alignItems: 'center', 
                 justifyContent: 'space-between', 
                 padding: '8px 12px', 
-                background: 'rgba(255,255,255,0.03)', 
-                borderRadius: '8px', 
-                border: '1px solid rgba(255,255,255,0.05)',
+                background: 'var(--veil-1)', 
+                borderRadius: 'var(--radius-sm)', 
+                border: '1px solid var(--veil-2)',
                 cursor: 'pointer',
                 transition: 'var(--transition-fast)'
               }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--hp-blue-vibrant)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--veil-2)'}
             >
               <span style={{
                 fontFamily: 'var(--font-mono)',
@@ -122,22 +123,22 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
             <AreaChart data={device.timeline_data}>
               <defs>
                 <linearGradient id="colorErrors" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ff5252" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#ff5252" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="var(--color-error)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--color-error)" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorWarnings" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ffb300" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#ffb300" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="var(--color-warning)" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="var(--color-warning)" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--veil-2)" vertical={false} />
               <XAxis 
                 dataKey="date" 
                 hide 
               />
               <YAxis hide />
               <Tooltip 
-                contentStyle={{ background: '#0e121a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--veil-4)', borderRadius: 'var(--radius-sm)', fontSize: '10px', boxShadow: 'var(--shadow-md)' }}
                 itemStyle={{ padding: '2px 0' }}
                 labelStyle={{ marginBottom: '4px', color: 'var(--text-dim)' }}
               />
@@ -145,8 +146,8 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
                 type="monotone" 
                 dataKey="errors" 
                 name="Errores"
-                stroke="#ff5252" 
-                fillOpacity={1} 
+                stroke="var(--color-error)"
+                fillOpacity={1}
                 fill="url(#colorErrors)" 
                 strokeWidth={2} 
                 isAnimationActive={false} 
@@ -155,7 +156,7 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
                 type="monotone" 
                 dataKey="warnings" 
                 name="Advertencias"
-                stroke="#ffb300" 
+                stroke="var(--color-warning)"
                 fillOpacity={1}
                 fill="url(#colorWarnings)"
                 strokeWidth={1.5} 
@@ -172,7 +173,7 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
 
 function TelemetryGauge({ percent, label }: { percent: number | null | undefined, label: string }) {
   const value = percent ?? 0
-  const color = value < 15 ? '#ff5252' : value < 30 ? '#ffb300' : '#00e676'
+  const color = value < 15 ? 'var(--color-error)' : value < 30 ? 'var(--color-warning)' : 'var(--color-success)'
   
   const radius = 18
   const circumference = Math.PI * radius
@@ -191,7 +192,7 @@ function TelemetryGauge({ percent, label }: { percent: number | null | undefined
         <path 
            d="M 5,25 A 18,18 0 0,1 41,25" 
            fill="none" 
-           stroke="rgba(255,255,255,0.05)" 
+           stroke="var(--veil-2)" 
            strokeWidth="5" 
            strokeLinecap="round" 
         />
@@ -204,7 +205,7 @@ function TelemetryGauge({ percent, label }: { percent: number | null | undefined
            strokeLinecap="round" 
            style={{ transition: 'stroke-dasharray 0.8s ease-out' }}
         />
-        <text x="23" y="24" textAnchor="middle" fontSize="11" fontWeight="800" fill="#fff">{value}%</text>
+        <text x="23" y="24" textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--text-main)">{value}%</text>
       </svg>
       <span 
         title={label}
@@ -249,19 +250,17 @@ function DeviceCard({
     <div
       onClick={onToggle}
       style={{
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-md)',
         border: `1px solid ${isExpanded ? s.text : s.border}`,
-        background: isExpanded ? `linear-gradient(135deg, ${s.bg}, var(--bg-card))` : 'var(--bg-card)',
-        backdropFilter: 'blur(20px)',
+        background: isExpanded ? s.bg : 'var(--bg-card)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         cursor: 'pointer',
         transition: 'border-color 0.2s, background 0.2s',
-        boxShadow: isExpanded ? `0 0 24px ${s.bg}` : 'none',
       }}
     >
-      <div style={{ height: '3px', background: s.text, boxShadow: `0 0 8px ${s.text}`, flexShrink: 0 }} />
+      <div style={{ height: '3px', background: s.text, flexShrink: 0 }} />
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
         {/* Serial + badge */}
@@ -273,7 +272,7 @@ function DeviceCard({
           >
             {device.serial}
           </a>
-          <span style={{ padding: '2px 10px', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}`, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-pill)', fontSize: '0.68rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}`, flexShrink: 0, whiteSpace: 'nowrap' }}>
             {s.label}
           </span>
         </div>
@@ -287,7 +286,7 @@ function DeviceCard({
         </div>
 
         {/* Telemetry */}
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', padding: '10px 0', borderTop: '1px solid var(--veil-2)', borderBottom: '1px solid var(--veil-2)' }}>
           <TelemetryGauge percent={device.black_toner_percent} label="Tóner" />
           <TelemetryGauge percent={device.fuser_life_percent} label="Fusor" />
           {rollers.map((r: RollerComponent) => (
@@ -301,10 +300,10 @@ function DeviceCard({
         {/* Footer: counts + date */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: device.error_count > 0 ? '#ff5252' : 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: device.error_count > 0 ? 'var(--color-error)' : 'var(--text-muted)' }}>
               ✕ {device.error_count}
             </span>
-            <span style={{ fontSize: '0.8rem', color: device.warning_count > 0 ? '#ffb300' : 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.8rem', color: device.warning_count > 0 ? 'var(--color-warning)' : 'var(--text-muted)' }}>
               ⚠ {device.warning_count}
             </span>
           </div>
@@ -330,6 +329,7 @@ const FILTER_LABELS: Record<StatusFilter, string> = {
 export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?: number }) {
   const { monitorClientId, monitorModels } = useAnalysisStore()
   const { setMonitorWizardOpen } = useUIStore()
+  const toast = useToast()
   const [client, setClient] = useState<FleetClientDetail | null>(null)
   const [results, setResults] = useState<FleetScanResult[]>([])
   const [scanning, setScanning] = useState(false)
@@ -343,8 +343,13 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
 
   useEffect(() => {
     if (!monitorClientId) return
-    getFleetClient(monitorClientId).then(setClient).catch(() => setClient(null))
-  }, [monitorClientId])
+    getFleetClient(monitorClientId)
+      .then(setClient)
+      .catch(() => {
+        setClient(null)
+        toast.showError('No se pudo cargar el cliente de la flota')
+      })
+  }, [monitorClientId, toast])
 
   const handleScan = async () => {
     if (!monitorClientId) return
@@ -420,19 +425,19 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
     : null
 
   return (
-    <div className="monitor-dashboard" style={{ padding: '0 40px 40px', maxWidth: '1600px', margin: '0 auto', color: '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', padding: '0 0 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <div className="monitor-dashboard" style={{ padding: '0 40px 40px', maxWidth: '1600px', margin: '0 auto', color: 'var(--text-main)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', padding: '0 0 16px', borderBottom: '1px solid var(--veil-2)' }}>
         <div className="dashboard__subheader-title-group">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
              <p className="dashboard__subheader-meta" style={{ margin: 0 }}>
-               {client ? <span style={{ color: '#fff', fontWeight: 600 }}>{client.name}</span> : '—'}
+               {client ? <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{client.name}</span> : '—'}
                {' · '}
                <span style={{ color: 'var(--text-dim)' }}>{displayRows.length} dispositivos</span>
              </p>
              {monitorModels && monitorModels.length > 0 && (
                 <div style={{ display: 'flex', gap: '6px' }}>
                    {monitorModels.map(m => (
-                     <span key={m} style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', fontSize: '0.7rem', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <span key={m} style={{ padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--veil-2)', fontSize: '0.7rem', color: 'var(--text-muted)', border: '1px solid var(--veil-4)' }}>
                        {m}
                      </span>
                    ))}
@@ -465,14 +470,14 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
           marginBottom: '24px', 
           padding: '20px', 
           background: 'var(--bg-glass)', 
-          borderRadius: '12px', 
-          border: '1px solid rgba(255,255,255,0.05)' 
+          borderRadius: 'var(--radius-md)', 
+          border: '1px solid var(--veil-2)' 
         }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
              <span>Progreso del escaneo de flota</span>
              <span>{scanJob.processed} / {scanJob.total} dispositivos</span>
            </div>
-           <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+           <div style={{ height: '6px', background: 'var(--veil-2)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
              <div style={{ 
                height: '100%', 
                width: `${(scanJob.processed / scanJob.total) * 100}%`, 
@@ -487,24 +492,22 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
       {/* KPI Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
         {([
-          { key: 'critical', label: 'Críticos', color: '#ff5252', bg: 'rgba(211,47,47,0.08)', border: 'rgba(211,47,47,0.2)' },
-          { key: 'warning',  label: 'Advertencia', color: '#ffb300', bg: 'rgba(255,160,0,0.08)', border: 'rgba(255,160,0,0.2)' },
-          { key: 'ok',       label: 'Saludables', color: '#00e676', bg: 'rgba(0,200,83,0.08)', border: 'rgba(0,200,83,0.2)' },
-          { key: 'unreachable', label: 'Sin contacto', color: '#888', bg: 'rgba(100,100,100,0.08)', border: 'rgba(100,100,100,0.2)' },
+          { key: 'critical', label: 'Críticos', color: 'var(--color-error)', bg: 'var(--color-error-bg)', border: 'rgba(211,47,47,0.2)' },
+          { key: 'warning',  label: 'Advertencia', color: 'var(--color-warning)', bg: 'var(--color-warning-bg)', border: 'rgba(255,160,0,0.2)' },
+          { key: 'ok',       label: 'Saludables', color: 'var(--color-success)', bg: 'var(--color-success-bg)', border: 'rgba(0,200,83,0.2)' },
+          { key: 'unreachable', label: 'Sin contacto', color: 'var(--text-muted)', bg: 'rgba(100,100,100,0.08)', border: 'rgba(100,100,100,0.2)' },
         ] as const).map(({ key, label, color, bg, border }) => (
           <button
             key={key}
             onClick={() => setStatusFilter(prev => prev === key ? 'all' : key)}
             style={{
               padding: '20px 24px',
-              borderRadius: '16px',
+              borderRadius: 'var(--radius-md)',
               border: `1px solid ${statusFilter === key ? color : border}`,
               background: statusFilter === key ? bg : 'var(--bg-card)',
-              backdropFilter: 'blur(20px)',
               cursor: 'pointer',
               textAlign: 'left',
-              transition: 'all 0.2s',
-              boxShadow: statusFilter === key ? `0 0 20px ${bg}` : 'none',
+              transition: 'var(--transition-fast)',
             }}
           >
             <div style={{ fontSize: '2rem', fontWeight: 800, color, lineHeight: 1 }}>
@@ -528,8 +531,8 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             onClick={() => setStatusFilter(f)}
             style={{
               padding: '5px 14px',
-              borderRadius: '20px',
-              border: `1px solid ${statusFilter === f ? 'var(--hp-blue-vibrant)' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 'var(--radius-pill)',
+              border: `1px solid ${statusFilter === f ? 'var(--hp-blue-vibrant)' : 'var(--veil-4)'}`,
               background: statusFilter === f ? 'rgba(0,161,255,0.15)' : 'transparent',
               color: statusFilter === f ? 'var(--hp-blue-vibrant)' : 'var(--text-muted)',
               fontSize: '0.8rem',
@@ -541,7 +544,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             {FILTER_LABELS[f]}{f !== 'all' ? ` (${kpis[f]})` : ` (${displayRows.length})`}
           </button>
         ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', border: '1px solid var(--veil-4)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           {([
             { mode: false, icon: '☰', title: 'Vista tabla' },
             { mode: true,  icon: '⊞', title: 'Vista grid' },
@@ -604,17 +607,17 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             return (
               <div
                 onClick={() => setExpandedSerial(null)}
-                style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+                style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--overlay-backdrop)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
               >
                 <div
                   onClick={e => e.stopPropagation()}
-                  style={{ width: '100%', maxWidth: '780px', maxHeight: '85vh', overflowY: 'auto', background: '#0e121a', border: `1px solid ${s.border}`, borderRadius: '20px', boxShadow: `0 0 40px ${s.bg}`, display: 'flex', flexDirection: 'column' }}
+                  style={{ width: '100%', maxWidth: '780px', maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-surface)', border: `1px solid ${s.border}`, borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column' }}
                 >
                   {/* Modal header */}
-                  <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                  <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--veil-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--hp-blue-vibrant)' }}>{device.serial}</span>
-                      <span style={{ padding: '2px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>{s.label}</span>
+                      <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-pill)', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>{s.label}</span>
                       {device.model_name && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{device.model_name}</span>}
                       {device.firmware && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>FW: {device.firmware}</span>}
                       <span style={{ fontSize: '0.85rem' }}>Errores: <strong style={{ color: 'var(--color-error)' }}>{device.error_count}</strong></span>
@@ -624,7 +627,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                   </div>
 
                   {/* Telemetry row */}
-                  <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--veil-2)', display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
                     <TelemetryGauge percent={device.black_toner_percent} label="Tóner" />
                     <TelemetryGauge percent={device.fuser_life_percent} label="Fusor" />
                     {(device.roller_components ?? []).map((r: RollerComponent) => (
@@ -635,7 +638,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                   {/* Body */}
                   <div style={{ padding: '20px 24px' }}>
                     {device.error_message ? (
-                      <p style={{ color: '#ff5252', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{device.error_message}</p>
+                      <p style={{ color: 'var(--color-error)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{device.error_message}</p>
                     ) : results.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)' }}>Presioná "Sincronizar Todo" para cargar los logs de este dispositivo.</p>
                     ) : (
@@ -653,10 +656,10 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
           })()} </Portal>}
         </>
       ) : (
-        <div className="monitor-grid" style={{ background: 'var(--bg-card)', border: 'var(--border-glass)', borderRadius: '24px', overflow: 'hidden', backdropFilter: 'blur(20px)', boxShadow: 'var(--shadow-premium)' }}>
+        <div className="monitor-grid" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <tr style={{ background: 'var(--veil-1)', borderBottom: '1px solid var(--veil-3)' }}>
                 <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Número de Serie</th>
                 <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ubicación</th>
                 <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</th>
@@ -682,7 +685,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                   <React.Fragment key={device.serial}>
                     <tr
                       onClick={() => setExpandedSerial(isExpanded ? null : device.serial)}
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: isExpanded ? 'rgba(255,255,255,0.03)' : 'transparent' }}
+                      style={{ borderBottom: '1px solid var(--veil-2)', cursor: 'pointer', transition: 'background 0.2s', background: isExpanded ? 'var(--veil-1)' : 'transparent' }}
                     >
                       <td style={{ padding: '20px 24px', fontWeight: 700 }}>
                         <a
@@ -704,7 +707,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                         {'location' in device ? (device as FleetScanResult).location : '—'}
                       </td>
                       <td style={{ padding: '20px 24px' }}>
-                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
+                        <span style={{ padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
                           {s.label}
                         </span>
                       </td>
@@ -717,8 +720,8 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                           ))}
                         </div>
                       </td>
-                      <td style={{ padding: '20px 24px', color: device.error_count > 0 ? '#ff5252' : 'var(--text-muted)', fontWeight: device.error_count > 0 ? 700 : 400 }}>{device.error_count}</td>
-                      <td style={{ padding: '20px 24px', color: device.warning_count > 0 ? '#ffb300' : 'var(--text-muted)' }}>{device.warning_count}</td>
+                      <td style={{ padding: '20px 24px', color: device.error_count > 0 ? 'var(--color-error)' : 'var(--text-muted)', fontWeight: device.error_count > 0 ? 700 : 400 }}>{device.error_count}</td>
+                      <td style={{ padding: '20px 24px', color: device.warning_count > 0 ? 'var(--color-warning)' : 'var(--text-muted)' }}>{device.warning_count}</td>
                       <td style={{ padding: '20px 24px', fontSize: '0.85rem', color: 'var(--text-dim)' }}>{device.last_event_date ? new Date(device.last_event_date).toLocaleDateString('es-AR') : '—'}</td>
                       <td style={{ padding: '20px 24px', textAlign: 'right' }}>
                         <span style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s' }}>▼</span>
@@ -727,15 +730,15 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                     {isExpanded && (
                       <tr key={`${device.serial}-detail`}>
                         <td colSpan={8} style={{ padding: 0 }}>
-                          <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--hp-blue-vibrant)' }}>
+                          <div style={{ padding: '24px', background: 'var(--veil-5)', borderBottom: '1px solid var(--hp-blue-vibrant)' }}>
                             {device.error_message ? (
-                              <p style={{ color: '#ff5252', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{device.error_message}</p>
+                              <p style={{ color: 'var(--color-error)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{device.error_message}</p>
                             ) : results.length === 0 ? (
                               <p style={{ color: 'var(--text-muted)' }}>Presioná "Sincronizar Todo" para cargar los logs de este dispositivo.</p>
                             ) : (
                               <>
                                 <div style={{ display: 'flex', gap: '24px', marginBottom: '12px' }}>
-                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Firmware: <strong style={{ color: '#fff' }}>{device.firmware ?? '—'}</strong></span>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Firmware: <strong style={{ color: 'var(--text-main)' }}>{device.firmware ?? '—'}</strong></span>
                                   <span>Errores: <strong style={{ color: 'var(--color-error)' }}>{device.error_count}</strong></span>
                                   <span>Warnings: <strong style={{ color: 'var(--color-warning)' }}>{device.warning_count}</strong></span>
                                 </div>

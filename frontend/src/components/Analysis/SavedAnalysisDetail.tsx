@@ -62,11 +62,11 @@ function DeviceHealthBar({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="device-health device-health--loading animate-pulse" style={{
-        background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px dashed rgba(255, 255, 255, 0.1)',
+        background: 'var(--veil-1)',
+        border: '1px dashed var(--veil-4)',
         padding: '20px',
-        borderRadius: '16px',
-        color: '#94a3b8',
+        borderRadius: 'var(--radius-md)',
+        color: 'var(--text-secondary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -85,16 +85,16 @@ function DeviceHealthBar({ id }: { id: string }) {
     <div
       className={`device-health device-health--${modifier} animate-in fade-in slide-in-from-top-4`}
       style={{
-        background: health.status === 'RED' ? 'rgba(239, 68, 68, 0.08)' : health.status === 'YELLOW' ? 'rgba(234, 179, 8, 0.08)' : 'rgba(34, 197, 94, 0.08)',
+        background: health.status === 'RED' ? 'var(--color-error-bg)' : health.status === 'YELLOW' ? 'var(--color-warning-bg)' : 'var(--color-success-bg)',
         border: `1px solid ${health.status === 'RED' ? 'rgba(239, 68, 68, 0.2)' : health.status === 'YELLOW' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`,
         padding: '20px',
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-md)',
         display: 'flex',
         gap: '16px',
         alignItems: 'flex-start',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+        boxShadow: 'var(--shadow-md)'
       }}
       role="status"
       aria-live="polite"
@@ -106,7 +106,7 @@ function DeviceHealthBar({ id }: { id: string }) {
         <p className="device-health__title" style={{
           margin: 0,
           fontWeight: 700,
-          color: '#f8fafc',
+          color: 'var(--text-main)',
           fontSize: '1.05rem',
           display: 'flex',
           flexWrap: 'wrap',
@@ -114,18 +114,18 @@ function DeviceHealthBar({ id }: { id: string }) {
           gap: '8px'
         }}>
           Estado del Dispositivo: <span style={{
-            color: health.status === 'RED' ? '#ef4444' : health.status === 'YELLOW' ? '#eab308' : '#22c55e'
+            color: health.status === 'RED' ? 'var(--color-error)' : health.status === 'YELLOW' ? 'var(--color-warning)' : 'var(--color-success)'
           }}>{health.label}</span>
           <span className="device-health__reco" style={{
             fontWeight: 500,
             opacity: 0.9,
-            color: '#cbd5e1'
+            color: 'var(--text-main)'
           }}> — {health.recommendation}</span>
         </p>
         <p className="device-health__reason" style={{
           margin: '6px 0 0 0',
           fontSize: '0.9rem',
-          color: '#94a3b8',
+          color: 'var(--text-secondary)',
           lineHeight: 1.5
         }}>{health.reason}</p>
       </div>
@@ -459,24 +459,24 @@ export function SavedAnalysisDetail({
       {/* Update Banner */}
       {isUpdating && (
         <div style={{
-          background: 'rgba(56, 189, 248, 0.08)',
+          background: 'var(--color-info-bg)',
           border: '1px solid rgba(56, 189, 248, 0.25)',
           padding: '16px 20px',
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-md)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          boxShadow: 'var(--shadow-md)',
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Activity className="text-sky-400 animate-pulse" size={20} />
             <div>
-              <p style={{ margin: 0, fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
+              <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem' }}>
                 Log Actualizado — Visualizando variaciones respecto al log original.
               </p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 Los KPIs, gráficos y la lista de incidentes reflejan las diferencias y deltas.
               </p>
             </div>
@@ -485,9 +485,9 @@ export function SavedAnalysisDetail({
             type="button"
             className="dashboard__btn"
             style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              color: '#f8fafc',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'var(--veil-3)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--veil-5)',
               padding: '6px 14px',
               fontSize: '0.85rem'
             }}
@@ -529,10 +529,10 @@ export function SavedAnalysisDetail({
         paddingBottom: '8px'
       }}>
         <div>
-          <h2 style={{ margin: '0 0 6px 0', fontSize: '1.6rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' }}>
+          <h2 style={{ margin: '0 0 6px 0', fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             {savedDetail.name}
           </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '0.85rem', color: '#64748b' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             {savedDetail.equipment_identifier && (
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <HardDrive size={14} /> {savedDetail.equipment_identifier}
@@ -579,8 +579,8 @@ export function SavedAnalysisDetail({
             type="button"
             className="dashboard__btn dashboard__btn--danger"
             style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              color: '#f87171',
+              background: 'var(--color-error-bg)',
+              color: 'var(--color-error)',
               border: '1px solid rgba(239, 68, 68, 0.2)'
             }}
             disabled={deletingId !== null}
@@ -624,21 +624,21 @@ export function SavedAnalysisDetail({
 
       {/* SVG Bar Chart for Incidents Distribution */}
       <div style={{
-        background: 'rgba(30, 41, 59, 0.25)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--veil-2)',
         padding: '24px',
-        borderRadius: '16px',
-        boxShadow: '0 4px 25px rgba(0, 0, 0, 0.1)'
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-sm)'
       }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9' }}>
-          {beforeIncidents 
-            ? 'Comparación de Ocurrencias por Código (Antes vs. Ahora)' 
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+          {beforeIncidents
+            ? 'Comparación de Ocurrencias por Código (Antes vs. Ahora)'
             : 'Distribución de Ocurrencias por Código'
           }
         </h3>
-        
+
         {listToRender.length === 0 ? (
-          <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>No hay incidentes para graficar.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>No hay incidentes para graficar.</p>
         ) : beforeIncidents ? (
           /* Dual-bar comparison mode */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -647,18 +647,18 @@ export function SavedAnalysisDetail({
               return listToRender.slice(0, 5).map((m, index) => {
                 const pctBefore = (m.beforeCount / maxVal) * 100
                 const pctAfter = (m.afterCount / maxVal) * 100
-                const color = m.severity.toUpperCase() === 'ERROR' ? '#f87171' : m.severity.toUpperCase() === 'WARNING' ? '#fbbf24' : '#38bdf8'
+                const color = m.severity.toUpperCase() === 'ERROR' ? 'var(--color-error)' : m.severity.toUpperCase() === 'WARNING' ? 'var(--color-warning)' : 'var(--color-info)'
                 const deltaSign = m.delta > 0 ? '+' : ''
-                const deltaColor = m.delta > 0 ? '#f87171' : m.delta < 0 ? '#34d399' : '#64748b'
-                
+                const deltaColor = m.delta > 0 ? 'var(--color-error)' : m.delta < 0 ? 'var(--color-success)' : 'var(--text-muted)'
+
                 return (
-                  <div key={m.code + String(index)} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <div key={m.code + String(index)} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'var(--veil-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--veil-2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#f8fafc', fontWeight: 700 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 700 }}>
                           {m.code}
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           {m.classification}
                         </span>
                       </div>
@@ -666,20 +666,20 @@ export function SavedAnalysisDetail({
                         {m.delta === 0 ? 'sin cambios' : `${deltaSign}${m.delta} ocur.`}
                       </div>
                     </div>
-                    
+
                     {/* Before bar */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ width: '50px', fontSize: '0.75rem', color: '#64748b' }}>Antes</span>
-                      <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <span style={{ width: '50px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Antes</span>
+                      <div style={{ flex: 1, height: '6px', background: 'var(--veil-1)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ width: `${pctBefore}%`, height: '100%', background: 'rgba(100, 116, 139, 0.4)', borderRadius: '3px' }} />
                       </div>
-                      <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: '#64748b' }}>{m.beforeCount}</span>
+                      <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.beforeCount}</span>
                     </div>
 
                     {/* After bar */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ width: '50px', fontSize: '0.75rem', color: color, fontWeight: 600 }}>Ahora</span>
-                      <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: '6px', background: 'var(--veil-1)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ width: `${pctAfter}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.6s ease-out' }} />
                       </div>
                       <span style={{ width: '30px', textAlign: 'right', fontSize: '0.75rem', color: color, fontWeight: 700 }}>{m.afterCount}</span>
@@ -689,7 +689,7 @@ export function SavedAnalysisDetail({
               })
             })()}
             {listToRender.length > 5 && (
-              <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: '#64748b', textAlign: 'right' }}>
+              <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'right' }}>
                 * Mostrando los 5 códigos con mayores variaciones.
               </p>
             )}
@@ -699,23 +699,23 @@ export function SavedAnalysisDetail({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {listToRender.slice(0, 5).map((m, index) => {
               const pct = totalOccurrences > 0 ? (m.afterCount / totalOccurrences) * 100 : 0
-              const color = m.severity.toUpperCase() === 'ERROR' ? '#f87171' : m.severity.toUpperCase() === 'WARNING' ? '#fbbf24' : '#38bdf8'
+              const color = m.severity.toUpperCase() === 'ERROR' ? 'var(--color-error)' : m.severity.toUpperCase() === 'WARNING' ? 'var(--color-warning)' : 'var(--color-info)'
               return (
                 <div key={m.code + String(index)} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ width: '80px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600 }}>
+                  <div style={{ width: '80px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600 }}>
                     {m.code}
                   </div>
-                  <div style={{ flex: 1, height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: '8px', background: 'var(--veil-2)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '4px', transition: 'width 0.6s ease-out' }} />
                   </div>
-                  <div style={{ width: '80px', textAlign: 'right', fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
+                  <div style={{ width: '80px', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                     {m.afterCount} ({Math.round(pct)}%)
                   </div>
                 </div>
               )
             })}
             {listToRender.length > 5 && (
-              <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: '#64748b', textAlign: 'right' }}>
+              <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'right' }}>
                 * Mostrando los 5 códigos con mayores ocurrencias.
               </p>
             )}
@@ -731,11 +731,10 @@ export function SavedAnalysisDetail({
         <div
           className="animate-in"
           style={{
-            background: 'rgba(30, 41, 59, 0.45)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37)',
-            borderRadius: '20px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--veil-3)',
+            boxShadow: 'var(--shadow-sm)',
+            borderRadius: 'var(--radius-md)',
             padding: '24px',
             display: 'flex',
             flexDirection: 'column',
@@ -744,14 +743,14 @@ export function SavedAnalysisDetail({
         >
           {/* Panel header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <GitCompare size={17} style={{ color: '#38bdf8' }} />
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <GitCompare size={17} style={{ color: 'var(--cd-orange)' }} />
               {selectedCompareId ? 'Comparación entre Snapshots' : 'Cambios en la Actualización'}
             </h3>
             <button
               type="button"
               onClick={() => { setUpdateDiff(null); setPreviousIncidents(null); setSelectedCompareId('') }}
-              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1, padding: '2px 6px' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1, padding: '2px 6px' }}
               aria-label="Cerrar"
             >
               ×
@@ -761,8 +760,8 @@ export function SavedAnalysisDetail({
           {updateDiff.newCodes.length === 0 &&
            updateDiff.resolvedCodes.length === 0 &&
            updateDiff.occurrenceChanges.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle size={28} style={{ color: '#34d399' }} />
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle size={28} style={{ color: 'var(--color-success)' }} />
               <p style={{ margin: 0, fontWeight: 600 }}>Sin cambios detectados</p>
               <p style={{ margin: 0, fontSize: '0.85rem' }}>Ambas lecturas son idénticas.</p>
             </div>
@@ -770,8 +769,8 @@ export function SavedAnalysisDetail({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {/* New codes */}
               {updateDiff.newCodes.length > 0 && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.18)', padding: '14px 16px', borderRadius: '14px' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#ef4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ background: 'var(--color-error-bg)', border: '1px solid rgba(239, 68, 68, 0.18)', padding: '14px 16px', borderRadius: 'var(--radius-md)' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--color-error)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <AlertTriangle size={14} /> Códigos Nuevos ({updateDiff.newCodes.length})
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -783,7 +782,7 @@ export function SavedAnalysisDetail({
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.8rem',
                           background: 'rgba(239, 68, 68, 0.18)',
-                          color: '#ef4444',
+                          color: 'var(--color-error)',
                           padding: '3px 10px',
                           borderRadius: '7px',
                           fontWeight: 700,
@@ -799,8 +798,8 @@ export function SavedAnalysisDetail({
 
               {/* Resolved codes */}
               {updateDiff.resolvedCodes.length > 0 && (
-                <div style={{ background: 'rgba(34, 197, 94, 0.06)', border: '1px solid rgba(34, 197, 94, 0.18)', padding: '14px 16px', borderRadius: '14px' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ background: 'var(--color-success-bg)', border: '1px solid rgba(34, 197, 94, 0.18)', padding: '14px 16px', borderRadius: 'var(--radius-md)' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--color-success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <CheckCircle size={14} /> Códigos Resueltos ({updateDiff.resolvedCodes.length})
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -811,7 +810,7 @@ export function SavedAnalysisDetail({
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.8rem',
                           background: 'rgba(34, 197, 94, 0.15)',
-                          color: '#22c55e',
+                          color: 'var(--color-success)',
                           padding: '3px 10px',
                           borderRadius: '7px',
                           fontWeight: 700,
@@ -828,7 +827,7 @@ export function SavedAnalysisDetail({
               {/* Occurrence changes */}
               {updateDiff.occurrenceChanges.length > 0 && (
                 <div>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#e2e8f0', fontWeight: 700 }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 700 }}>
                     Variación de Ocurrencias
                   </h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -842,22 +841,22 @@ export function SavedAnalysisDetail({
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             padding: '8px 14px',
-                            background: 'rgba(255,255,255,0.025)',
-                            borderRadius: '10px',
-                            border: `1px solid ${isIncrease ? 'rgba(239,68,68,0.1)' : 'rgba(52,211,153,0.1)'}`,
+                            background: 'var(--veil-1)',
+                            borderRadius: 'var(--radius-md)',
+                            border: `1px solid ${isIncrease ? 'var(--color-error-bg)' : 'var(--color-success-bg)'}`,
                           }}
                         >
-                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#f1f5f9', fontSize: '0.9rem' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>
                             {change.code}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-                            <span style={{ color: '#64748b' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>
                               {change.before} → {change.after}
                             </span>
                             <span style={{
                               fontWeight: 700,
-                              color: isIncrease ? '#f87171' : '#34d399',
-                              background: isIncrease ? 'rgba(239,68,68,0.12)' : 'rgba(52,211,153,0.12)',
+                              color: isIncrease ? 'var(--color-error)' : 'var(--color-success)',
+                              background: isIncrease ? 'var(--color-error-bg)' : 'var(--color-success-bg)',
                               padding: '2px 8px',
                               borderRadius: '5px',
                               fontSize: '0.78rem',

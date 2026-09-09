@@ -2,6 +2,7 @@ import { forwardRef, useState, useEffect } from 'react'
 import { aiDiagnose } from '../../services/api'
 import type { ParseLogsResponse, RealtimeConsumable, DeviceAlertsResponse, InsightMeter, CdsIncident } from '../../types/api'
 import { AIDiagnosticSkeleton } from './AIDiagnosticSkeleton'
+import { Spinner } from '../ui/Spinner'
 
 interface AIDiagnosticPanelProps {
   result: ParseLogsResponse | null
@@ -146,7 +147,7 @@ export const AIDiagnosticPanel = forwardRef<HTMLDivElement, AIDiagnosticPanelPro
 
           {loading && (
             <div className="ai-diagnostic-panel__loading-container">
-              <div className="ai-diagnostic-panel__loading-spinner" />
+              <Spinner size={22} />
               <span className="ai-diagnostic-panel__loading-text">
                 Generando diagnóstico técnico, por favor aguarde...
               </span>

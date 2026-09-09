@@ -6,22 +6,23 @@ interface SeverityFiltersProps {
 
 export function SeverityFilters({ activeSeverities, onToggle }: SeverityFiltersProps) {
   const SEVERITIES = [
-    { id: 'ERROR', color: '#ef4444', label: 'ERROR' },
-    { id: 'WARNING', color: '#f59e0b', label: 'WARNING' },
-    { id: 'INFO', color: '#3b82f6', label: 'INFO' },
+    { id: 'ERROR', color: 'var(--color-error)', label: 'ERROR', activeClass: 'active--error' },
+    { id: 'WARNING', color: 'var(--color-warning)', label: 'WARNING', activeClass: 'active--warning' },
+    { id: 'INFO', color: 'var(--color-info)', label: 'INFO', activeClass: 'active--info' },
   ] as const
 
   return (
     <div className="chart-filters">
-      {SEVERITIES.map(({ id, color, label }) => {
+      {SEVERITIES.map(({ id, color, label, activeClass }) => {
         const isActive = activeSeverities.has(id)
+        const className = isActive ? `chart-filters__btn active ${activeClass}` : 'chart-filters__btn'
         return (
           <button
             key={id}
             onClick={() => onToggle(id)}
-            className={`chart-filters__btn ${isActive ? 'active' : ''}`}
-            style={{ 
-              color: isActive ? '#fff' : color,
+            className={className}
+            style={{
+              color: isActive ? 'var(--text-on-accent)' : color,
               borderColor: isActive ? color : 'transparent'
             }}
           >

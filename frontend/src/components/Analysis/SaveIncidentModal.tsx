@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Portal } from '../ui/Portal'
+import { Spinner } from '../ui/Spinner'
 
 export interface SaveIncidentModalProps {
   onSave: (name: string, equipmentIdentifier: string | null) => void | Promise<void>
@@ -122,7 +123,7 @@ export function SaveIncidentModal({
               >
                 {saving ? (
                   <>
-                    <span className="spinner-small" /> Guardando…
+                    <Spinner size={14} /> Guardando…
                   </>
                 ) : (
                   'Confirmar y Guardar'
