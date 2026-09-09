@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { CdsIncident } from '../../types/api'
+import { LoadingState } from '../ui/Spinner'
 
 function calcCheckDigit(numStr: string): string {
   const clean = numStr.replace(/\D/g, '')
@@ -21,9 +22,10 @@ interface CdsIncidentsPanelProps {
   data: CdsIncident[]
   loading: boolean
   error: string | null
+  onRetry?: () => void
 }
 
-export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidentsPanelProps) {
+export function CdsIncidentsPanel({ serial, data, loading, error, onRetry }: CdsIncidentsPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
 
   if (!serial) return null
@@ -55,14 +57,18 @@ export function CdsIncidentsPanel({ serial, data, loading, error }: CdsIncidents
 
       {!collapsed && (
         <div className="collapsible-panel__body">
-          {loading && (
-            <div className="cds-incidents-panel__loading">
-              <span className="cds-incidents-panel__spinner" aria-hidden="true" />
-              Consultando incidentes en Canal Directo…
-            </div>
-          )}
+          {loading && <LoadingState text="Consultando incidentes en Canal Directo…" />}
 
-          {error && <p className="cds-incidents-panel__error">{error}</p>}
+          {error && (
+            <p className="cds-incidents-panel__error">
+              {error}
+              {onRetry && (
+                <button type="button" className="dashboard__btn dashboard__btn--secondary dashboard__btn--small" onClick={onRetry} style={{ marginLeft: '10px' }}>
+                  Reintentar
+                </button>
+              )}
+            </p>
+          )}
 
           {!loading && !error && (
             <>

@@ -12,10 +12,13 @@ import { ConfirmModal } from '../ui/ConfirmModal'
 import { SolutionContentModal } from '../Parser/SolutionContentModal'
 import { HelpModal } from '../ui/HelpModal'
 import { MonitorWizard } from '../Monitor/MonitorWizard'
+import { Portal } from '../ui/Portal'
+import { Spinner } from '../ui/Spinner'
 
 interface DashboardModalsProps {
   serverWasCold: boolean
   autoExtracting: boolean
+  onCancelAutoExtract: () => void
   currentSerialNumber: string | null
   currentModelId: string | null
   currentModelName: string | null
@@ -39,6 +42,7 @@ interface DashboardModalsProps {
 export function DashboardModals({
   serverWasCold,
   autoExtracting,
+  onCancelAutoExtract,
   currentSerialNumber,
   currentModelId,
   currentModelName,
@@ -199,49 +203,47 @@ export function DashboardModals({
       )}
 
       {autoExtracting && (
-        <div className="log-modal-overlay" style={{ zIndex: 3000 }}>
-          <div className="log-modal" style={{ textAlign: 'center', padding: '40px' }}>
-            <div className="log-modal__spinner" style={{ margin: '0 auto 20px', width: '40px', height: '40px' }} />
-            <h2 className="log-modal__title">Extrayendo logs automáticamente…</h2>
-            <p style={{ marginTop: '10px', color: 'var(--text-secondary)' }}>
-              Estamos conectando con el portal SDS para el equipo <strong>{currentSerialNumber}</strong>.
-              Esto puede tardar hasta 30 segundos.
-            </p>
+        <Portal>
+          <div className="log-modal-overlay">
+            <div className="log-modal" style={{ textAlign: 'center', padding: '40px' }}>
+              <Spinner size={40} className="dashboard-modals__extract-spinner" />
+              <h2 className="log-modal__title">Extrayendo logs automáticamente…</h2>
+              <p style={{ marginTop: '10px', color: 'var(--text-secondary)' }}>
+                Estamos conectando con el portal SDS para el equipo <strong>{currentSerialNumber}</strong>.
+                Esto puede tardar hasta 30 segundos.
+              </p>
+              <button
+                type="button"
+                className="dashboard__btn dashboard__btn--secondary"
+                style={{ marginTop: '24px' }}
+                onClick={onCancelAutoExtract}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* ===== Modal de Exportación PDF (auto-contenido) ===== */}
       {(exportingPdf || isAiPdfReady || isGeneratingAiPdf) && (
-        <>
-          <style>{`
-            @keyframes pdf-spin { to { transform: rotate(360deg); } }
-            .pdf-export-spinner {
-              width: 52px;
-              height: 52px;
-              border: 5px solid rgba(255,255,255,0.12);
-              border-top-color: #38bdf8;
-              border-radius: 50%;
-              animation: pdf-spin 0.9s linear infinite;
-              margin-bottom: 28px;
-            }
-          `}</style>
+        <Portal>
           <div style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(8, 12, 22, 0.85)',
+            background: 'var(--overlay-backdrop)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            zIndex: 100000,
+            zIndex: 11000, // = --z-toast (arriba de cualquier modal; ver escala en base.css)
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
             <div style={{
-              background: '#111827',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--veil-3)',
               borderRadius: '20px',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              boxShadow: 'var(--shadow-premium)',
               width: '380px',
               padding: '52px 40px',
               display: 'flex',
@@ -252,12 +254,12 @@ export function DashboardModals({
             }}>
               {!isAiPdfReady ? (
                 <>
-                  <div className="pdf-export-spinner" />
+                  <Spinner size={52} className="dashboard-modals__pdf-spinner" />
                   <p style={{
                     margin: '0 0 8px 0',
                     fontSize: '1.35rem',
                     fontWeight: 700,
-                    color: '#f1f5f9',
+                    color: 'var(--text-main)',
                     letterSpacing: '-0.02em'
                   }}>
                     Generando reporte
@@ -265,7 +267,7 @@ export function DashboardModals({
                   <p style={{
                     margin: 0,
                     fontSize: '13px',
-                    color: '#64748b',
+                    color: 'var(--text-muted)',
                     lineHeight: 1.5
                   }}>
                     Redactando resumen ejecutivo con IA...
@@ -278,7 +280,7 @@ export function DashboardModals({
                     margin: '0 0 10px 0',
                     fontSize: '1.35rem',
                     fontWeight: 700,
-                    color: '#f1f5f9',
+                    color: 'var(--text-main)',
                     letterSpacing: '-0.02em'
                   }}>
                     ¡Reporte Listo!
@@ -286,7 +288,7 @@ export function DashboardModals({
                   <p style={{
                     margin: '0 0 32px 0',
                     fontSize: '13px',
-                    color: '#64748b',
+                    color: 'var(--text-muted)',
                     lineHeight: 1.5
                   }}>
                     La IA ha finalizado el resumen ejecutivo.
@@ -309,7 +311,7 @@ export function DashboardModals({
               )}
             </div>
           </div>
-        </>
+        </Portal>
       )}
     </>
   )

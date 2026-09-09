@@ -15,6 +15,13 @@ interface WelcomeViewProps {
   loadingQuickSearch?: boolean
 }
 
+function handleActivateKey(e: React.KeyboardEvent, action: () => void) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    action()
+  }
+}
+
 export function WelcomeView({
   onAnalyzeNew,
   onViewSaved,
@@ -208,8 +215,8 @@ export function WelcomeView({
             </button>
           </div>
           <p className="welcome-searchbox__tip">
-            {searchMode === 'serial' 
-              ? 'Pega un número de serie para un diagnóstico instantáneo vía HP Insight API.'
+            {searchMode === 'serial'
+              ? 'Pegá un número de serie para un diagnóstico instantáneo vía HP Insight API.'
               : 'Seleccioná un cliente de la flota para listar sus equipos activos y diagnosticar uno de ellos.'
             }
           </p>
@@ -220,7 +227,13 @@ export function WelcomeView({
       <div className="welcome-grid">
         
         {/* NEW: Fleet Monitor Card */}
-        <div className="welcome-grid__item welcome-grid__item--monitor" onClick={onOpenMonitor}>
+        <div
+          className="welcome-grid__item welcome-grid__item--monitor"
+          onClick={onOpenMonitor}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => handleActivateKey(e, onOpenMonitor)}
+        >
           <div className="welcome-grid__content">
             <h3 className="welcome-grid__title">Monitoreo de Flota</h3>
             <p className="welcome-grid__desc">Control centralizado de logs para clientes críticos y familias de modelos.</p>
@@ -231,7 +244,13 @@ export function WelcomeView({
         </div>
 
         {/* NEW: Maintenance Alerts Card */}
-        <div className="welcome-grid__item welcome-grid__item--alerts" onClick={onOpenAvisos}>
+        <div
+          className="welcome-grid__item welcome-grid__item--alerts"
+          onClick={onOpenAvisos}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => handleActivateKey(e, onOpenAvisos)}
+        >
           <div className="welcome-grid__content">
             <h3 className="welcome-grid__title">Avisos de Mantenimiento</h3>
             <p className="welcome-grid__desc">Alertas automáticas por contador para equipos sin medición por chip.</p>
@@ -327,10 +346,16 @@ export function WelcomeView({
         </div>
 
         {/* CARD 2: Recent Search History - Slot 5 (Now containing Manual Analysis) */}
-        <div className="welcome-grid__item welcome-grid__item--history" onClick={onAnalyzeNew}>
+        <div
+          className="welcome-grid__item welcome-grid__item--history"
+          onClick={onAnalyzeNew}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => handleActivateKey(e, onAnalyzeNew)}
+        >
           <div className="welcome-grid__content">
             <h3 className="welcome-grid__title">Análisis Manual</h3>
-            <p className="welcome-grid__desc">Sube o pega logs históricos para un diagnóstico profundo fuera de línea.</p>
+            <p className="welcome-grid__desc">Subí o pegá logs históricos para un diagnóstico profundo fuera de línea.</p>
           </div>
           <div className="welcome-grid__footer">
             Comenzar ahora →

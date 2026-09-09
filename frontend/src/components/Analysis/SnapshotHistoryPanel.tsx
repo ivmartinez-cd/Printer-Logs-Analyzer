@@ -11,6 +11,7 @@ import { GitCompare, TrendingUp, Loader2 } from 'lucide-react'
 import { listSavedAnalyses } from '../../services/api'
 import type { SavedAnalysisSummary } from '../../types/api'
 import { formatDateTime } from '../../hooks/useDateFilter'
+import { useToast } from '../../contexts/ToastContext'
 
 interface Props {
   currentId: string
@@ -56,6 +57,7 @@ export function SnapshotHistoryPanel({
   onClearCompare,
 }: Props) {
   const [siblings, setSiblings] = useState<SavedAnalysisSummary[]>([])
+  const toast = useToast()
 
   useEffect(() => {
     const ctrl = new AbortController()
@@ -66,9 +68,12 @@ export function SnapshotHistoryPanel({
           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         setSiblings(same)
       })
-      .catch(() => {})
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        toast.showError('No se pudo cargar el historial de análisis de este equipo')
+      })
     return () => ctrl.abort()
-  }, [currentId, equipmentIdentifier])
+  }, [currentId, equipmentIdentifier, toast])
 
   const currentScore = severityToScore(currentGlobalSeverity)
 
@@ -214,8 +219,8 @@ export function SnapshotHistoryPanel({
           </ResponsiveContainer>
         </div>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569' }}>
-          Guarda más lecturas para ver el historial de salud del equipo.
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          Guardá más lecturas para ver el historial de salud del equipo.
         </p>
       )}
 

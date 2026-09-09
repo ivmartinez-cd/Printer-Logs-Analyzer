@@ -31,7 +31,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
             height: '100vh',
             gap: '16px',
             fontFamily: 'var(--font-sans)',
-            color: '#374151',
+            color: 'var(--text-main)',
           }}
         >
           <p style={{ fontSize: '1.125rem', margin: 0 }}>
@@ -42,8 +42,8 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
             style={{
               padding: '10px 20px',
               fontSize: '0.875rem',
-              background: '#2563eb',
-              color: '#fff',
+              background: 'var(--accent-primary)',
+              color: 'var(--text-on-accent)',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',

@@ -2,7 +2,7 @@
 .collapsible-panel {
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-left: 4px solid #2d3a52;
+  border-left: 4px solid var(--border-strong);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
@@ -11,7 +11,7 @@
 
 .collapsible-panel:hover {
   box-shadow: var(--shadow-lg);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--veil-5);
 }
 
 .collapsible-panel--ai {
@@ -39,7 +39,7 @@
 }
 
 .collapsible-panel--cds {
-  border-left-color: #3b82f6;
+  border-left-color: var(--cd-celeste);
 }
 
 .collapsible-panel--incidents {
@@ -51,7 +51,7 @@
 }
 
 .collapsible-panel--events {
-  border-left-color: #4c8bf5;
+  border-left-color: var(--cd-celeste);
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────── */
@@ -72,7 +72,7 @@
 }
 
 .collapsible-panel__header:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--veil-1);
 }
 
 .collapsible-panel__icon {

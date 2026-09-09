@@ -36,13 +36,13 @@ export function HelpModal({ onClose }: HelpModalProps) {
                 <p>El sistema soporta tres métodos principales para procesar la información:</p>
                 <div className="help-modal__flow-list">
                   <div className="flow-item">
-                    <strong>Opción 1 — Deep Link:</strong> Ingresa directamente vía URL con el serial. La app resuelve el modelo y extrae logs de HP SDS automáticamente.
+                    <strong>Opción 1 — Deep Link:</strong> Ingresá directamente vía URL con el serial. La app resuelve el modelo y extrae logs de HP SDS automáticamente.
                   </div>
                   <div className="flow-item">
-                    <strong>Opción 2 — Extracción Automática:</strong> Ingresa el serial en el modal inicial para un flujo completo de Login → Extracción → Análisis.
+                    <strong>Opción 2 — Extracción Automática:</strong> Ingresá el serial en el modal inicial para un flujo completo de Login → Extracción → Análisis.
                   </div>
                   <div className="flow-item">
-                    <strong>Opción 3 — Log Manual:</strong> Pega el contenido crudo. El sistema detecta la identidad del equipo automáticamente.
+                    <strong>Opción 3 — Log Manual:</strong> Pegá el contenido crudo. El sistema detecta la identidad del equipo automáticamente.
                   </div>
                 </div>
                 <div className="hiw-callout">
@@ -114,7 +114,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
           </div>
 
-          <div className="log-modal__actions" style={{ padding: '24px 40px' }}>
+          <div className="log-modal__actions log-modal__actions--wide">
             <button
               type="button"
               className="dashboard__btn dashboard__btn--primary vibrant"

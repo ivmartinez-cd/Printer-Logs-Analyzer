@@ -87,13 +87,16 @@ export function RuleModal({
 }: RuleModalProps) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>{editingRule.id ? 'Editar Regla Maestra' : 'Nueva Regla Maestra'}</h3>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">
+          {editingRule.id ? 'Editar Regla Maestra' : 'Nueva Regla Maestra'}
+        </h3>
         <form onSubmit={onSave} className="maintenance-form">
           <div className="form-group">
-            <label>Familia de Modelo (ej: 50145)</label>
+            <label htmlFor="rule-model-family">Familia de Modelo (ej: 50145)</label>
             <input
+              id="rule-model-family"
               type="text"
               className="form-input"
               placeholder="Ej: 50145"
@@ -105,8 +108,9 @@ export function RuleModal({
             />
           </div>
           <div className="form-group">
-            <label>Componente</label>
+            <label htmlFor="rule-component-type">Componente</label>
             <input
+              id="rule-component-type"
               type="text"
               className="form-input"
               placeholder="Ej: Fuser Kit, Roller..."
@@ -118,8 +122,9 @@ export function RuleModal({
             />
           </div>
           <div className="form-group">
-            <label>Vida Útil Esperada (págs)</label>
+            <label htmlFor="rule-expected-life">Vida Útil Esperada (págs)</label>
             <input
+              id="rule-expected-life"
               type="number"
               className="form-input"
               value={editingRule.expected_life}
@@ -130,8 +135,9 @@ export function RuleModal({
             />
           </div>
           <div className="form-group">
-            <label>Margen de Alerta (págs antes)</label>
+            <label htmlFor="rule-alert-margin">Margen de Alerta (págs antes)</label>
             <input
+              id="rule-alert-margin"
               type="number"
               className="form-input"
               value={editingRule.alert_margin}
@@ -142,8 +148,9 @@ export function RuleModal({
             />
           </div>
           <div className="form-group">
-            <label>Emails (separados por coma)</label>
+            <label htmlFor="rule-email-recipients">Emails (separados por coma)</label>
             <input
+              id="rule-email-recipients"
               type="text"
               className="form-input"
               placeholder="ejemplo@correo.com"
@@ -178,18 +185,19 @@ export function RecordChangeModal({
 }: RecordChangeModalProps) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>Registrar Cambio de Componente</h3>
-        <p>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">Registrar Cambio de Componente</h3>
+        <p className="modal-body-text">
           Se registrará el cambio de <strong>{recordingData.component_type}</strong> para el
           equipo {recordingData.serial} con el contador actual de{' '}
           <strong>{currentCounter.toLocaleString()}</strong> págs.
         </p>
         <form onSubmit={onSave} className="maintenance-form">
           <div className="form-group">
-            <label>Nº de Incidente (Opcional)</label>
+            <label htmlFor="record-incident-number">Nº de Incidente (Opcional)</label>
             <input
+              id="record-incident-number"
               type="text"
               className="form-input"
               placeholder="Ej: INC-12345"
@@ -200,8 +208,9 @@ export function RecordChangeModal({
             />
           </div>
           <div className="form-group">
-            <label>Notas del Técnico</label>
+            <label htmlFor="record-notes">Notas del Técnico</label>
             <textarea
+              id="record-notes"
               className="form-input"
               rows={3}
               placeholder="Detalles del cambio..."
@@ -234,20 +243,21 @@ export function StateModal({
 }: StateModalProps) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>⚙️ Ajustar Último Cambio</h3>
-        <p>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">⚙️ Ajustar Último Cambio</h3>
+        <p className="modal-body-text">
           Ajusta manualmente el contador en el que se realizó el último cambio para este equipo.
         </p>
         <form onSubmit={onSave} className="maintenance-form">
           <div className="form-group">
-            <label>Componente</label>
-            <input className="form-input" value={stateEditingData.component_type} disabled />
+            <label htmlFor="state-component-type">Componente</label>
+            <input id="state-component-type" className="form-input" value={stateEditingData.component_type} disabled />
           </div>
           <div className="form-group">
-            <label>Contador del Último Cambio (Páginas)</label>
+            <label htmlFor="state-last-change-counter">Contador del Último Cambio (Páginas)</label>
             <input
+              id="state-last-change-counter"
               className="form-input"
               type="number"
               value={stateEditingData.last_change_counter}
@@ -281,8 +291,8 @@ export function StateModal({
 export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay" onClick={onClose}>
-      <div className="maintenance-modal maintenance-modal--wide" onClick={(e) => e.stopPropagation()}>
+    <div className="log-modal-overlay" onClick={onClose}>
+      <div className="log-modal maintenance-modal--wide" onClick={(e) => e.stopPropagation()}>
         <div className="hiw-header">
           <div className="dashboard__subheader-title-group">
             <h3 className="log-modal__title">¿Cómo funciona el módulo de Avisos?</h3>
@@ -429,7 +439,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
           </div>
         </div>
 
-        <div className="log-modal__actions" style={{ padding: '24px 40px' }}>
+        <div className="log-modal__actions log-modal__actions--wide">
           <button className="dashboard__btn dashboard__btn--primary vibrant" onClick={onClose} style={{ width: '100%' }}>
             Entendido
           </button>
@@ -449,20 +459,21 @@ export function OpenIncidentModal({
 }: OpenIncidentModalProps) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>🎫 Abrir Incidente de Mantenimiento</h3>
-        <p>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">🎫 Abrir Incidente de Mantenimiento</h3>
+        <p className="modal-body-text">
           Al cargar el incidente, las alertas por email quedarán suspendidas hasta que sea cerrado.
         </p>
         <form onSubmit={onSave} className="maintenance-form">
           <div className="form-group">
-            <label>Componente</label>
-            <input className="form-input" value={data.component_type} disabled />
+            <label htmlFor="open-incident-component">Componente</label>
+            <input id="open-incident-component" className="form-input" value={data.component_type} disabled />
           </div>
           <div className="form-group">
-            <label>Nº de Incidente *</label>
+            <label htmlFor="open-incident-number">Nº de Incidente *</label>
             <input
+              id="open-incident-number"
               type="text"
               className="form-input"
               placeholder="Ej: INC-20240422-001"
@@ -473,8 +484,9 @@ export function OpenIncidentModal({
             />
           </div>
           <div className="form-group">
-            <label>Notas (Opcional)</label>
+            <label htmlFor="open-incident-notes">Notas (Opcional)</label>
             <textarea
+              id="open-incident-notes"
               className="form-input"
               rows={2}
               placeholder="Ej: Fusor pedido, llegada estimada 25/04..."
@@ -506,22 +518,23 @@ export function CloseIncidentModal({
 }: CloseIncidentModalProps) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>✅ Cerrar Incidente y Registrar Reemplazo</h3>
-        <p>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">✅ Cerrar Incidente y Registrar Reemplazo</h3>
+        <p className="modal-body-text">
           Se registrará el reemplazo de <strong>{data.component_type}</strong> y el contador
           se reiniciará desde el valor actual. El incidente <strong>{data.incident_number}</strong>{' '}
           quedará cerrado.
         </p>
         <form onSubmit={onSave} className="maintenance-form">
           <div className="form-group">
-            <label>Nº de Incidente</label>
-            <input className="form-input" value={data.incident_number} disabled />
+            <label htmlFor="close-incident-number">Nº de Incidente</label>
+            <input id="close-incident-number" className="form-input" value={data.incident_number} disabled />
           </div>
           <div className="form-group">
-            <label>Notas del Técnico (Opcional)</label>
+            <label htmlFor="close-incident-notes">Notas del Técnico (Opcional)</label>
             <textarea
+              id="close-incident-notes"
               className="form-input"
               rows={3}
               placeholder="Ej: Reemplazado fusor original por kit HP CF281A..."
@@ -554,16 +567,17 @@ export function NewFamilyModal({ onSave, onClose }: NewFamilyModalProps) {
 
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>📂 Nueva Familia de Equipos</h3>
-        <p>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">📂 Nueva Familia de Equipos</h3>
+        <p className="modal-body-text">
           Crea un nuevo grupo de configuración maestra para un modelo de impresora.
         </p>
         <form onSubmit={handleSubmit} className="maintenance-form">
           <div className="form-group">
-            <label>Nombre de la Familia</label>
+            <label htmlFor="new-family-name">Nombre de la Familia</label>
             <input
+              id="new-family-name"
               className="form-input"
               placeholder="Ej: 52645, MFP E876, etc."
               value={name}
@@ -609,16 +623,17 @@ export function RenameFamilyModal({
 
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3>✏️ Renombrar Familia</h3>
-        <p>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading">✏️ Renombrar Familia</h3>
+        <p className="modal-body-text">
           Cambia el nombre de la familia maestra. Se actualizarán todos los equipos y reglas asociados.
         </p>
         <form onSubmit={handleSubmit} className="maintenance-form">
           <div className="form-group">
-            <label>Nuevo Nombre</label>
+            <label htmlFor="rename-family-name">Nuevo Nombre</label>
             <input
+              id="rename-family-name"
               className="form-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -652,11 +667,11 @@ export function DeleteFamilyModal({
 }) {
   return (
     <Portal>
-    <div className="maintenance-modal-overlay">
-      <div className="maintenance-modal">
-        <h3 style={{ color: '#ef4444' }}>⚠️ Eliminar Familia</h3>
-        <p className="danger-text">
-          ¿Estás seguro de que deseas eliminar la familia <strong>"{familyName}"</strong>?<br/><br/>
+    <div className="log-modal-overlay">
+      <div className="log-modal">
+        <h3 className="modal-heading" style={{ color: 'var(--color-error)' }}>⚠️ Eliminar Familia</h3>
+        <p className="modal-body-text danger-text">
+          ¿Estás seguro de que querés eliminar la familia <strong>"{familyName}"</strong>?<br/><br/>
           Esta acción es <strong>irreversible</strong> y eliminará:<br/>
           • Todas las reglas maestras configuradas.<br/>
           • Todos los equipos asociados a este modelo.<br/>

@@ -3,6 +3,7 @@ import { AlertOctagon, AlertTriangle, CheckCircle2, Monitor, Plus, ChevronDown, 
 import { formatDateTime } from '../../hooks/useDateFilter'
 import type { SavedAnalysisSummary } from '../../types/api'
 import { EquipmentTimeline } from './EquipmentTimeline'
+import { LoadingState } from '../ui/Spinner'
 import { relativeTime } from '../Monitor/healthMetrics'
 import { useUIStore } from '../../store/useUIStore'
 
@@ -203,7 +204,7 @@ export function SavedAnalysisList({
       </div>
 
       {savedList === null ? (
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Cargando…</p>
+        <LoadingState />
       ) : savedList.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay incidentes guardados.</p>
       ) : (

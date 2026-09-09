@@ -5,7 +5,7 @@
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .error-timeline__header {
@@ -20,7 +20,7 @@
 .error-timeline__title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-main);
   margin: 0 0 4px 0;
 }
 
@@ -43,7 +43,7 @@
   font-weight: 600;
   border-radius: 7px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--veil-2);
   color: var(--text-dim);
   cursor: pointer;
   transition: all 0.2s;
@@ -51,14 +51,14 @@
 }
 
 .error-timeline__day-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  background: var(--veil-3);
 }
 
 .error-timeline__day-btn--active {
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--color-info-bg);
   border-color: rgba(59, 130, 246, 0.4);
-  color: #93c5fd;
+  color: var(--color-info);
 }
 
 .error-timeline__day-arrow {
@@ -68,8 +68,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--veil-3);
+  background: var(--veil-1);
   color: var(--text-dim);
   cursor: pointer;
   transition: all 0.2s;
@@ -78,8 +78,8 @@
 }
 
 .error-timeline__day-arrow:hover:not(:disabled) {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  background: var(--veil-3);
 }
 
 .error-timeline__day-arrow:disabled {
@@ -106,8 +106,8 @@
   gap: 16px;
   margin-bottom: 20px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--veil-1);
+  border: 1px solid var(--veil-2);
   border-radius: 10px;
   flex-wrap: wrap;
 }
@@ -139,7 +139,7 @@
   max-height: 480px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: var(--veil-4) transparent;
 }
 
 .error-timeline__list::before {
@@ -151,8 +151,8 @@
   width: 2px;
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.03)
+    var(--veil-3),
+    var(--veil-1)
   );
   border-radius: 1px;
 }
@@ -181,7 +181,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--veil-5);
   border: 2px solid var(--bg-card);
 }
 
@@ -199,7 +199,7 @@
 }
 
 .error-timeline__event:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--veil-1);
 }
 
 .error-timeline__event::before {
@@ -214,17 +214,17 @@
 }
 
 .error-timeline__event--error::before {
-  background: #ef4444;
+  background: var(--color-error);
   box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
 }
 
 .error-timeline__event--warning::before {
-  background: #f59e0b;
+  background: var(--color-warning);
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
 }
 
 .error-timeline__event--info::before {
-  background: #3b82f6;
+  background: var(--color-info);
   box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
 }
 
@@ -255,24 +255,24 @@
 }
 
 .error-timeline__event-code--error {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }
 
 .error-timeline__event-code--warning {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fcd34d;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .error-timeline__event-code--info {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
 .error-timeline__event-desc {
   flex: 1;
   font-size: 0.8rem;
-  color: #c9d1e0;
+  color: var(--text-main);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -301,7 +301,7 @@
   padding: 12px;
   font-size: 0.75rem;
   color: var(--text-dim);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--veil-2);
   margin-top: 8px;
 }
 

@@ -105,13 +105,17 @@ export function DateRangePicker({ activeFilter, minDate, maxDate, onChange }: Da
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [coords, setCoords] = useState({ top: 0, right: 0 })
 
-  // Calculate position for the portal
+  // Calculate position for the portal — clampeado para que el popover
+  // (calendario + presets, ancho variable por `min-width: max-content`) no
+  // se corte contra el borde izquierdo en viewports angostos.
   const updateCoords = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
+      const popoverWidth = popoverRef.current?.offsetWidth || 360
+      const maxRight = window.innerWidth - popoverWidth - 8
       setCoords({
         top: rect.bottom + 6,
-        right: window.innerWidth - rect.right
+        right: Math.max(8, Math.min(window.innerWidth - rect.right, maxRight))
       })
     }
   }

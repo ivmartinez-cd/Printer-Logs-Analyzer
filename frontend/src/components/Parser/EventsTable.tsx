@@ -71,7 +71,7 @@ export function EventsTable({ events, onViewSolution }: EventsTableProps) {
       >
         <span className="collapsible-panel__title">📅 Eventos del período</span>
         {isCollapsed && events.length > 0 && (
-          <span style={{ fontSize: '0.8rem', color: '#9aa3b2', fontWeight: 400, marginLeft: 4 }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 4 }}>
             {events.length} evento{events.length !== 1 ? 's' : ''}
           </span>
         )}

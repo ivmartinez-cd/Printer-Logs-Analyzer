@@ -33,7 +33,7 @@ const CustomCursor = (props: CustomCursorProps) => {
       y={y + height / 2 - 1}
       width={width}
       height={2}
-      fill="rgba(255, 255, 255, 0.15)"
+      fill="var(--veil-5)"
     />
   )
 }
@@ -72,12 +72,12 @@ export function TopErrorsChart({
               margin={{ top: 8, right: 32, left: 10, bottom: 8 }}
               barSize={32}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#232734" />
-              <XAxis type="number" stroke="#9aa3b2" tick={{ fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <XAxis type="number" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
               <YAxis
                 type="category"
                 dataKey="name"
-                stroke="#9aa3b2"
+                stroke="var(--text-secondary)"
                 width={100}
                 axisLine={false}
                 tickLine={false}
@@ -92,7 +92,7 @@ export function TopErrorsChart({
                         y={0}
                         dy={4}
                         textAnchor="end"
-                        fill={canView ? '#3b82f6' : '#9aa3b2'}
+                        fill={canView ? 'var(--cd-celeste)' : 'var(--text-secondary)'}
                         fontSize={12}
                         fontWeight={canView ? 700 : 400}
                         style={{ cursor: canView ? 'pointer' : 'default' }}
@@ -112,28 +112,28 @@ export function TopErrorsChart({
               />
               <Tooltip
                 contentStyle={{
-                  background: '#151821',
-                  border: '1px solid #232734',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: 8,
                 }}
-                labelStyle={{ color: '#e5e7eb', fontWeight: 700 }}
-                itemStyle={{ color: '#e5e7eb' }}
+                labelStyle={{ color: 'var(--text-main)', fontWeight: 700 }}
+                itemStyle={{ color: 'var(--text-main)' }}
                 cursor={<CustomCursor />}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div style={{ 
-                        background: '#151821', 
-                        border: '1px solid #232734', 
-                        padding: '10px', 
+                      <div style={{
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border-color)',
+                        padding: '10px',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                        boxShadow: 'var(--shadow-sm)'
                       }}>
-                        <div style={{ color: '#e5e7eb', fontWeight: 700, marginBottom: '4px' }}>{data.name}</div>
-                        <div style={{ color: '#9aa3b2', fontSize: '12px' }}>Ocurrencias: <span style={{ color: '#fff' }}>{data.count}</span></div>
+                        <div style={{ color: 'var(--text-main)', fontWeight: 700, marginBottom: '4px' }}>{data.name}</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Ocurrencias: <span style={{ color: 'var(--text-main)' }}>{data.count}</span></div>
                         {(data.sds_link || data.sds_solution_content) && (
-                          <div style={{ color: '#3b82f6', fontSize: '10px', marginTop: '8px', fontWeight: 700 }}>
+                          <div style={{ color: 'var(--cd-celeste)', fontSize: '10px', marginTop: '8px', fontWeight: 700 }}>
                             Haga clic en el código para ver solución
                           </div>
                         )}
@@ -147,10 +147,10 @@ export function TopErrorsChart({
                 {filteredCodes.map((entry, index) => {
                   const color =
                     entry.severity?.toUpperCase() === 'ERROR'
-                      ? '#ef4444'
+                      ? 'var(--color-error)'
                       : entry.severity?.toUpperCase() === 'WARNING'
-                        ? '#f59e0b'
-                        : '#3b82f6'
+                        ? 'var(--color-warning)'
+                        : 'var(--color-info)'
                   return <Cell key={`cell-${index}`} fill={color} />
                 })}
               </Bar>

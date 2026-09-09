@@ -9,11 +9,11 @@
 }
 
 .consumable-warnings-panel__table tr[data-status='replace'] {
-  background: rgba(220, 38, 38, 0.06);
+  background: var(--color-error-bg);
 }
 
 .consumable-warnings-panel__table tr[data-status='warning'] {
-  background: rgba(217, 119, 6, 0.06);
+  background: var(--color-warning-bg);
 }
 
 .consumable-warnings-panel__cat-icon {
@@ -23,12 +23,12 @@
 .consumable-warnings-panel__part {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  color: #a5b4c8;
+  color: var(--text-secondary);
 }
 
 .consumable-warnings-panel__num {
   white-space: nowrap;
-  color: #c9d1de;
+  color: var(--text-main);
 }
 
 /* Progress bar */
@@ -38,7 +38,7 @@
 
 .consumable-warnings-panel__bar-wrap {
   position: relative;
-  background: #1e2a3a;
+  background: var(--bg-input);
   border-radius: 4px;
   height: 16px;
   overflow: hidden;
@@ -56,15 +56,15 @@
 }
 
 .consumable-warnings-panel__bar--ok {
-  background: #16a34a;
+  background: var(--color-success);
 }
 
 .consumable-warnings-panel__bar--warning {
-  background: #d97706;
+  background: var(--color-warning);
 }
 
 .consumable-warnings-panel__bar--replace {
-  background: #dc2626;
+  background: var(--color-error);
 }
 
 .consumable-warnings-panel__bar-label {
@@ -72,7 +72,7 @@
   z-index: 1;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #e6e8ee;
+  color: var(--text-on-accent);
   padding: 0 6px;
   white-space: nowrap;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -89,29 +89,29 @@
 }
 
 .consumable-warnings-panel__badge--ok {
-  background: rgba(22, 163, 74, 0.2);
-  color: #4ade80;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .consumable-warnings-panel__badge--warning {
-  background: rgba(217, 119, 6, 0.2);
-  color: #fbbf24;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .consumable-warnings-panel__badge--replace {
-  background: rgba(220, 38, 38, 0.2);
-  color: #f87171;
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }
 
 .consumable-warnings-panel__codes {
   font-size: 0.75rem;
-  color: #9aa3b2;
+  color: var(--text-secondary);
   font-family: var(--font-mono);
 }
 
 .consumable-warnings-panel__intro {
   font-size: 0.8125rem;
-  color: #8a94a6;
+  color: var(--text-muted);
   margin: 8px 16px 12px;
   line-height: 1.5;
 }

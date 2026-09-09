@@ -1,7 +1,7 @@
 /* CDS Incidents Panel */
 
 .cds-incidents-panel__link {
-  color: #3b82f6;
+  color: var(--cd-celeste);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.15s;
@@ -20,8 +20,8 @@
 
 .cds-incidents-panel__replacement-badge {
   display: inline-block;
-  background: rgba(59, 130, 246, 0.1);
-  color: #93c5fd;
+  background: var(--color-info-bg);
+  color: var(--cd-celeste);
   border: 1px solid rgba(59, 130, 246, 0.2);
   padding: 2px 8px;
   border-radius: 6px;
@@ -44,29 +44,11 @@
   margin: 4px 0 0;
 }
 
-.cds-incidents-panel__loading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 0;
-  font-size: 0.8125rem;
-  color: #a5b4c8;
-}
-
-.cds-incidents-panel__spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
+/* .cds-incidents-panel__loading / __spinner: reemplazados por <LoadingState> (components/ui/Spinner.tsx) */
 
 .cds-incidents-panel__error {
   font-size: 0.8125rem;
-  color: #fca5a5;
+  color: var(--color-error);
   margin: 8px 0 0;
 }
 

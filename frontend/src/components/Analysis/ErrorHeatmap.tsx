@@ -90,7 +90,7 @@ export function ErrorHeatmap({ events, visibleSeverities, onViewSolution, onEdit
     visibleSeverities.forEach(sev => {
       count += (cell[sev as keyof Omit<CellData, 'events'>] as number) || 0
     })
-    if (count === 0) return 'rgba(255, 255, 255, 0.03)'
+    if (count === 0) return 'var(--veil-1)'
 
     // Use color of the most critical severity present among SELECTED ones
     const colorRgb = (visibleSeverities.has('ERROR') && cell.ERROR > 0)
@@ -244,7 +244,7 @@ function HeatmapDetailModal({
                 {day} — {hour}:00h ({data.total} eventos totales)
               </p>
             </div>
-            <button type="button" className="log-modal__close" onClick={onClose}>&times;</button>
+            <button type="button" className="log-modal__close" onClick={onClose} aria-label="Cerrar">&times;</button>
           </div>
 
           <div className="heatmap-modal-body">

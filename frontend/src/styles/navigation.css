@@ -5,8 +5,8 @@
   position: sticky;
   top: 0;
   flex-shrink: 0;
-  background: #0d0d0f;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--veil-2);
   border-top: 3px solid var(--cd-orange);
   display: flex;
   flex-direction: column;
@@ -27,21 +27,22 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #1a202c;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: var(--bg-surface);
+  border: 1px solid var(--veil-4);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 2001;
+  z-index: var(--z-nav-mobile);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-md);
 }
 
 .navigation__toggle:hover {
   background: var(--cd-orange);
   border-color: var(--cd-orange);
+  color: var(--text-on-accent);
   transform: translateY(-50%) scale(1.15);
   box-shadow: 0 0 16px rgba(243, 147, 34, 0.45);
 }
@@ -59,14 +60,24 @@
   align-items: center;
   gap: 12px;
   padding: 0 16px 48px;
-  color: #fff;
+  color: var(--text-main);
   min-width: 250px; /* Prevent wrapping during transition */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
 }
 
 .navigation--collapsed .navigation__brand {
   padding: 0 0 48px;
   justify-content: center;
   min-width: 0;
+}
+
+.navigation__brand:focus-visible {
+  outline: 2px solid var(--cd-orange);
+  outline-offset: 4px;
+  border-radius: 8px;
 }
 
 .navigation__brand-text {
@@ -141,7 +152,7 @@
 
 .navigation__item:hover {
   background: rgba(243, 147, 34, 0.06);
-  color: #fff;
+  color: var(--text-main);
   transform: translateX(4px);
   border-color: rgba(243, 147, 34, 0.15);
 }
@@ -177,18 +188,24 @@
   gap: 16px;
 }
 
+.theme-toggle {
+  border-top: 1px solid var(--veil-2);
+  padding-top: 16px;
+  margin-top: 4px;
+}
+
 .navigation__status-area {
   margin-top: auto;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--veil-1);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--veil-2);
   transition: all 0.3s ease;
 }
 
 .navigation__status-area:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--veil-2);
+  border-color: var(--veil-3);
 }
 
 .navigation__datetime {
@@ -206,7 +223,7 @@
 }
 
 .navigation__time {
-  color: #fff;
+  color: var(--text-main);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -226,13 +243,13 @@
 }
 
 .navigation__db-badge--ok {
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--color-success-bg);
   color: var(--color-success);
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .navigation__db-badge--error {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--color-error-bg);
   color: var(--color-error);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
@@ -261,13 +278,13 @@
     left: -280px;
     top: 0;
     width: 280px !important;
-    z-index: 2000;
+    z-index: var(--z-nav);
     transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .navigation--mobile-open {
     left: 0;
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8);
+    box-shadow: 20px 0 50px rgba(15, 23, 42, 0.35);
   }
 
   .navigation__toggle {
@@ -281,9 +298,9 @@
   }
 
   .navigation__close-mobile {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: var(--veil-2);
+    border: 1px solid var(--veil-4);
+    color: var(--text-main);
     cursor: pointer;
     width: 36px;
     height: 36px;
@@ -295,16 +312,16 @@
   }
 
   .navigation__close-mobile:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    background: var(--color-error-bg);
+    color: var(--color-error);
   }
 
   .navigation__overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.4);
     backdrop-filter: blur(4px);
-    z-index: 1999;
+    z-index: calc(var(--z-nav) - 1);
     animation: fadeIn 0.3s ease;
   }
 }

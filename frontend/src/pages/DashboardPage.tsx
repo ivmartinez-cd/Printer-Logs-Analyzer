@@ -508,7 +508,9 @@ export default function DashboardPage({
                   // detail view (and selection) at it and refresh the list.
                   setSelectedSavedId(updated.id)
                   setSavedDetail(updated)
-                  listSavedAnalyses().then(setSavedList).catch(() => {})
+                  listSavedAnalyses().then(setSavedList).catch(() =>
+                    toast.showError('No se pudo actualizar la lista de incidentes guardados')
+                  )
                 }}
               />
             )}
@@ -742,6 +744,7 @@ export default function DashboardPage({
       <DashboardModals
         serverWasCold={serverWasCold}
         autoExtracting={autoExtracting}
+        onCancelAutoExtract={() => setAutoExtracting(false)}
         currentSerialNumber={currentSerialNumber}
         currentModelId={currentModelId}
         currentModelName={currentModelName}

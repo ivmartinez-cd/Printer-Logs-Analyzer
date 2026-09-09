@@ -4,7 +4,7 @@
 .collapsible-panel.collapsible-panel--featured {
   border: 1px solid rgba(139, 92, 246, 0.3);
   background: rgba(139, 92, 246, 0.02);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 20px rgba(139, 92, 246, 0.05);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(139, 92, 246, 0.05);
   margin-top: 12px;
   margin-bottom: 32px;
   transition: all 0.3s ease;
@@ -12,7 +12,7 @@
 
 .collapsible-panel.collapsible-panel--featured:hover {
   border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 25px rgba(139, 92, 246, 0.1);
+  box-shadow: var(--shadow-premium), 0 0 25px rgba(139, 92, 246, 0.1);
 }
 
 .collapsible-panel.collapsible-panel--featured .collapsible-panel__header {
@@ -42,7 +42,7 @@
 
 .ai-diagnostic-panel__button-description {
   font-size: 0.8125rem;
-  color: #6b7a8e;
+  color: var(--text-muted);
   margin: 0;
   max-width: 420px;
   line-height: 1.5;
@@ -52,7 +52,7 @@
   padding: 9px 20px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #fff;
+  color: var(--text-on-accent);
   background: #7c3aed;
   border: none;
   border-radius: 6px;
@@ -80,20 +80,12 @@
   animation: fadeIn 0.5s ease-out;
 }
 
-.ai-diagnostic-panel__loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(139, 92, 246, 0.1);
-  border-top: 3px solid #8b5cf6;
-  border-radius: 50%;
-  animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
-}
+/* .ai-diagnostic-panel__loading-spinner: reemplazado por <Spinner> (components/ui/Spinner.tsx) */
 
 .ai-diagnostic-panel__loading-text {
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #a5b4c8;
+  color: var(--text-secondary);
   letter-spacing: 0.01em;
 }
 
@@ -117,13 +109,13 @@
   gap: 16px;
   margin: 16px;
   padding: 16px 20px;
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--color-error-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 12px;
   font-size: 0.875rem;
-  color: #fca5a5;
+  color: var(--color-error);
   animation: slideUp 0.4s ease-out;
 }
 
@@ -131,8 +123,8 @@
   padding: 8px 16px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #ffffff;
-  background: rgba(239, 68, 68, 0.2);
+  color: var(--text-on-accent);
+  background: var(--color-error-bg);
   border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 8px;
   cursor: pointer;
@@ -166,20 +158,20 @@
 }
 
 .ai-priority-badge--alta {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: var(--color-error-bg);
+  color: var(--color-error);
   border-color: rgba(239, 68, 68, 0.35);
 }
 
 .ai-priority-badge--media {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
   border-color: rgba(245, 158, 11, 0.35);
 }
 
 .ai-priority-badge--baja {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--color-info-bg);
+  color: var(--cd-celeste);
   border-color: rgba(59, 130, 246, 0.35);
 }
 
@@ -202,21 +194,21 @@
 }
 
 .ai-diagnostic-result__despacho--si {
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--color-error-bg);
   border-color: rgba(239, 68, 68, 0.5);
-  color: #f87171;
+  color: var(--color-error);
 }
 
 .ai-diagnostic-result__despacho--remoto {
-  background: rgba(234, 179, 8, 0.12);
+  background: var(--color-warning-bg);
   border-color: rgba(234, 179, 8, 0.5);
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .ai-diagnostic-result__despacho--no {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--color-success-bg);
   border-color: rgba(34, 197, 94, 0.4);
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .ai-diagnostic-result__despacho-icon {
@@ -255,21 +247,21 @@
 }
 
 .ai-diagnostic-result__urgencia--urgente {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--color-error-bg);
   border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
+  color: var(--color-error);
 }
 
 .ai-diagnostic-result__urgencia--programar {
-  background: rgba(234, 179, 8, 0.1);
+  background: var(--color-warning-bg);
   border-color: rgba(234, 179, 8, 0.4);
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .ai-diagnostic-result__urgencia--monitorear {
-  background: rgba(34, 197, 94, 0.08);
+  background: var(--color-success-bg);
   border-color: rgba(34, 197, 94, 0.35);
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .ai-diagnostic-result__urgencia-icon {
@@ -304,7 +296,7 @@
 .ai-diagnostic-result__summary-text {
   font-size: 0.84rem;
   line-height: 1.6;
-  color: #c9d1de;
+  color: var(--text-main);
   margin: 0;
 }
 
@@ -316,7 +308,7 @@
 }
 
 .ai-diagnostic-result__actions-card {
-  background: rgba(22, 163, 74, 0.05);
+  background: var(--color-success-bg);
   border: 1px solid rgba(22, 163, 74, 0.2);
   border-radius: 8px;
   padding: 14px 16px;
@@ -326,7 +318,7 @@
   margin: 0 0 10px;
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #c9d1de;
+  color: var(--text-main);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   display: flex;
@@ -343,7 +335,7 @@
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.65;
-  color: #d4dbe8;
+  color: var(--text-main);
 }
 
 .ai-diagnostic-result__impact {
@@ -352,11 +344,11 @@
   border-top: 1px solid rgba(139, 92, 246, 0.15);
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: #a5b4c8;
+  color: var(--text-secondary);
 }
 
 .ai-diagnostic-result__impact strong {
-  color: #c9d1de;
+  color: var(--text-main);
 }
 
 .ai-diagnostic-result__actions-list {
@@ -378,9 +370,9 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  background: rgba(22, 163, 74, 0.2);
+  background: var(--color-success-bg);
   border: 1px solid rgba(22, 163, 74, 0.4);
-  color: #4ade80;
+  color: var(--color-success);
   border-radius: 50%;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -393,7 +385,7 @@
 .ai-diagnostic-result__action-text {
   font-size: 0.875rem;
   line-height: 1.55;
-  color: #c9d1de;
+  color: var(--text-main);
   flex: 1;
 }
 
@@ -401,7 +393,7 @@
 .ai-diagnostic-panel__diagnosis-fallback {
   padding: 16px;
   font-size: 0.875rem;
-  color: #c9d1de;
+  color: var(--text-main);
   line-height: 1.6;
   white-space: pre-wrap;
 }

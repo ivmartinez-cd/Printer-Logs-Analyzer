@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { MaintenanceDevice } from '../../types/api'
+import { LoadingState } from '../ui/Spinner'
 
 interface AvisosSidebarProps {
   groupedDevices: Record<string, MaintenanceDevice[]>
@@ -79,10 +80,7 @@ export function AvisosSidebar({
 
       <div className="avisos-device-list">
         {loading ? (
-          <div className="sidebar-loading">
-            <div className="spinner-small"></div>
-            <span>Cargando...</span>
-          </div>
+          <LoadingState className="sidebar-loading" />
         ) : families.length > 0 ? (
           families.map((family) => {
             const devices = groupedDevices[family] || []

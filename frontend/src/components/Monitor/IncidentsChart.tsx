@@ -85,9 +85,9 @@ function bucketEventsByHourWithCodes(
 }
 
 const SEV_COLORS: Record<string, string> = {
-  ERROR: '#ef4444',
-  WARNING: '#f59e0b',
-  INFO: '#3b82f6',
+  ERROR: 'var(--color-error)',
+  WARNING: 'var(--color-warning)',
+  INFO: 'var(--color-info)',
 }
 
 interface CustomTooltipProps {
@@ -129,15 +129,15 @@ function CustomTooltip({
   return (
     <div
       style={{
-        background: '#151821',
-        border: '1px solid #232734',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-color)',
         borderRadius: 6,
         padding: '8px 12px',
         minWidth: 160,
         maxWidth: 260,
       }}
     >
-      <div style={{ color: '#e5e7eb', fontWeight: 600, marginBottom: 6, fontSize: 12 }}>
+      <div style={{ color: 'var(--text-main)', fontWeight: 600, marginBottom: 6, fontSize: 12 }}>
         {timeLabel}
       </div>
       {severities.map((sev) => {
@@ -160,14 +160,14 @@ function CustomTooltip({
               <span style={{ color: SEV_COLORS[sev], fontWeight: 600, fontSize: 11 }}>
                 {sev}
               </span>
-              <span style={{ color: '#9aa3b2', fontSize: 11, marginLeft: 'auto' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 11, marginLeft: 'auto' }}>
                 {dataPoint[sev]}
               </span>
             </div>
             {codes.length > 0 && (
               <div
                 style={{
-                  color: '#c9d1d9',
+                  color: 'var(--text-main)',
                   fontSize: 10,
                   fontFamily: 'var(--font-mono)',
                   paddingLeft: 14,
@@ -176,7 +176,7 @@ function CustomTooltip({
               >
                 {displayed.join(', ')}
                 {overflow > 0 && (
-                  <span style={{ color: '#6b7280' }}>{` +${overflow} más`}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>{` +${overflow} más`}</span>
                 )}
               </div>
             )}
@@ -225,7 +225,7 @@ export function IncidentsChart({
     xAxis: (
       <XAxis
         dataKey="time"
-        stroke="#9aa3b2"
+        stroke="var(--text-secondary)"
         tick={{ fontSize: 12 }}
         interval={Math.max(0, Math.ceil(volumeData.length / 10) - 1)}
         tickFormatter={(v: string) => {
@@ -236,8 +236,8 @@ export function IncidentsChart({
         }}
       />
     ),
-    yAxis: <YAxis stroke="#9aa3b2" tick={{ fontSize: 12 }} />,
-    grid: <CartesianGrid strokeDasharray="3 3" stroke="#232734" />,
+    yAxis: <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />,
+    grid: <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />,
     tooltip: (
       <Tooltip
         content={(props) => (

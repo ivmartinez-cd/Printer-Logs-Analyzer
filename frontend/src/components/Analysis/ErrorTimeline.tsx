@@ -42,9 +42,9 @@ function getSeverity(evt: EnrichedEvent): string {
 }
 
 const SEV_COLORS: Record<string, string> = {
-  ERROR: '#ef4444',
-  WARNING: '#f59e0b',
-  INFO: '#3b82f6',
+  ERROR: 'var(--color-error)',
+  WARNING: 'var(--color-warning)',
+  INFO: 'var(--color-info)',
 }
 
 const MAX_VISIBLE_EVENTS = 200
@@ -167,7 +167,7 @@ export function ErrorTimeline({ events, visibleSeverities, onViewSolution }: Err
                 >
                   {day.label}
                   {hasErrors && (
-                    <span style={{ color: '#ef4444', marginLeft: 4, fontSize: '0.65rem' }}>
+                    <span style={{ color: 'var(--color-error)', marginLeft: 4, fontSize: '0.65rem' }}>
                       {day.counts.ERROR}
                     </span>
                   )}
