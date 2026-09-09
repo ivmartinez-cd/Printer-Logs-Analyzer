@@ -273,7 +273,7 @@
 .welcome-grid__item--monitor {
   grid-column: span 4;
   grid-row: span 2;
-  border-left: 3px solid var(--cd-gray);
+  border-left: 3px solid var(--cd-gray-accent);
 }
 
 .welcome-grid__item--alerts {
@@ -413,7 +413,7 @@
 
 .welcome-activity__item-icon-wrapper--folder {
   background: rgba(89, 89, 91, 0.12);
-  color: var(--cd-gray);
+  color: var(--cd-gray-accent);
   border: 1px solid rgba(89, 89, 91, 0.2);
 }
 
