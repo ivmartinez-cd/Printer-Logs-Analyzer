@@ -50,17 +50,23 @@
 }
 
 :root {
-  /* ── Canal Directo Brand Colors (invariantes, no cambian con el tema) ── */
+  /* ── Canal Directo Brand Colors (invariantes, no cambian con el tema) ──
+     Este producto es MPS (impresión) — el manual pauta "servicio + gris"
+     por producto: acá el par institucional es naranja + gris, nada más.
+     --cd-celeste/--cd-magenta/--cd-violet son los colores de OTRAS unidades
+     de negocio (Signage / Digitalización / DaaS) — quedan definidos por si
+     hace falta referenciarlos puntualmente, pero no se usan como decoración
+     de esta UI. */
   --cd-orange: #f39322;
   --cd-orange-light: #f5a84a;
   --cd-orange-glow: rgba(243, 147, 34, 0.25);
+  --cd-gray: #59595b;
   --cd-celeste: #3bb1ca;
   --cd-magenta: #dc368b;
   --cd-violet: #633188;
-  --cd-gray: #59595b;
 
   --accent-primary: var(--cd-orange);
-  --accent-secondary: var(--cd-celeste);
+  --accent-secondary: var(--cd-gray);
   --accent-color: var(--cd-orange);
   --text-on-accent: #ffffff;
 
@@ -84,14 +90,16 @@
   --text-dim: #9a9aa3;
   --text-gradient: linear-gradient(135deg, #1a1a1e 0%, var(--cd-orange) 100%);
 
-  /* ── Status Colors (mismo valor en ambos temas, ya tienen buen contraste) */
+  /* ── Status Colors — semántica genérica de UI (error/warning/success), no
+     colores de marca. --color-info usaba el celeste de Signage por error:
+     pasa a un slate neutro para no pisar el color de otra unidad de negocio. */
   --color-error: #ef4444;
   --color-warning: #f59e0b;
-  --color-info: var(--cd-celeste);
+  --color-info: #64748b;
   --color-success: #10b981;
   --color-error-bg: rgba(239, 68, 68, 0.1);
   --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-info-bg: rgba(59, 177, 202, 0.1);
+  --color-info-bg: rgba(100, 116, 139, 0.1);
   --color-success-bg: rgba(16, 185, 129, 0.1);
 
   /* ── Bordes ──────────────────────────────────────────────────────────── */
@@ -260,12 +268,14 @@ body {
   background: var(--cd-orange-light);
 }
 
-/* Variante de énfasis: mismo tratamiento plano, color de marca distinto
-   (magenta) en vez del degradado naranja→magenta con glow que tenía antes. */
+/* Variante de énfasis: el par institucional es naranja + gris (nada de
+   magenta, que es el color de Digitalización, otra unidad de negocio) —
+   gris sólido y fuerte, en vez del degradado naranja→magenta con glow que
+   tenía antes. */
 .dashboard__btn--vibrant {
-  background: var(--cd-magenta);
+  background: var(--cd-gray);
   color: var(--text-on-accent);
-  border: 1px solid var(--cd-magenta);
+  border: 1px solid var(--cd-gray);
 }
 
 .dashboard__btn--vibrant:hover:not(:disabled) {
@@ -364,9 +374,10 @@ body {
   display: block;
 }
 
-/* ─── Franja de marca — el "subrayado de colores" del manual (Violeta,
-   Magenta, Naranja, Gris, Celeste). Reemplaza al glow ambiental como
-   elemento de identidad bajo el logo / título de sección. ─────────────── */
+/* ─── Franja de marca — "servicio + gris" del manual para MPS: naranja
+   institucional + gris, nada de los otros 3 colores de servicio (esos son
+   de DaaS/Digitalización/Signage, otras unidades de negocio). Reemplaza al
+   glow ambiental como elemento de identidad bajo el logo / título. ────── */
 .brand-strip {
   display: block;
   width: 100%;
@@ -374,11 +385,8 @@ body {
   border-radius: var(--radius-pill);
   background: linear-gradient(
     to right,
-    var(--cd-violet) 0% 20%,
-    var(--cd-magenta) 20% 40%,
-    var(--cd-orange) 40% 60%,
-    var(--cd-gray) 60% 80%,
-    var(--cd-celeste) 80% 100%
+    var(--cd-orange) 0% 65%,
+    var(--cd-gray) 65% 100%
   );
 }
 

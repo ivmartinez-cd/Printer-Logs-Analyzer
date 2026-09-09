@@ -263,7 +263,8 @@
 }
 
 /* Modifiers: mismo bloque plano para todas, un borde izquierdo de color de
-   marca identifica la sección — sin degradados ni azules ajenos a la marca. */
+   marca (naranja/gris — nada de los colores de otras unidades de negocio)
+   identifica la sección. */
 .welcome-grid__item--main {
   grid-column: span 4;
   grid-row: span 2;
@@ -272,7 +273,7 @@
 .welcome-grid__item--monitor {
   grid-column: span 4;
   grid-row: span 2;
-  border-left: 3px solid var(--cd-celeste);
+  border-left: 3px solid var(--cd-gray);
 }
 
 .welcome-grid__item--alerts {
@@ -417,9 +418,9 @@
 }
 
 .welcome-activity__item-icon-wrapper--search {
-  background: rgba(59, 177, 202, 0.12);
-  color: var(--cd-celeste);
-  border: 1px solid rgba(59, 177, 202, 0.2);
+  background: var(--cd-orange-glow);
+  color: var(--cd-orange);
+  border: 1px solid rgba(243, 147, 34, 0.2);
 }
 
 .welcome-activity__item-info {
