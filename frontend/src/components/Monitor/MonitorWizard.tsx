@@ -132,7 +132,7 @@ export function MonitorWizard() {
                         onClick={() => setSelectedClient(client.id)}
                         style={{
                           padding: '16px',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--radius-md)',
                           border: selectedClient === client.id
                             ? '2px solid var(--hp-blue-vibrant)'
                             : '1px solid rgba(255,255,255,0.08)',
@@ -214,7 +214,7 @@ export function MonitorWizard() {
                               alignItems: 'center', 
                               gap: '12px', 
                               padding: '12px 16px', 
-                              borderRadius: '12px', 
+                              borderRadius: 'var(--radius-md)', 
                               background: 'rgba(255,255,255,0.03)',
                               border: '1px solid rgba(255,255,255,0.06)',
                               cursor: 'pointer',

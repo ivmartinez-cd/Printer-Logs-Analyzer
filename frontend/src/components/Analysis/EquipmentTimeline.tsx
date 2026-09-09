@@ -236,7 +236,7 @@ export function EquipmentTimeline({ equipmentId, snapshots, embedded = false }: 
           style={{
             marginTop: '12px',
             padding: '10px 14px',
-            borderRadius: '10px',
+            borderRadius: 'var(--radius-md)',
             fontSize: '0.85rem',
             fontWeight: 600,
             display: 'flex',

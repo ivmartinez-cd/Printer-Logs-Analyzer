@@ -306,7 +306,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
         </div>
 
         <div className="hiw-body">
-          <div className="hiw-section hiw-section--setup">
+          <div className="hiw-section">
             <div className="hiw-step-number">1</div>
             <div className="hiw-step-content">
               <h4>Configuración inicial</h4>
@@ -319,7 +319,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--discover">
+          <div className="hiw-section">
             <div className="hiw-step-number">2</div>
             <div className="hiw-step-content">
               <h4>Descubrimiento de equipos</h4>
@@ -331,7 +331,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--sync">
+          <div className="hiw-section">
             <div className="hiw-step-number">3</div>
             <div className="hiw-step-content">
               <h4>Primera sincronización — modo silencioso</h4>
@@ -348,7 +348,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--formula">
+          <div className="hiw-section">
             <div className="hiw-step-number">4</div>
             <div className="hiw-step-content">
               <h4>Cálculo de páginas restantes</h4>
@@ -374,7 +374,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--alert">
+          <div className="hiw-section">
             <div className="hiw-step-number">5</div>
             <div className="hiw-step-content">
               <h4>Alerta por email</h4>
@@ -387,7 +387,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--incident">
+          <div className="hiw-section">
             <div className="hiw-step-number">6</div>
             <div className="hiw-step-content">
               <h4>Abrir incidente</h4>
@@ -401,7 +401,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--close">
+          <div className="hiw-section">
             <div className="hiw-step-number">7</div>
             <div className="hiw-step-content">
               <h4>Cerrar incidente y registrar reemplazo</h4>
@@ -414,7 +414,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--direct">
+          <div className="hiw-section">
             <div className="hiw-step-number">8</div>
             <div className="hiw-step-content">
               <h4>Cambio directo (sin incidente previo)</h4>
@@ -426,7 +426,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
             </div>
           </div>
 
-          <div className="hiw-section hiw-section--adjust">
+          <div className="hiw-section">
             <div className="hiw-step-number">9</div>
             <div className="hiw-step-content">
               <h4>Ajuste manual</h4>

@@ -53,8 +53,8 @@
 }
 
 .insight-alerts-panel__tab--active {
-  color: #06b6d4;
-  border-bottom-color: #06b6d4;
+  color: var(--cd-orange);
+  border-bottom-color: var(--cd-orange);
 }
 
 .insight-alerts-panel__tab-badge {
@@ -64,9 +64,9 @@
   padding: 1px 6px;
   font-size: 0.6875rem;
   font-weight: 700;
-  background: rgba(6, 182, 212, 0.2);
-  color: #06b6d4;
-  border-radius: 10px;
+  background: var(--cd-orange-glow);
+  color: var(--cd-orange);
+  border-radius: var(--radius-pill);
 }
 
 .insight-alerts-panel__table {
@@ -98,7 +98,7 @@
 .insight-alerts-panel__severity {
   display: inline-block;
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   font-size: 0.7rem;
   font-weight: 600;
 }

@@ -22,7 +22,7 @@
 }
 
 .sds-incident-panel__value[data-status='general'] {
-  color: var(--cd-celeste);
+  color: var(--color-info);
 }
 
 .sds-incident-panel__value--muted {
@@ -73,7 +73,7 @@
 .sds-consumable__badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
@@ -102,7 +102,7 @@
   font-size: 13px;
   background: var(--bg-surface);
   border: 1px solid var(--bg-elevated);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-main);
   resize: vertical;
 }
@@ -116,19 +116,19 @@
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
-  background: var(--cd-celeste);
+  background: var(--cd-orange);
   color: var(--text-on-accent);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 
 .dashboard__btn:hover {
-  background: #3b7ade;
+  background: var(--cd-orange-light);
 }
 
 .dashboard__btn:focus-visible {
-  outline: 2px solid var(--cd-celeste);
+  outline: 2px solid var(--cd-orange);
   outline-offset: 2px;
 }
 
@@ -144,7 +144,7 @@
 }
 
 .dashboard__btn--secondary:focus-visible {
-  outline: 2px solid var(--cd-celeste);
+  outline: 2px solid var(--cd-orange);
   outline-offset: 2px;
 }
 

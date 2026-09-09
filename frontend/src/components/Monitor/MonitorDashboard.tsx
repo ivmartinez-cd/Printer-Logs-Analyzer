@@ -42,10 +42,10 @@ function StatusLegend() {
     { label: 'Sin contacto', desc: 'No alcanzable.', color: 'var(--text-muted)' },
   ]
   return (
-    <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '12px 20px', background: 'var(--veil-1)', borderRadius: '12px', border: '1px solid var(--veil-2)', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '12px 20px', background: 'var(--veil-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--veil-2)', flexWrap: 'wrap' }}>
       {items.map(i => (
         <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: i.color, boxShadow: `0 0 8px ${i.color}` }} />
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: i.color }} />
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: i.color, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{i.label}:</span>
           <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{i.desc}</span>
         </div>
@@ -74,7 +74,7 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
       marginTop: '16px', 
       padding: '20px', 
       background: 'var(--veil-1)', 
-      borderRadius: '12px',
+      borderRadius: 'var(--radius-md)',
       border: '1px solid var(--veil-2)'
     }}>
       {/* Top Errores column */}
@@ -91,7 +91,7 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
                 justifyContent: 'space-between', 
                 padding: '8px 12px', 
                 background: 'var(--veil-1)', 
-                borderRadius: '8px', 
+                borderRadius: 'var(--radius-sm)', 
                 border: '1px solid var(--veil-2)',
                 cursor: 'pointer',
                 transition: 'var(--transition-fast)'
@@ -138,7 +138,7 @@ function DeviceMiniAnalysis({ device, onViewSolution }: { device: FleetScanResul
               />
               <YAxis hide />
               <Tooltip 
-                contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--veil-4)', borderRadius: '8px', fontSize: '10px', boxShadow: 'var(--shadow-md)' }}
+                contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--veil-4)', borderRadius: 'var(--radius-sm)', fontSize: '10px', boxShadow: 'var(--shadow-md)' }}
                 itemStyle={{ padding: '2px 0' }}
                 labelStyle={{ marginBottom: '4px', color: 'var(--text-dim)' }}
               />
@@ -250,19 +250,17 @@ function DeviceCard({
     <div
       onClick={onToggle}
       style={{
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-md)',
         border: `1px solid ${isExpanded ? s.text : s.border}`,
-        background: isExpanded ? `linear-gradient(135deg, ${s.bg}, var(--bg-card))` : 'var(--bg-card)',
-        backdropFilter: 'blur(20px)',
+        background: isExpanded ? s.bg : 'var(--bg-card)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         cursor: 'pointer',
         transition: 'border-color 0.2s, background 0.2s',
-        boxShadow: isExpanded ? `0 0 24px ${s.bg}` : 'none',
       }}
     >
-      <div style={{ height: '3px', background: s.text, boxShadow: `0 0 8px ${s.text}`, flexShrink: 0 }} />
+      <div style={{ height: '3px', background: s.text, flexShrink: 0 }} />
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
         {/* Serial + badge */}
@@ -274,7 +272,7 @@ function DeviceCard({
           >
             {device.serial}
           </a>
-          <span style={{ padding: '2px 10px', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}`, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-pill)', fontSize: '0.68rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}`, flexShrink: 0, whiteSpace: 'nowrap' }}>
             {s.label}
           </span>
         </div>
@@ -439,7 +437,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
              {monitorModels && monitorModels.length > 0 && (
                 <div style={{ display: 'flex', gap: '6px' }}>
                    {monitorModels.map(m => (
-                     <span key={m} style={{ padding: '2px 8px', borderRadius: '6px', background: 'var(--veil-2)', fontSize: '0.7rem', color: 'var(--text-muted)', border: '1px solid var(--veil-4)' }}>
+                     <span key={m} style={{ padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--veil-2)', fontSize: '0.7rem', color: 'var(--text-muted)', border: '1px solid var(--veil-4)' }}>
                        {m}
                      </span>
                    ))}
@@ -472,14 +470,14 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
           marginBottom: '24px', 
           padding: '20px', 
           background: 'var(--bg-glass)', 
-          borderRadius: '12px', 
+          borderRadius: 'var(--radius-md)', 
           border: '1px solid var(--veil-2)' 
         }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
              <span>Progreso del escaneo de flota</span>
              <span>{scanJob.processed} / {scanJob.total} dispositivos</span>
            </div>
-           <div style={{ height: '6px', background: 'var(--veil-2)', borderRadius: '3px', overflow: 'hidden' }}>
+           <div style={{ height: '6px', background: 'var(--veil-2)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
              <div style={{ 
                height: '100%', 
                width: `${(scanJob.processed / scanJob.total) * 100}%`, 
@@ -504,14 +502,12 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             onClick={() => setStatusFilter(prev => prev === key ? 'all' : key)}
             style={{
               padding: '20px 24px',
-              borderRadius: '16px',
+              borderRadius: 'var(--radius-md)',
               border: `1px solid ${statusFilter === key ? color : border}`,
               background: statusFilter === key ? bg : 'var(--bg-card)',
-              backdropFilter: 'blur(20px)',
               cursor: 'pointer',
               textAlign: 'left',
-              transition: 'all 0.2s',
-              boxShadow: statusFilter === key ? `0 0 20px ${bg}` : 'none',
+              transition: 'var(--transition-fast)',
             }}
           >
             <div style={{ fontSize: '2rem', fontWeight: 800, color, lineHeight: 1 }}>
@@ -535,7 +531,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             onClick={() => setStatusFilter(f)}
             style={{
               padding: '5px 14px',
-              borderRadius: '20px',
+              borderRadius: 'var(--radius-pill)',
               border: `1px solid ${statusFilter === f ? 'var(--hp-blue-vibrant)' : 'var(--veil-4)'}`,
               background: statusFilter === f ? 'rgba(0,161,255,0.15)' : 'transparent',
               color: statusFilter === f ? 'var(--hp-blue-vibrant)' : 'var(--text-muted)',
@@ -548,7 +544,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             {FILTER_LABELS[f]}{f !== 'all' ? ` (${kpis[f]})` : ` (${displayRows.length})`}
           </button>
         ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', border: '1px solid var(--veil-4)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', border: '1px solid var(--veil-4)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           {([
             { mode: false, icon: '☰', title: 'Vista tabla' },
             { mode: true,  icon: '⊞', title: 'Vista grid' },
@@ -611,17 +607,17 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
             return (
               <div
                 onClick={() => setExpandedSerial(null)}
-                style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+                style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--overlay-backdrop)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
               >
                 <div
                   onClick={e => e.stopPropagation()}
-                  style={{ width: '100%', maxWidth: '780px', maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-surface)', border: `1px solid ${s.border}`, borderRadius: '20px', boxShadow: `0 0 40px ${s.bg}`, display: 'flex', flexDirection: 'column' }}
+                  style={{ width: '100%', maxWidth: '780px', maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-surface)', border: `1px solid ${s.border}`, borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column' }}
                 >
                   {/* Modal header */}
                   <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--veil-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--hp-blue-vibrant)' }}>{device.serial}</span>
-                      <span style={{ padding: '2px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>{s.label}</span>
+                      <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-pill)', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>{s.label}</span>
                       {device.model_name && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{device.model_name}</span>}
                       {device.firmware && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>FW: {device.firmware}</span>}
                       <span style={{ fontSize: '0.85rem' }}>Errores: <strong style={{ color: 'var(--color-error)' }}>{device.error_count}</strong></span>
@@ -660,7 +656,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
           })()} </Portal>}
         </>
       ) : (
-        <div className="monitor-grid" style={{ background: 'var(--bg-card)', border: 'var(--border-glass)', borderRadius: '24px', overflow: 'hidden', backdropFilter: 'blur(20px)', boxShadow: 'var(--shadow-premium)' }}>
+        <div className="monitor-grid" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: 'var(--veil-1)', borderBottom: '1px solid var(--veil-3)' }}>
@@ -711,7 +707,7 @@ export function MonitorDashboard({ pollingInterval = 2000 }: { pollingInterval?:
                         {'location' in device ? (device as FleetScanResult).location : '—'}
                       </td>
                       <td style={{ padding: '20px 24px' }}>
-                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
+                        <span style={{ padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
                           {s.label}
                         </span>
                       </td>

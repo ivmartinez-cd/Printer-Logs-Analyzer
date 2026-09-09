@@ -329,8 +329,7 @@
   .navigation__overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(4px);
+    background: var(--overlay-backdrop);
     z-index: calc(var(--z-nav) - 1);
     animation: fadeIn 0.3s ease;
   }

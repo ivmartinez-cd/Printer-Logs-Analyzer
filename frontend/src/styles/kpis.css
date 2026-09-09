@@ -9,7 +9,7 @@
   min-width: 0;
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 16px;
 }
 
@@ -92,7 +92,7 @@
   flex-direction: column;
   background: var(--bg-surface);
   border: var(--border-glass);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   padding: 24px;
   min-height: 0;
 }
@@ -125,9 +125,9 @@
   font-size: 12px;
   font-weight: 600;
   padding: 3px 9px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: var(--transition-fast);
   font-family: inherit;
 }
 
@@ -138,7 +138,7 @@
   gap: 2px;
   background: var(--veil-2);
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 2px;
 }
 
@@ -146,12 +146,12 @@
   font-size: 12px;
   font-weight: 500;
   padding: 3px 11px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: var(--transition-fast);
   font-family: inherit;
   white-space: nowrap;
 }
@@ -195,7 +195,7 @@
 .section {
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 20px;
 }
 
@@ -217,7 +217,7 @@
   font-size: 13px;
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-main);
   cursor: pointer;
 }
@@ -227,12 +227,12 @@
 }
 
 .dashboard__day-select:focus {
-  border-color: var(--cd-celeste);
+  border-color: var(--cd-orange);
   outline: none;
 }
 
 .dashboard__day-select:focus-visible {
-  box-shadow: 0 0 0 2px rgba(76, 139, 245, 0.35);
+  box-shadow: 0 0 0 2px rgba(243, 147, 34, 0.35);
 }
 
 .dashboard__date-input {
@@ -241,7 +241,7 @@
   font-family: inherit;
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-main);
   cursor: pointer;
 }
@@ -251,12 +251,12 @@
 }
 
 .dashboard__date-input:focus {
-  border-color: var(--cd-celeste);
+  border-color: var(--cd-orange);
   outline: none;
 }
 
 .dashboard__date-input:focus-visible {
-  box-shadow: 0 0 0 2px rgba(76, 139, 245, 0.35);
+  box-shadow: 0 0 0 2px rgba(243, 147, 34, 0.35);
 }
 
 .dashboard__btn--todo {
@@ -265,7 +265,7 @@
 }
 
 .dashboard__btn--todo-active {
-  background: rgba(76, 139, 245, 0.2);
-  border-color: var(--cd-celeste);
-  color: #8fb4f5;
+  background: rgba(243, 147, 34, 0.2);
+  border-color: var(--cd-orange);
+  color: var(--cd-orange-light);
 }

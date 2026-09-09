@@ -28,20 +28,20 @@
   width: 100%;
   background: var(--bg-main);
   border: var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-main);
   padding: 10px 12px;
   font-family: inherit;
   font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: var(--transition-fast);
 }
 
 .add-code-modal__input:focus,
 .add-code-modal__textarea:focus,
 .add-code-modal__select:focus {
   outline: none;
-  border-color: var(--cd-celeste);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--cd-orange);
+  box-shadow: 0 0 0 2px rgba(243, 147, 34, 0.2);
 }
 
 .add-code-modal__input:disabled,
@@ -84,9 +84,9 @@
   background: transparent;
   color: var(--text-secondary);
   border: var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition-fast);
 }
 
 .log-modal__btn-secondary:hover:not(:disabled) {

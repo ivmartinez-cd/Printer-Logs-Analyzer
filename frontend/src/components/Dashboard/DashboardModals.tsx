@@ -232,8 +232,6 @@ export function DashboardModals({
             position: 'fixed',
             inset: 0,
             background: 'var(--overlay-backdrop)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
             zIndex: 11000, // = --z-toast (arriba de cualquier modal; ver escala en base.css)
             display: 'flex',
             alignItems: 'center',
@@ -242,8 +240,8 @@ export function DashboardModals({
             <div style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--veil-3)',
-              borderRadius: '20px',
-              boxShadow: 'var(--shadow-premium)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-lg)',
               width: '380px',
               padding: '52px 40px',
               display: 'flex',

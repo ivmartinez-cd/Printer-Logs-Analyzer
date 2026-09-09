@@ -92,7 +92,7 @@ export function TopErrorsChart({
                         y={0}
                         dy={4}
                         textAnchor="end"
-                        fill={canView ? 'var(--cd-celeste)' : 'var(--text-secondary)'}
+                        fill={canView ? 'var(--cd-orange)' : 'var(--text-secondary)'}
                         fontSize={12}
                         fontWeight={canView ? 700 : 400}
                         style={{ cursor: canView ? 'pointer' : 'default' }}
@@ -127,13 +127,13 @@ export function TopErrorsChart({
                         background: 'var(--bg-surface)',
                         border: '1px solid var(--border-color)',
                         padding: '10px',
-                        borderRadius: '8px',
+                        borderRadius: 'var(--radius-sm)',
                         boxShadow: 'var(--shadow-sm)'
                       }}>
                         <div style={{ color: 'var(--text-main)', fontWeight: 700, marginBottom: '4px' }}>{data.name}</div>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Ocurrencias: <span style={{ color: 'var(--text-main)' }}>{data.count}</span></div>
                         {(data.sds_link || data.sds_solution_content) && (
-                          <div style={{ color: 'var(--cd-celeste)', fontSize: '10px', marginTop: '8px', fontWeight: 700 }}>
+                          <div style={{ color: 'var(--cd-orange)', fontSize: '10px', marginTop: '8px', fontWeight: 700 }}>
                             Haga clic en el código para ver solución
                           </div>
                         )}

@@ -99,11 +99,10 @@ export function SnapshotHistoryPanel({
 
   return (
     <div style={{
-      background: 'rgba(30, 41, 59, 0.45)',
-      backdropFilter: 'blur(12px)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37)',
-      borderRadius: '20px',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)',
+      boxShadow: 'var(--shadow-sm)',
+      borderRadius: 'var(--radius-md)',
       padding: '24px',
       display: 'flex',
       flexDirection: 'column',
@@ -131,7 +130,7 @@ export function SnapshotHistoryPanel({
                   border: '1px solid rgba(239, 68, 68, 0.25)',
                   color: '#f87171',
                   padding: '6px 14px',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--radius-md)',
                   fontSize: '0.82rem',
                   cursor: 'pointer',
                   fontWeight: 600,
@@ -149,7 +148,7 @@ export function SnapshotHistoryPanel({
                     border: '1px solid rgba(255,255,255,0.12)',
                     color: '#e2e8f0',
                     padding: '6px 12px',
-                    borderRadius: '10px',
+                    borderRadius: 'var(--radius-md)',
                     fontSize: '0.82rem',
                     cursor: 'pointer',
                     maxWidth: '260px',
@@ -196,7 +195,7 @@ export function SnapshotHistoryPanel({
                 contentStyle={{
                   background: 'rgba(15, 23, 42, 0.95)',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--radius-md)',
                   fontSize: '0.8rem',
                   color: '#e2e8f0',
                 }}
@@ -233,7 +232,7 @@ export function SnapshotHistoryPanel({
           padding: '8px 14px',
           background: 'rgba(56, 189, 248, 0.08)',
           border: '1px solid rgba(56, 189, 248, 0.2)',
-          borderRadius: '10px',
+          borderRadius: 'var(--radius-md)',
           fontSize: '0.82rem',
           color: '#7dd3fc',
         }}>

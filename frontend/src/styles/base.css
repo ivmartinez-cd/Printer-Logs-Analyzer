@@ -558,7 +558,7 @@ body {
   font-weight: 800;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: var(--transition-premium);
+  transition: var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
 
@@ -566,8 +566,6 @@ body {
   background: var(--cd-orange);
   color: var(--text-on-accent);
   border-color: var(--cd-orange);
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: 0 0 15px var(--cd-orange-glow);
 }
 
 .hiw-header {
@@ -622,7 +620,6 @@ body {
   font-weight: 800;
   font-size: 0.9rem;
   flex-shrink: 0;
-  box-shadow: 0 0 15px var(--cd-orange-glow);
 }
 
 .hiw-step-content {
@@ -652,7 +649,6 @@ body {
   font-size: 0.9rem;
   color: var(--text-main);
   font-style: italic;
-  backdrop-filter: blur(4px);
 }
 
 .hiw-formula {
@@ -677,13 +673,6 @@ body {
   color: var(--text-dim);
 }
 
-/* Colors for specific steps */
-.hiw-section--setup .hiw-step-number { background: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-.hiw-section--discover .hiw-step-number { background: #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
-.hiw-section--sync .hiw-step-number { background: #8b5cf6; box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
-.hiw-section--formula .hiw-step-number { background: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
-.hiw-section--alert .hiw-step-number { background: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
-.hiw-section--incident .hiw-step-number { background: #d946ef; box-shadow: 0 0 15px rgba(217, 70, 239, 0.3); }
-.hiw-section--close .hiw-step-number { background: #14b8a6; box-shadow: 0 0 15px rgba(20, 184, 166, 0.3); }
-.hiw-section--direct .hiw-step-number { background: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
-.hiw-section--adjust .hiw-step-number { background: #64748b; box-shadow: 0 0 15px rgba(100, 116, 139, 0.3); }
+/* Los 9 pasos del walkthrough ya se distinguen por el número — un solo
+   color institucional (naranja) en vez de un arcoíris decorativo de 9
+   colores ajenos a la marca. */

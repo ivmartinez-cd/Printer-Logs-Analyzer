@@ -45,7 +45,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
               background: 'var(--accent-primary)',
               color: 'var(--text-on-accent)',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
             }}
           >

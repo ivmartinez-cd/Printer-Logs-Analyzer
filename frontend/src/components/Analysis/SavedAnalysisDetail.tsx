@@ -65,7 +65,7 @@ function DeviceHealthBar({ id }: { id: string }) {
         background: 'var(--veil-1)',
         border: '1px dashed var(--veil-4)',
         padding: '20px',
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-md)',
         color: 'var(--text-secondary)',
         display: 'flex',
         alignItems: 'center',
@@ -88,7 +88,7 @@ function DeviceHealthBar({ id }: { id: string }) {
         background: health.status === 'RED' ? 'var(--color-error-bg)' : health.status === 'YELLOW' ? 'var(--color-warning-bg)' : 'var(--color-success-bg)',
         border: `1px solid ${health.status === 'RED' ? 'rgba(239, 68, 68, 0.2)' : health.status === 'YELLOW' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`,
         padding: '20px',
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-md)',
         display: 'flex',
         gap: '16px',
         alignItems: 'flex-start',
@@ -462,7 +462,7 @@ export function SavedAnalysisDetail({
           background: 'var(--color-info-bg)',
           border: '1px solid rgba(56, 189, 248, 0.25)',
           padding: '16px 20px',
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-md)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -627,7 +627,7 @@ export function SavedAnalysisDetail({
         background: 'var(--bg-card)',
         border: '1px solid var(--veil-2)',
         padding: '24px',
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-md)',
         boxShadow: 'var(--shadow-sm)'
       }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
@@ -652,7 +652,7 @@ export function SavedAnalysisDetail({
                 const deltaColor = m.delta > 0 ? 'var(--color-error)' : m.delta < 0 ? 'var(--color-success)' : 'var(--text-muted)'
 
                 return (
-                  <div key={m.code + String(index)} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'var(--veil-1)', borderRadius: '12px', border: '1px solid var(--veil-2)' }}>
+                  <div key={m.code + String(index)} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'var(--veil-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--veil-2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 700 }}>
@@ -732,10 +732,9 @@ export function SavedAnalysisDetail({
           className="animate-in"
           style={{
             background: 'var(--bg-card)',
-            backdropFilter: 'blur(12px)',
             border: '1px solid var(--veil-3)',
-            boxShadow: 'var(--shadow-lg)',
-            borderRadius: '20px',
+            boxShadow: 'var(--shadow-sm)',
+            borderRadius: 'var(--radius-md)',
             padding: '24px',
             display: 'flex',
             flexDirection: 'column',
@@ -745,7 +744,7 @@ export function SavedAnalysisDetail({
           {/* Panel header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <GitCompare size={17} style={{ color: 'var(--cd-celeste)' }} />
+              <GitCompare size={17} style={{ color: 'var(--cd-orange)' }} />
               {selectedCompareId ? 'Comparación entre Snapshots' : 'Cambios en la Actualización'}
             </h3>
             <button
@@ -770,7 +769,7 @@ export function SavedAnalysisDetail({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {/* New codes */}
               {updateDiff.newCodes.length > 0 && (
-                <div style={{ background: 'var(--color-error-bg)', border: '1px solid rgba(239, 68, 68, 0.18)', padding: '14px 16px', borderRadius: '14px' }}>
+                <div style={{ background: 'var(--color-error-bg)', border: '1px solid rgba(239, 68, 68, 0.18)', padding: '14px 16px', borderRadius: 'var(--radius-md)' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--color-error)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <AlertTriangle size={14} /> Códigos Nuevos ({updateDiff.newCodes.length})
                   </h4>
@@ -799,7 +798,7 @@ export function SavedAnalysisDetail({
 
               {/* Resolved codes */}
               {updateDiff.resolvedCodes.length > 0 && (
-                <div style={{ background: 'var(--color-success-bg)', border: '1px solid rgba(34, 197, 94, 0.18)', padding: '14px 16px', borderRadius: '14px' }}>
+                <div style={{ background: 'var(--color-success-bg)', border: '1px solid rgba(34, 197, 94, 0.18)', padding: '14px 16px', borderRadius: 'var(--radius-md)' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--color-success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <CheckCircle size={14} /> Códigos Resueltos ({updateDiff.resolvedCodes.length})
                   </h4>
@@ -843,7 +842,7 @@ export function SavedAnalysisDetail({
                             alignItems: 'center',
                             padding: '8px 14px',
                             background: 'var(--veil-1)',
-                            borderRadius: '10px',
+                            borderRadius: 'var(--radius-md)',
                             border: `1px solid ${isIncrease ? 'var(--color-error-bg)' : 'var(--color-success-bg)'}`,
                           }}
                         >

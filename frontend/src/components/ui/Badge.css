@@ -5,7 +5,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   padding: 4px 12px;
-  border-radius: 99px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
   letter-spacing: 0.02em;
   background: var(--veil-2);
@@ -39,7 +39,7 @@
 
 .badge--info {
   color: var(--color-info);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(100, 116, 139, 0.3);
   background: var(--color-info-bg);
 }
 

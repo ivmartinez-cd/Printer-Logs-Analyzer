@@ -10,7 +10,7 @@
 }
 .equipment-timeline {
   border: var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 8px;
   overflow: hidden;
 }
@@ -51,7 +51,7 @@
 .equipment-timeline__tooltip {
   background: var(--bg-hover);
   border: var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 8px 12px;
   font-size: 0.8125rem;
   color: var(--text-main);

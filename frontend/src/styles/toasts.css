@@ -16,7 +16,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.875rem;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--veil-3);

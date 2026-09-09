@@ -17,7 +17,7 @@
 }
 
 .solution-content-modal__url {
-  color: var(--cd-celeste);
+  color: var(--cd-orange);
   text-decoration: none;
 }
 
@@ -59,7 +59,7 @@ button.dashboard-table__solution-link {
   padding: 0;
   cursor: pointer;
   font: inherit;
-  color: var(--cd-celeste);
+  color: var(--cd-orange);
   text-decoration: none;
 }
 
@@ -68,9 +68,9 @@ button.dashboard-table__solution-link {
 }
 
 .dashboard-table__code-link:focus-visible {
-  outline: 2px solid var(--cd-celeste);
+  outline: 2px solid var(--cd-orange);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .dashboard-table__cpmd-badge {
@@ -99,7 +99,7 @@ button.dashboard-table__solution-link {
   color: var(--text-dim);
   cursor: pointer;
   margin-bottom: -1px;
-  transition: color 0.15s, border-color 0.15s;
+  transition: var(--transition-fast);
 }
 
 .solution-content-modal__tab:hover {
@@ -107,8 +107,8 @@ button.dashboard-table__solution-link {
 }
 
 .solution-content-modal__tab--active {
-  color: var(--cd-celeste);
-  border-bottom-color: var(--cd-celeste);
+  color: var(--cd-orange);
+  border-bottom-color: var(--cd-orange);
   font-weight: 600;
 }
 
@@ -150,7 +150,7 @@ button.dashboard-table__solution-link {
 
 .solution-content-modal__cpmd-page {
   font-size: 0.75rem;
-  color: var(--cd-celeste);
+  color: var(--cd-orange);
   font-style: italic;
 }
 
@@ -207,8 +207,8 @@ button.dashboard-table__solution-link {
   font-size: 0.75rem;
   background: var(--bg-elevated);
   padding: 1px 4px;
-  border-radius: 3px;
-  color: var(--cd-celeste);
+  border-radius: var(--radius-sm);
+  color: var(--cd-orange);
 }
 
 .solution-content-modal__cpmd-fru-desc {

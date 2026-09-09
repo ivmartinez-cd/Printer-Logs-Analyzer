@@ -52,7 +52,7 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
               onClick={() => inputRef.current?.click()}
               style={{
                 border: '2px dashed var(--border-color)',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-sm)',
                 padding: '24px',
                 textAlign: 'center',
                 cursor: 'pointer',
@@ -62,7 +62,7 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
             >
               {file ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <FileText size={18} style={{ color: 'var(--cd-celeste)' }} />
+                  <FileText size={18} style={{ color: 'var(--cd-orange)' }} />
                   <span style={{ fontSize: '13px', color: 'var(--text-main)' }}>{file.name}</span>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
                 </div>
@@ -89,7 +89,7 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="M607, E60075, ..."
                 style={{
-                  padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)',
+                  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
                   background: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '13px',
                 }}
               />
@@ -103,7 +103,7 @@ export function CpmdUploadModal({ modelFamily, onClose, onUploaded }: CpmdUpload
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 style={{
-                  padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)',
+                  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
                   background: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '13px',
                 }}
               />

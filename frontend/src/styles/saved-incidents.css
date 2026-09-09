@@ -47,7 +47,7 @@
   padding: 16px;
   background: var(--bg-elevated);
   border: var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .dashboard__compare-block h4 {
@@ -67,7 +67,7 @@
   gap: 12px;
   margin: 4px 0 16px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--dh-border, var(--border-color));
   background: linear-gradient(135deg, var(--dh-bg1, var(--bg-elevated)), var(--dh-bg2, var(--bg-elevated)));
   color: var(--text-main);
@@ -86,7 +86,7 @@
   --dh-border: rgba(220, 38, 38, 0.35);
   --dh-bg1: #fef2f2;
   --dh-bg2: #fee2e2;
-  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.08), 0 8px 24px -12px rgba(220, 38, 38, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 .device-health--yellow {
@@ -105,7 +105,7 @@ html.dark .device-health--red {
   --dh-border: rgba(248, 113, 113, 0.55);
   --dh-bg1: #2a1518;
   --dh-bg2: #1c1116;
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.15), 0 8px 24px -12px rgba(248, 113, 113, 0.6);
+  box-shadow: var(--shadow-sm);
 }
 
 html.dark .device-health--yellow {

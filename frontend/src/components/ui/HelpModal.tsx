@@ -29,7 +29,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
 
           <div className="hiw-body">
             {/* FLUJO DE ANÁLISIS */}
-            <section className="hiw-section hiw-section--direct">
+            <section className="hiw-section">
               <div className="hiw-step-number">1</div>
               <div className="hiw-step-content">
                 <h4>Flujo de Análisis</h4>
@@ -52,7 +52,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Panel de KPIs */}
-            <section className="hiw-section hiw-section--formula">
+            <section className="hiw-section">
               <div className="hiw-step-number">2</div>
               <div className="hiw-step-content">
                 <h4>Panel de KPIs Inteligentes</h4>
@@ -79,7 +79,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Diagnóstico con IA */}
-            <section className="hiw-section hiw-section--incident">
+            <section className="hiw-section">
               <div className="hiw-step-number">3</div>
               <div className="hiw-step-content">
                 <h4>Diagnóstico Ejecutivo (IA)</h4>
@@ -93,7 +93,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Consumibles e Insight */}
-            <section className="hiw-section hiw-section--alert">
+            <section className="hiw-section">
               <div className="hiw-step-number">4</div>
               <div className="hiw-step-content">
                 <h4>Consumibles y Alertas Insight</h4>
@@ -105,7 +105,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             </section>
 
             {/* Exportación */}
-            <section className="hiw-section hiw-section--close">
+            <section className="hiw-section">
               <div className="hiw-step-number">5</div>
               <div className="hiw-step-content">
                 <h4>Reporte Ejecutivo PDF</h4>

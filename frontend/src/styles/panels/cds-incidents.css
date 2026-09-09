@@ -1,14 +1,14 @@
 /* CDS Incidents Panel */
 
 .cds-incidents-panel__link {
-  color: var(--cd-celeste);
+  color: var(--cd-orange);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.15s;
 }
 
 .cds-incidents-panel__link:hover {
-  color: #60a5fa;
+  color: var(--cd-orange-light);
   text-decoration: underline;
 }
 
@@ -21,10 +21,10 @@
 .cds-incidents-panel__replacement-badge {
   display: inline-block;
   background: var(--color-info-bg);
-  color: var(--cd-celeste);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--color-info);
+  border: 1px solid rgba(100, 116, 139, 0.2);
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
 }
 

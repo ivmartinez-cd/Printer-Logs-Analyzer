@@ -124,7 +124,7 @@ export function AnalysisDashboardView({
             gap: '16px',
             background: 'var(--veil-1)',
             padding: '8px 24px',
-            borderRadius: '14px',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--veil-2)',
             boxShadow: 'var(--shadow-sm)'
           }}>
@@ -307,11 +307,11 @@ export function AnalysisDashboardView({
         <Portal>
           <div
             onClick={() => setDrillCode(null)}
-            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--overlay-backdrop)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
           >
             <div
               onClick={e => e.stopPropagation()}
-              style={{ width: '100%', maxWidth: '720px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)', border: '1px solid var(--veil-4)', borderRadius: '20px', boxShadow: 'var(--shadow-lg)' }}
+              style={{ width: '100%', maxWidth: '720px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)', border: '1px solid var(--veil-4)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)' }}
             >
               <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--veil-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>

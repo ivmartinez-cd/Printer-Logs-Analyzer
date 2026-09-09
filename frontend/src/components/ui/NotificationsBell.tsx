@@ -121,7 +121,6 @@ export function NotificationsBell() {
           borderRadius: '50%',
           background: 'var(--bg-glass)',
           border: '1px solid var(--veil-4)',
-          backdropFilter: 'blur(8px)',
           color: 'var(--text-main)',
           display: 'flex',
           alignItems: 'center',
@@ -168,7 +167,7 @@ export function NotificationsBell() {
             overflowY: 'auto',
             background: 'var(--bg-surface)',
             border: '1px solid var(--veil-4)',
-            borderRadius: '16px',
+            borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
           }}
         >
@@ -196,7 +195,7 @@ export function NotificationsBell() {
                     gap: '6px',
                     background: 'none',
                     border: 'none',
-                    color: 'var(--cd-celeste)',
+                    color: 'var(--cd-orange)',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: 'pointer',

@@ -1,7 +1,7 @@
 .executive-summary {
   background: var(--bg-surface);
   border: var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -17,7 +17,7 @@
 .exec-scorecard {
   background: var(--veil-1);
   border: var(--border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -63,7 +63,7 @@
 .executive-summary__block {
   background: var(--bg-glass);
   border: var(--border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 16px 18px;
 }
 
