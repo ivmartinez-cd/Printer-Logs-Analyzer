@@ -64,12 +64,16 @@
   --accent-color: var(--cd-orange);
   --text-on-accent: #ffffff;
 
-  /* ── Superficies (modo claro por defecto) ───────────────────────────── */
+  /* ── Superficies (modo claro por defecto) ─────────────────────────────
+     Todas opacas a propósito: nada de "vidrio" translúcido — el manual de
+     marca son piezas planas de color sólido, no glassmorphism. --bg-card y
+     --bg-glass quedan como alias de --bg-elevated (no como "vidrio") para
+     no romper los archivos que todavía los referencian. */
   --bg-main: #f6f6f7;
   --bg-surface: #ffffff;
   --bg-elevated: #f0f0f2;
-  --bg-card: rgba(255, 255, 255, 0.75);
-  --bg-glass: rgba(255, 255, 255, 0.80);
+  --bg-card: #ffffff;
+  --bg-glass: #f0f0f2;
   --bg-hover: rgba(15, 23, 42, 0.04);
   --bg-input: rgba(15, 23, 42, 0.03);
 
@@ -95,7 +99,12 @@
   --border-subtle: 1px solid rgba(15, 23, 42, 0.09);
   --border-strong: rgba(15, 23, 42, 0.16);
   --border-glass: 1px solid rgba(15, 23, 42, 0.12);
-  --glass-blur: blur(16px) saturate(1.6);
+  /* El blur de "vidrio" queda apagado a propósito (ver nota de superficies) */
+  --glass-blur: none;
+  /* Escala única de radios: chico (inputs), medio (cards/botones/modales), pill (badges) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
 
   /* ── Escala de veladuras neutras (bordes finos, hovers, disabled) ──────
      Uso: reemplazan rgba(255,255,255,X) / rgba(0,0,0,X) sueltos usados como
@@ -110,13 +119,15 @@
   /* Fondo oscurecido detrás de un modal/overlay a pantalla completa */
   --overlay-backdrop: rgba(15, 23, 42, 0.45);
 
-  /* ── Elevación (las sombras siguen siendo oscuras en los dos temas —
-     una sombra es una sombra; solo baja de intensidad en claro) ────────── */
-  --shadow-premium: 0 10px 40px -10px rgba(15, 23, 42, 0.18);
-  --shadow-glow: 0 0 24px rgba(243, 147, 34, 0.18);
+  /* ── Elevación — planas y neutras, nunca de color (nada de "glow"):
+     la profundidad la da el borde, la sombra es solo para separar capas
+     reales (modal sobre overlay, dropdown sobre contenido). ───────────── */
   --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.1);
   --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.14);
+  /* Alias retro-compatibles: dejan de ser "glow"/"premium" de color, apuntan a sombras planas */
+  --shadow-premium: var(--shadow-lg);
+  --shadow-glow: var(--shadow-sm);
 
   /* ── Escala de z-index única para toda la app ───────────────────────── */
   --z-sticky: 100;
@@ -142,8 +153,8 @@ html.dark {
   --bg-main: #0a0a0b;
   --bg-surface: #111113;
   --bg-elevated: #17171a;
-  --bg-card: rgba(22, 22, 26, 0.55);
-  --bg-glass: rgba(18, 18, 22, 0.70);
+  --bg-card: #111113;
+  --bg-glass: #17171a;
   --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-input: rgba(0, 0, 0, 0.3);
 
@@ -166,11 +177,11 @@ html.dark {
 
   --overlay-backdrop: rgba(10, 14, 23, 0.7);
 
-  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 24px rgba(243, 147, 34, 0.12);
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-premium: var(--shadow-lg);
+  --shadow-glow: var(--shadow-sm);
 }
 
 /* Alias retro-compatibles (no agregar usos nuevos, migrar a --cd-orange / --accent-primary) */
@@ -225,10 +236,10 @@ body {
   font-size: 0.875rem;
   font-weight: 600;
   font-family: inherit;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: var(--transition-premium);
+  transition: var(--transition-fast);
   white-space: nowrap;
   text-decoration: none;
   user-select: none;
@@ -243,33 +254,28 @@ body {
   background: var(--cd-orange);
   color: var(--text-on-accent);
   border-color: var(--cd-orange);
-  box-shadow: 0 4px 12px var(--cd-orange-glow);
 }
 
 .dashboard__btn--primary:hover:not(:disabled) {
   background: var(--cd-orange-light);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(243, 147, 34, 0.4);
 }
 
+/* Variante de énfasis: mismo tratamiento plano, color de marca distinto
+   (magenta) en vez del degradado naranja→magenta con glow que tenía antes. */
 .dashboard__btn--vibrant {
-  background: linear-gradient(135deg, var(--cd-orange) 0%, var(--cd-magenta) 100%);
+  background: var(--cd-magenta);
   color: var(--text-on-accent);
-  border: none;
-  box-shadow: 0 4px 15px rgba(243, 147, 34, 0.3);
+  border: 1px solid var(--cd-magenta);
 }
 
 .dashboard__btn--vibrant:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(243, 147, 34, 0.45);
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
 
 .dashboard__btn--secondary {
-  background: var(--veil-2);
+  background: var(--bg-elevated);
   color: var(--text-main);
-  border-color: var(--veil-3);
-  backdrop-filter: blur(8px);
+  border-color: var(--border-color);
 }
 
 .dashboard__btn--secondary:hover:not(:disabled) {
@@ -292,19 +298,16 @@ body {
   background: var(--color-error);
   color: var(--text-on-accent);
   border-color: var(--color-error);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .dashboard__btn--danger:hover:not(:disabled) {
-  background: #f87171;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  background: #dc2626;
 }
 
 .dashboard__btn--small {
   padding: 6px 12px;
   font-size: 0.8125rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* ─── Global Scrollbar ───────────────────────────────────────────────── */
@@ -335,7 +338,7 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--veil-4);
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   color: var(--text-main);
   font-family: inherit;
   font-size: 0.95rem;
@@ -359,6 +362,24 @@ body {
   color: var(--text-muted);
   margin-bottom: 8px;
   display: block;
+}
+
+/* ─── Franja de marca — el "subrayado de colores" del manual (Violeta,
+   Magenta, Naranja, Gris, Celeste). Reemplaza al glow ambiental como
+   elemento de identidad bajo el logo / título de sección. ─────────────── */
+.brand-strip {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--cd-violet) 0% 20%,
+    var(--cd-magenta) 20% 40%,
+    var(--cd-orange) 40% 60%,
+    var(--cd-gray) 60% 80%,
+    var(--cd-celeste) 80% 100%
+  );
 }
 
 /* ─── Textos genéricos de modal (título/cuerpo neutros, sin el estilo

@@ -111,12 +111,12 @@ export function WelcomeView({
   }, [recentSearches, displaySaved])
 
   return (
-    <div className="welcome-view animate-fade-in">
-      
+    <div className="welcome-view">
+
       {/* Hero Section */}
       <section className="welcome-hero">
-        <div className="welcome-hero__bg-glow" />
-        
+        <span className="brand-strip welcome-hero__strip" aria-hidden="true" />
+
         <div className="welcome-hero__titles">
           <h1 className="welcome-hero__title">
             HP Logs <span className="welcome-hero__title-suffix">Analyzer</span>

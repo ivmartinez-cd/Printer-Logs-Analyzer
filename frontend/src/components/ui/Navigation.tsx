@@ -66,18 +66,21 @@ export function Navigation({
       </button>
 
       <div className="navigation__content">
-        <button
-          type="button"
-          className="navigation__brand"
-          onClick={() => onNavigate('dashboard')}
-          title="Ir al panel de análisis"
-        >
-          <img
-            src={isCollapsed ? '/isotipo-naranja.svg' : '/logo-cd-naranja.svg'}
-            alt="Canal Directo"
-            className={isCollapsed ? 'navigation__logo' : 'navigation__logo-full'}
-          />
-        </button>
+        <div className="navigation__brand-block">
+          <button
+            type="button"
+            className="navigation__brand"
+            onClick={() => onNavigate('dashboard')}
+            title="Ir al panel de análisis"
+          >
+            <img
+              src={isCollapsed ? '/isotipo-naranja.svg' : '/logo-cd-naranja.svg'}
+              alt="Canal Directo"
+              className={isCollapsed ? 'navigation__logo' : 'navigation__logo-full'}
+            />
+          </button>
+          <span className="brand-strip navigation__brand-strip" aria-hidden="true" />
+        </div>
 
         <ul className="navigation__list">
           <li>
