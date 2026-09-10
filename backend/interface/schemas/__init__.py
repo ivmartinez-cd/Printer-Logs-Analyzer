@@ -22,3 +22,13 @@ from .sds import (
     ExtractSdsLogsResponse,
     ResolveDeviceResponse,
 )
+from .sds_engineering import (
+    EngineeringAnalyzeJobResponse,
+    EngineeringAnalyzeRequest,
+    EngineeringCaseDetailResponse,
+    EngineeringCaseItem,
+    EngineeringCaseListResponse,
+    EngineeringCodeStat,
+    EngineeringSyncRequest,
+    EngineeringSyncResponse,
+)

@@ -35,6 +35,7 @@ import { WelcomeView } from '../components/ui/WelcomeView'
 import { MonitorDashboard } from '../components/Monitor/MonitorDashboard'
 import { Navigation, type ViewMode as NavViewMode } from '../components/ui/Navigation'
 import { AvisosPage } from './AvisosPage'
+import { EngineeringCasesPage } from './EngineeringCasesPage'
 import {
   useDateFilter,
   filterEventsByDate,
@@ -59,6 +60,7 @@ export default function DashboardPage({
   initialIsSavedList,
   initialIsMonitor,
   initialIsAvisos,
+  initialIsCasos,
 }: {
   serverWasCold: boolean
   healthStatus: HealthStatus | null
@@ -67,6 +69,7 @@ export default function DashboardPage({
   initialIsSavedList?: boolean
   initialIsMonitor?: boolean
   initialIsAvisos?: boolean
+  initialIsCasos?: boolean
 }) {
   const dateFilter = useDateFilter()
   const {
@@ -143,6 +146,8 @@ export default function DashboardPage({
       newPath = '/monitor'
     } else if (viewMode === 'avisos') {
       newPath = '/avisos'
+    } else if (viewMode === 'casos-ingenieria') {
+      newPath = '/casos-ingenieria'
     }
 
     if (window.location.pathname !== newPath) {
@@ -251,6 +256,8 @@ export default function DashboardPage({
       }
     } else if (initialIsAvisos) {
       setViewMode('avisos')
+    } else if (initialIsCasos) {
+      setViewMode('casos-ingenieria')
     } else if (initialSerial) {
       setViewMode('dashboard')
       if (initialSerial !== currentSerialNumber) {
@@ -264,7 +271,7 @@ export default function DashboardPage({
       setSavedDetail(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, initialIsAvisos, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
+  }, [initialSerial, initialAnalysisId, initialIsSavedList, initialIsMonitor, initialIsAvisos, initialIsCasos, autoResolveAndAnalyze, setCurrentSerialNumber, setResult])
 
   // Tracks the analysis id last seen in the URL. We only load from the URL on a
   // genuine URL change (deep link / back-forward). Internal selection changes
@@ -475,6 +482,10 @@ export default function DashboardPage({
         ) : viewMode === 'avisos' ? (
           <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
             <AvisosPage />
+          </div>
+        ) : viewMode === 'casos-ingenieria' ? (
+          <div className="dashboard__content-wrap" style={{ paddingTop: '32px' }}>
+            <EngineeringCasesPage />
           </div>
         ) : result || loading || viewMode === 'saved-list' || viewMode === 'saved-detail' ? (
           <>

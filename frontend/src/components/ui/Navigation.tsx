@@ -6,6 +6,7 @@ import {
   HelpCircle,
   Monitor,
   Bell,
+  ClipboardList,
   ChevronLeft,
   ChevronRight,
   X
@@ -14,7 +15,7 @@ import type { HealthStatus } from '../../services/api'
 import { ThemeToggle } from './ThemeToggle'
 import '../../styles/navigation.css'
 
-export type ViewMode = 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos'
+export type ViewMode = 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos' | 'casos-ingenieria'
 
 interface NavigationProps {
   viewMode: ViewMode
@@ -115,9 +116,20 @@ export function Navigation({
               {!isCollapsed && <span className="navigation__item-label">Mantenimiento</span>}
             </button>
           </li>
-          
+
           <li>
-            <button 
+            <button
+              className={`navigation__item ${viewMode === 'casos-ingenieria' ? 'navigation__item--active' : ''}`}
+              onClick={() => onNavigate('casos-ingenieria')}
+              title="Casos de ingeniería HP"
+            >
+              <ClipboardList className="navigation__item-icon" />
+              {!isCollapsed && <span className="navigation__item-label">Casos de Ingeniería</span>}
+            </button>
+          </li>
+
+          <li>
+            <button
               className={`navigation__item ${viewMode === 'saved-list' || viewMode === 'saved-detail' ? 'navigation__item--active' : ''}`}
               onClick={() => onNavigate('saved-list')}
               title="Historial de Incidentes"

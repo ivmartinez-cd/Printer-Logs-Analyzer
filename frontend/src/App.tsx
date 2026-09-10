@@ -64,38 +64,44 @@ interface LocationInfo {
   isSavedList: boolean
   isMonitor: boolean
   isAvisos: boolean
+  isCasos: boolean
 }
 
 function parseLocation(): LocationInfo {
   const path = window.location.pathname.slice(1) // remove leading /
-  
+
   // 1. Saved analysis detail: /analysis/[ID]
   if (path.startsWith('analysis/')) {
     const id = path.split('/')[1]
-    return { serial: null, analysisId: id || null, isSavedList: false, isMonitor: false, isAvisos: false }
+    return { serial: null, analysisId: id || null, isSavedList: false, isMonitor: false, isAvisos: false, isCasos: false }
   }
 
   // 2. Saved list: /saved-analyses
   if (path === 'saved-analyses') {
-    return { serial: null, analysisId: null, isSavedList: true, isMonitor: false, isAvisos: false }
+    return { serial: null, analysisId: null, isSavedList: true, isMonitor: false, isAvisos: false, isCasos: false }
   }
 
   // 3. Monitor: /monitor
   if (path === 'monitor') {
-    return { serial: null, analysisId: null, isSavedList: false, isMonitor: true, isAvisos: false }
+    return { serial: null, analysisId: null, isSavedList: false, isMonitor: true, isAvisos: false, isCasos: false }
   }
 
   // 4. Avisos: /avisos
   if (path === 'avisos') {
-    return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: true }
+    return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: true, isCasos: false }
   }
 
-  // 5. Serial: /[SERIAL]
+  // 5. Casos de ingeniería: /casos-ingenieria
+  if (path === 'casos-ingenieria') {
+    return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false, isCasos: true }
+  }
+
+  // 6. Serial: /[SERIAL]
   if (path && /^[A-Z0-9]{5,20}$/i.test(path)) {
-    return { serial: path.toUpperCase(), analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false }
+    return { serial: path.toUpperCase(), analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false, isCasos: false }
   }
 
-  return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false }
+  return { serial: null, analysisId: null, isSavedList: false, isMonitor: false, isAvisos: false, isCasos: false }
 }
 
 function App() {
@@ -142,6 +148,7 @@ function App() {
           initialIsSavedList={locationInfo.isSavedList}
           initialIsMonitor={locationInfo.isMonitor}
           initialIsAvisos={locationInfo.isAvisos}
+          initialIsCasos={locationInfo.isCasos}
         />
 
         <ToastContainer />

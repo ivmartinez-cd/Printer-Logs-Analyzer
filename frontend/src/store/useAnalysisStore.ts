@@ -16,7 +16,7 @@ interface AnalysisState {
   savingIncident: boolean
   
   // UI State
-  viewMode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos'
+  viewMode: 'dashboard' | 'saved-list' | 'saved-detail' | 'monitor' | 'avisos' | 'casos-ingenieria'
   logFileName: string | null
   currentModelFamily: string | null
   currentSerialNumber: string | null

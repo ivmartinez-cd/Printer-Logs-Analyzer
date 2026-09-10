@@ -19,6 +19,7 @@ from backend.interface.routers import (
     notifications,
     saved_analysis,
     sds,
+    sds_engineering,
 )
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,6 +102,7 @@ def get_app(settings: Settings | None = None) -> FastAPI:
     # Include modular routers
     app.include_router(analysis.router)
     app.include_router(sds.router)
+    app.include_router(sds_engineering.router)
     app.include_router(ai.router)
     app.include_router(saved_analysis.router)
 

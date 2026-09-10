@@ -204,6 +204,50 @@ def test_fetch_kaas_content_expired_returns_none(mock_session_cls, sds_session):
 
 
 @patch("requests.Session")
+def test_fetch_solution_content_detecta_session_expired(mock_session_cls, sds_session):
+    """Regresión: HP devuelve HTTP 200 con una página "Session Expired" cuando el
+    token del link (KaaS/Content Bootstrapper) caducó. Antes se cacheaba esa
+    basura como si fuera el artículo real."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+
+    expired_url = "https://api-sds-contentbootstrapper-prod.sds.hp8.us:443/v1/expired.token"
+    sds_session.session.get.return_value = MagicMock(
+        status_code=200,
+        url=expired_url,
+        text="<html><body><div class='banner'>Session Expired</div>"
+        "<div>Your session has expired. Please log in again.</div></body></html>",
+    )
+
+    result = sds_session.fetch_solution_content(expired_url)
+    assert result is None
+
+
+@patch("requests.Session")
+def test_fetch_engineering_advisories_params_repetibles(mock_session_cls, sds_session):
+    """Los params st/sev/tp son repetibles (uno por valor), maxrows y search=go van
+    siempre al final — mismo patrón que fetch_event_logs_html."""
+    sds_session.session = mock_session_cls.return_value
+    sds_session.last_login = time.monotonic()
+    sds_session.session.get.return_value = MagicMock(status_code=200, text="<html></html>")
+
+    sds_session.fetch_engineering_advisories_html(
+        states=["1", "2"], severities=["1"], types=["3", "5"], maxrows=50
+    )
+
+    assert sds_session.session.get.called
+    _, kwargs = sds_session.session.get.call_args
+    params = kwargs["params"]
+    assert params.count(("st", "1")) == 1
+    assert params.count(("st", "2")) == 1
+    assert params.count(("sev", "1")) == 1
+    assert params.count(("tp", "3")) == 1
+    assert params.count(("tp", "5")) == 1
+    assert ("maxrows", "50") in params
+    assert ("search", "go") in params
+
+
+@patch("requests.Session")
 def test_fetch_remote_ews_url_success(mock_session_cls, sds_session):
     """Extracts the remote EWS launch link from the hpsmart/ews AJAX response."""
     sds_session.session = mock_session_cls.return_value
