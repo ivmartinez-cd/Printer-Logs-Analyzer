@@ -422,3 +422,153 @@ export interface CdsIncident {
   repuestos: CdsReplacement[]
   tareas_realizadas: string[]
 }
+
+// --- Casos de Ingeniería (HP SDS) ---
+
+export type EngCaseEstado = 'New' | 'Open' | 'Postponed' | 'Closed'
+export type EngCaseGravedad = 'High' | 'Medium'
+export type EngCaseTipo =
+  | 'EngineAnalysis'
+  | 'ExpertRules'
+  | 'Predictive'
+  | 'Vibration'
+  | 'PrintQualityDiagnostics'
+export type EngCaseVeredicto = 'accionar' | 'monitorear' | 'descartar'
+export type EngCaseConfianza = 'alta' | 'media' | 'baja'
+
+export interface EngineeringCaseAnalysisSummary {
+  veredicto: EngCaseVeredicto
+  confianza: EngCaseConfianza
+  analizado_en: string | null
+  model: string
+}
+
+export interface EngineeringCase {
+  incident_id: string
+  device_id: string
+  serial: string
+  customer: string | null
+  monitor: string | null
+  model: string | null
+  firmware: string | null
+  estado: EngCaseEstado
+  gravedad: EngCaseGravedad | null
+  tipo: EngCaseTipo | null
+  codigo: string
+  probabilidad: number | null
+  plazo_dias: number | null
+  mediana_dias_a_fallo: number | null
+  creado: string | null
+  actualizado: string | null
+  analisis: EngineeringCaseAnalysisSummary | null
+}
+
+export interface EngineeringCaseListResponse {
+  items: EngineeringCase[]
+  total: number
+}
+
+export interface EngineeringCasePart {
+  pn: string
+  description: string
+}
+
+export interface EngineeringCaseHistoryRow {
+  date: string
+  state: string
+  user: string | null
+  comment: string | null
+}
+
+export interface EngineeringCaseDetail {
+  hp_action_id: string | null
+  state: string | null
+  available_states: string[]
+  case_type: string | null
+  code: string | null
+  severity: string | null
+  description: string | null
+  more_info_url: string | null
+  more_info_text: string | null
+  related_event_codes: string[]
+  probability: number | null
+  lead_days: number | null
+  median_days_to_failure: number | null
+  parts: EngineeringCasePart[]
+  total_impressions: string | null
+  firmware: string | null
+  created_at: string | null
+  updated_at: string | null
+  state_history: EngineeringCaseHistoryRow[]
+}
+
+export interface EngineeringAiPart {
+  pn: string
+  descripcion: string
+  prioridad?: 'llevar' | 'opcional' | 'no_llevar' | null
+  motivo?: string | null
+}
+
+export interface EngineeringAiConsolidado {
+  visita_requerida: 'si' | 'no' | 'remoto'
+  prioridad: 'alta' | 'media' | 'baja'
+  resumen: string
+  piezas_a_llevar: string[]
+  casos_a_cerrar: string[]
+}
+
+export interface EngineeringCaseAnalysis {
+  incident_id: string
+  codigo: string
+  veredicto: EngCaseVeredicto
+  confianza: EngCaseConfianza
+  corroboracion_logs: 'corrobora' | 'contradice' | 'sin_evidencia' | null
+  causa_raiz: string | null
+  justificacion: string | null
+  pasos: string[]
+  piezas: EngineeringAiPart[]
+  motivo_cierre_sugerido: string | null
+  comentario_cierre: string | null
+  consolidado?: EngineeringAiConsolidado | null
+  _error?: string
+}
+
+export interface EngineeringCaseDetailResponse {
+  case: EngineeringCase
+  detail: EngineeringCaseDetail
+  latest_analysis: EngineeringCaseAnalysis | null
+  analysis_history: EngineeringCaseAnalysis[]
+}
+
+export interface EngineeringSyncResponse {
+  fetched: number
+  new: number
+  updated: number
+}
+
+export interface EngineeringIncidentRef {
+  device_id: string
+  incident_id: string
+}
+
+export interface EngineeringAnalyzeJobResponse {
+  job_id: string
+  total: number
+  status: string
+  notification_id: string | null
+}
+
+export interface EngineeringJobStatus {
+  status: string
+  processed: number
+  total: number
+  errors: number
+  results?: {
+    total_groups: number
+    total_cases: number
+    analyzed: number
+    errors: number
+    veredictos: Record<string, number>
+    cost_usd: number
+  } | null
+}

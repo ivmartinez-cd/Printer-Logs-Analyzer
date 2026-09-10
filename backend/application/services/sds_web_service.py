@@ -188,6 +188,12 @@ class SDSWebSession:
             resp = self.session.get(url, allow_redirects=True, timeout=20)
             _logger.info("Solution fetch: status=%s url=%s", resp.status_code, resp.url[:80])
             if resp.status_code == 200 and "login" not in resp.url.lower():
+                if _looks_like_session_expired(resp.text):
+                    _logger.warning(
+                        "Solution fetch returned an expired-token page (HTTP 200) for %s",
+                        url[:80],
+                    )
+                    return None
                 return resp.text
             _logger.warning(
                 "Solution fetch failed: status=%s final_url=%s", resp.status_code, resp.url[:80]
@@ -311,6 +317,74 @@ class SDSWebSession:
             raise SDSWebError(f"Error loading operations ({resp.status_code})")
         return _parse_hp_operations(resp.text)
 
+    def fetch_engineering_advisories_html(
+        self,
+        states: list[str] | None = None,
+        severities: list[str] | None = None,
+        types: list[str] | None = None,
+        date_from: str | None = None,
+        date_until: str | None = None,
+        customer_id: str | None = None,
+        maxrows: int = 200,
+    ) -> str:
+        """Fetch the "Soporte técnico de HP SDS" queue (predictive/expert-rules triage).
+
+        GET /sds/alerts/engineering. states/severities/types son códigos del portal
+        (st: 1=Nuevo,2=Abierto,3=Pospuesto,4=Cerrado; sev: 1=Alto,2=Medio;
+        tp: 2=ExpertRules,3=Predictive,4=Vibration,5=EngineAnalysis,6=PrintQualityDiagnostics).
+        Devuelve HTML de página completa (no es el wrapper AJAX de EKM).
+        """
+        self._ensure_session()
+
+        params: list[tuple[str, str]] = []
+        for s in states or ["1", "2"]:
+            params.append(("st", s))
+        for s in severities or ["1", "2"]:
+            params.append(("sev", s))
+        for t in types or ["2", "3", "4", "5", "6"]:
+            params.append(("tp", t))
+        params.append(("from", date_from or "2000-01-01"))
+        params.append(("until", date_until or datetime.now().strftime("%Y-%m-%d")))
+        if customer_id:
+            params.append(("customer", customer_id))
+        params.append(("maxrows", str(maxrows)))
+        params.append(("search", "go"))
+
+        try:
+            resp = self.session.get(
+                f"{self.base_url}/sds/alerts/engineering", params=params, timeout=40
+            )
+        except requests.RequestException as e:
+            raise SDSWebError(f"Failed to fetch engineering advisories: {e}") from e
+
+        if resp.status_code != 200:
+            raise SDSWebError(f"Error fetching engineering advisories ({resp.status_code})")
+        return resp.text
+
+    def fetch_action_event_detail_html(self, device_id: str, incident_id: str) -> str:
+        """Fetch the detail dialog of one engineering advisory (actionevents/{id}).
+
+        Devuelve el wrapper XML/CDATA crudo de EKM — desenvolver con _get_html_content().
+        """
+        self._ensure_session()
+        try:
+            resp = self.session.get(
+                f"{self.base_url}/devices/{device_id}/hpsmart/actionevents/{incident_id}",
+                params={"closeUrl": "NONE"},
+                headers={
+                    "x-ekm-usage": "dialog",
+                    "x-requested-with": "XMLHttpRequest",
+                    "Accept": "*/*",
+                },
+                timeout=20,
+            )
+        except requests.RequestException as e:
+            raise SDSWebError(f"Failed to fetch action event detail: {e}") from e
+
+        if resp.status_code != 200:
+            raise SDSWebError(f"Error fetching action event detail ({resp.status_code})")
+        return resp.text
+
     def refresh_hp_data_cache(self, device_id: str) -> list[dict]:
         """Trigger the portal's "Actualizar la caché de datos de HP" action.
 
@@ -358,6 +432,27 @@ class SDSWebSession:
         if resp.status_code not in (200, 204):
             raise SDSWebError(f"Error requesting cache refresh ({resp.status_code})")
         return baseline
+
+
+_SESSION_EXPIRED_MARKERS = (
+    "session expired",
+    "sesión expirada",
+    "sesion expirada",
+    "your session has expired",
+    "please log in again",
+)
+
+
+def _looks_like_session_expired(html_text: str) -> bool:
+    """HP a veces devuelve HTTP 200 con una página "Session Expired" cuando el
+    token del link (KaaS/Content Bootstrapper) caducó. Sin este chequeo, esa
+    página basura se cachea como si fuera el artículo de solución real."""
+    if not html_text:
+        return True
+    sample = html_text[:4000].lower()
+    if any(marker in sample for marker in _SESSION_EXPIRED_MARKERS):
+        return True
+    return len(html_text.strip()) < 400 and "session" in sample
 
 
 def html_to_tsv(raw_xml_html: str) -> str:

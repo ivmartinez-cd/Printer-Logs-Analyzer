@@ -50,6 +50,13 @@ class Settings(BaseModel):
     # explícito en vez de perder datos en silencio.
     disable_local_fallback: bool = Field(False, alias="DISABLE_LOCAL_FALLBACK")
 
+    # Casos de ingeniería SDS: ventana de event logs a agregar para el "paseo del
+    # log" (corroborar el caso contra evidencia real del equipo) y concurrencia
+    # máxima del análisis en lote (SDSWebSession es un singleton de proceso con
+    # una sola sesión HTTP — no subir mucho esto).
+    sds_eng_log_days: int = Field(60, alias="SDS_ENG_LOG_DAYS")
+    sds_eng_max_workers: int = Field(3, alias="SDS_ENG_MAX_WORKERS")
+
     @classmethod
     def from_env(cls) -> "Settings":
         """Load configuration and raise informative errors when missing."""

@@ -30,6 +30,11 @@ import type {
   CdsIncident,
   DeviceStatusResponse,
   SnapshotDiffResult,
+  EngineeringCase,
+  EngineeringCaseDetailResponse,
+  EngineeringSyncResponse,
+  EngineeringAnalyzeJobResponse,
+  EngineeringJobStatus,
 } from '../types/api'
 
 const getApiBase = (): string => {
@@ -842,4 +847,75 @@ export async function sendMaintenanceAlert(serial: string, componentType: string
 export async function getMaintenanceDevicesStatus(): Promise<DeviceStatusResponse[]> {
   const res = await apiFetch(`${API_BASE}/maintenance/devices/status`, { method: 'GET', headers: apiHeaders() })
   return handleResponse<DeviceStatusResponse[]>(res)
+}
+
+// --- Casos de Ingeniería (HP SDS) ---
+
+export async function syncEngineeringCases(signal?: AbortSignal): Promise<EngineeringSyncResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/engineering/sync`,
+    { method: 'POST', headers: apiHeaders(), body: JSON.stringify({}), signal },
+    45_000
+  )
+  return handleResponse<EngineeringSyncResponse>(res)
+}
+
+export async function getEngineeringCases(
+  filters?: { state?: string[]; onlyUnanalyzed?: boolean },
+  signal?: AbortSignal
+): Promise<EngineeringCase[]> {
+  const params = new URLSearchParams()
+  for (const s of filters?.state ?? []) params.append('state', s)
+  if (filters?.onlyUnanalyzed) params.append('only_unanalyzed', 'true')
+  const qs = params.toString()
+  const res = await apiFetch(
+    `${API_BASE}/sds/engineering/cases${qs ? `?${qs}` : ''}`,
+    { method: 'GET', headers: apiHeaders(), signal }
+  )
+  const data = await handleResponse<{ items: EngineeringCase[]; total: number }>(res)
+  return data.items
+}
+
+export async function getEngineeringCaseDetail(
+  deviceId: string,
+  incidentId: string,
+  refresh = false,
+  signal?: AbortSignal
+): Promise<EngineeringCaseDetailResponse> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/engineering/cases/${encodeURIComponent(deviceId)}/${encodeURIComponent(incidentId)}${refresh ? '?refresh=true' : ''}`,
+    { method: 'GET', headers: apiHeaders(), signal },
+    20_000
+  )
+  return handleResponse<EngineeringCaseDetailResponse>(res)
+}
+
+export async function analyzeEngineeringCases(options: {
+  scope: 'new' | 'open' | 'selection'
+  incidents?: { device_id: string; incident_id: string }[]
+  force?: boolean
+  includeLogs?: boolean
+  includeCds?: boolean
+}): Promise<EngineeringAnalyzeJobResponse> {
+  const body = JSON.stringify({
+    scope: options.scope,
+    incidents: options.incidents ?? null,
+    force: options.force ?? false,
+    include_logs: options.includeLogs ?? true,
+    include_cds: options.includeCds ?? true,
+  })
+  const res = await apiFetch(
+    `${API_BASE}/sds/engineering/analyze`,
+    { method: 'POST', headers: apiHeaders(), body },
+    60_000
+  )
+  return handleResponse<EngineeringAnalyzeJobResponse>(res)
+}
+
+export async function getEngineeringJobStatus(jobId: string): Promise<EngineeringJobStatus> {
+  const res = await apiFetch(
+    `${API_BASE}/sds/engineering/jobs/${encodeURIComponent(jobId)}`,
+    { method: 'GET', headers: apiHeaders() }
+  )
+  return handleResponse<EngineeringJobStatus>(res)
 }
