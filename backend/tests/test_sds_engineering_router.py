@@ -12,8 +12,6 @@ os.environ.setdefault("DB_URL", "postgresql://test")
 os.environ.setdefault("API_KEY", "dev")
 
 import pytest
-from fastapi.testclient import TestClient
-
 from backend.infrastructure.config import Settings
 from backend.infrastructure.repositories.sds_engineering_repository import EngineeringCase
 from backend.interface.api import get_app
@@ -22,6 +20,7 @@ from backend.interface.deps import (
     get_notification_repo,
     get_sds_engineering_repo,
 )
+from fastapi.testclient import TestClient
 
 _HEADERS = {"x-api-key": "dev"}
 

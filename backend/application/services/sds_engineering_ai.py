@@ -11,7 +11,6 @@ import json
 import logging
 
 from anthropic import AsyncAnthropic
-
 from backend.application.services.ai_diagnosis_service import _extract_json
 
 _logger = logging.getLogger(__name__)

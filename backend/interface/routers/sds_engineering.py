@@ -12,8 +12,6 @@ import logging
 import threading
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-
 from backend.application.services.job_tracker import create_job, get_job
 from backend.application.services.sds_engineering_service import SdsEngineeringService
 from backend.application.services.sds_web_service import SDSWebError
@@ -43,6 +41,7 @@ from backend.interface.schemas.sds_engineering import (
     EngineeringSyncRequest,
     EngineeringSyncResponse,
 )
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 router = APIRouter(prefix="/sds/engineering", tags=["SDS Engineering"])
 _logger = logging.getLogger(__name__)

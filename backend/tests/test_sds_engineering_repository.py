@@ -8,7 +8,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from backend.application.parsers.sds_engineering_parser import EngineeringCaseRow
 from backend.infrastructure.database import DatabaseUnavailableError
 from backend.infrastructure.repositories.sds_engineering_repository import (
